@@ -1,10 +1,12 @@
 # Build these headers, don't install them
 noinst_HEADERS = \
-	occ_pass_through.hpp
+	occ_pass_through.hpp \
+	occ_finder.hpp
 
 sbin_PROGRAMS = openpower-occ-control
 openpower_occ_control_SOURCES = \
 	occ_pass_through.cpp \
+	occ_finder.cpp \
 	app.cpp
 
 openpower_occ_control_LDFLAGS = \
