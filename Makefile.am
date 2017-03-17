@@ -1,5 +1,10 @@
+# Build these headers, don't install them
+noinst_HEADERS = \
+	occ_finder.hpp
+
 sbin_PROGRAMS = openpower-occ-control
 openpower_occ_control_SOURCES = \
+	occ_finder.cpp \
 	app.cpp
 
 openpower_occ_control_LDFLAGS = \
