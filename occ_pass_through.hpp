@@ -5,6 +5,7 @@
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
 #include "org/open_power/OCC/PassThrough/server.hpp"
+#include "config.h"
 
 namespace open_power
 {
@@ -12,6 +13,21 @@ namespace occ
 {
 namespace pass_through
 {
+
+/** @brief Make occ pass-through d-bus object pathname
+ *  @param[in] occ - occ name
+ *  @returns occ pass-through path
+ */
+inline auto object(const std::string& occ)
+{
+    return std::string(OCC_PASS_THROUGH_ROOT) +
+           '/' +
+           occ;
+}
+
+/** @brief Put occ pass through objects on the bus
+ */
+void run();
 
 using Iface = sdbusplus::server::object::object<
     sdbusplus::org::open_power::OCC::server::PassThrough>;

@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <sdbusplus/server.hpp>
 #include "occ_finder.hpp"
 #include "config.h"
