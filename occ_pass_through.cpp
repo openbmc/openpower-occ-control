@@ -1,5 +1,6 @@
 #include <memory>
-#include <iostream>
+#include <algorithm>
+#include <phosphor-logging/log.hpp>
 #include "occ_pass_through.hpp"
 #include "occ_finder.hpp"
 
@@ -45,6 +46,25 @@ PassThrough::PassThrough(
 
 std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
 {
+    std::string msg = "Pass through to OCC ";
+    msg += path;
+
+    std::string cmd;
+    std::for_each(command.cbegin(), command.cend(),
+                  [&cmd](const auto& c)
+                  {
+                      cmd += std::to_string(c);
+                      cmd += ',';
+                  });
+    if (!cmd.empty())
+    {
+        // Remove trailing ','
+        cmd.pop_back();
+    }
+
+    using namespace phosphor::logging;
+    log<level::INFO>(msg.c_str(), entry("COMMAND=%s", cmd.c_str()));
+
     return {};
 }
 
