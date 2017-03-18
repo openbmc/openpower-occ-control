@@ -6,6 +6,7 @@ noinst_HEADERS = \
 sbin_PROGRAMS = openpower-occ-control
 openpower_occ_control_SOURCES = \
 	occ_finder.cpp \
+	occ_pass_through.cpp \
 	app.cpp
 
 openpower_occ_control_LDFLAGS = \
