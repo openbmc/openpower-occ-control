@@ -1,17 +1,18 @@
-#include <sdbusplus/server.hpp>
-#include "config.h"
+#include <phosphor-logging/log.hpp>
+#include <exception>
+#include "occ_pass_through.hpp"
 
 int main(int argc, char* argv[])
 {
-    auto bus = sdbusplus::bus::new_default();
-    sdbusplus::server::manager::manager objManager(bus,
-                                                   OCC_PASS_THROUGH_ROOT);
-    bus.request_name(OCC_PASS_THROUGH_BUSNAME);
-
-    while (true)
+    try
     {
-        bus.process_discard();
-        bus.wait();
+        open_power::occ::pass_through::run();
+    }
+    catch (const std::exception& e)
+    {
+        using namespace phosphor::logging;
+        log<level::ERR>(e.what());
+        return -1;
     }
 
     return 0;
