@@ -3,7 +3,6 @@
 #include <phosphor-logging/log.hpp>
 #include "occ_pass_through.hpp"
 #include "occ_finder.hpp"
-
 namespace open_power
 {
 namespace occ
@@ -41,7 +40,7 @@ PassThrough::PassThrough(
     Iface(bus, path),
     path(path)
 {
-    // Nothing
+    devicePath.append(std::to_string((this->path.back() - '0') + 1));
 }
 
 std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
