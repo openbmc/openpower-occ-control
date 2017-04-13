@@ -41,7 +41,7 @@ PassThrough::PassThrough(
     Iface(bus, path),
     path(path)
 {
-    this->emit_object_added();
+    // Nothing
 }
 
 std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
