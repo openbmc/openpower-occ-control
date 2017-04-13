@@ -62,6 +62,15 @@ class PassThrough : public Iface
     private:
         /** @brief Pass-through occ path on the bus */
         std::string path;
+
+        /** @brief OCC device path
+         *  For now, here is the hard-coded mapping until
+         *  the udev rule is in
+         *  occ0 --> /dev/occfifo1
+         *  occ1 --> /dev/occfifo2
+         *  ...
+         */
+        std::string devicePath = "/dev/occfifo";
 };
 
 } // namespace pass_through
