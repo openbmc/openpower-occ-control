@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <unistd.h>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
 #include "org/open_power/OCC/PassThrough/server.hpp"
@@ -43,7 +44,13 @@ class PassThrough : public Iface
         PassThrough& operator=(const PassThrough&) = delete;
         PassThrough(PassThrough&&) = default;
         PassThrough& operator=(PassThrough&&) = default;
-        ~PassThrough() = default;
+        ~PassThrough()
+        {
+            if (fd != -1)
+            {
+                close(fd);
+            }
+        }
 
         /** @brief Ctor to put pass-through d-bus object on the bus
          *  @param[in] bus - Bus to attach to
@@ -65,12 +72,15 @@ class PassThrough : public Iface
 
         /** @brief OCC device path
          *  For now, here is the hard-coded mapping until
-         *  the udev rule is in
+         *  the udev rule is in.
          *  occ0 --> /dev/occfifo1
          *  occ1 --> /dev/occfifo2
          *  ...
          */
         std::string devicePath = "/dev/occfifo";
+
+        /** @brief file descriptor to access occ driver */
+        int fd = -1;
 };
 
 } // namespace pass_through
