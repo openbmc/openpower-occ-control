@@ -1,5 +1,6 @@
 #include <memory>
 #include <algorithm>
+#include <fcntl.h>
 #include <phosphor-logging/log.hpp>
 #include "occ_pass_through.hpp"
 #include "occ_finder.hpp"
@@ -38,32 +39,29 @@ PassThrough::PassThrough(
     sdbusplus::bus::bus& bus,
     const char* path) :
     Iface(bus, path),
-    path(path)
+    path(path),
+    fd(openDevice())
 {
+    // Nothing to do.
+}
+
+int PassThrough::openDevice()
+{
+    // Device instance number starts from 1.
     devicePath.append(std::to_string((this->path.back() - '0') + 1));
+
+    int fd = open(devicePath.c_str(), O_RDWR | O_NONBLOCK);
+    if (fd < 0)
+    {
+        // This is for completion. This is getting replaced by elog
+        // in the next commit
+        throw std::runtime_error("Error opening " + devicePath);
+    }
+    return fd;
 }
 
 std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
 {
-    std::string msg = "Pass through to OCC ";
-    msg += path;
-
-    std::string cmd;
-    std::for_each(command.cbegin(), command.cend(),
-                  [&cmd](const auto& c)
-                  {
-                      cmd += std::to_string(c);
-                      cmd += ',';
-                  });
-    if (!cmd.empty())
-    {
-        // Remove trailing ','
-        cmd.pop_back();
-    }
-
-    using namespace phosphor::logging;
-    log<level::INFO>(msg.c_str(), entry("COMMAND=%s", cmd.c_str()));
-
     return {};
 }
 
