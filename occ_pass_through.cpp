@@ -1,6 +1,7 @@
 #include <memory>
 #include <algorithm>
 #include <fcntl.h>
+#include <errno.h>
 #include <phosphor-logging/log.hpp>
 #include "occ_pass_through.hpp"
 #include "occ_finder.hpp"
@@ -55,8 +56,47 @@ PassThrough::PassThrough(
 
 std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
 {
-    return {};
+    using namespace phosphor::logging;
+
+    std::vector<int32_t> response {};
+
+    // Amester packs data in 4 bytes
+    auto size = command.size() * sizeof(int32_t);
+    auto rc = write(fd, command.data(), size);
+    if (rc < 0)
+    {
+        log<level::ERR>("Error writing to OCC");
+
+        // In the next commit, it will have exceptions.
+        return response;
+    }
+
+    // Now read the response. This would be the content of occ-sram
+    while(1)
+    {
+        errno = 0;
+        int32_t data {};
+        if(read(fd, &data, sizeof(data)) > 0)
+        {
+            response.emplace_back(data);
+            continue;
+        }
+        else
+        {
+            // Need to log error on certain cases.
+            break;
+        }
+    }
+
+    if (errno != EAGAIN)
+    {
+        // Will have exception in the next commit.
+        log<level::ERR>("Error reading from OCC");
+    }
+
+    return response;
 }
+
 
 } // namespace pass_through
 } // namespace occ
