@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
-#include "org/open_power/OCC/PassThrough/server.hpp"
+#include <org/open_power/OCC/PassThrough/server.hpp>
 #include "config.h"
 
 namespace open_power
