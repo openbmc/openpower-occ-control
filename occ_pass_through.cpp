@@ -3,8 +3,13 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <phosphor-logging/log.hpp>
+#include <phosphor-logging/elog.hpp>
+#include <errno.h>
+#include <org/open_power/OCC/PassThrough/error.hpp>
 #include "occ_pass_through.hpp"
 #include "occ_finder.hpp"
+#include "elog-errors.hpp"
+
 namespace open_power
 {
 namespace occ
@@ -42,15 +47,19 @@ PassThrough::PassThrough(
     Iface(bus, path),
     path(path)
 {
+    using namespace phosphor::logging;
+
     // Device instance number starts from 1.
     devicePath.append(std::to_string((this->path.back() - '0') + 1));
 
+    errno = 0;
     fd = open(devicePath.c_str(), O_RDWR | O_NONBLOCK);
     if (fd < 0)
     {
-        // This is for completion. This is getting replaced by elog
-        // in the next commit
-        throw std::runtime_error("Error opening " + devicePath);
+        elog<sdbusplus::org::open_power::OCC::
+            PassThrough::Error::OpenFailure>(
+                phosphor::logging::org::open_power::OCC::
+                    PassThrough::OpenFailure::ERRNO(errno));
     }
 }
 
@@ -62,13 +71,14 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
 
     // Amester packs data in 4 bytes
     auto size = command.size() * sizeof(int32_t);
+    errno = 0;
     auto rc = write(fd, command.data(), size);
     if (rc < 0)
     {
-        log<level::ERR>("Error writing to OCC");
-
-        // In the next commit, it will have exceptions.
-        return response;
+        elog<sdbusplus::org::open_power::OCC::
+            PassThrough::Error::WriteFailure>(
+                phosphor::logging::org::open_power::OCC::
+                    PassThrough::WriteFailure::ERRNO(errno));
     }
 
     // Now read the response. This would be the content of occ-sram
@@ -87,15 +97,15 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
         }
         else
         {
-            // Will have exception in the next commit.
-            log<level::ERR>("Error reading from OCC");
-            break;
+            elog<sdbusplus::org::open_power::OCC::
+                PassThrough::Error::ReadFailure>(
+                    phosphor::logging::org::open_power::OCC::
+                        PassThrough::ReadFailure::ERRNO(errno));
         }
     }
 
     return response;
 }
-
 
 } // namespace pass_through
 } // namespace occ
