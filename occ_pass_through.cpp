@@ -3,8 +3,11 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <phosphor-logging/log.hpp>
+#include <phosphor-logging/elog.hpp>
+#include <org/open_power/OCC/PassThrough/error.hpp>
 #include "occ_pass_through.hpp"
 #include "occ_finder.hpp"
+#include "elog-errors.hpp"
 namespace open_power
 {
 namespace occ
@@ -48,15 +51,21 @@ PassThrough::PassThrough(
 
 int PassThrough::openDevice()
 {
+    using namespace phosphor::logging;
+    using namespace sdbusplus::org::open_power::OCC::PassThrough::Error;
+
     // Device instance number starts from 1.
     devicePath.append(std::to_string((this->path.back() - '0') + 1));
 
     int fd = open(devicePath.c_str(), O_RDWR | O_NONBLOCK);
     if (fd < 0)
     {
-        // This is for completion. This is getting replaced by elog
-        // in the next commit
-        throw std::runtime_error("Error opening " + devicePath);
+        // This would log and terminate since its not handled.
+        elog<OpenFailure>(
+            phosphor::logging::org::open_power::OCC::PassThrough::
+                OpenFailure::CALLOUT_ERRNO(errno),
+            phosphor::logging::org::open_power::OCC::PassThrough::
+                OpenFailure::CALLOUT_DEVICE_PATH(devicePath.c_str()));
     }
     return fd;
 }
@@ -64,6 +73,7 @@ int PassThrough::openDevice()
 std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
 {
     using namespace phosphor::logging;
+    using namespace sdbusplus::org::open_power::OCC::PassThrough::Error;
 
     std::vector<int32_t> response {};
 
@@ -72,16 +82,17 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
     auto rc = write((fd)(), command.data(), size);
     if (rc < 0 || (rc != size))
     {
-        log<level::ERR>("Error writing to OCC");
-
-        // In the next commit, it will have exceptions.
-        return response;
+        // This would log and terminate since its not handled.
+        elog<WriteFailure>(
+            phosphor::logging::org::open_power::OCC::PassThrough::
+                WriteFailure::CALLOUT_ERRNO(errno),
+            phosphor::logging::org::open_power::OCC::PassThrough::
+                WriteFailure::CALLOUT_DEVICE_PATH(devicePath.c_str()));
     }
 
     // Now read the response. This would be the content of occ-sram
     while(1)
     {
-        errno = 0;
         int32_t data {};
         auto len = read((fd)(), &data, sizeof(data));
         if (len > 0)
@@ -90,7 +101,8 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
         }
         else if (len < 0 && errno == EAGAIN)
         {
-            // We may have data coming still
+            // We may have data coming still.
+            // This driver does not need a sleep for a retry.
             continue;
         }
         else if (len == 0)
@@ -100,15 +112,17 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
         }
         else
         {
-            // Will have exception in the next commit.
-            log<level::ERR>("Error reading from OCC");
-            break;
+            // This would log and terminate since its not handled.
+            elog<ReadFailure>(
+                phosphor::logging::org::open_power::OCC::PassThrough::
+                    ReadFailure::CALLOUT_ERRNO(errno),
+                phosphor::logging::org::open_power::OCC::PassThrough::
+                    ReadFailure::CALLOUT_DEVICE_PATH(devicePath.c_str()));
         }
     }
 
     return response;
 }
-
 
 } // namespace pass_through
 } // namespace occ
