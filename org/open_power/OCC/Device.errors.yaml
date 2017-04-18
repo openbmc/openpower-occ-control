@@ -1,0 +1,2 @@
+- name: Failure
+  description: A device operation failed.

@@ -1,0 +1,11 @@
+- name: OpenFailure
+  inherits:
+      - org.open_power.OCC.Device.Failure
+
+- name: ReadFailure
+  inherits:
+      - org.open_power.OCC.Device.Failure
+
+- name: WriteFailure
+  inherits:
+      - org.open_power.OCC.Device.Failure

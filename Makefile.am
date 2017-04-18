@@ -7,7 +7,8 @@ sbin_PROGRAMS = openpower-occ-control
 openpower_occ_control_SOURCES = \
 	occ_finder.cpp \
 	occ_pass_through.cpp \
-	app.cpp
+	app.cpp \
+	org/open_power/OCC/PassThrough/error.cpp
 
 openpower_occ_control_LDFLAGS = \
 	$(SDBUSPLUS_LIBS) \
