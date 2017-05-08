@@ -1,13 +1,18 @@
 #pragma once
 
 #include <string>
+#include <map>
 #include <vector>
+#include <experimental/filesystem>
 #include <unistd.h>
 #include <sdbusplus/bus.hpp>
+#include <functional>
 #include <sdbusplus/server/object.hpp>
 #include <org/open_power/OCC/PassThrough/server.hpp>
 #include "config.h"
 #include "file.hpp"
+
+namespace sdbusRule = sdbusplus::bus::match::rules;
 
 namespace open_power
 {
@@ -16,20 +21,88 @@ namespace occ
 namespace pass_through
 {
 
-/** @brief Make occ pass-through d-bus object pathname
- *  @param[in] occ - occ name
- *  @returns occ pass-through path
- */
-inline auto object(const std::string& occ)
-{
-    return std::string(OCC_PASS_THROUGH_ROOT) +
-           '/' +
-           occ;
-}
+class PassThrough;
 
-/** @brief Put occ pass through objects on the bus
+namespace manager
+{
+
+/** @class Manager
+ *  @brief Builds and manages OCC pass-through objects
  */
-void run();
+struct Manager
+{
+    public:
+        Manager() = delete;
+        Manager(const Manager&) = delete;
+        Manager& operator=(const Manager&) = delete;
+        Manager(Manager&&) = default;
+        Manager& operator=(Manager&&) = default;
+        ~Manager() = default;
+
+        /** @brief Ctor - Add OCC pass-through objects on the bus. Create
+         *         OCC objects when corresponding CPU inventory is created.
+         *  @param[in] bus - handle to the bus
+         */
+        Manager(sdbusplus::bus::bus& bus):
+            bus(bus)
+        {
+            for (auto id = 0; id < MAX_CPUS; ++id)
+            {
+                auto path = std::string(CPU_PATH) + std::to_string(id);
+                cpuMatches.emplace_back(
+                    bus,
+                    sdbusRule::type::signal() +
+                    sdbusRule::member("InterfacesAdded") +
+                    sdbusRule::argNpath(0, path) +
+                    sdbusRule::interface("org.freedesktop.DBus.ObjectManager"),
+                    std::bind(std::mem_fn(&Manager::cpuCreated),
+                              this, std::placeholders::_1));
+            }
+        }
+
+        /** @brief Callback that responds cpu creation in the inventory -
+         *         by creating the occ passthrough object.
+         *
+         *  @param[in] msg - bus message
+         *
+         *  @returns 0 to indicate success
+         */
+        int cpuCreated(sdbusplus::message::message& msg)
+        {
+            namespace fs = std::experimental::filesystem;
+            static const std::map<std::string, std::string> map {
+                {"cpu0", "occ0"},
+                {"cpu1", "occ1"}
+            };
+
+            sdbusplus::message::object_path o;
+            msg.read(o);
+            fs::path path(std::string(std::move(o)));
+            auto cpu = path.filename();
+            auto occ = fs::path(OCC_PASS_THROUGH_ROOT);
+            occ /= map.at(cpu.c_str());
+
+            objects.emplace_back(
+                std::make_unique<PassThrough>(
+                    bus,
+                    occ.c_str()));
+
+            return 0;
+        }
+
+    private:
+        /** @brief reference to the bus */
+        sdbusplus::bus::bus& bus;
+
+        /** @brief OCC pass-through objects */
+        std::vector<std::unique_ptr<PassThrough>> objects;
+
+        /** @brief sbdbusplus match objects */
+        std::vector<sdbusplus::bus::match_t> cpuMatches;
+};
+
+} // namespace manager
+
 
 using Iface = sdbusplus::server::object::object<
     sdbusplus::org::open_power::OCC::server::PassThrough>;
