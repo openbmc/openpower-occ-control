@@ -43,17 +43,21 @@ AC_ARG_VAR(INVENTORY_ITEM_INTERFACE, [The Inventory.Item interface])
 AS_IF([test "x$INVENTORY_ITEM_INTERFACE" == "x"], [INVENTORY_ITEM_INTERFACE="xyz.openbmc_project.Inventory.Item"])
 AC_DEFINE_UNQUOTED([INVENTORY_ITEM_INTERFACE], ["$INVENTORY_ITEM_INTERFACE"], [The Inventory.Item root])
 
-AC_ARG_VAR(INVENTORY_ROOT, [The Inventory root])
-AS_IF([test "x$INVENTORY_ROOT" == "x"], [INVENTORY_ROOT="/xyz/openbmc_project/inventory/system"])
-AC_DEFINE_UNQUOTED([INVENTORY_ROOT], ["$INVENTORY_ROOT"], [The Inventory root])
+AC_ARG_VAR(CPU_PATH, [CPU inventory path])
+AS_IF([test "x$CPU_PATH" == "x"], [CPU_PATH="/xyz/openbmc_project/inventory/system/chassis/motherboard/cpu"])
+AC_DEFINE_UNQUOTED([CPU_PATH], ["$CPU_PATH"], [CPU inventory path])
 
-AC_ARG_VAR(CPU_NAME, [The name of the cpu object])
+AC_ARG_VAR(MAX_CPUS, [The max number of CPUs])
+AS_IF([test "x$MAX_CPUS" == "x"], [MAX_CPUS=2])
+AC_DEFINE_UNQUOTED([MAX_CPUS], [$MAX_CPUS], [The max number of CPUs])
+
+AC_ARG_VAR(CPU_NAME, [The CPU object name])
 AS_IF([test "x$CPU_NAME" == "x"], [CPU_NAME="cpu"])
-AC_DEFINE_UNQUOTED([CPU_NAME], ["$CPU_NAME"], [The name of the cpu object])
+AC_DEFINE_UNQUOTED([CPU_NAME], ["$CPU_NAME"], [The CPU object name])
 
-AC_ARG_VAR(OCC_NAME, [The name of the occ object])
+AC_ARG_VAR(OCC_NAME, [The OCC object name])
 AS_IF([test "x$OCC_NAME" == "x"], [OCC_NAME="occ"])
-AC_DEFINE_UNQUOTED([OCC_NAME], ["$OCC_NAME"], [The name of the occ object])
+AC_DEFINE_UNQUOTED([OCC_NAME], ["$OCC_NAME"], [The OCC object name])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
