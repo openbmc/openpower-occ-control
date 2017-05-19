@@ -8,8 +8,6 @@
 #include "occ_pass_through.hpp"
 #include "occ_finder.hpp"
 #include "elog-errors.hpp"
-
-#include <iostream>
 namespace open_power
 {
 namespace occ
@@ -79,9 +77,17 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
 
     std::vector<int32_t> response {};
 
-    // Amester packs data in 4 bytes
-    ssize_t size = command.size() * sizeof(int32_t);
-    auto rc = write((fd)(), command.data(), size);
+    // OCC only understands [bytes] so need array of bytes. Doing this
+    // because rest-server currently treats all int* as 32 bit integer.
+    std::vector<uint8_t> cmdInBytes;
+    cmdInBytes.resize(command.size());
+
+    // Populate uint8_t version of vector.
+    std::transform(command.begin(), command.end(), cmdInBytes.begin(),
+            [](decltype(cmdInBytes)::value_type x){return x;});
+
+    ssize_t size = cmdInBytes.size() * sizeof(decltype(cmdInBytes)::value_type);
+    auto rc = write((fd)(), cmdInBytes.data(), size);
     if (rc < 0 || (rc != size))
     {
         // This would log and terminate since its not handled.
@@ -95,30 +101,25 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
     // Now read the response. This would be the content of occ-sram
     while(1)
     {
-        int32_t data {};
+        uint8_t data {};
         auto len = read((fd)(), &data, sizeof(data));
         if (len > 0)
         {
-            std::cout <<  " LED > 0 and data is " << data << std::endl;
             response.emplace_back(data);
         }
         else if (len < 0 && errno == EAGAIN)
         {
             // We may have data coming still.
             // This driver does not need a sleep for a retry.
-            std::cout <<  " LED < 0 EGAIN.. CONTINUE " << std::endl;
             continue;
         }
         else if (len == 0)
         {
             // We have read all that we can.
-            std::cout <<  " LED = 0 EGAIN.. BREAKING " << std::endl;
             break;
         }
         else
         {
-            std::cout <<  " BAILING OUT. ERRNO = " << errno << std::endl;
-
             // This would log and terminate since its not handled.
             elog<ReadFailure>(
                 phosphor::logging::org::open_power::OCC::PassThrough::
