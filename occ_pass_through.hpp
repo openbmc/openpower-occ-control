@@ -72,7 +72,7 @@ class PassThrough : public Iface
          *  occ1 --> /dev/occfifo2
          *  ...
          */
-        std::string devicePath = "/dev/occfifo";
+        std::string devicePath = "/dev/occ";
 
         /** @brief File descriptor manager */
         FileDescriptor fd;
