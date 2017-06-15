@@ -59,6 +59,14 @@ AC_ARG_VAR(OCC_NAME, [The OCC object name])
 AS_IF([test "x$OCC_NAME" == "x"], [OCC_NAME="occ"])
 AC_DEFINE_UNQUOTED([OCC_NAME], ["$OCC_NAME"], [The OCC object name])
 
+AC_ARG_VAR(OCC_STATUS_BUSNAME, [The Dbus busname to own])
+AS_IF([test "x$OCC_STATUS_BUSNAME" == "x"], [OCC_STATUS_BUSNAME="org.open_power.OCC.Status"])
+AC_DEFINE_UNQUOTED([OCC_STATUS_BUSNAME], ["$OCC_STATUS_BUSNAME"], [The DBus busname to own])
+
+AC_ARG_VAR(OCC_STATUS_ROOT, [The Dbus root])
+AS_IF([test "x$OCC_STATUS_ROOT" == "x"], [OCC_STATUS_ROOT="/xyz/openbmc_project/occ/status"])
+AC_DEFINE_UNQUOTED([OCC_STATUS_ROOT], ["$OCC_STATUS_ROOT"], [The Dbus root])
+
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile status/Makefile])
 AC_OUTPUT
