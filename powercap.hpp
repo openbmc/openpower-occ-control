@@ -74,7 +74,23 @@ namespace sdbusRule = sdbusplus::bus::match::rules;
          *
          */
          void pcapEnableChanged(sdbusplus::message::message& msg);
-    
+
+         /** @brief Look up DBUS service for input path/interface
+          *
+          * @param[in]  path       - DBUS path
+          * @param[in]  path       - DBUS interface
+          *
+          * @return Distinct service name for input path/interface
+          */
+        std::string getService(std::string path,
+                               std::string interface);
+
+        /** @brief Retrieve status of OCC
+         *
+         * @return True if OCC active, False otherwise
+         */
+        bool isOccActive();
+
         sdbusplus::bus::bus& bus;
 
         /** @brief Used to subscribe to dbus pcap propety changes **/
