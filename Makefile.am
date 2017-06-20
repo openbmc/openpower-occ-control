@@ -1,7 +1,8 @@
 # Build these headers, don't install them
 noinst_HEADERS = \
 	occ_pass_through.hpp \
-	occ_status.hpp
+	occ_status.hpp \
+	powercap.hpp
 
 sbin_PROGRAMS = openpower-occ-control
 openpower_occ_control_SOURCES = \
@@ -9,7 +10,8 @@ openpower_occ_control_SOURCES = \
 	occ_status.cpp \
 	occ_device.cpp \
 	app.cpp \
-	org/open_power/OCC/PassThrough/error.cpp
+	org/open_power/OCC/PassThrough/error.cpp \
+	powercap.cpp
 
 BUILT_SOURCES =  org/open_power/OCC/PassThrough/error.hpp \
                  org/open_power/OCC/PassThrough/error.cpp
