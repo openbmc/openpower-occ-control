@@ -11,8 +11,6 @@ namespace open_power
 {
 namespace occ
 {
-namespace pass_through
-{
 
 PassThrough::PassThrough(
     sdbusplus::bus::bus& bus,
@@ -107,6 +105,5 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
     return response;
 }
 
-} // namespace pass_through
 } // namespace occ
 } // namespace open_power
