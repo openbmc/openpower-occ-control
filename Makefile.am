@@ -7,6 +7,7 @@ sbin_PROGRAMS = openpower-occ-control
 openpower_occ_control_SOURCES = \
 	occ_pass_through.cpp \
 	occ_status.cpp \
+	occ_device.cpp \
 	app.cpp \
 	org/open_power/OCC/PassThrough/error.cpp
 
