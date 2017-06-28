@@ -43,6 +43,10 @@ AC_ARG_VAR(OCC_PASS_THROUGH, [OCC Passthrough path])
 AS_IF([test "x$OCC_PASS_THROUGH_ROOT" == "x"], [OCC_PASS_THROUGH="pass_through"])
 AC_DEFINE_UNQUOTED([OCC_PASS_THROUGH], ["$OCC_PASS_THROUGH"], [OCC Passthrough path])
 
+AC_ARG_VAR(OCC_STATUS, [OCC Status path])
+AS_IF([test "x$OCC_STATUS" == "x"], [OCC_STATUS="status"])
+AC_DEFINE_UNQUOTED([OCC_STATUS], ["$OCC_STATUS"], [OCC status path])
+
 AC_ARG_VAR(INVENTORY_ITEM_INTERFACE, [The Inventory.Item interface])
 AS_IF([test "x$INVENTORY_ITEM_INTERFACE" == "x"], [INVENTORY_ITEM_INTERFACE="xyz.openbmc_project.Inventory.Item"])
 AC_DEFINE_UNQUOTED([INVENTORY_ITEM_INTERFACE], ["$INVENTORY_ITEM_INTERFACE"], [The Inventory.Item root])
