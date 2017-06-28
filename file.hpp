@@ -5,8 +5,6 @@ namespace open_power
 {
 namespace occ
 {
-namespace pass_through
-{
 /** @class FileDescriptor
  *  @brief Responsible for handling file descriptor
  */
@@ -46,6 +44,5 @@ class FileDescriptor
         }
 };
 
-} // namespace pass_through
 } // namespace occ
 } // namespace open-power
