@@ -36,12 +36,16 @@ AS_IF([test "x$OCC_CONTROL_BUSNAME" == "x"], [OCC_CONTROL_BUSNAME="org.open_powe
 AC_DEFINE_UNQUOTED([OCC_CONTROL_BUSNAME], ["$OCC_CONTROL_BUSNAME"], [The DBus busname to own])
 
 AC_ARG_VAR(OCC_CONTROL_ROOT, [The Dbus root])
-AS_IF([test "x$OCC_CONTROL_ROOT" == "x"], [OCC_CONTROL_ROOT="/xyz/openbmc_project/occ"])
+AS_IF([test "x$OCC_CONTROL_ROOT" == "x"], [OCC_CONTROL_ROOT="/org/open_power/occ"])
 AC_DEFINE_UNQUOTED([OCC_CONTROL_ROOT], ["$OCC_CONTROL_ROOT"], [The Dbus root])
 
-AC_ARG_VAR(OCC_PASS_THROUGH_ROOT, [The Dbus root])
-AS_IF([test "x$OCC_PASS_THROUGH_ROOT" == "x"], [OCC_PASS_THROUGH_ROOT="/xyz/openbmc_project/occ/pass_through"])
-AC_DEFINE_UNQUOTED([OCC_PASS_THROUGH_ROOT], ["$OCC_PASS_THROUGH_ROOT"], [The Dbus root])
+AC_ARG_VAR(OCC_PASS_THROUGH, [OCC Passthrough path])
+AS_IF([test "x$OCC_PASS_THROUGH" == "x"], [OCC_PASS_THROUGH="pass_through"])
+AC_DEFINE_UNQUOTED([OCC_PASS_THROUGH], ["$OCC_PASS_THROUGH"], [OCC Passthrough path])
+
+AC_ARG_VAR(OCC_STATUS, [OCC Status path])
+AS_IF([test "x$OCC_STATUS" == "x"], [OCC_STATUS="status"])
+AC_DEFINE_UNQUOTED([OCC_STATUS], ["$OCC_STATUS"], [OCC status path])
 
 AC_ARG_VAR(INVENTORY_ITEM_INTERFACE, [The Inventory.Item interface])
 AS_IF([test "x$INVENTORY_ITEM_INTERFACE" == "x"], [INVENTORY_ITEM_INTERFACE="xyz.openbmc_project.Inventory.Item"])
