@@ -31,9 +31,13 @@ AS_IF([test "x$SDBUSPLUSPLUS" == "x"], AC_MSG_ERROR([Cannot find sdbus++]))
 AX_CXX_COMPILE_STDCXX_14([noext])
 AX_APPEND_COMPILE_FLAGS([-Wall -Werror], [CXXFLAGS])
 
-AC_ARG_VAR(OCC_PASS_THROUGH_BUSNAME, [The Dbus busname to own])
-AS_IF([test "x$OCC_PASS_THROUGH_BUSNAME" == "x"], [OCC_PASS_THROUGH_BUSNAME="org.open_power.OCC.PassThrough"])
-AC_DEFINE_UNQUOTED([OCC_PASS_THROUGH_BUSNAME], ["$OCC_PASS_THROUGH_BUSNAME"], [The DBus busname to own])
+AC_ARG_VAR(OCC_CONTROL_BUSNAME, [The Dbus busname to own])
+AS_IF([test "x$OCC_CONTROL_BUSNAME" == "x"], [OCC_CONTROL_BUSNAME="org.open_power.OCC.Control"])
+AC_DEFINE_UNQUOTED([OCC_CONTROL_BUSNAME], ["$OCC_CONTROL_BUSNAME"], [The DBus busname to own])
+
+AC_ARG_VAR(OCC_CONTROL_ROOT, [The Dbus root])
+AS_IF([test "x$OCC_CONTROL_ROOT" == "x"], [OCC_CONTROL_ROOT="/xyz/openbmc_project/occ"])
+AC_DEFINE_UNQUOTED([OCC_CONTROL_ROOT], ["$OCC_CONTROL_ROOT"], [The Dbus root])
 
 AC_ARG_VAR(OCC_PASS_THROUGH_ROOT, [The Dbus root])
 AS_IF([test "x$OCC_PASS_THROUGH_ROOT" == "x"], [OCC_PASS_THROUGH_ROOT="/xyz/openbmc_project/occ/pass_through"])
