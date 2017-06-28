@@ -6,6 +6,7 @@
 #include <functional>
 #include <sdbusplus/bus.hpp>
 #include "occ_pass_through.hpp"
+#include "occ_status.hpp"
 #include "config.h"
 
 namespace sdbusRule = sdbusplus::bus::match::rules;
@@ -28,8 +29,8 @@ struct Manager
         Manager& operator=(Manager&&) = default;
         ~Manager() = default;
 
-        /** @brief Ctor - Add OCC pass-through objects on the bus. Create
-         *         OCC objects when corresponding CPU inventory is created.
+        /** @brief Adds OCC pass-through and status objects on the bus
+         *         when corresponding CPU inventory is created.
          *  @param[in] bus - handle to the bus
          */
         Manager(sdbusplus::bus::bus& bus):
@@ -69,11 +70,15 @@ struct Manager
             name.replace(index, std::strlen(CPU_NAME), OCC_NAME);
             occPath /= name;
 
-            objects.emplace_back(
+            passThroughObjects.emplace_back(
                 std::make_unique<PassThrough>(
                     bus,
                     occPath.c_str()));
 
+            statusObjects.emplace_back(
+                std::make_unique<Status>(
+                    bus,
+                    occPath.c_str()));
             return 0;
         }
 
@@ -82,7 +87,10 @@ struct Manager
         sdbusplus::bus::bus& bus;
 
         /** @brief OCC pass-through objects */
-        std::vector<std::unique_ptr<PassThrough>> objects;
+        std::vector<std::unique_ptr<PassThrough>> passThroughObjects;
+
+        /** @brief OCC Status objects */
+        std::vector<std::unique_ptr<Status>> statusObjects;
 
         /** @brief sbdbusplus match objects */
         std::vector<sdbusplus::bus::match_t> cpuMatches;
