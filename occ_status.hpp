@@ -3,6 +3,7 @@
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
 #include <org/open_power/OCC/Status/server.hpp>
+#include "occ_device.hpp"
 namespace open_power
 {
 namespace occ
@@ -30,7 +31,9 @@ class Status : public Interface
          *  @param[in] path - DBus object path
          */
         Status(sdbusplus::bus::bus& bus, const char* path)
-            : Interface(bus, path)
+            : Interface(bus, path),
+              path(path),
+              device(path)
         {
             // Nothing to do here
         }
@@ -42,6 +45,13 @@ class Status : public Interface
          *  @return          - Updated value of the property
          */
         bool occActive(bool value) override;
+
+    private:
+        /** @brief OCC dbus object path */
+        std::string path;
+
+        /** @brief OCC device object to do bind and unbind */
+        Device device;
 };
 
 } // namespace occ

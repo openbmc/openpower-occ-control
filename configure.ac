@@ -63,6 +63,10 @@ AC_ARG_VAR(OCC_NAME, [The OCC object name])
 AS_IF([test "x$OCC_NAME" == "x"], [OCC_NAME="occ"])
 AC_DEFINE_UNQUOTED([OCC_NAME], ["$OCC_NAME"], [The OCC object name])
 
+AC_ARG_VAR(OCC_HWMON_PATH, [The OCC hwmon path])
+AS_IF([test "x$OCC_HWMON_PATH" == "x"], [OCC_HWMON_PATH="/sys/bus/platform/drivers/occ-hwmon/"])
+AC_DEFINE_UNQUOTED([OCC_HWMON_PATH], ["$OCC_HWMON_PATH"], [The OCC hwmon path])
+
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
