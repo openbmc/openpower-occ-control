@@ -1,16 +1,17 @@
 #include <phosphor-logging/log.hpp>
 #include <exception>
-#include "occ_pass_through.hpp"
+#include "occ_manager.hpp"
+#include "config.h"
 
 int main(int argc, char* argv[])
 {
     try
     {
         auto bus = sdbusplus::bus::new_default();
-        bus.request_name(OCC_PASS_THROUGH_BUSNAME);
+        bus.request_name(OCC_CONTROL_BUSNAME);
 
         sdbusplus::server::manager::manager objManager(bus,
-                                                       OCC_PASS_THROUGH_ROOT);
+                                                       OCC_CONTROL_ROOT);
 
         open_power::occ::pass_through::manager::Manager mgr(bus);
 
