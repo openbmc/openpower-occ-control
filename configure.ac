@@ -19,6 +19,8 @@ PKG_CHECK_MODULES([PHOSPHOR_LOGGING], [phosphor-logging],,\
     AC_MSG_ERROR(["Requires phosphor-logging package."]))
 PKG_CHECK_MODULES([OPENPOWER_DBUS_INTERFACES], [openpower-dbus-interfaces],,\
     AC_MSG_ERROR(["Requires openpower-dbus-interfaces package."]))
+PKG_CHECK_MODULES([PHOSPHOR_DBUS_INTERFACES], [phosphor-dbus-interfaces],,\
+    AC_MSG_ERROR(["Requires phosphor-dbus-interfaces package."]))
 
 # Check for sdbusplus
 PKG_CHECK_MODULES([SDBUSPLUS], [sdbusplus],, [AC_MSG_ERROR(["sdbusplus packaged required and not found"])])
@@ -62,6 +64,10 @@ AC_DEFINE_UNQUOTED([OCC_NAME], ["$OCC_NAME"], [The OCC object name])
 AC_ARG_VAR(OCC_HWMON_PATH, [The OCC hwmon path])
 AS_IF([test "x$OCC_HWMON_PATH" == "x"], [OCC_HWMON_PATH="/sys/bus/platform/drivers/occ-hwmon/"])
 AC_DEFINE_UNQUOTED([OCC_HWMON_PATH], ["$OCC_HWMON_PATH"], [The OCC hwmon path])
+
+AC_ARG_VAR(DEV_PATH, [The device path])
+AS_IF([test "x$DEV_PATH" == "x"], [DEV_PATH="/sys/bus/platform/devices/"])
+AC_DEFINE_UNQUOTED([DEV_PATH], ["$DEV_PATH"], [The device path])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
