@@ -32,10 +32,14 @@ struct Manager
 
         /** @brief Adds OCC pass-through and status objects on the bus
          *         when corresponding CPU inventory is created.
-         *  @param[in] bus - handle to the bus
+         *
+         *  @param[in] bus   - handle to the bus
+         *  @param[in] event - Unique ptr reference to sd_event
          */
-        Manager(sdbusplus::bus::bus& bus):
-            bus(bus)
+        Manager(sdbusplus::bus::bus& bus,
+                EventPtr& event) :
+            bus(bus),
+            event(event)
         {
             for (auto id = 0; id < MAX_CPUS; ++id)
             {
@@ -50,7 +54,7 @@ struct Manager
         }
 
         /** @brief Callback that responds to cpu creation in the inventory -
-         *         by creating the occ passthrough and status objects.
+         *         by creating the needed objects.
          *
          *  @param[in] msg - bus message
          *
@@ -78,6 +82,7 @@ struct Manager
             statusObjects.emplace_back(
                 std::make_unique<Status>(
                     bus,
+                    event,
                     path.c_str()));
 
             // Create the power cap monitor object for master occ (0)
@@ -93,6 +98,9 @@ struct Manager
     private:
         /** @brief reference to the bus */
         sdbusplus::bus::bus& bus;
+
+        /** @brief reference to sd_event wrapped in unique_ptr */
+        EventPtr& event;
 
         /** @brief OCC pass-through objects */
         std::vector<std::unique_ptr<PassThrough>> passThroughObjects;

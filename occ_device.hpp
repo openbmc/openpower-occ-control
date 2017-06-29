@@ -2,6 +2,8 @@
 
 #include <fstream>
 #include <experimental/filesystem>
+#include "occ_events.hpp"
+#include "occ_errors.hpp"
 #include "config.h"
 namespace open_power
 {
@@ -25,10 +27,16 @@ class Device
 
         /** @brief Constructs the Device object
          *
-         *  @param[in] name - OCC instance name
+         *  @param[in] event    - Unique ptr reference to sd_event
+         *  @param[in] name     - OCC instance name
+         *  @param[in] callback - Optional callback on errors
          */
-        Device(const std::string& name) :
-            config(name + '-' + "dev0")
+        Device(EventPtr& event,
+               const std::string& name,
+               std::function<void()> callBack = nullptr) :
+            config(name + '-' + "dev0"),
+            errorFile(fs::path(config) / "occ_error"),
+            error(event, errorFile, callBack)
         {
             // Nothing to do here
         }
@@ -36,20 +44,38 @@ class Device
         /** @brief Binds device to the OCC driver */
         inline void bind()
         {
+            // Bind the device
             return write(bindPath, config);
         }
 
         /** @brief Un-binds device from the OCC driver */
         inline void unBind()
         {
-            return write(unBindPath, config);
+           // Unbind the device
+           return write(unBindPath, config);
+        }
+
+        /** @brief Starts to monitor for errors */
+        inline void addErrorWatch()
+        {
+            return error.addWatch();
+        }
+
+        /** @brief stops monitoring for errors */
+        inline void removeErrorWatch()
+        {
+           return error.removeWatch();
         }
 
     private:
         /** @brief Config value to be used to do bind and unbind */
         const std::string config;
 
+        /** @brief This file contains 0 for success, non-zero for errors */
+        const fs::path errorFile;
+
         /**  @brief To bind the device to the OCC driver, do:
+         *
          *    Write occ<#>-dev0 to: /sys/bus/platform/drivers/occ-hwmon/bind
          */
         static fs::path bindPath;
@@ -58,6 +84,9 @@ class Device
          *    Write occ<#>-dev0 to: /sys/bus/platform/drivers/occ-hwmon/unbind
          */
         static fs::path unBindPath;
+
+        /** Abstraction of error monitoring */
+        Error error;
 
         /** @brief file writer to achieve bind and unbind
          *
