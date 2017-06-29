@@ -1,32 +1,44 @@
 #include <phosphor-logging/log.hpp>
-#include <exception>
+#include <phosphor-logging/elog.hpp>
+#include <xyz/openbmc_project/Common/error.hpp>
+#include <org/open_power/OCC/Device/error.hpp>
 #include "occ_manager.hpp"
+#include "occ_events.hpp"
+#include "elog-errors.hpp"
 #include "config.h"
+
+using namespace phosphor::logging;
+
+using namespace sdbusplus::org::open_power::OCC::Device::Error;
+using InternalFailure = sdbusplus::xyz::openbmc_project::Common::
+                                Error::InternalFailure;
 
 int main(int argc, char* argv[])
 {
-    try
+    auto bus = sdbusplus::bus::new_default();
+
+    // Need sd_event to watch for OCC device errors
+    sd_event* event = nullptr;
+    auto r = sd_event_default(&event);
+    if (r < 0)
     {
-        auto bus = sdbusplus::bus::new_default();
-        bus.request_name(OCC_CONTROL_BUSNAME);
-
-        sdbusplus::server::manager::manager objManager(bus,
-                                                       OCC_CONTROL_ROOT);
-
-        open_power::occ::Manager mgr(bus);
-
-        while (true)
-        {
-            bus.process_discard();
-            bus.wait();
-        }
+        log<level::ERR>("Error creating a default sd_event handler");
+        return r;
     }
-    catch (const std::exception& e)
-    {
-        using namespace phosphor::logging;
-        log<level::ERR>(e.what());
-        return -1;
-    }
+    open_power::occ::EventPtr eventP{event};
+    event = nullptr;
+
+    // Attach the bus to sd_event to service user requests
+    bus.attach_event(eventP.get(), SD_EVENT_PRIORITY_NORMAL);
+
+    sdbusplus::server::manager::manager objManager(bus, OCC_CONTROL_ROOT);
+    open_power::occ::Manager mgr(bus, eventP);
+
+    // Claim the bus since all the house keeping is done now
+    bus.request_name(OCC_CONTROL_BUSNAME);
+
+    // Wait for requests
+    sd_event_loop(eventP.get());
 
     return 0;
 }

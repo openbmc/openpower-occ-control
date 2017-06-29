@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <phosphor-logging/log.hpp>
 #include <phosphor-logging/elog.hpp>
-#include <org/open_power/OCC/PassThrough/error.hpp>
+#include <org/open_power/OCC/Device/error.hpp>
 #include "occ_pass_through.hpp"
 #include "elog-errors.hpp"
 namespace open_power
@@ -25,7 +25,7 @@ PassThrough::PassThrough(
 int PassThrough::openDevice()
 {
     using namespace phosphor::logging;
-    using namespace sdbusplus::org::open_power::OCC::PassThrough::Error;
+    using namespace sdbusplus::org::open_power::OCC::Device::Error;
 
     // Device instance number starts from 1.
     devicePath.append(std::to_string((this->path.back() - '0') + 1));
@@ -35,9 +35,9 @@ int PassThrough::openDevice()
     {
         // This would log and terminate since its not handled.
         elog<OpenFailure>(
-            phosphor::logging::org::open_power::OCC::PassThrough::
+            phosphor::logging::org::open_power::OCC::Device::
                 OpenFailure::CALLOUT_ERRNO(errno),
-            phosphor::logging::org::open_power::OCC::PassThrough::
+            phosphor::logging::org::open_power::OCC::Device::
                 OpenFailure::CALLOUT_DEVICE_PATH(devicePath.c_str()));
     }
     return fd;
@@ -46,7 +46,7 @@ int PassThrough::openDevice()
 std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
 {
     using namespace phosphor::logging;
-    using namespace sdbusplus::org::open_power::OCC::PassThrough::Error;
+    using namespace sdbusplus::org::open_power::OCC::Device::Error;
 
     std::vector<int32_t> response {};
 
@@ -65,9 +65,9 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
     {
         // This would log and terminate since its not handled.
         elog<WriteFailure>(
-            phosphor::logging::org::open_power::OCC::PassThrough::
+            phosphor::logging::org::open_power::OCC::Device::
                 WriteFailure::CALLOUT_ERRNO(errno),
-            phosphor::logging::org::open_power::OCC::PassThrough::
+            phosphor::logging::org::open_power::OCC::Device::
                 WriteFailure::CALLOUT_DEVICE_PATH(devicePath.c_str()));
     }
 
@@ -95,9 +95,9 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
         {
             // This would log and terminate since its not handled.
             elog<ReadFailure>(
-                phosphor::logging::org::open_power::OCC::PassThrough::
+                phosphor::logging::org::open_power::OCC::Device::
                     ReadFailure::CALLOUT_ERRNO(errno),
-                phosphor::logging::org::open_power::OCC::PassThrough::
+                phosphor::logging::org::open_power::OCC::Device::
                     ReadFailure::CALLOUT_DEVICE_PATH(devicePath.c_str()));
         }
     }
