@@ -3,6 +3,7 @@
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
 #include <org/open_power/OCC/Status/server.hpp>
+#include "occ_events.hpp"
 #include "occ_device.hpp"
 namespace open_power
 {
@@ -25,15 +26,18 @@ class Status : public Interface
         Status(Status&&) = default;
         Status& operator=(Status&&) = default;
 
-        /** @brief Constructs the Status object
+        /** @brief Constructs the Status object and
+         *         the underlying device object
          *
          *  @param[in] bus  - DBus bus to attach to
          *  @param[in] path - DBus object path
          */
-        Status(sdbusplus::bus::bus& bus, const char* path)
+        Status(sdbusplus::bus::bus& bus, EventPtr& event, const char* path)
             : Interface(bus, path),
               path(path),
-              device(name + std::to_string((this->path.back() - '0') + 1))
+              device(event,
+                     name + std::to_string((this->path.back() - '0') + 1),
+                     std::bind(&Status::deviceErrorHandler, this))
         {
             // Nothing to do here
         }
@@ -61,6 +65,9 @@ class Status : public Interface
 
         /** @brief OCC device object to do bind and unbind */
         Device device;
+
+        /** @brief Callback handler when device errors are detected */
+        void deviceErrorHandler();
 };
 
 } // namespace occ
