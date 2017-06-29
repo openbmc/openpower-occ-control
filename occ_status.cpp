@@ -13,14 +13,27 @@ bool Status::occActive(bool value)
         {
             // Bind the device
             device.bind();
+
+            // And watch for errors
+            device.addErrorWatch();
         }
         else
         {
-            // Do the unbind
+            // Stop watching for errors
+            device.removeErrorWatch();
+
+            // Do the unbind.
             device.unBind();
         }
     }
     return Base::Status::occActive(value);
+}
+
+// Callback handler when a device error is reported.
+void Status::deviceErrorHandler()
+{
+    // This would deem OCC inactive
+    this->occActive(false);
 }
 
 } // namespace occ
