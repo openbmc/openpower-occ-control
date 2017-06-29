@@ -65,6 +65,26 @@ namespace Error
 
 namespace sdbusplus
 {
+namespace org
+{
+namespace open_power
+{
+namespace OCC
+{
+namespace Device
+{
+namespace Error
+{
+    struct WriteFailure;
+} // namespace Error
+} // namespace Device
+} // namespace OCC
+} // namespace open_power
+} // namespace org
+} // namespace sdbusplus
+
+namespace sdbusplus
+{
 namespace xyz
 {
 namespace openbmc_project
@@ -206,6 +226,26 @@ namespace xyz
 {
 namespace openbmc_project
 {
+namespace Sensor
+{
+namespace Device
+{
+namespace Error
+{
+    struct ReadFailure;
+} // namespace Error
+} // namespace Device
+} // namespace Sensor
+} // namespace openbmc_project
+} // namespace xyz
+} // namespace sdbusplus
+
+namespace sdbusplus
+{
+namespace xyz
+{
+namespace openbmc_project
+{
 namespace Common
 {
 namespace File
@@ -228,36 +268,16 @@ namespace open_power
 {
 namespace OCC
 {
-namespace PassThrough
-{
-namespace Error
-{
-    struct OpenFailure;
-} // namespace Error
-} // namespace PassThrough
-} // namespace OCC
-} // namespace open_power
-} // namespace org
-} // namespace sdbusplus
-
-namespace sdbusplus
-{
-namespace xyz
-{
-namespace openbmc_project
-{
-namespace Sensor
-{
 namespace Device
 {
 namespace Error
 {
-    struct ReadFailure;
+    struct ConfigFailure;
 } // namespace Error
 } // namespace Device
-} // namespace Sensor
-} // namespace openbmc_project
-} // namespace xyz
+} // namespace OCC
+} // namespace open_power
+} // namespace org
 } // namespace sdbusplus
 
 namespace sdbusplus
@@ -268,13 +288,13 @@ namespace open_power
 {
 namespace OCC
 {
-namespace PassThrough
+namespace Device
 {
 namespace Error
 {
-    struct ReadFailure;
+    struct OpenFailure;
 } // namespace Error
-} // namespace PassThrough
+} // namespace Device
 } // namespace OCC
 } // namespace open_power
 } // namespace org
@@ -308,13 +328,13 @@ namespace open_power
 {
 namespace OCC
 {
-namespace PassThrough
+namespace Device
 {
 namespace Error
 {
-    struct WriteFailure;
+    struct ReadFailure;
 } // namespace Error
-} // namespace PassThrough
+} // namespace Device
 } // namespace OCC
 } // namespace open_power
 } // namespace org
@@ -351,6 +371,44 @@ namespace xyz
 {
 namespace openbmc_project
 {
+namespace Control
+{
+namespace Host
+{
+namespace _CommandNotSupported
+{
+
+
+}  // namespace _CommandNotSupported
+
+struct CommandNotSupported
+{
+    static constexpr auto L = level::ERR;
+    using metadata_types = std::tuple<>;
+
+};
+
+} // namespace Host
+} // namespace Control
+} // namespace openbmc_project
+} // namespace xyz
+
+
+namespace details
+{
+
+template <>
+struct map_exception_type<sdbusplus::xyz::openbmc_project::Control::Host::Error::CommandNotSupported>
+{
+    using type = xyz::openbmc_project::Control::Host::CommandNotSupported;
+};
+
+}
+
+namespace xyz
+{
+namespace openbmc_project
+{
 namespace Common
 {
 namespace _Timeout
@@ -367,28 +425,12 @@ struct TIMEOUT_IN_MSEC
 
 }  // namespace _Timeout
 
-struct Timeout : public sdbusplus::exception_t
+struct Timeout
 {
-    static constexpr auto errName = "xyz.openbmc_project.Common.Timeout";
-    static constexpr auto errDesc = "Operation timed out.";
-    static constexpr auto L = level::INFO;
+    static constexpr auto L = level::ERR;
     using TIMEOUT_IN_MSEC = _Timeout::TIMEOUT_IN_MSEC;
     using metadata_types = std::tuple<TIMEOUT_IN_MSEC>;
 
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
 };
 
 } // namespace Common
@@ -403,6 +445,41 @@ template <>
 struct map_exception_type<sdbusplus::xyz::openbmc_project::Common::Error::Timeout>
 {
     using type = xyz::openbmc_project::Common::Timeout;
+};
+
+}
+
+namespace xyz
+{
+namespace openbmc_project
+{
+namespace Common
+{
+namespace _InternalFailure
+{
+
+
+}  // namespace _InternalFailure
+
+struct InternalFailure
+{
+    static constexpr auto L = level::ERR;
+    using metadata_types = std::tuple<>;
+
+};
+
+} // namespace Common
+} // namespace openbmc_project
+} // namespace xyz
+
+
+namespace details
+{
+
+template <>
+struct map_exception_type<sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure>
+{
+    using type = xyz::openbmc_project::Common::InternalFailure;
 };
 
 }
@@ -435,29 +512,13 @@ struct ARGUMENT_VALUE
 
 }  // namespace _InvalidArgument
 
-struct InvalidArgument : public sdbusplus::exception_t
+struct InvalidArgument
 {
-    static constexpr auto errName = "xyz.openbmc_project.Common.InvalidArgument";
-    static constexpr auto errDesc = "Invalid argument was given.";
-    static constexpr auto L = level::INFO;
+    static constexpr auto L = level::ERR;
     using ARGUMENT_NAME = _InvalidArgument::ARGUMENT_NAME;
     using ARGUMENT_VALUE = _InvalidArgument::ARGUMENT_VALUE;
     using metadata_types = std::tuple<ARGUMENT_NAME, ARGUMENT_VALUE>;
 
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
 };
 
 } // namespace Common
@@ -482,427 +543,41 @@ namespace openbmc_project
 {
 namespace Common
 {
-namespace _InternalFailure
+namespace File
+{
+namespace _Open
 {
 
-
-}  // namespace _InternalFailure
-
-struct InternalFailure : public sdbusplus::exception_t
+struct ERRNO
 {
-    static constexpr auto errName = "xyz.openbmc_project.Common.InternalFailure";
-    static constexpr auto errDesc = "The operation failed internally.";
-    static constexpr auto L = level::ERR;
-    using metadata_types = std::tuple<>;
-
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
-};
-
-} // namespace Common
-} // namespace openbmc_project
-} // namespace xyz
-
-
-namespace details
-{
-
-template <>
-struct map_exception_type<sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure>
-{
-    using type = xyz::openbmc_project::Common::InternalFailure;
-};
-
-}
-
-namespace xyz
-{
-namespace openbmc_project
-{
-namespace Common
-{
-namespace Callout
-{
-namespace _Device
-{
-
-struct CALLOUT_ERRNO
-{
-    static constexpr auto str = "CALLOUT_ERRNO=%d";
-    static constexpr auto str_short = "CALLOUT_ERRNO";
+    static constexpr auto str = "ERRNO=%d";
+    static constexpr auto str_short = "ERRNO";
     using type = std::tuple<std::decay_t<decltype(str)>,int32_t>;
-    explicit constexpr CALLOUT_ERRNO(int32_t a) : _entry(entry(str, a)) {};
+    explicit constexpr ERRNO(int32_t a) : _entry(entry(str, a)) {};
     type _entry;
 };
-struct CALLOUT_DEVICE_PATH
+struct PATH
 {
-    static constexpr auto str = "CALLOUT_DEVICE_PATH=%s";
-    static constexpr auto str_short = "CALLOUT_DEVICE_PATH";
+    static constexpr auto str = "PATH=%s";
+    static constexpr auto str_short = "PATH";
     using type = std::tuple<std::decay_t<decltype(str)>,const char*>;
-    explicit constexpr CALLOUT_DEVICE_PATH(const char* a) : _entry(entry(str, a)) {};
+    explicit constexpr PATH(const char* a) : _entry(entry(str, a)) {};
     type _entry;
 };
 
-}  // namespace _Device
+}  // namespace _Open
 
-struct Device : public sdbusplus::exception_t
+struct Open
 {
-    static constexpr auto errName = "xyz.openbmc_project.Common.Callout.Device";
-    static constexpr auto errDesc = "Generic device callout";
-    static constexpr auto L = level::INFO;
-    using CALLOUT_ERRNO = _Device::CALLOUT_ERRNO;
-    using CALLOUT_DEVICE_PATH = _Device::CALLOUT_DEVICE_PATH;
-    using metadata_types = std::tuple<CALLOUT_ERRNO, CALLOUT_DEVICE_PATH>;
-
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
-};
-
-} // namespace Callout
-} // namespace Common
-} // namespace openbmc_project
-} // namespace xyz
-
-
-namespace details
-{
-
-template <>
-struct map_exception_type<sdbusplus::xyz::openbmc_project::Common::Callout::Error::Device>
-{
-    using type = xyz::openbmc_project::Common::Callout::Device;
-};
-
-}
-
-namespace xyz
-{
-namespace openbmc_project
-{
-namespace Common
-{
-namespace Callout
-{
-namespace _GPIO
-{
-
-struct CALLOUT_GPIO_NUM
-{
-    static constexpr auto str = "CALLOUT_GPIO_NUM=%u";
-    static constexpr auto str_short = "CALLOUT_GPIO_NUM";
-    using type = std::tuple<std::decay_t<decltype(str)>,uint32_t>;
-    explicit constexpr CALLOUT_GPIO_NUM(uint32_t a) : _entry(entry(str, a)) {};
-    type _entry;
-};
-
-}  // namespace _GPIO
-
-struct GPIO : public sdbusplus::exception_t
-{
-    static constexpr auto errName = "xyz.openbmc_project.Common.Callout.GPIO";
-    static constexpr auto errDesc = "Callout GPIO pin";
-    static constexpr auto L = level::INFO;
-    using CALLOUT_GPIO_NUM = _GPIO::CALLOUT_GPIO_NUM;
-    using CALLOUT_ERRNO = xyz::openbmc_project::Common::Callout::Device::CALLOUT_ERRNO;
-    using CALLOUT_DEVICE_PATH = xyz::openbmc_project::Common::Callout::Device::CALLOUT_DEVICE_PATH;
-    using metadata_types = std::tuple<CALLOUT_GPIO_NUM, CALLOUT_ERRNO, CALLOUT_DEVICE_PATH>;
-
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
-};
-
-} // namespace Callout
-} // namespace Common
-} // namespace openbmc_project
-} // namespace xyz
-
-
-namespace details
-{
-
-template <>
-struct map_exception_type<sdbusplus::xyz::openbmc_project::Common::Callout::Error::GPIO>
-{
-    using type = xyz::openbmc_project::Common::Callout::GPIO;
-};
-
-}
-
-namespace xyz
-{
-namespace openbmc_project
-{
-namespace Common
-{
-namespace Callout
-{
-namespace _IIC
-{
-
-struct CALLOUT_IIC_BUS
-{
-    static constexpr auto str = "CALLOUT_IIC_BUS=%s";
-    static constexpr auto str_short = "CALLOUT_IIC_BUS";
-    using type = std::tuple<std::decay_t<decltype(str)>,const char*>;
-    explicit constexpr CALLOUT_IIC_BUS(const char* a) : _entry(entry(str, a)) {};
-    type _entry;
-};
-struct CALLOUT_IIC_ADDR
-{
-    static constexpr auto str = "CALLOUT_IIC_ADDR=0x%hx";
-    static constexpr auto str_short = "CALLOUT_IIC_ADDR";
-    using type = std::tuple<std::decay_t<decltype(str)>,uint16_t>;
-    explicit constexpr CALLOUT_IIC_ADDR(uint16_t a) : _entry(entry(str, a)) {};
-    type _entry;
-};
-
-}  // namespace _IIC
-
-struct IIC : public sdbusplus::exception_t
-{
-    static constexpr auto errName = "xyz.openbmc_project.Common.Callout.IIC";
-    static constexpr auto errDesc = "Callout IIC device";
-    static constexpr auto L = level::INFO;
-    using CALLOUT_IIC_BUS = _IIC::CALLOUT_IIC_BUS;
-    using CALLOUT_IIC_ADDR = _IIC::CALLOUT_IIC_ADDR;
-    using CALLOUT_ERRNO = xyz::openbmc_project::Common::Callout::Device::CALLOUT_ERRNO;
-    using CALLOUT_DEVICE_PATH = xyz::openbmc_project::Common::Callout::Device::CALLOUT_DEVICE_PATH;
-    using metadata_types = std::tuple<CALLOUT_IIC_BUS, CALLOUT_IIC_ADDR, CALLOUT_ERRNO, CALLOUT_DEVICE_PATH>;
-
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
-};
-
-} // namespace Callout
-} // namespace Common
-} // namespace openbmc_project
-} // namespace xyz
-
-
-namespace details
-{
-
-template <>
-struct map_exception_type<sdbusplus::xyz::openbmc_project::Common::Callout::Error::IIC>
-{
-    using type = xyz::openbmc_project::Common::Callout::IIC;
-};
-
-}
-
-namespace xyz
-{
-namespace openbmc_project
-{
-namespace Common
-{
-namespace Callout
-{
-namespace _Inventory
-{
-
-struct CALLOUT_INVENTORY_PATH
-{
-    static constexpr auto str = "CALLOUT_INVENTORY_PATH=%s";
-    static constexpr auto str_short = "CALLOUT_INVENTORY_PATH";
-    using type = std::tuple<std::decay_t<decltype(str)>,const char*>;
-    explicit constexpr CALLOUT_INVENTORY_PATH(const char* a) : _entry(entry(str, a)) {};
-    type _entry;
-};
-
-}  // namespace _Inventory
-
-struct Inventory : public sdbusplus::exception_t
-{
-    static constexpr auto errName = "xyz.openbmc_project.Common.Callout.Inventory";
-    static constexpr auto errDesc = "Inventory item callout";
-    static constexpr auto L = level::INFO;
-    using CALLOUT_INVENTORY_PATH = _Inventory::CALLOUT_INVENTORY_PATH;
-    using metadata_types = std::tuple<CALLOUT_INVENTORY_PATH>;
-
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
-};
-
-} // namespace Callout
-} // namespace Common
-} // namespace openbmc_project
-} // namespace xyz
-
-
-namespace details
-{
-
-template <>
-struct map_exception_type<sdbusplus::xyz::openbmc_project::Common::Callout::Error::Inventory>
-{
-    using type = xyz::openbmc_project::Common::Callout::Inventory;
-};
-
-}
-
-namespace xyz
-{
-namespace openbmc_project
-{
-namespace Common
-{
-namespace Callout
-{
-namespace _IPMISensor
-{
-
-struct CALLOUT_IPMI_SENSOR_NUM
-{
-    static constexpr auto str = "CALLOUT_IPMI_SENSOR_NUM=%u";
-    static constexpr auto str_short = "CALLOUT_IPMI_SENSOR_NUM";
-    using type = std::tuple<std::decay_t<decltype(str)>,uint32_t>;
-    explicit constexpr CALLOUT_IPMI_SENSOR_NUM(uint32_t a) : _entry(entry(str, a)) {};
-    type _entry;
-};
-
-}  // namespace _IPMISensor
-
-struct IPMISensor : public sdbusplus::exception_t
-{
-    static constexpr auto errName = "xyz.openbmc_project.Common.Callout.IPMISensor";
-    static constexpr auto errDesc = "Callout IPMI sensor";
-    static constexpr auto L = level::INFO;
-    using CALLOUT_IPMI_SENSOR_NUM = _IPMISensor::CALLOUT_IPMI_SENSOR_NUM;
-    using metadata_types = std::tuple<CALLOUT_IPMI_SENSOR_NUM>;
-
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
-};
-
-} // namespace Callout
-} // namespace Common
-} // namespace openbmc_project
-} // namespace xyz
-
-
-namespace details
-{
-
-template <>
-struct map_exception_type<sdbusplus::xyz::openbmc_project::Common::Callout::Error::IPMISensor>
-{
-    using type = xyz::openbmc_project::Common::Callout::IPMISensor;
-};
-
-}
-
-namespace xyz
-{
-namespace openbmc_project
-{
-namespace Control
-{
-namespace Host
-{
-namespace _CommandNotSupported
-{
-
-
-}  // namespace _CommandNotSupported
-
-struct CommandNotSupported : public sdbusplus::exception_t
-{
-    static constexpr auto errName = "xyz.openbmc_project.Control.Host.CommandNotSupported";
-    static constexpr auto errDesc = "Command is not supported";
     static constexpr auto L = level::ERR;
-    using metadata_types = std::tuple<>;
+    using ERRNO = _Open::ERRNO;
+    using PATH = _Open::PATH;
+    using metadata_types = std::tuple<ERRNO, PATH>;
 
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
 };
 
-} // namespace Host
-} // namespace Control
+} // namespace File
+} // namespace Common
 } // namespace openbmc_project
 } // namespace xyz
 
@@ -911,177 +586,9 @@ namespace details
 {
 
 template <>
-struct map_exception_type<sdbusplus::xyz::openbmc_project::Control::Host::Error::CommandNotSupported>
+struct map_exception_type<sdbusplus::xyz::openbmc_project::Common::File::Error::Open>
 {
-    using type = xyz::openbmc_project::Control::Host::CommandNotSupported;
-};
-
-}
-
-namespace org
-{
-namespace open_power
-{
-namespace OCC
-{
-namespace PassThrough
-{
-namespace _OpenFailure
-{
-
-
-}  // namespace _OpenFailure
-
-struct OpenFailure : public sdbusplus::exception_t
-{
-    static constexpr auto errName = "org.open_power.OCC.PassThrough.OpenFailure";
-    static constexpr auto errDesc = "Opening OCC device failed.";
-    static constexpr auto L = level::INFO;
-    using CALLOUT_ERRNO = xyz::openbmc_project::Common::Callout::Device::CALLOUT_ERRNO;
-    using CALLOUT_DEVICE_PATH = xyz::openbmc_project::Common::Callout::Device::CALLOUT_DEVICE_PATH;
-    using metadata_types = std::tuple<CALLOUT_ERRNO, CALLOUT_DEVICE_PATH>;
-
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
-};
-
-} // namespace PassThrough
-} // namespace OCC
-} // namespace open_power
-} // namespace org
-
-
-namespace details
-{
-
-template <>
-struct map_exception_type<sdbusplus::org::open_power::OCC::PassThrough::Error::OpenFailure>
-{
-    using type = org::open_power::OCC::PassThrough::OpenFailure;
-};
-
-}
-
-namespace org
-{
-namespace open_power
-{
-namespace OCC
-{
-namespace PassThrough
-{
-namespace _ReadFailure
-{
-
-
-}  // namespace _ReadFailure
-
-struct ReadFailure : public sdbusplus::exception_t
-{
-    static constexpr auto errName = "org.open_power.OCC.PassThrough.ReadFailure";
-    static constexpr auto errDesc = "Reading from OCC failed.";
-    static constexpr auto L = level::INFO;
-    using CALLOUT_ERRNO = xyz::openbmc_project::Common::Callout::Device::CALLOUT_ERRNO;
-    using CALLOUT_DEVICE_PATH = xyz::openbmc_project::Common::Callout::Device::CALLOUT_DEVICE_PATH;
-    using metadata_types = std::tuple<CALLOUT_ERRNO, CALLOUT_DEVICE_PATH>;
-
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
-};
-
-} // namespace PassThrough
-} // namespace OCC
-} // namespace open_power
-} // namespace org
-
-
-namespace details
-{
-
-template <>
-struct map_exception_type<sdbusplus::org::open_power::OCC::PassThrough::Error::ReadFailure>
-{
-    using type = org::open_power::OCC::PassThrough::ReadFailure;
-};
-
-}
-
-namespace org
-{
-namespace open_power
-{
-namespace OCC
-{
-namespace PassThrough
-{
-namespace _WriteFailure
-{
-
-
-}  // namespace _WriteFailure
-
-struct WriteFailure : public sdbusplus::exception_t
-{
-    static constexpr auto errName = "org.open_power.OCC.PassThrough.WriteFailure";
-    static constexpr auto errDesc = "Writing to OCC failed.";
-    static constexpr auto L = level::INFO;
-    using CALLOUT_ERRNO = xyz::openbmc_project::Common::Callout::Device::CALLOUT_ERRNO;
-    using CALLOUT_DEVICE_PATH = xyz::openbmc_project::Common::Callout::Device::CALLOUT_DEVICE_PATH;
-    using metadata_types = std::tuple<CALLOUT_ERRNO, CALLOUT_DEVICE_PATH>;
-
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
-};
-
-} // namespace PassThrough
-} // namespace OCC
-} // namespace open_power
-} // namespace org
-
-
-namespace details
-{
-
-template <>
-struct map_exception_type<sdbusplus::org::open_power::OCC::PassThrough::Error::WriteFailure>
-{
-    using type = org::open_power::OCC::PassThrough::WriteFailure;
+    using type = xyz::openbmc_project::Common::File::Open;
 };
 
 }
@@ -1090,122 +597,75 @@ namespace xyz
 {
 namespace openbmc_project
 {
-namespace Control
+namespace Common
 {
-namespace Device
+namespace File
 {
-namespace _WriteFailure
+namespace _Seek
 {
 
-
-}  // namespace _WriteFailure
-
-struct WriteFailure : public sdbusplus::exception_t
+struct OFFSET
 {
-    static constexpr auto errName = "xyz.openbmc_project.Control.Device.WriteFailure";
-    static constexpr auto errDesc = "Failed to write to device.";
-    static constexpr auto L = level::INFO;
-    using CALLOUT_ERRNO = xyz::openbmc_project::Common::Callout::Device::CALLOUT_ERRNO;
-    using CALLOUT_DEVICE_PATH = xyz::openbmc_project::Common::Callout::Device::CALLOUT_DEVICE_PATH;
-    using metadata_types = std::tuple<CALLOUT_ERRNO, CALLOUT_DEVICE_PATH>;
-
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
+    static constexpr auto str = "OFFSET=%ll";
+    static constexpr auto str_short = "OFFSET";
+    using type = std::tuple<std::decay_t<decltype(str)>,int64_t>;
+    explicit constexpr OFFSET(int64_t a) : _entry(entry(str, a)) {};
+    type _entry;
 };
-
-} // namespace Device
-} // namespace Control
-} // namespace openbmc_project
-} // namespace xyz
-
-
-namespace details
+struct WHENCE
 {
-
-template <>
-struct map_exception_type<sdbusplus::xyz::openbmc_project::Control::Device::Error::WriteFailure>
-{
-    using type = xyz::openbmc_project::Control::Device::WriteFailure;
-};
-
-}
-
-namespace example
-{
-namespace xyz
-{
-namespace openbmc_project
-{
-namespace Example
-{
-namespace Device
-{
-namespace _Callout
-{
-
-struct CALLOUT_ERRNO_TEST
-{
-    static constexpr auto str = "CALLOUT_ERRNO_TEST=%d";
-    static constexpr auto str_short = "CALLOUT_ERRNO_TEST";
+    static constexpr auto str = "WHENCE=%d";
+    static constexpr auto str_short = "WHENCE";
     using type = std::tuple<std::decay_t<decltype(str)>,int32_t>;
-    explicit constexpr CALLOUT_ERRNO_TEST(int32_t a) : _entry(entry(str, a)) {};
+    explicit constexpr WHENCE(int32_t a) : _entry(entry(str, a)) {};
     type _entry;
 };
-struct CALLOUT_DEVICE_PATH_TEST
+struct ERRNO
 {
-    static constexpr auto str = "CALLOUT_DEVICE_PATH_TEST=%s";
-    static constexpr auto str_short = "CALLOUT_DEVICE_PATH_TEST";
+    static constexpr auto str = "ERRNO=%d";
+    static constexpr auto str_short = "ERRNO";
+    using type = std::tuple<std::decay_t<decltype(str)>,int32_t>;
+    explicit constexpr ERRNO(int32_t a) : _entry(entry(str, a)) {};
+    type _entry;
+};
+struct PATH
+{
+    static constexpr auto str = "PATH=%s";
+    static constexpr auto str_short = "PATH";
     using type = std::tuple<std::decay_t<decltype(str)>,const char*>;
-    explicit constexpr CALLOUT_DEVICE_PATH_TEST(const char* a) : _entry(entry(str, a)) {};
+    explicit constexpr PATH(const char* a) : _entry(entry(str, a)) {};
     type _entry;
 };
 
-}  // namespace _Callout
+}  // namespace _Seek
 
-struct Callout : public sdbusplus::exception_t
+struct Seek
 {
-    static constexpr auto errName = "example.xyz.openbmc_project.Example.Device.Callout";
-    static constexpr auto errDesc = "Generic device callout";
-    static constexpr auto L = level::INFO;
-    using CALLOUT_ERRNO_TEST = _Callout::CALLOUT_ERRNO_TEST;
-    using CALLOUT_DEVICE_PATH_TEST = _Callout::CALLOUT_DEVICE_PATH_TEST;
-    using metadata_types = std::tuple<CALLOUT_ERRNO_TEST, CALLOUT_DEVICE_PATH_TEST>;
+    static constexpr auto L = level::ERR;
+    using OFFSET = _Seek::OFFSET;
+    using WHENCE = _Seek::WHENCE;
+    using ERRNO = _Seek::ERRNO;
+    using PATH = _Seek::PATH;
+    using metadata_types = std::tuple<OFFSET, WHENCE, ERRNO, PATH>;
 
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
 };
 
-} // namespace Device
-} // namespace Example
+} // namespace File
+} // namespace Common
 } // namespace openbmc_project
 } // namespace xyz
-} // namespace example
 
 
+namespace details
+{
+
+template <>
+struct map_exception_type<sdbusplus::xyz::openbmc_project::Common::File::Error::Seek>
+{
+    using type = xyz::openbmc_project::Common::File::Seek;
+};
+
+}
 
 namespace example
 {
@@ -1345,31 +805,38 @@ namespace openbmc_project
 {
 namespace Example
 {
-namespace Elog
+namespace Device
 {
-namespace _TestCallout
+namespace _Callout
 {
 
-struct DEV_ADDR
+struct CALLOUT_ERRNO_TEST
 {
-    static constexpr auto str = "DEV_ADDR=0x%.8X";
-    static constexpr auto str_short = "DEV_ADDR";
-    using type = std::tuple<std::decay_t<decltype(str)>,uint32_t>;
-    explicit constexpr DEV_ADDR(uint32_t a) : _entry(entry(str, a)) {};
+    static constexpr auto str = "CALLOUT_ERRNO_TEST=%d";
+    static constexpr auto str_short = "CALLOUT_ERRNO_TEST";
+    using type = std::tuple<std::decay_t<decltype(str)>,int32_t>;
+    explicit constexpr CALLOUT_ERRNO_TEST(int32_t a) : _entry(entry(str, a)) {};
+    type _entry;
+};
+struct CALLOUT_DEVICE_PATH_TEST
+{
+    static constexpr auto str = "CALLOUT_DEVICE_PATH_TEST=%s";
+    static constexpr auto str_short = "CALLOUT_DEVICE_PATH_TEST";
+    using type = std::tuple<std::decay_t<decltype(str)>,const char*>;
+    explicit constexpr CALLOUT_DEVICE_PATH_TEST(const char* a) : _entry(entry(str, a)) {};
     type _entry;
 };
 
-}  // namespace _TestCallout
+}  // namespace _Callout
 
-struct TestCallout : public sdbusplus::exception_t
+struct Callout : public sdbusplus::exception_t
 {
-    static constexpr auto errName = "example.xyz.openbmc_project.Example.Elog.TestCallout";
-    static constexpr auto errDesc = "This is test error TestCallout";
+    static constexpr auto errName = "example.xyz.openbmc_project.Example.Device.Callout";
+    static constexpr auto errDesc = "Generic device callout";
     static constexpr auto L = level::ERR;
-    using DEV_ADDR = _TestCallout::DEV_ADDR;
-    using CALLOUT_ERRNO_TEST = example::xyz::openbmc_project::Example::Device::Callout::CALLOUT_ERRNO_TEST;
-    using CALLOUT_DEVICE_PATH_TEST = example::xyz::openbmc_project::Example::Device::Callout::CALLOUT_DEVICE_PATH_TEST;
-    using metadata_types = std::tuple<DEV_ADDR, CALLOUT_ERRNO_TEST, CALLOUT_DEVICE_PATH_TEST>;
+    using CALLOUT_ERRNO_TEST = _Callout::CALLOUT_ERRNO_TEST;
+    using CALLOUT_DEVICE_PATH_TEST = _Callout::CALLOUT_DEVICE_PATH_TEST;
+    using metadata_types = std::tuple<CALLOUT_ERRNO_TEST, CALLOUT_DEVICE_PATH_TEST>;
 
     const char* name() const noexcept
     {
@@ -1387,7 +854,7 @@ struct TestCallout : public sdbusplus::exception_t
     }
 };
 
-} // namespace Elog
+} // namespace Device
 } // namespace Example
 } // namespace openbmc_project
 } // namespace xyz
@@ -1401,56 +868,40 @@ namespace openbmc_project
 {
 namespace Common
 {
-namespace File
+namespace Callout
 {
-namespace _Open
+namespace _Device
 {
 
-struct ERRNO
+struct CALLOUT_ERRNO
 {
-    static constexpr auto str = "ERRNO=%d";
-    static constexpr auto str_short = "ERRNO";
+    static constexpr auto str = "CALLOUT_ERRNO=%d";
+    static constexpr auto str_short = "CALLOUT_ERRNO";
     using type = std::tuple<std::decay_t<decltype(str)>,int32_t>;
-    explicit constexpr ERRNO(int32_t a) : _entry(entry(str, a)) {};
+    explicit constexpr CALLOUT_ERRNO(int32_t a) : _entry(entry(str, a)) {};
     type _entry;
 };
-struct PATH
+struct CALLOUT_DEVICE_PATH
 {
-    static constexpr auto str = "PATH=%s";
-    static constexpr auto str_short = "PATH";
+    static constexpr auto str = "CALLOUT_DEVICE_PATH=%s";
+    static constexpr auto str_short = "CALLOUT_DEVICE_PATH";
     using type = std::tuple<std::decay_t<decltype(str)>,const char*>;
-    explicit constexpr PATH(const char* a) : _entry(entry(str, a)) {};
+    explicit constexpr CALLOUT_DEVICE_PATH(const char* a) : _entry(entry(str, a)) {};
     type _entry;
 };
 
-}  // namespace _Open
+}  // namespace _Device
 
-struct Open : public sdbusplus::exception_t
+struct Device
 {
-    static constexpr auto errName = "xyz.openbmc_project.Common.File.Open";
-    static constexpr auto errDesc = "Failed to open a file";
-    static constexpr auto L = level::INFO;
-    using ERRNO = _Open::ERRNO;
-    using PATH = _Open::PATH;
-    using metadata_types = std::tuple<ERRNO, PATH>;
+    static constexpr auto L = level::ERR;
+    using CALLOUT_ERRNO = _Device::CALLOUT_ERRNO;
+    using CALLOUT_DEVICE_PATH = _Device::CALLOUT_DEVICE_PATH;
+    using metadata_types = std::tuple<CALLOUT_ERRNO, CALLOUT_DEVICE_PATH>;
 
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
 };
 
-} // namespace File
+} // namespace Callout
 } // namespace Common
 } // namespace openbmc_project
 } // namespace xyz
@@ -1460,9 +911,9 @@ namespace details
 {
 
 template <>
-struct map_exception_type<sdbusplus::xyz::openbmc_project::Common::File::Error::Open>
+struct map_exception_type<sdbusplus::xyz::openbmc_project::Common::Callout::Error::Device>
 {
-    using type = xyz::openbmc_project::Common::File::Open;
+    using type = xyz::openbmc_project::Common::Callout::Device;
 };
 
 }
@@ -1473,74 +924,33 @@ namespace openbmc_project
 {
 namespace Common
 {
-namespace File
+namespace Callout
 {
-namespace _Seek
+namespace _GPIO
 {
 
-struct OFFSET
+struct CALLOUT_GPIO_NUM
 {
-    static constexpr auto str = "OFFSET=%ll";
-    static constexpr auto str_short = "OFFSET";
-    using type = std::tuple<std::decay_t<decltype(str)>,int64_t>;
-    explicit constexpr OFFSET(int64_t a) : _entry(entry(str, a)) {};
-    type _entry;
-};
-struct WHENCE
-{
-    static constexpr auto str = "WHENCE=%d";
-    static constexpr auto str_short = "WHENCE";
-    using type = std::tuple<std::decay_t<decltype(str)>,int32_t>;
-    explicit constexpr WHENCE(int32_t a) : _entry(entry(str, a)) {};
-    type _entry;
-};
-struct ERRNO
-{
-    static constexpr auto str = "ERRNO=%d";
-    static constexpr auto str_short = "ERRNO";
-    using type = std::tuple<std::decay_t<decltype(str)>,int32_t>;
-    explicit constexpr ERRNO(int32_t a) : _entry(entry(str, a)) {};
-    type _entry;
-};
-struct PATH
-{
-    static constexpr auto str = "PATH=%s";
-    static constexpr auto str_short = "PATH";
-    using type = std::tuple<std::decay_t<decltype(str)>,const char*>;
-    explicit constexpr PATH(const char* a) : _entry(entry(str, a)) {};
+    static constexpr auto str = "CALLOUT_GPIO_NUM=%u";
+    static constexpr auto str_short = "CALLOUT_GPIO_NUM";
+    using type = std::tuple<std::decay_t<decltype(str)>,uint32_t>;
+    explicit constexpr CALLOUT_GPIO_NUM(uint32_t a) : _entry(entry(str, a)) {};
     type _entry;
 };
 
-}  // namespace _Seek
+}  // namespace _GPIO
 
-struct Seek : public sdbusplus::exception_t
+struct GPIO
 {
-    static constexpr auto errName = "xyz.openbmc_project.Common.File.Seek";
-    static constexpr auto errDesc = "Failed to seek a file";
-    static constexpr auto L = level::INFO;
-    using OFFSET = _Seek::OFFSET;
-    using WHENCE = _Seek::WHENCE;
-    using ERRNO = _Seek::ERRNO;
-    using PATH = _Seek::PATH;
-    using metadata_types = std::tuple<OFFSET, WHENCE, ERRNO, PATH>;
+    static constexpr auto L = level::ERR;
+    using CALLOUT_GPIO_NUM = _GPIO::CALLOUT_GPIO_NUM;
+    using CALLOUT_ERRNO = xyz::openbmc_project::Common::Callout::Device::CALLOUT_ERRNO;
+    using CALLOUT_DEVICE_PATH = xyz::openbmc_project::Common::Callout::Device::CALLOUT_DEVICE_PATH;
+    using metadata_types = std::tuple<CALLOUT_GPIO_NUM, CALLOUT_ERRNO, CALLOUT_DEVICE_PATH>;
 
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
 };
 
-} // namespace File
+} // namespace Callout
 } // namespace Common
 } // namespace openbmc_project
 } // namespace xyz
@@ -1550,9 +960,161 @@ namespace details
 {
 
 template <>
-struct map_exception_type<sdbusplus::xyz::openbmc_project::Common::File::Error::Seek>
+struct map_exception_type<sdbusplus::xyz::openbmc_project::Common::Callout::Error::GPIO>
 {
-    using type = xyz::openbmc_project::Common::File::Seek;
+    using type = xyz::openbmc_project::Common::Callout::GPIO;
+};
+
+}
+
+namespace xyz
+{
+namespace openbmc_project
+{
+namespace Common
+{
+namespace Callout
+{
+namespace _IIC
+{
+
+struct CALLOUT_IIC_BUS
+{
+    static constexpr auto str = "CALLOUT_IIC_BUS=%s";
+    static constexpr auto str_short = "CALLOUT_IIC_BUS";
+    using type = std::tuple<std::decay_t<decltype(str)>,const char*>;
+    explicit constexpr CALLOUT_IIC_BUS(const char* a) : _entry(entry(str, a)) {};
+    type _entry;
+};
+struct CALLOUT_IIC_ADDR
+{
+    static constexpr auto str = "CALLOUT_IIC_ADDR=0x%hx";
+    static constexpr auto str_short = "CALLOUT_IIC_ADDR";
+    using type = std::tuple<std::decay_t<decltype(str)>,uint16_t>;
+    explicit constexpr CALLOUT_IIC_ADDR(uint16_t a) : _entry(entry(str, a)) {};
+    type _entry;
+};
+
+}  // namespace _IIC
+
+struct IIC
+{
+    static constexpr auto L = level::ERR;
+    using CALLOUT_IIC_BUS = _IIC::CALLOUT_IIC_BUS;
+    using CALLOUT_IIC_ADDR = _IIC::CALLOUT_IIC_ADDR;
+    using CALLOUT_ERRNO = xyz::openbmc_project::Common::Callout::Device::CALLOUT_ERRNO;
+    using CALLOUT_DEVICE_PATH = xyz::openbmc_project::Common::Callout::Device::CALLOUT_DEVICE_PATH;
+    using metadata_types = std::tuple<CALLOUT_IIC_BUS, CALLOUT_IIC_ADDR, CALLOUT_ERRNO, CALLOUT_DEVICE_PATH>;
+
+};
+
+} // namespace Callout
+} // namespace Common
+} // namespace openbmc_project
+} // namespace xyz
+
+
+namespace details
+{
+
+template <>
+struct map_exception_type<sdbusplus::xyz::openbmc_project::Common::Callout::Error::IIC>
+{
+    using type = xyz::openbmc_project::Common::Callout::IIC;
+};
+
+}
+
+namespace xyz
+{
+namespace openbmc_project
+{
+namespace Common
+{
+namespace Callout
+{
+namespace _Inventory
+{
+
+struct CALLOUT_INVENTORY_PATH
+{
+    static constexpr auto str = "CALLOUT_INVENTORY_PATH=%s";
+    static constexpr auto str_short = "CALLOUT_INVENTORY_PATH";
+    using type = std::tuple<std::decay_t<decltype(str)>,const char*>;
+    explicit constexpr CALLOUT_INVENTORY_PATH(const char* a) : _entry(entry(str, a)) {};
+    type _entry;
+};
+
+}  // namespace _Inventory
+
+struct Inventory
+{
+    static constexpr auto L = level::ERR;
+    using CALLOUT_INVENTORY_PATH = _Inventory::CALLOUT_INVENTORY_PATH;
+    using metadata_types = std::tuple<CALLOUT_INVENTORY_PATH>;
+
+};
+
+} // namespace Callout
+} // namespace Common
+} // namespace openbmc_project
+} // namespace xyz
+
+
+namespace details
+{
+
+template <>
+struct map_exception_type<sdbusplus::xyz::openbmc_project::Common::Callout::Error::Inventory>
+{
+    using type = xyz::openbmc_project::Common::Callout::Inventory;
+};
+
+}
+
+namespace xyz
+{
+namespace openbmc_project
+{
+namespace Common
+{
+namespace Callout
+{
+namespace _IPMISensor
+{
+
+struct CALLOUT_IPMI_SENSOR_NUM
+{
+    static constexpr auto str = "CALLOUT_IPMI_SENSOR_NUM=%u";
+    static constexpr auto str_short = "CALLOUT_IPMI_SENSOR_NUM";
+    using type = std::tuple<std::decay_t<decltype(str)>,uint32_t>;
+    explicit constexpr CALLOUT_IPMI_SENSOR_NUM(uint32_t a) : _entry(entry(str, a)) {};
+    type _entry;
+};
+
+}  // namespace _IPMISensor
+
+struct IPMISensor
+{
+    static constexpr auto L = level::ERR;
+    using CALLOUT_IPMI_SENSOR_NUM = _IPMISensor::CALLOUT_IPMI_SENSOR_NUM;
+    using metadata_types = std::tuple<CALLOUT_IPMI_SENSOR_NUM>;
+
+};
+
+} // namespace Callout
+} // namespace Common
+} // namespace openbmc_project
+} // namespace xyz
+
+
+namespace details
+{
+
+template <>
+struct map_exception_type<sdbusplus::xyz::openbmc_project::Common::Callout::Error::IPMISensor>
+{
+    using type = xyz::openbmc_project::Common::Callout::IPMISensor;
 };
 
 }
@@ -1571,28 +1133,12 @@ namespace _SoftOffTimeout
 
 }  // namespace _SoftOffTimeout
 
-struct SoftOffTimeout : public sdbusplus::exception_t
+struct SoftOffTimeout
 {
-    static constexpr auto errName = "xyz.openbmc_project.State.Host.SoftOffTimeout";
-    static constexpr auto errDesc = "Host did not shutdown within configured time.";
-    static constexpr auto L = level::INFO;
+    static constexpr auto L = level::ERR;
     using TIMEOUT_IN_MSEC = xyz::openbmc_project::Common::Timeout::TIMEOUT_IN_MSEC;
     using metadata_types = std::tuple<TIMEOUT_IN_MSEC>;
 
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
 };
 
 } // namespace Host
@@ -1616,6 +1162,206 @@ namespace xyz
 {
 namespace openbmc_project
 {
+namespace Control
+{
+namespace Device
+{
+namespace _WriteFailure
+{
+
+
+}  // namespace _WriteFailure
+
+struct WriteFailure
+{
+    static constexpr auto L = level::ERR;
+    using CALLOUT_ERRNO = xyz::openbmc_project::Common::Callout::Device::CALLOUT_ERRNO;
+    using CALLOUT_DEVICE_PATH = xyz::openbmc_project::Common::Callout::Device::CALLOUT_DEVICE_PATH;
+    using metadata_types = std::tuple<CALLOUT_ERRNO, CALLOUT_DEVICE_PATH>;
+
+};
+
+} // namespace Device
+} // namespace Control
+} // namespace openbmc_project
+} // namespace xyz
+
+
+namespace details
+{
+
+template <>
+struct map_exception_type<sdbusplus::xyz::openbmc_project::Control::Device::Error::WriteFailure>
+{
+    using type = xyz::openbmc_project::Control::Device::WriteFailure;
+};
+
+}
+
+namespace org
+{
+namespace open_power
+{
+namespace OCC
+{
+namespace Device
+{
+namespace _OpenFailure
+{
+
+
+}  // namespace _OpenFailure
+
+struct OpenFailure
+{
+    static constexpr auto L = level::ERR;
+    using CALLOUT_ERRNO = xyz::openbmc_project::Common::Callout::Device::CALLOUT_ERRNO;
+    using CALLOUT_DEVICE_PATH = xyz::openbmc_project::Common::Callout::Device::CALLOUT_DEVICE_PATH;
+    using metadata_types = std::tuple<CALLOUT_ERRNO, CALLOUT_DEVICE_PATH>;
+
+};
+
+} // namespace Device
+} // namespace OCC
+} // namespace open_power
+} // namespace org
+
+
+namespace details
+{
+
+template <>
+struct map_exception_type<sdbusplus::org::open_power::OCC::Device::Error::OpenFailure>
+{
+    using type = org::open_power::OCC::Device::OpenFailure;
+};
+
+}
+
+namespace org
+{
+namespace open_power
+{
+namespace OCC
+{
+namespace Device
+{
+namespace _ReadFailure
+{
+
+
+}  // namespace _ReadFailure
+
+struct ReadFailure
+{
+    static constexpr auto L = level::ERR;
+    using CALLOUT_ERRNO = xyz::openbmc_project::Common::Callout::Device::CALLOUT_ERRNO;
+    using CALLOUT_DEVICE_PATH = xyz::openbmc_project::Common::Callout::Device::CALLOUT_DEVICE_PATH;
+    using metadata_types = std::tuple<CALLOUT_ERRNO, CALLOUT_DEVICE_PATH>;
+
+};
+
+} // namespace Device
+} // namespace OCC
+} // namespace open_power
+} // namespace org
+
+
+namespace details
+{
+
+template <>
+struct map_exception_type<sdbusplus::org::open_power::OCC::Device::Error::ReadFailure>
+{
+    using type = org::open_power::OCC::Device::ReadFailure;
+};
+
+}
+
+namespace org
+{
+namespace open_power
+{
+namespace OCC
+{
+namespace Device
+{
+namespace _WriteFailure
+{
+
+
+}  // namespace _WriteFailure
+
+struct WriteFailure
+{
+    static constexpr auto L = level::ERR;
+    using CALLOUT_ERRNO = xyz::openbmc_project::Common::Callout::Device::CALLOUT_ERRNO;
+    using CALLOUT_DEVICE_PATH = xyz::openbmc_project::Common::Callout::Device::CALLOUT_DEVICE_PATH;
+    using metadata_types = std::tuple<CALLOUT_ERRNO, CALLOUT_DEVICE_PATH>;
+
+};
+
+} // namespace Device
+} // namespace OCC
+} // namespace open_power
+} // namespace org
+
+
+namespace details
+{
+
+template <>
+struct map_exception_type<sdbusplus::org::open_power::OCC::Device::Error::WriteFailure>
+{
+    using type = org::open_power::OCC::Device::WriteFailure;
+};
+
+}
+
+namespace org
+{
+namespace open_power
+{
+namespace OCC
+{
+namespace Device
+{
+namespace _ConfigFailure
+{
+
+
+}  // namespace _ConfigFailure
+
+struct ConfigFailure
+{
+    static constexpr auto L = level::ERR;
+    using CALLOUT_ERRNO = xyz::openbmc_project::Common::Callout::Device::CALLOUT_ERRNO;
+    using CALLOUT_DEVICE_PATH = xyz::openbmc_project::Common::Callout::Device::CALLOUT_DEVICE_PATH;
+    using metadata_types = std::tuple<CALLOUT_ERRNO, CALLOUT_DEVICE_PATH>;
+
+};
+
+} // namespace Device
+} // namespace OCC
+} // namespace open_power
+} // namespace org
+
+
+namespace details
+{
+
+template <>
+struct map_exception_type<sdbusplus::org::open_power::OCC::Device::Error::ConfigFailure>
+{
+    using type = org::open_power::OCC::Device::ConfigFailure;
+};
+
+}
+
+namespace xyz
+{
+namespace openbmc_project
+{
 namespace Sensor
 {
 namespace Device
@@ -1626,29 +1372,13 @@ namespace _ReadFailure
 
 }  // namespace _ReadFailure
 
-struct ReadFailure : public sdbusplus::exception_t
+struct ReadFailure
 {
-    static constexpr auto errName = "xyz.openbmc_project.Sensor.Device.ReadFailure";
-    static constexpr auto errDesc = "Failed to read from device.";
-    static constexpr auto L = level::INFO;
+    static constexpr auto L = level::ERR;
     using CALLOUT_ERRNO = xyz::openbmc_project::Common::Callout::Device::CALLOUT_ERRNO;
     using CALLOUT_DEVICE_PATH = xyz::openbmc_project::Common::Callout::Device::CALLOUT_DEVICE_PATH;
     using metadata_types = std::tuple<CALLOUT_ERRNO, CALLOUT_DEVICE_PATH>;
 
-    const char* name() const noexcept
-    {
-        return errName;
-    }
-
-    const char* description() const noexcept
-    {
-        return errDesc;
-    }
-
-    const char* what() const noexcept
-    {
-        return errName;
-    }
 };
 
 } // namespace Device
@@ -1720,6 +1450,64 @@ struct TestErrorOne : public sdbusplus::exception_t
     using DEV_ID = example::xyz::openbmc_project::Example::Elog::TestErrorTwo::DEV_ID;
     using DEV_NAME = example::xyz::openbmc_project::Example::Elog::TestErrorTwo::DEV_NAME;
     using metadata_types = std::tuple<ERRNUM, FILE_PATH, FILE_NAME, DEV_ADDR, DEV_ID, DEV_NAME>;
+
+    const char* name() const noexcept
+    {
+        return errName;
+    }
+
+    const char* description() const noexcept
+    {
+        return errDesc;
+    }
+
+    const char* what() const noexcept
+    {
+        return errName;
+    }
+};
+
+} // namespace Elog
+} // namespace Example
+} // namespace openbmc_project
+} // namespace xyz
+} // namespace example
+
+
+
+namespace example
+{
+namespace xyz
+{
+namespace openbmc_project
+{
+namespace Example
+{
+namespace Elog
+{
+namespace _TestCallout
+{
+
+struct DEV_ADDR
+{
+    static constexpr auto str = "DEV_ADDR=0x%.8X";
+    static constexpr auto str_short = "DEV_ADDR";
+    using type = std::tuple<std::decay_t<decltype(str)>,uint32_t>;
+    explicit constexpr DEV_ADDR(uint32_t a) : _entry(entry(str, a)) {};
+    type _entry;
+};
+
+}  // namespace _TestCallout
+
+struct TestCallout : public sdbusplus::exception_t
+{
+    static constexpr auto errName = "example.xyz.openbmc_project.Example.Elog.TestCallout";
+    static constexpr auto errDesc = "This is test error TestCallout";
+    static constexpr auto L = level::ERR;
+    using DEV_ADDR = _TestCallout::DEV_ADDR;
+    using CALLOUT_ERRNO_TEST = example::xyz::openbmc_project::Example::Device::Callout::CALLOUT_ERRNO_TEST;
+    using CALLOUT_DEVICE_PATH_TEST = example::xyz::openbmc_project::Example::Device::Callout::CALLOUT_DEVICE_PATH_TEST;
+    using metadata_types = std::tuple<DEV_ADDR, CALLOUT_ERRNO_TEST, CALLOUT_DEVICE_PATH_TEST>;
 
     const char* name() const noexcept
     {
