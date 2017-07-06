@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/bus/match.hpp>
 #include "occ_status.hpp"
@@ -59,6 +60,18 @@ private:
      *
      */
     void pcapChanged(sdbusplus::message::message& msg);
+
+    /** @brief Get the power cap property
+     *
+     * @return Power cap, 0 on failure to indicate no pcap
+     */
+    uint32_t getPcap();
+
+    /** @brief Get the power cap enable property
+     *
+     * @return Whether power cap enabled, will return false on error
+     */
+    bool getPcapEnabled();
 
     /** @brief Reference to sdbus **/
     sdbusplus::bus::bus& bus;
