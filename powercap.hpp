@@ -60,6 +60,28 @@ private:
      */
     void pcapChanged(sdbusplus::message::message& msg);
 
+    /** @brief Look up DBUS service for input path/interface
+     *
+     * @param[in]  path       - DBUS path
+     * @param[in]  path       - DBUS interface
+     *
+     * @return Distinct service name for input path/interface
+     */
+    std::string getService(std::string path,
+                           std::string interface);
+
+    /** @brief Get the power cap property
+     *
+     * @return Power cap, 0 on failure to indicate no pcap
+     */
+    uint32_t getPcap();
+
+    /** @brief Get the power cap enable property
+     *
+     * @return Whether power cap enabled, will return false on error
+     */
+    bool getPcapEnabled();
+
     /** @brief Reference to sdbus **/
     sdbusplus::bus::bus& bus;
 
