@@ -8,6 +8,7 @@
 #include "occ_pass_through.hpp"
 #include "occ_status.hpp"
 #include "config.h"
+#include <powercap.hpp>
 
 namespace sdbusRule = sdbusplus::bus::match::rules;
 
@@ -78,6 +79,14 @@ struct Manager
                 std::make_unique<Status>(
                     bus,
                     path.c_str()));
+
+            // Create the power cap monitor object for master occ (0)
+            if(!pcap && (index == 0))
+            {
+                pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
+                                                        bus,
+                                                        *statusObjects[index]);
+            }
             return 0;
         }
 
@@ -90,6 +99,9 @@ struct Manager
 
         /** @brief OCC Status objects */
         std::vector<std::unique_ptr<Status>> statusObjects;
+
+        /** @brief Power cap monitor and occ notification object */
+        std::unique_ptr<open_power::occ::powercap::PowerCap> pcap;
 
         /** @brief sbdbusplus match objects */
         std::vector<sdbusplus::bus::match_t> cpuMatches;
