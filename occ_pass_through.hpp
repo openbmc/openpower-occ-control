@@ -12,6 +12,7 @@
 #include <org/open_power/OCC/PassThrough/server.hpp>
 #include "config.h"
 #include "file.hpp"
+#include <powercap.hpp>
 
 namespace sdbusRule = sdbusplus::bus::match::rules;
 
@@ -57,6 +58,9 @@ struct Manager
                     std::bind(std::mem_fn(&Manager::cpuCreated),
                               this, std::placeholders::_1));
             }
+
+            // Create the power cap monitor object
+            pcap = std::make_unique<open_power::occ::powercap::PowerCap>(bus);
         }
 
         /** @brief Callback that responds to cpu creation in the inventory -
@@ -95,6 +99,8 @@ struct Manager
 
         /** @brief OCC pass-through objects */
         std::vector<std::unique_ptr<PassThrough>> objects;
+
+        std::unique_ptr<open_power::occ::powercap::PowerCap> pcap;
 
         /** @brief sbdbusplus match objects */
         std::vector<sdbusplus::bus::match_t> cpuMatches;

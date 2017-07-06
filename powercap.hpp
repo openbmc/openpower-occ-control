@@ -91,6 +91,11 @@ namespace sdbusRule = sdbusplus::bus::match::rules;
          */
         bool isOccActive();
 
+        /** @brief Notify OCC of pcap change
+         *
+         */
+        void updateOcc();
+
         sdbusplus::bus::bus& bus;
 
         /** @brief Used to subscribe to dbus pcap propety changes **/

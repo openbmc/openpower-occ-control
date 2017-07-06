@@ -74,6 +74,11 @@ bool PowerCap::isOccActive()
     return sdbusplus::message::variant_ns::get<bool>(occStatus);
 }
 
+void PowerCap::updateOcc()
+{
+
+}
+
 void PowerCap::pcapChanged(sdbusplus::message::message& msg)
 {
     log<level::DEBUG>("Power Cap Change Detected");
@@ -82,7 +87,11 @@ void PowerCap::pcapChanged(sdbusplus::message::message& msg)
         // Nothing to  do
         return;
     }
-    // TODO - Process this change
+
+    uint32_t pcap {};
+    msg.read(pcap);
+    log<level::INFO>("Power Cap Changed",
+                     entry("PCAP=%u",pcap));
 }
 
 void PowerCap::pcapEnableChanged(sdbusplus::message::message& msg)
@@ -94,7 +103,16 @@ void PowerCap::pcapEnableChanged(sdbusplus::message::message& msg)
         return;
     }
 
-    // TODO - Process this change
+    bool enabled = false;
+    msg.read(enabled);
+    if(enabled)
+    {
+        log<level::INFO>("Power Cap Enabled");
+    }
+    else
+    {
+        log<level::INFO>("Power Cap Disabled");
+    }
 }
 
 } // namespace open_power
