@@ -17,6 +17,18 @@ constexpr auto POWER_CAP_ENABLE_PROP = "PowerCapEnable";
 
 using namespace phosphor::logging;
 
+uint32_t PowerCap::getOccInput(uint32_t pcap, bool pcapEnabled)
+{
+    if(!pcapEnabled)
+    {
+        // Pcap disabled, return 0 to indicate disabled
+        return 0;
+    }
+
+    // If pcap is not disabled then just return the pcap
+    return pcap;
+}
+
 uint32_t PowerCap::getPcap()
 {
 
@@ -105,7 +117,9 @@ void PowerCap::pcapChanged(sdbusplus::message::message& msg)
                      entry("PCAP_ENABLED=%u",pcapEnabled));
 
     // Determine desired action to write to occ
-    // TODO
+    uint32_t occInput = getOccInput(pcap, pcapEnabled);
+    log<level::DEBUG>("Writing new power cap setting to OCC",
+                     entry("OCC_PCAP_VAL=%u",occInput));
 
     // Write action to occ
     // TODO
