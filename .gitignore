@@ -46,3 +46,7 @@ Makefile
 *-libtool
 /org/open_power/OCC/PassThrough/
 /openpower-occ-control
+/test/utest
+/test/utest-utest.o
+/test/*.log
+/test/*.trs
