@@ -13,6 +13,30 @@ AC_PROG_MAKE_SET
 # Surpress the --with-libtool-sysroot error
 LT_INIT
 
+# gtest
+# Check/set gtest specific functions.
+AX_PTHREAD([GTEST_CPPFLAGS="-DGTEST_HAS_PTHREAD=1"],[GTEST_CPPFLAGS="-DGTEST_HAS_PTHREAD=0"])
+AC_SUBST(GTEST_CPPFLAGS)
+
+# Test cases require SDK so only build if we're told to (and SDK is available)
+AC_ARG_ENABLE([oe-sdk],
+    AS_HELP_STRING([--enable-oe-sdk], [Link testcases absolutely against OE SDK so they can be ran within it.])
+)
+AC_ARG_VAR(OECORE_TARGET_SYSROOT,
+    [Path to the OE SDK SYSROOT])
+AS_IF([test "x$enable_oe_sdk" == "xyes"],
+    AS_IF([test "x$OECORE_TARGET_SYSROOT" == "x"],
+          AC_MSG_ERROR([OECORE_TARGET_SYSROOT must be set with --enable-oe-sdk])
+    )
+    AC_MSG_NOTICE([Enabling OE-SDK at $OECORE_TARGET_SYSROOT])
+    [
+        testcase_flags="-Wl,-rpath,\${OECORE_TARGET_SYSROOT}/lib"
+        testcase_flags="${testcase_flags} -Wl,-rpath,\${OECORE_TARGET_SYSROOT}/usr/lib"
+        testcase_flags="${testcase_flags} -Wl,-dynamic-linker,`find \${OECORE_TARGET_SYSROOT}/lib/ld-*.so | sort -r -n | head -n1`"
+    ]
+    AC_SUBST([OESDK_TESTCASE_FLAGS], [$testcase_flags])
+)
+
 PKG_CHECK_MODULES([SDBUSPLUS], [sdbusplus],,\
     AC_MSG_ERROR(["Requires sdbusplus package."]))
 PKG_CHECK_MODULES([PHOSPHOR_LOGGING], [phosphor-logging],,\
@@ -63,6 +87,10 @@ AC_ARG_VAR(OCC_HWMON_PATH, [The OCC hwmon path])
 AS_IF([test "x$OCC_HWMON_PATH" == "x"], [OCC_HWMON_PATH="/sys/bus/platform/drivers/occ-hwmon/"])
 AC_DEFINE_UNQUOTED([OCC_HWMON_PATH], ["$OCC_HWMON_PATH"], [The OCC hwmon path])
 
+AC_ARG_VAR(PS_DERATING_FACTOR, [The power supply derating factor])
+AS_IF([test "x$PS_DERATING_FACTOR" == "x"], [PS_DERATING_FACTOR=90])
+AC_DEFINE_UNQUOTED([PS_DERATING_FACTOR], [$PS_DERATING_FACTOR], [The power supply derating factor])
+
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile test/Makefile])
 AC_OUTPUT
