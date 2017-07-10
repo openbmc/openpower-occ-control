@@ -82,6 +82,12 @@ private:
      */
     bool getPcapEnabled();
 
+    /** @brief Write the input power cap to the occ hwmon entry
+     *
+     * @param[in]  pcapValue - Power cap value to write to OCC
+     */
+    void writeOcc(uint32_t pcapValue);
+
     /** @brief Reference to sdbus **/
     sdbusplus::bus::bus& bus;
 
