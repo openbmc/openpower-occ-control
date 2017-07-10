@@ -72,6 +72,19 @@ bool PowerCap::getPcapEnabled()
     return sdbusplus::message::variant_ns::get<bool>(pcapEnabled);
 }
 
+void PowerCap::writeOcc(uint32_t pcapValue)
+{
+    fs::path fileName {OCC_HWMON_PATH};
+    fileName / "/occ1-dev0/hwmon/hwmon*/caps1_user";
+
+    std::string data {std::to_string(pcapValue)};
+
+    std::ofstream file(fileName, std::ios::out);
+    file << data;
+    file.close();
+    return;
+}
+
 void PowerCap::pcapChanged(sdbusplus::message::message& msg)
 {
     log<level::DEBUG>("Power Cap Setting Change Detected");
@@ -122,7 +135,7 @@ void PowerCap::pcapChanged(sdbusplus::message::message& msg)
                      entry("OCC_PCAP_VAL=%u",occInput));
 
     // Write action to occ
-    // TODO
+    writeOcc(occInput);
 
     return;
 }
