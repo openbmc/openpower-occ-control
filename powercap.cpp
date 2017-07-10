@@ -115,6 +115,34 @@ bool PowerCap::getPcapEnabled()
     return sdbusplus::message::variant_ns::get<bool>(pcapEnabled);
 }
 
+void PowerCap::writeOcc(uint32_t pcapValue)
+{
+    // Create path out to master occ hwmon entry
+    std::unique_ptr<fs::path> fileName =
+            std::make_unique<fs::path>(OCC_HWMON_PATH);
+    *fileName /= OCC_MASTER_NAME;
+    *fileName /= "/hwmon/";
+
+    // Need to get the hwmonXX directory name, there better only be 1 dir
+    assert(std::distance(fs::directory_iterator(*fileName),
+                         fs::directory_iterator{}) == 1);
+    // Now set our path to this full path, including this hwmonXX directory
+    fileName = std::make_unique<fs::path>(*fs::directory_iterator(*fileName));
+    // Append on the hwmon string where we write the user power cap
+    *fileName /= "/caps1_user";
+
+    auto pcapString {std::to_string(pcapValue)};
+
+    log<level::INFO>("Writing pcap value to hwmon",
+                     entry("PCAP_PATH=%s",*fileName),
+                     entry("PCAP_VALUE=%s",pcapString.c_str()));
+    // Open the hwmon file and write the power cap
+    std::ofstream file(*fileName, std::ios::out);
+    file << pcapString;
+    file.close();
+    return;
+}
+
 void PowerCap::pcapChanged(sdbusplus::message::message& msg)
 {
     if(!occStatus.occActive())
@@ -160,11 +188,9 @@ void PowerCap::pcapChanged(sdbusplus::message::message& msg)
 
     // Determine desired action to write to occ
     uint32_t occInput = getOccInput(pcap, pcapEnabled);
-    log<level::DEBUG>("Writing new power cap setting to OCC",
-                     entry("OCC_PCAP_VAL=%u",occInput));
 
     // Write action to occ
-    // TODO
+    writeOcc(occInput);
 
     return;
 }
