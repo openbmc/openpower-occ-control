@@ -49,6 +49,15 @@ public:
                           this, std::placeholders::_1))
     {};
 
+    /** @brief Return the appropriate value to write to the OCC
+     *
+     * @param[in]  pcap        - Current user power cap setting
+     * @param[in]  pcapEnabled - Current power cap enable setting
+     *
+     * @return The value to write to the occ user pcap
+     */
+    uint32_t getOccInput(uint32_t pcap, bool pcapEnabled);
+
 private:
 
     /** @brief Callback for pcap setting changes
