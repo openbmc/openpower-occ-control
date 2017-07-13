@@ -18,6 +18,7 @@ openpower_occ_control_SOURCES = \
 	powercap.cpp \
 	org/open_power/OCC/Device/error.cpp \
 	occ_finder.cpp \
+	i2c_occ.cpp \
 	utils.cpp
 
 BUILT_SOURCES =  org/open_power/OCC/Device/error.hpp \

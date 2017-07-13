@@ -12,6 +12,7 @@
 #include "occ_status.hpp"
 #include "occ_finder.hpp"
 #include "config.h"
+#include "i2c_occ.hpp"
 
 namespace sdbusRule = sdbusplus::bus::match::rules;
 namespace open_power
@@ -43,6 +44,10 @@ struct Manager
             bus(bus),
             event(event)
         {
+#ifdef I2C_OCC
+            // I2C OCC status objects are initialized directly
+            initStatusObjects();
+#else
             // Check if CPU inventory exists already.
             auto occs = open_power::occ::finder::get(bus);
             if (occs.empty())
@@ -67,6 +72,7 @@ struct Manager
                     createObjects(occ);
                 }
             }
+#endif
         }
 
     private:
@@ -187,6 +193,31 @@ struct Manager
 
         /** @brief Number of OCCs that are bound */
         uint8_t activeCount = 0;
+
+#ifdef I2C_OCC
+        /** @brief Init Status objects for I2C OCC devices
+         *
+         * It iterates in /sys/bus/i2c/devices, finds all occ hwmon devices
+         * and creates status objects.
+         */
+        void initStatusObjects()
+        {
+            // Make sure we have a valid path string
+            static_assert(sizeof(DEV_PATH) != 0);
+
+            auto deviceNames = i2c_occ::getOccHwmonDevices(DEV_PATH);
+            for (auto& name : deviceNames)
+            {
+                i2c_occ::i2cToDbus(name);
+                auto path = fs::path(OCC_CONTROL_ROOT) / name;
+                statusObjects.emplace_back(
+                    std::make_unique<Status>(
+                        bus,
+                        event,
+                        path.c_str()));
+            }
+        }
+#endif
 };
 
 } // namespace occ

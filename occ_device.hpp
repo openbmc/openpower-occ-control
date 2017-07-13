@@ -5,6 +5,8 @@
 #include "occ_events.hpp"
 #include "occ_errors.hpp"
 #include "config.h"
+
+
 namespace open_power
 {
 namespace occ
@@ -34,7 +36,11 @@ class Device
         Device(EventPtr& event,
                const std::string& name,
                std::function<void()> callBack = nullptr) :
+#ifdef I2C_OCC
+            config(name),
+#else
             config(name + '-' + "dev0"),
+#endif
             errorFile(fs::path(config) / "occ_error"),
             error(event, errorFile, callBack)
         {
