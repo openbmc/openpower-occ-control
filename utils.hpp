@@ -2,6 +2,7 @@
 
 #include <sdbusplus/bus.hpp>
 #include <string>
+
 namespace open_power
 {
 namespace occ
@@ -21,3 +22,4 @@ std::string getService(sdbusplus::bus::bus& bus,
                        const std::string& path);
 } // namespace occ
 } // namespace open_power
+

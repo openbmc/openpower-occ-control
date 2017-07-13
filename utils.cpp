@@ -1,7 +1,10 @@
+
 #include <string>
 #include <sdbusplus/bus.hpp>
 #include <phosphor-logging/elog-errors.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
+
+
 namespace open_power
 {
 namespace occ
@@ -51,3 +54,5 @@ std::string getService(sdbusplus::bus::bus& bus,
 
 } // namespace occ
 } // namespace open_power
+
+

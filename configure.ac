@@ -57,6 +57,17 @@ AS_IF([test "x$SDBUSPLUSPLUS" == "x"], AC_MSG_ERROR([Cannot find sdbus++]))
 AX_CXX_COMPILE_STDCXX_14([noext])
 AX_APPEND_COMPILE_FLAGS([-Wall -Werror], [CXXFLAGS])
 
+AC_ARG_ENABLE([i2c-occ],
+    AS_HELP_STRING([--enable-i2c-occ], [Enable I2C OCC support])
+)
+AS_IF([test "x$enable_i2c_occ" == "xyes"],
+    AC_MSG_NOTICE([Enabling I2C OCC])
+    [
+        cpp_flags="-DI2C_OCC"
+    ]
+    AC_SUBST([CPPFLAGS], [$cpp_flags])
+)
+
 AC_ARG_VAR(OCC_CONTROL_BUSNAME, [The Dbus busname to own])
 AS_IF([test "x$OCC_CONTROL_BUSNAME" == "x"], [OCC_CONTROL_BUSNAME="org.open_power.OCC.Control"])
 AC_DEFINE_UNQUOTED([OCC_CONTROL_BUSNAME], ["$OCC_CONTROL_BUSNAME"], [The DBus busname to own])
@@ -90,12 +101,21 @@ AS_IF([test "x$OCC_MASTER_NAME" == "x"], [OCC_MASTER_NAME="occ1-dev0"])
 AC_DEFINE_UNQUOTED([OCC_MASTER_NAME], ["$OCC_MASTER_NAME"], [The OCC master object name])
 
 AC_ARG_VAR(OCC_HWMON_PATH, [The OCC hwmon path])
-AS_IF([test "x$OCC_HWMON_PATH" == "x"], [OCC_HWMON_PATH="/sys/bus/platform/drivers/occ-hwmon/"])
-AC_DEFINE_UNQUOTED([OCC_HWMON_PATH], ["$OCC_HWMON_PATH"], [The OCC hwmon path])
-
 AC_ARG_VAR(DEV_PATH, [The device path])
-AS_IF([test "x$DEV_PATH" == "x"], [DEV_PATH="/sys/bus/platform/devices/"])
+AC_ARG_VAR(I2C_OCC_DEVICE_NAME, [The device name of i2c occ hwmon])
+AS_IF([test "x$enable_i2c_occ" == "xyes"],
+    # If enable_2c_occ is defined, define occ hwmon path for I2C and its driver's name
+    AS_IF([test "x$OCC_HWMON_PATH" == "x"], [OCC_HWMON_PATH="/sys/bus/i2c/drivers/occ-hwmon/"])
+    AS_IF([test "x$DEV_PATH" == "x"], [DEV_PATH="/sys/bus/i2c/devices"])
+    AS_IF([test "x$I2C_OCC_DEVICE_NAME" == "x"], [I2C_OCC_DEVICE_NAME="p8-occ-hwmon"]),
+
+    # Else, define occ hwmon path for FSI
+    AS_IF([test "x$OCC_HWMON_PATH" == "x"], [OCC_HWMON_PATH="/sys/bus/platform/drivers/occ-hwmon/"])
+    AS_IF([test "x$DEV_PATH" == "x"], [DEV_PATH="/sys/bus/platform/devices/"]),
+)
+AC_DEFINE_UNQUOTED([OCC_HWMON_PATH], ["$OCC_HWMON_PATH"], [The OCC hwmon path])
 AC_DEFINE_UNQUOTED([DEV_PATH], ["$DEV_PATH"], [The device path])
+AC_DEFINE_UNQUOTED([I2C_OCC_DEVICE_NAME], ["$I2C_OCC_DEVICE_NAME"], [The device name of i2c occ hwmon])
 
 AC_ARG_VAR(FSI_SCAN_FILE, [The File to write for initiating FSI rescan])
 AS_IF([test "x$FSI_SCAN_FILE" == "x"], [FSI_SCAN_FILE="/sys/devices/platform/gpio-fsi/fsi0/slave@00:00/00:00:00:0a/fsi1/rescan"])

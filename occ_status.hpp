@@ -6,6 +6,8 @@
 #include <org/open_power/Control/Host/server.hpp>
 #include "occ_events.hpp"
 #include "occ_device.hpp"
+#include "i2c_occ.hpp"
+
 namespace open_power
 {
 namespace occ
@@ -51,7 +53,11 @@ class Status : public Interface
               path(path),
               instance(((this->path.back() - '0'))),
               device(event,
+#ifdef I2C_OCC
+                     i2c_occ::getI2cDeviceName(path),
+#else
                      name + std::to_string(instance + 1),
+#endif
                      std::bind(&Status::deviceErrorHandler, this)),
               hostControlSignal(
                      bus,
