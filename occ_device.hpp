@@ -3,6 +3,8 @@
 #include <fstream>
 #include <experimental/filesystem>
 #include "config.h"
+
+
 namespace open_power
 {
 namespace occ
@@ -28,7 +30,11 @@ class Device
          *  @param[in] name - OCC instance name
          */
         Device(const std::string& name) :
+#ifdef I2C_OCC
+            config(name)
+#else
             config(name + '-' + "dev0")
+#endif
         {
             // Nothing to do here
         }

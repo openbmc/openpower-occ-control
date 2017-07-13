@@ -31,6 +31,20 @@ AS_IF([test "x$SDBUSPLUSPLUS" == "x"], AC_MSG_ERROR([Cannot find sdbus++]))
 AX_CXX_COMPILE_STDCXX_14([noext])
 AX_APPEND_COMPILE_FLAGS([-Wall -Werror], [CXXFLAGS])
 
+AC_ARG_ENABLE([i2c-occ],
+    AS_HELP_STRING([--enable-i2c-occ], [Enable I2C OCC support])
+)
+AC_ARG_VAR(OCC_DEVICE_PATH, [The OCC device path])
+AS_IF([test "x$enable_i2c_occ" == "xyes"],
+    AC_MSG_NOTICE([Enabling I2C OCC])
+    [
+        cpp_flags="-DI2C_OCC"
+    ]
+    AC_SUBST([CPPFLAGS], [$cpp_flags])
+    AS_IF([test "x$OCC_DEVICE_PATH" == "x"], [OCC_DEVICE_PATH="/sys/bus/i2c/devices"])
+    AC_DEFINE_UNQUOTED([OCC_DEVICE_PATH], ["$OCC_DEVICE_PATH"], [The OCC device path])
+)
+
 AC_ARG_VAR(OCC_CONTROL_BUSNAME, [The Dbus busname to own])
 AS_IF([test "x$OCC_CONTROL_BUSNAME" == "x"], [OCC_CONTROL_BUSNAME="org.open_power.OCC.Control"])
 AC_DEFINE_UNQUOTED([OCC_CONTROL_BUSNAME], ["$OCC_CONTROL_BUSNAME"], [The DBus busname to own])
@@ -60,7 +74,12 @@ AS_IF([test "x$OCC_NAME" == "x"], [OCC_NAME="occ"])
 AC_DEFINE_UNQUOTED([OCC_NAME], ["$OCC_NAME"], [The OCC object name])
 
 AC_ARG_VAR(OCC_HWMON_PATH, [The OCC hwmon path])
-AS_IF([test "x$OCC_HWMON_PATH" == "x"], [OCC_HWMON_PATH="/sys/bus/platform/drivers/occ-hwmon/"])
+AS_IF([test "x$enable_i2c_occ" == "xyes"],
+    # Define occ hwmon path for I2C
+    AS_IF([test "x$OCC_HWMON_PATH" == "x"], [OCC_HWMON_PATH="/sys/bus/i2c/drivers/occ-hwmon/"]),
+    # Define occ hwmon path for FSI
+    AS_IF([test "x$OCC_HWMON_PATH" == "x"], [OCC_HWMON_PATH="/sys/bus/platform/drivers/occ-hwmon/"]),
+)
 AC_DEFINE_UNQUOTED([OCC_HWMON_PATH], ["$OCC_HWMON_PATH"], [The OCC hwmon path])
 
 AC_CONFIG_HEADERS([config.h])
