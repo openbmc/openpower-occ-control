@@ -33,7 +33,11 @@ class Status : public Interface
         Status(sdbusplus::bus::bus& bus, const char* path)
             : Interface(bus, path),
               path(path),
+#ifdef I2C_OCC
+              device(path)
+#else
               device(name + std::to_string((this->path.back() - '0') + 1))
+#endif
         {
             // Nothing to do here
         }
