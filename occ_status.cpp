@@ -28,14 +28,12 @@ bool Status::occActive(bool value)
             // Bind the device
             device.bind();
 
-            // And watch for errors
             // Commenting until we solve the occ error monitoring issue
             // TODO: openbmc/openbmc#2126
             // device.addErrorWatch();
         }
         else
         {
-            // Stop watching for errors
             // Commenting until we solve the occ error monitoring issue
             // TODO: openbmc/openbmc#2126
             // device.removeErrorWatch();
