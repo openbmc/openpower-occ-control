@@ -9,6 +9,7 @@ openpower_occ_control_SOURCES = \
 	occ_status.cpp \
 	occ_device.cpp \
 	app.cpp \
+	utils.cpp \
 	org/open_power/OCC/PassThrough/error.cpp
 
 BUILT_SOURCES =  org/open_power/OCC/PassThrough/error.hpp \
