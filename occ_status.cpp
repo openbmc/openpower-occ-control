@@ -17,13 +17,19 @@ bool Status::occActive(bool value)
             // Bind the device
             device.bind();
 
+// TODO: P8 OCC driver has flood of error notifies
+// so disable error watch for now
+#ifndef I2C_OCC
             // And watch for errors
             device.addErrorWatch();
+#endif
         }
         else
         {
+#ifndef I2C_OCC
             // Stop watching for errors
             device.removeErrorWatch();
+#endif
 
             // Do the unbind.
             device.unBind();
