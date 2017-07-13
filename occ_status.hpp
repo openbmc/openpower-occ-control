@@ -4,6 +4,8 @@
 #include <sdbusplus/server/object.hpp>
 #include <org/open_power/OCC/Status/server.hpp>
 #include "occ_device.hpp"
+#include "utils.hpp"
+
 namespace open_power
 {
 namespace occ
@@ -33,7 +35,11 @@ class Status : public Interface
         Status(sdbusplus::bus::bus& bus, const char* path)
             : Interface(bus, path),
               path(path),
+#ifdef I2C_OCC
+              device(utils::getI2cDeviceName(path))
+#else
               device(name + std::to_string((this->path.back() - '0') + 1))
+#endif
         {
             // Nothing to do here
         }

@@ -10,6 +10,10 @@
 #include "config.h"
 #include <powercap.hpp>
 
+#ifdef I2C_OCC
+#include "utils.hpp"
+#endif
+
 namespace sdbusRule = sdbusplus::bus::match::rules;
 
 namespace open_power
@@ -37,6 +41,10 @@ struct Manager
         Manager(sdbusplus::bus::bus& bus):
             bus(bus)
         {
+#ifdef I2C_OCC
+            // I2C OCC status objects are initialized directly
+            initStatusObjects();
+#else
             for (auto id = 0; id < MAX_CPUS; ++id)
             {
                 auto path = std::string(CPU_PATH) + std::to_string(id);
@@ -47,6 +55,7 @@ struct Manager
                     std::bind(std::mem_fn(&Manager::cpuCreated),
                               this, std::placeholders::_1));
             }
+#endif
         }
 
         /** @brief Callback that responds to cpu creation in the inventory -
@@ -58,6 +67,7 @@ struct Manager
          */
         int cpuCreated(sdbusplus::message::message& msg)
         {
+#ifndef I2C_OCC
             namespace fs = std::experimental::filesystem;
 
             sdbusplus::message::object_path o;
@@ -87,6 +97,7 @@ struct Manager
                                                         bus,
                                                         *statusObjects[index]);
             }
+#endif
             return 0;
         }
 
@@ -105,6 +116,30 @@ struct Manager
 
         /** @brief sbdbusplus match objects */
         std::vector<sdbusplus::bus::match_t> cpuMatches;
+
+#ifdef I2C_OCC
+        /** @brief Init Status objects for I2C OCC devices
+         *
+         * It iterates in /sys/bus/i2c/devices, finds all occ hwmon devices
+         * and creates status objects.
+         */
+        void initStatusObjects()
+        {
+            // Make sure we have a valid path string
+            static_assert(sizeof(OCC_DEVICE_PATH) != 0);
+
+            auto deviceNames = utils::getOccHwmonDevices(OCC_DEVICE_PATH);
+            for (auto& name : deviceNames)
+            {
+                utils::i2cToDbus(name);
+                auto path = fs::path(OCC_CONTROL_ROOT) / name;
+                statusObjects.emplace_back(
+                    std::make_unique<Status>(
+                        bus,
+                        path.c_str()));
+            }
+        }
+#endif
 };
 
 } // namespace occ
