@@ -36,17 +36,20 @@ Makefile.in
 /texinfo.tex
 
 # Repo Specific Items
-/*.o
+*.o
+*.la
+*.lo
+*.log
 /config.h
 /config.h.in~
-/config.log
 /config.status
 Makefile
 .deps
 *-libtool
+.libs
 /org/open_power/OCC/PassThrough/
 /openpower-occ-control
+
+# UT related items
 /test/utest
-/test/utest-utest.o
-/test/*.log
 /test/*.trs
