@@ -8,17 +8,24 @@ noinst_HEADERS = \
 	occ_finder.hpp \
 	utils.hpp
 
+noinst_LTLIBRARIES = libocc_control.la
+
 sbin_PROGRAMS = openpower-occ-control
+
 openpower_occ_control_SOURCES = \
+	app.cpp
+
+libocc_control_la_SOURCES = \
 	occ_pass_through.cpp \
 	occ_status.cpp \
 	occ_device.cpp \
 	occ_errors.cpp \
-	app.cpp \
 	powercap.cpp \
 	org/open_power/OCC/Device/error.cpp \
 	occ_finder.cpp \
 	utils.cpp
+
+openpower_occ_control_LDADD = libocc_control.la -lstdc++fs
 
 BUILT_SOURCES =  org/open_power/OCC/Device/error.hpp \
                  org/open_power/OCC/Device/error.cpp \
@@ -34,18 +41,26 @@ EXTRA_DIST = $(REQ_MAKO_FILE) $(REQ_PY_SCRIPT)
 occ_sensor.hpp: ${REQ_PY_SCRIPT} ${REQ_MAKO_FILE}
 	$(AM_V_GEN) ${PYTHON} ${REQ_PY_SCRIPT} -i ${YAML_PATH} > $@
 
-openpower_occ_control_LDFLAGS = \
+
+generic_ld_flags = \
 	$(SDBUSPLUS_LIBS) \
 	$(PHOSPHOR_LOGGING_LIBS) \
 	$(OPENPOWER_DBUS_INTERFACES_LIBS) \
-	$(PHOSPHOR_DBUS_INTERFACES_LIBS) \
-        -lstdc++fs
+	$(PHOSPHOR_DBUS_INTERFACES_LIBS)
 
-openpower_occ_control_CXXFLAGS =
+generic_cxx_flags = \
 	$(SDBUSPLUS_CFLAGS) \
 	$(PHOSPHOR_LOGGING_CFLAGS) \
 	$(OPENPOWER_DBUS_INTERFACES_CFLAGS) \
 	$(PHOSPHOR_DBUS_INTERFACES_CFLAGS)
+
+libocc_control_la_CXXFLAGS = $(generic_cxx_flags)
+
+libocc_control_la_LDFLAGS = $(generic_ld_flags)
+
+openpower_occ_control_CXXFLAGS = $(generic_cxx_flags)
+
+openpower_occ_control_LDFLAGS = $(generic_ld_flags)
 
 org/open_power/OCC/Device/error.hpp: ${top_srcdir}/org/open_power/OCC/Device.errors.yaml
 	@mkdir -p `dirname $@`
