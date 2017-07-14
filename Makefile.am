@@ -34,3 +34,5 @@ org/open_power/OCC/PassThrough/error.hpp: ${top_srcdir}/org/open_power/OCC/PassT
 org/open_power/OCC/PassThrough/error.cpp: ${top_srcdir}/org/open_power/OCC/PassThrough.errors.yaml
 	@mkdir -p `dirname $@`
 	$(SDBUSPLUSPLUS) -r $(top_srcdir) error exception-cpp org.open_power.OCC.PassThrough > $@
+
+SUBDIRS = . test
