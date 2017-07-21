@@ -13,6 +13,12 @@ namespace occ
 namespace Base = sdbusplus::org::open_power::OCC::server;
 using Interface = sdbusplus::server::object::object<Base::Status>;
 
+// OCC status instance. Ex. for "occ0", the instance is 0
+using instanceID = int;
+
+// IPMI sensor ID for a given OCC instance
+using sensorID = uint8_t;
+
 /** @class Status
  *  @brief Implementation of OCC Active Status
  */
@@ -35,8 +41,9 @@ class Status : public Interface
         Status(sdbusplus::bus::bus& bus, EventPtr& event, const char* path)
             : Interface(bus, path),
               path(path),
+              instance(((this->path.back() - '0'))),
               device(event,
-                     name + std::to_string((this->path.back() - '0') + 1),
+                     name + std::to_string(instance + 1),
                      std::bind(&Status::deviceErrorHandler, this))
         {
             // Nothing to do here
@@ -62,6 +69,12 @@ class Status : public Interface
 
         /** @brief occ name prefix */
         std::string name = OCC_NAME;
+
+        /** @brief OCC instance number. Ex, 0,1, etc */
+        int instance;
+
+        /** @brief OCC instance to Sensor ID mapping */
+        static const std::map<instanceID, sensorID> sensorMap;
 
         /** @brief OCC device object to do bind and unbind */
         Device device;

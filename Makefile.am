@@ -19,9 +19,18 @@ openpower_occ_control_SOURCES = \
 	occ_finder.cpp
 
 BUILT_SOURCES =  org/open_power/OCC/Device/error.hpp \
-                 org/open_power/OCC/Device/error.cpp
+                 org/open_power/OCC/Device/error.cpp \
+                 occ_sensor.hpp
 
 CLEANFILES = ${BUILT_SOURCES}
+
+REQ_MAKO_FILE ?= ${top_srcdir}/occ_sensor.mako.hpp
+REQ_PY_SCRIPT ?= ${top_srcdir}/sensor_gen.py
+
+EXTRA_DIST = $(REQ_MAKO_FILE) $(REQ_PY_SCRIPT)
+
+occ_sensor.hpp: ${REQ_PY_SCRIPT} ${REQ_MAKO_FILE}
+	$(AM_V_GEN) ${PYTHON} ${REQ_PY_SCRIPT} -i ${YAML_PATH} > $@
 
 openpower_occ_control_LDFLAGS = \
 	$(SDBUSPLUS_LIBS) \
