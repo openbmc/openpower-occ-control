@@ -35,8 +35,9 @@ class Status : public Interface
         Status(sdbusplus::bus::bus& bus, EventPtr& event, const char* path)
             : Interface(bus, path),
               path(path),
+              instance(((this->path.back() - '0'))),
               device(event,
-                     name + std::to_string((this->path.back() - '0') + 1),
+                     name + std::to_string(instance + 1),
                      std::bind(&Status::deviceErrorHandler, this))
         {
             // Nothing to do here
@@ -62,6 +63,12 @@ class Status : public Interface
 
         /** @brief occ name prefix */
         std::string name = OCC_NAME;
+
+        /** @brief OCC instance number. Ex, 0,1, etc */
+        int instance;
+
+        /** @brief OCC instance to Sensor ID mapping */
+        static const std::map<int, uint8_t> sensorMap;
 
         /** @brief OCC device object to do bind and unbind */
         Device device;
