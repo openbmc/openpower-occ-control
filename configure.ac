@@ -84,7 +84,7 @@ AS_IF([test "x$OCC_NAME" == "x"], [OCC_NAME="occ"])
 AC_DEFINE_UNQUOTED([OCC_NAME], ["$OCC_NAME"], [The OCC object name])
 
 AC_ARG_VAR(OCC_MASTER_NAME, [The OCC master object name])
-AS_IF([test "x$OCC_MASTER_NAME" == "x"], [OCC_MASTER_NAME="occ-dev0"])
+AS_IF([test "x$OCC_MASTER_NAME" == "x"], [OCC_MASTER_NAME="occ1-dev0"])
 AC_DEFINE_UNQUOTED([OCC_MASTER_NAME], ["$OCC_MASTER_NAME"], [The OCC master object name])
 
 AC_ARG_VAR(OCC_HWMON_PATH, [The OCC hwmon path])
