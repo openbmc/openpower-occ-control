@@ -105,6 +105,12 @@ AC_ARG_VAR(CPU_SUBPATH, [The subpath containing CPU objects])
 AS_IF([test "x$CPU_SUBPATH" == "x"], [CPU_SUBPATH="/xyz/openbmc_project/inventory/system/chassis/motherboard"])
 AC_DEFINE_UNQUOTED([CPU_SUBPATH], ["$CPU_SUBPATH"], [The subpath containing CPU objects])
 
+# Handling configuration files
+AC_ARG_VAR(YAML_PATH, [The path to the yaml config files.])
+AS_IF([test "x$YAML_PATH" == "x"], [YAML_PATH="$srcdir/example"])
+SENSORGEN="$PYTHON $srcdir/sensor_gen.py -i $YAML_PATH"
+AC_SUBST(SENSORGEN)
+
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile test/Makefile])
 AC_OUTPUT

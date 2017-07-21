@@ -19,9 +19,17 @@ openpower_occ_control_SOURCES = \
 	occ_finder.cpp
 
 BUILT_SOURCES =  org/open_power/OCC/Device/error.hpp \
-                 org/open_power/OCC/Device/error.cpp
+                 org/open_power/OCC/Device/error.cpp \
+                 occ_sensor.hpp
 
 CLEANFILES = ${BUILT_SOURCES}
+
+REQ_SCRIPT_FILES ?= ${top_srcdir}/occ_sensor.mako.hpp
+
+EXTRA_DIST = $(REQ_SCRIPT_FILES)
+
+occ_sensor.hpp: ${REQ_SCRIPT_FILES}
+	$(AM_V_GEN) @SENSORGEN@ > $@
 
 openpower_occ_control_LDFLAGS = \
 	$(SDBUSPLUS_LIBS) \
