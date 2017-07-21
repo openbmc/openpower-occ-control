@@ -1,4 +1,5 @@
 #include "occ_status.hpp"
+#include "occ_sensor.hpp"
 namespace open_power
 {
 namespace occ
