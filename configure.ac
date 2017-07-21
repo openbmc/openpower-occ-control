@@ -101,6 +101,12 @@ AC_ARG_VAR(PS_DERATING_FACTOR, [The power supply derating factor])
 AS_IF([test "x$PS_DERATING_FACTOR" == "x"], [PS_DERATING_FACTOR=90])
 AC_DEFINE_UNQUOTED([PS_DERATING_FACTOR], [$PS_DERATING_FACTOR], [The power supply derating factor])
 
+# Handling configuration files
+AC_ARG_VAR(YAML_PATH, [The path to the yaml config files.])
+AS_IF([test "x$YAML_PATH" == "x"], [YAML_PATH="$srcdir/example"])
+SENSORGEN="$PYTHON $srcdir/sensor_gen.py -i $YAML_PATH"
+AC_SUBST(SENSORGEN)
+
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile test/Makefile])
 AC_OUTPUT
