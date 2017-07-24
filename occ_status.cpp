@@ -1,5 +1,7 @@
+#include <phosphor-logging/log.hpp>
 #include "occ_status.hpp"
 #include "occ_sensor.hpp"
+#include "utils.hpp"
 namespace open_power
 {
 namespace occ
@@ -35,6 +37,60 @@ void Status::deviceErrorHandler()
 {
     // This would deem OCC inactive
     this->occActive(false);
+
+    // Reset the OCC
+    this->resetOCC();
+}
+
+// Sends message to host control command handler to reset OCC
+void Status::resetOCC()
+{
+    using namespace phosphor::logging;
+    constexpr auto CONTROL_HOST_PATH = "/org/open_power/control/host0";
+    constexpr auto CONTROL_HOST_INTF = "org.open_power.Control.Host";
+
+    // This will throw exception on failure
+    auto service = getService(bus, CONTROL_HOST_PATH, CONTROL_HOST_INTF);
+
+    auto method = bus.new_method_call(service.c_str(),
+                                      CONTROL_HOST_PATH,
+                                      CONTROL_HOST_INTF,
+                                      "Execute");
+    // OCC Reset control command
+    method.append(convertForMessage(
+                Control::Host::Command::OCCReset).c_str());
+
+    // OCC Sensor ID for callout reasons
+    method.append(sensorMap.at(instance));
+
+    bus.call_noreply(method);
+    return;
+}
+
+// Handler called by Host control command handler to convey the
+// status of the executed command
+void Status::hostControlEvent(sdbusplus::message::message& msg)
+{
+    using namespace phosphor::logging;
+
+    std::string cmdCompleted{};
+    std::string cmdStatus{};
+
+    msg.read(cmdCompleted, cmdStatus);
+
+    log<level::DEBUG>("Host control signal values",
+                      entry("COMMAND=%s",cmdCompleted.c_str()),
+                      entry("STATUS=%s",cmdStatus.c_str()));
+
+    if(Control::Host::convertResultFromString(cmdStatus) !=
+            Control::Host::Result::Success)
+    {
+        // Must be a Timeout. Log an Erorr !!
+        log<level::ERR>("Error resetting the OCC.",
+                entry("PATH=%s", path.c_str()),
+                entry("SensorID=0x%X",sensorMap.at(instance)));
+    }
+    return;
 }
 
 } // namespace occ
