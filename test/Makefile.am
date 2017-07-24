@@ -20,4 +20,5 @@ utest_LDADD = $(top_builddir)/powercap.o \
               $(top_builddir)/occ_status.o \
               $(top_builddir)/occ_device.o \
               $(top_builddir)/occ_errors.o \
+              $(top_builddir)/utils.o \
               $(top_builddir)/org/open_power/OCC/Device/error.o
