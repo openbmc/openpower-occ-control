@@ -5,10 +5,11 @@
 #include <experimental/filesystem>
 #include <functional>
 #include <sdbusplus/bus.hpp>
+#include <powercap.hpp>
 #include "occ_pass_through.hpp"
 #include "occ_status.hpp"
+#include "occ_finder.hpp"
 #include "config.h"
-#include <powercap.hpp>
 
 namespace sdbusRule = sdbusplus::bus::match::rules;
 
@@ -37,15 +38,36 @@ struct Manager
         Manager(sdbusplus::bus::bus& bus):
             bus(bus)
         {
-            for (auto id = 0; id < MAX_CPUS; ++id)
+            // Check if CPU inventory exists already, if yes the OCC objects
+            // can be created right away.
+            auto occs = open_power::occ::finder::get();
+            for (const auto& occ : occs)
             {
-                auto path = std::string(CPU_PATH) + std::to_string(id);
-                cpuMatches.emplace_back(
-                    bus,
-                    sdbusRule::interfacesAdded() +
-                    sdbusRule::argNpath(0, path),
-                    std::bind(std::mem_fn(&Manager::cpuCreated),
-                              this, std::placeholders::_1));
+                auto occPath = fs::path(OCC_CONTROL_ROOT);
+                occPath /= occ;
+                passThroughObjects.emplace_back(
+                    std::make_unique<PassThrough>(
+                        bus,
+                        occPath.c_str()));
+                statusObjects.emplace_back(
+                    std::make_unique<Status>(
+                        bus,
+                        occPath.c_str()));
+            }
+
+            if (occs.empty())
+            {
+                // Need to watch for CPU inventory creation.
+                for (auto id = 0; id < MAX_CPUS; ++id)
+                {
+                    auto path = std::string(CPU_PATH) + std::to_string(id);
+                    cpuMatches.emplace_back(
+                        bus,
+                        sdbusRule::interfacesAdded() +
+                        sdbusRule::argNpath(0, path),
+                        std::bind(std::mem_fn(&Manager::cpuCreated),
+                                  this, std::placeholders::_1));
+                }
             }
         }
 
