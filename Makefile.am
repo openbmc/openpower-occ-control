@@ -2,7 +2,8 @@
 noinst_HEADERS = \
 	occ_pass_through.hpp \
 	occ_status.hpp \
-	powercap.hpp
+	powercap.hpp \
+	occ_finder.hpp
 
 sbin_PROGRAMS = openpower-occ-control
 openpower_occ_control_SOURCES = \
@@ -11,7 +12,8 @@ openpower_occ_control_SOURCES = \
 	occ_device.cpp \
 	app.cpp \
 	org/open_power/OCC/PassThrough/error.cpp \
-	powercap.cpp
+	powercap.cpp \
+	occ_finder.cpp
 
 BUILT_SOURCES =  org/open_power/OCC/PassThrough/error.hpp \
                  org/open_power/OCC/PassThrough/error.cpp
@@ -22,12 +24,14 @@ openpower_occ_control_LDFLAGS = \
 	$(SDBUSPLUS_LIBS) \
 	$(PHOSPHOR_LOGGING_LIBS) \
 	$(OPENPOWER_DBUS_INTERFACES_LIBS) \
+	$(PHOSPHOR_DBUS_INTERFACES_LIBS) \
         -lstdc++fs
 
 openpower_occ_control_CXXFLAGS =
 	$(SDBUSPLUS_CFLAGS) \
 	$(PHOSPHOR_LOGGING_CFLAGS) \
-	$(OPENPOWER_DBUS_INTERFACES_CFLAGS)
+	$(OPENPOWER_DBUS_INTERFACES_CFLAGS) \
+	$(PHOSPHOR_DBUS_INTERFACES_CFLAGS)
 
 org/open_power/OCC/PassThrough/error.hpp: ${top_srcdir}/org/open_power/OCC/PassThrough.errors.yaml
 	@mkdir -p `dirname $@`
