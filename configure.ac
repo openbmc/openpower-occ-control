@@ -101,6 +101,10 @@ AC_ARG_VAR(PS_DERATING_FACTOR, [The power supply derating factor])
 AS_IF([test "x$PS_DERATING_FACTOR" == "x"], [PS_DERATING_FACTOR=90])
 AC_DEFINE_UNQUOTED([PS_DERATING_FACTOR], [$PS_DERATING_FACTOR], [The power supply derating factor])
 
+AC_ARG_VAR(CPU_SUBPATH, [The subpath containing CPU objects])
+AS_IF([test "x$CPU_SUBPATH" == "x"], [CPU_SUBPATH="/xyz/openbmc_project/inventory/system/chassis/motherboard"])
+AC_DEFINE_UNQUOTED([CPU_SUBPATH], ["$CPU_SUBPATH"], [The subpath containing CPU objects])
+
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile test/Makefile])
 AC_OUTPUT

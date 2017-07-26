@@ -5,10 +5,11 @@
 #include <experimental/filesystem>
 #include <functional>
 #include <sdbusplus/bus.hpp>
+#include <powercap.hpp>
 #include "occ_pass_through.hpp"
 #include "occ_status.hpp"
+#include "occ_finder.hpp"
 #include "config.h"
-#include <powercap.hpp>
 
 namespace sdbusRule = sdbusplus::bus::match::rules;
 
@@ -41,15 +42,29 @@ struct Manager
             bus(bus),
             event(event)
         {
-            for (auto id = 0; id < MAX_CPUS; ++id)
+            // Check if CPU inventory exists already.
+            auto occs = open_power::occ::finder::get();
+            if (occs.empty())
             {
-                auto path = std::string(CPU_PATH) + std::to_string(id);
-                cpuMatches.emplace_back(
-                    bus,
-                    sdbusRule::interfacesAdded() +
-                    sdbusRule::argNpath(0, path),
-                    std::bind(std::mem_fn(&Manager::cpuCreated),
-                              this, std::placeholders::_1));
+                // Need to watch for CPU inventory creation.
+                for (auto id = 0; id < MAX_CPUS; ++id)
+                {
+                    auto path = std::string(CPU_PATH) + std::to_string(id);
+                    cpuMatches.emplace_back(
+                        bus,
+                        sdbusRule::interfacesAdded() +
+                        sdbusRule::argNpath(0, path),
+                        std::bind(std::mem_fn(&Manager::cpuCreated),
+                                  this, std::placeholders::_1));
+                }
+            }
+            else
+            {
+                for (const auto& occ : occs)
+                {
+                    // CPU inventory exists already, OCC objects can be created.
+                    createObjects(occ);
+                }
             }
         }
 
@@ -67,13 +82,25 @@ struct Manager
             sdbusplus::message::object_path o;
             msg.read(o);
             fs::path cpuPath(std::string(std::move(o)));
-            auto cpu = cpuPath.filename();
 
-            std::string name{cpu.c_str()};
+            auto name = cpuPath.filename().string();
             auto index = name.find(CPU_NAME);
             name.replace(index, std::strlen(CPU_NAME), OCC_NAME);
 
-            auto path = fs::path(OCC_CONTROL_ROOT) / name;
+            createObjects(name);
+
+            return 0;
+        }
+
+    private:
+        /** @brief Create child OCC objects.
+         *
+         *  @param[in] occ - the occ name, such as occ0.
+         */
+        void createObjects(const std::string& occ)
+        {
+            auto path = fs::path(OCC_CONTROL_ROOT) / occ;
+
             passThroughObjects.emplace_back(
                 std::make_unique<PassThrough>(
                     bus,
@@ -86,16 +113,14 @@ struct Manager
                     path.c_str()));
 
             // Create the power cap monitor object for master occ (0)
-            if(!pcap && (index == 0))
+            if (!pcap)
             {
                 pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
                                                         bus,
-                                                        *statusObjects[index]);
+                                                        *statusObjects.front());
             }
-            return 0;
         }
 
-    private:
         /** @brief reference to the bus */
         sdbusplus::bus::bus& bus;
 

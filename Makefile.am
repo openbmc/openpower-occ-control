@@ -4,7 +4,8 @@ noinst_HEADERS = \
 	occ_status.hpp \
 	powercap.hpp \
 	occ_errors.hpp \
-	occ_events.hpp
+	occ_events.hpp \
+	occ_finder.hpp
 
 sbin_PROGRAMS = openpower-occ-control
 openpower_occ_control_SOURCES = \
@@ -14,7 +15,8 @@ openpower_occ_control_SOURCES = \
 	occ_errors.cpp \
 	app.cpp \
 	powercap.cpp \
-	org/open_power/OCC/Device/error.cpp
+	org/open_power/OCC/Device/error.cpp \
+	occ_finder.cpp
 
 BUILT_SOURCES =  org/open_power/OCC/Device/error.hpp \
                  org/open_power/OCC/Device/error.cpp
