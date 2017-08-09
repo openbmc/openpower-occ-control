@@ -7,6 +7,8 @@ namespace open_power
 namespace occ
 {
 
+bool Status::hubFsiScanDone = false;
+
 // Handles updates to occActive property
 bool Status::occActive(bool value)
 {
@@ -14,6 +16,12 @@ bool Status::occActive(bool value)
     {
         if (value)
         {
+            if (!hubFsiScanDone)
+            {
+                // Need to do hub scan before we bind
+                this->scanHubFSI();
+            }
+
             // Bind the device
             device.bind();
 
@@ -94,6 +102,29 @@ void Status::hostControlEvent(sdbusplus::message::message& msg)
                     entry("SensorID=0x%X",sensorMap.at(instance)));
         }
     }
+    return;
+}
+
+// Scans the secondary FSI hub to make sure needed sysfs files are populated
+// This "called to" service is of type "oneshot". So the call to start that
+// service will only return when the service ends
+void Status::scanHubFSI()
+{
+    // systemd service to kick start a target.
+    constexpr auto SYSTEMD_SERVICE    = "org.freedesktop.systemd1";
+    constexpr auto SYSTEMD_ROOT       = "/org/freedesktop/systemd1";
+    constexpr auto SYSTEMD_INTERFACE  = "org.freedesktop.systemd1.Manager";
+
+    auto method = bus.new_method_call(SYSTEMD_SERVICE,
+                                      SYSTEMD_ROOT,
+                                      SYSTEMD_INTERFACE,
+                                      "StartUnit");
+
+    method.append(FSI_SCAN_SERVICE, "replace");
+    bus.call_noreply(method);
+
+    // Hub FSI scan has been done. No need to do this for all the OCCs
+    hubFsiScanDone = true;
     return;
 }
 
