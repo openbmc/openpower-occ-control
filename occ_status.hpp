@@ -109,6 +109,9 @@ class Status : public Interface
          **/
         sdbusplus::bus::match_t hostControlSignal;
 
+        /** @brief Indicates whether a hub FSI scan has been attempted or not */
+        static bool hubFsiScanDone;
+
         /** @brief Callback handler when device errors are detected */
         void deviceErrorHandler();
 
@@ -121,6 +124,10 @@ class Status : public Interface
         /** @brief Sends a message to host control command handler to reset OCC
          */
         void resetOCC();
+
+        /** @brief Initiates hub FSI scan so that /dev/occ files are created
+         */
+        void scanHubFSI();
 };
 
 } // namespace occ

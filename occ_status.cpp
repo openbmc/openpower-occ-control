@@ -7,6 +7,11 @@ namespace open_power
 namespace occ
 {
 
+bool Status::hubFsiScanDone = false;
+
+// To initiate a FSI rescan
+constexpr auto fsiReScan = "1";
+
 // Handles updates to occActive property
 bool Status::occActive(bool value)
 {
@@ -14,16 +19,26 @@ bool Status::occActive(bool value)
     {
         if (value)
         {
+            if (!hubFsiScanDone)
+            {
+                // Need to do hub scan before we bind
+                this->scanHubFSI();
+            }
+
             // Bind the device
             device.bind();
 
             // And watch for errors
-            device.addErrorWatch();
+            // Commenting until we solve the occ error monitoring issue
+            // TODO: openbmc/openbmc#2126
+            // device.addErrorWatch();
         }
         else
         {
             // Stop watching for errors
-            device.removeErrorWatch();
+            // Commenting until we solve the occ error monitoring issue
+            // TODO: openbmc/openbmc#2126
+            // device.removeErrorWatch();
 
             // Do the unbind.
             device.unBind();
@@ -94,6 +109,19 @@ void Status::hostControlEvent(sdbusplus::message::message& msg)
                     entry("SensorID=0x%X",sensorMap.at(instance)));
         }
     }
+    return;
+}
+
+// Scans the secondary FSI hub to make sure /dev/occ files are populated
+// Write "1" to achieve that
+void Status::scanHubFSI()
+{
+    std::ofstream file(FSI_SCAN_FILE, std::ios::out);
+    file << fsiReScan;
+    file.close();
+
+    // Hub FSI scan has been done. No need to do this for all the OCCs
+    hubFsiScanDone = true;
     return;
 }
 
