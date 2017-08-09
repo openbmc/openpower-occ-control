@@ -97,6 +97,10 @@ AC_ARG_VAR(DEV_PATH, [The device path])
 AS_IF([test "x$DEV_PATH" == "x"], [DEV_PATH="/sys/bus/platform/devices/"])
 AC_DEFINE_UNQUOTED([DEV_PATH], ["$DEV_PATH"], [The device path])
 
+AC_ARG_VAR(FSI_SCAN_FILE, [The File to write for initiating FSI rescan])
+AS_IF([test "x$FSI_SCAN_FILE" == "x"], [FSI_SCAN_FILE="/sys/devices/platform/gpio-fsi/fsi0/slave@00:00/00:00:00:0a/fsi1/rescan"])
+AC_DEFINE_UNQUOTED([FSI_SCAN_FILE], ["$FSI_SCAN_FILE"], [The File to write for initiating FSI rescan])
+
 AC_ARG_VAR(PS_DERATING_FACTOR, [The power supply derating factor])
 AS_IF([test "x$PS_DERATING_FACTOR" == "x"], [PS_DERATING_FACTOR=90])
 AC_DEFINE_UNQUOTED([PS_DERATING_FACTOR], [$PS_DERATING_FACTOR], [The power supply derating factor])
