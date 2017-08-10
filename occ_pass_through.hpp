@@ -14,6 +14,9 @@ namespace occ
 using Iface = sdbusplus::server::object::object<
     sdbusplus::org::open_power::OCC::server::PassThrough>;
 
+// For waiting on signals
+namespace sdbusRule = sdbusplus::bus::match::rules;
+
 /** @class PassThrough
  *  @brief Implements org.open_power.OCC.PassThrough
  */
@@ -21,7 +24,6 @@ class PassThrough : public Iface
 {
     public:
         PassThrough() = delete;
-        ~PassThrough() = default;
         PassThrough(const PassThrough&) = delete;
         PassThrough& operator=(const PassThrough&) = delete;
         PassThrough(PassThrough&&) = default;
@@ -33,6 +35,14 @@ class PassThrough : public Iface
          */
         PassThrough(sdbusplus::bus::bus& bus,
                     const char* path);
+
+        ~PassThrough()
+        {
+            if (fd >= 0)
+            {
+                close(fd);
+            }
+        }
 
         /** @brief Pass through command to OCC
          *  @param[in] command - command to pass-through
@@ -54,11 +64,27 @@ class PassThrough : public Iface
          */
         std::string devicePath = "/dev/occ";
 
-        /** @brief File descriptor manager */
-        FileDescriptor fd;
+        /** brief file descriptor associated with occ device */
+        int fd = -1;
 
-        /** Opens devicePath and returns file descritor */
-        int openDevice();
+        /** @brief Subscribe to OCC Status signal
+         *
+         *  Once the OCC status gets to active, only then we will get /dev/occ2
+         *  populated and hence need to wait on that before opening that
+         */
+        sdbusplus::bus::match_t activeStatusSignal;
+
+        /** Opens devicePath and populates file descritor */
+        void openDevice();
+
+        /** Closed the fd associated with opened device */
+        void closeDevice();
+
+        /** @brief Callback function on OCC Status change signals
+         *
+         *  @param[in]  msg - Data associated with subscribed signal
+         */
+        void activeStatusEvent(sdbusplus::message::message& msg);
 };
 
 } // namespace occ

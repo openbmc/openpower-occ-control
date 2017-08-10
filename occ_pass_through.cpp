@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <fcntl.h>
 #include <errno.h>
+#include <string>
 #include <phosphor-logging/log.hpp>
 #include <phosphor-logging/elog.hpp>
 #include <org/open_power/OCC/Device/error.hpp>
@@ -17,20 +18,28 @@ PassThrough::PassThrough(
     const char* path) :
     Iface(bus, path),
     path(path),
-    fd(openDevice())
+    activeStatusSignal(
+            bus,
+            sdbusRule::type::signal() +
+            sdbusRule::member("PropertiesChanged") +
+            sdbusRule::path(path) +
+            sdbusRule::interface("org.freedesktop.DBus.Properties") +
+            sdbusRule::argN(0, "org.open_power.OCC.Status"),
+            std::bind(std::mem_fn(&PassThrough::activeStatusEvent),
+                this, std::placeholders::_1))
 {
     // Nothing to do.
 }
 
-int PassThrough::openDevice()
+void PassThrough::openDevice()
 {
     using namespace phosphor::logging;
     using namespace sdbusplus::org::open_power::OCC::Device::Error;
 
     // Device instance number starts from 1.
-    devicePath.append(std::to_string((this->path.back() - '0') + 1));
-
-    int fd = open(devicePath.c_str(), O_RDWR | O_NONBLOCK);
+    // TODO : Need to init devicePath in ctr,will do in sometime.
+    auto devPath = devicePath + std::to_string((this->path.back() - '0') + 1);
+    fd = open(devPath.c_str(), O_RDWR | O_NONBLOCK);
     if (fd < 0)
     {
         // This would log and terminate since its not handled.
@@ -40,7 +49,15 @@ int PassThrough::openDevice()
             phosphor::logging::org::open_power::OCC::Device::
                 OpenFailure::CALLOUT_DEVICE_PATH(devicePath.c_str()));
     }
-    return fd;
+    return;
+}
+
+void PassThrough::closeDevice()
+{
+    if (fd >= 0)
+    {
+        close(fd);
+    }
 }
 
 std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
@@ -60,7 +77,7 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
             [](decltype(cmdInBytes)::value_type x){return x;});
 
     ssize_t size = cmdInBytes.size() * sizeof(decltype(cmdInBytes)::value_type);
-    auto rc = write((fd)(), cmdInBytes.data(), size);
+    auto rc = write(fd, cmdInBytes.data(), size);
     if (rc < 0 || (rc != size))
     {
         // This would log and terminate since its not handled.
@@ -75,7 +92,7 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
     while(1)
     {
         uint8_t data {};
-        auto len = read((fd)(), &data, sizeof(data));
+        auto len = read(fd, &data, sizeof(data));
         if (len > 0)
         {
             response.emplace_back(data);
@@ -103,6 +120,29 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
     }
 
     return response;
+}
+
+// Called at OCC Status change signal
+void PassThrough::activeStatusEvent(sdbusplus::message::message& msg)
+{
+    std::string statusInterface;
+    std::map<std::string, sdbusplus::message::variant<bool>> msgData;
+    msg.read(statusInterface, msgData);
+
+    auto propertyMap = msgData.find("OccActive");
+    if (propertyMap != msgData.end())
+    {
+        // Extract the OccActive property
+        if (sdbusplus::message::variant_ns::get<bool>(propertyMap->second))
+        {
+            this->openDevice();
+        }
+        else
+        {
+            this->closeDevice();
+        }
+    }
+    return;
 }
 
 } // namespace occ
