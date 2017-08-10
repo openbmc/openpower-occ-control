@@ -97,6 +97,10 @@ AC_ARG_VAR(DEV_PATH, [The device path])
 AS_IF([test "x$DEV_PATH" == "x"], [DEV_PATH="/sys/bus/platform/devices/"])
 AC_DEFINE_UNQUOTED([DEV_PATH], ["$DEV_PATH"], [The device path])
 
+AC_ARG_VAR(OCC_DEV_PATH, [The OCC device path in /dev])
+AS_IF([test "x$OCC_DEV_PATH" == "x"], [OCC_DEV_PATH="/dev/occ"])
+AC_DEFINE_UNQUOTED([OCC_DEV_PATH], ["$OCC_DEV_PATH"], [The OCC device path in /dev])
+
 AC_ARG_VAR(FSI_SCAN_SERVICE, [The service that scans hub FSI])
 AS_IF([test "x$FSI_SCAN_SERVICE" == "x"], [FSI_SCAN_SERVICE="fsi-hub-scan.service"])
 AC_DEFINE_UNQUOTED([FSI_SCAN_SERVICE], ["$FSI_SCAN_SERVICE"], [The service that scans hub FSI])
