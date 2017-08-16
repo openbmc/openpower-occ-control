@@ -42,6 +42,9 @@ bool Status::occActive(bool value)
 
             // Do the unbind.
             device.unBind();
+
+            // Indicate the hub FSI scan needs to be done again
+            hubFsiScanDone = false;
         }
     }
     return Base::Status::occActive(value);
