@@ -5,6 +5,8 @@
 #include <experimental/filesystem>
 #include <functional>
 #include <sdbusplus/bus.hpp>
+#include <phosphor-logging/log.hpp>
+#include <phosphor-logging/elog.hpp>
 #include <powercap.hpp>
 #include "occ_pass_through.hpp"
 #include "occ_status.hpp"
@@ -12,7 +14,6 @@
 #include "config.h"
 
 namespace sdbusRule = sdbusplus::bus::match::rules;
-
 namespace open_power
 {
 namespace occ
@@ -68,6 +69,7 @@ struct Manager
             }
         }
 
+    private:
         /** @brief Callback that responds to cpu creation in the inventory -
          *         by creating the needed objects.
          *
@@ -92,7 +94,6 @@ struct Manager
             return 0;
         }
 
-    private:
         /** @brief Create child OCC objects.
          *
          *  @param[in] occ - the occ name, such as occ0.
@@ -110,7 +111,9 @@ struct Manager
                 std::make_unique<Status>(
                     bus,
                     event,
-                    path.c_str()));
+                    path.c_str(),
+                    std::bind(std::mem_fn(&Manager::statusCallBack),
+                                          this, std::placeholders::_1)));
 
             // Create the power cap monitor object for master occ (0)
             if (!pcap)
@@ -118,6 +121,49 @@ struct Manager
                 pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
                                                         bus,
                                                         *statusObjects.front());
+            }
+        }
+
+        /** @brief Callback handler invoked by Status object when the OccActive
+         *         property is changed. This is needed to make sure that the
+         *         error detection is started only after all the OCCs are bound.
+         *         Similarly, when one of the OCC gets its OccActive property
+         *         un-set, then the OCC error detection needs to be stopped on
+         *         all the OCCs
+         *
+         *  @param[in] status - OccActive status
+         */
+        void statusCallBack(bool status)
+        {
+            using namespace phosphor::logging;
+            using InternalFailure = sdbusplus::xyz::openbmc_project::Common::
+                                        Error::InternalFailure;
+
+            // At this time, it won't happen but keeping it
+            // here just incase something changes in the future
+            if (activeCount == 0 && !status)
+            {
+                log<level::ERR>("Invalid update on OCCActive");
+                elog<InternalFailure>();
+            }
+
+            activeCount += status ? 1 : -1;
+
+            // If all the OCCs are bound, then start error detection
+            if (activeCount == statusObjects.size())
+            {
+                for (const auto& occ: statusObjects)
+                {
+                    occ->addErrorWatch();
+                }
+            }
+            else if (!status)
+            {
+                // If some OCCs are not bound yet, those will be a NO-OP
+                for (const auto& occ: statusObjects)
+                {
+                    occ->removeErrorWatch();
+                }
             }
         }
 
@@ -138,6 +184,9 @@ struct Manager
 
         /** @brief sbdbusplus match objects */
         std::vector<sdbusplus::bus::match_t> cpuMatches;
+
+        /** @brief Number of OCCs that are bound */
+        uint8_t activeCount = 0;
 };
 
 } // namespace occ
