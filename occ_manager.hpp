@@ -2,17 +2,12 @@
 
 #include <cstring>
 #include <vector>
-#include <experimental/filesystem>
-#include <functional>
 #include <sdbusplus/bus.hpp>
 #include <powercap.hpp>
 #include "occ_pass_through.hpp"
 #include "occ_status.hpp"
-#include "occ_finder.hpp"
+#include "occ_events.hpp"
 #include "config.h"
-
-namespace sdbusRule = sdbusplus::bus::match::rules;
-
 namespace open_power
 {
 namespace occ
@@ -21,7 +16,7 @@ namespace occ
 /** @class Manager
  *  @brief Builds and manages OCC objects
  */
-struct Manager
+class Manager
 {
     public:
         Manager() = delete;
@@ -37,37 +32,9 @@ struct Manager
          *  @param[in] bus   - handle to the bus
          *  @param[in] event - Unique ptr reference to sd_event
          */
-        Manager(sdbusplus::bus::bus& bus,
-                EventPtr& event) :
-            bus(bus),
-            event(event)
-        {
-            // Check if CPU inventory exists already.
-            auto occs = open_power::occ::finder::get();
-            if (occs.empty())
-            {
-                // Need to watch for CPU inventory creation.
-                for (auto id = 0; id < MAX_CPUS; ++id)
-                {
-                    auto path = std::string(CPU_PATH) + std::to_string(id);
-                    cpuMatches.emplace_back(
-                        bus,
-                        sdbusRule::interfacesAdded() +
-                        sdbusRule::argNpath(0, path),
-                        std::bind(std::mem_fn(&Manager::cpuCreated),
-                                  this, std::placeholders::_1));
-                }
-            }
-            else
-            {
-                for (const auto& occ : occs)
-                {
-                    // CPU inventory exists already, OCC objects can be created.
-                    createObjects(occ);
-                }
-            }
-        }
+        Manager(sdbusplus::bus::bus& bus, EventPtr& event);
 
+    private:
         /** @brief Callback that responds to cpu creation in the inventory -
          *         by creating the needed objects.
          *
@@ -75,51 +42,22 @@ struct Manager
          *
          *  @returns 0 to indicate success
          */
-        int cpuCreated(sdbusplus::message::message& msg)
-        {
-            namespace fs = std::experimental::filesystem;
+        int cpuCreated(sdbusplus::message::message& msg);
 
-            sdbusplus::message::object_path o;
-            msg.read(o);
-            fs::path cpuPath(std::string(std::move(o)));
-
-            auto name = cpuPath.filename().string();
-            auto index = name.find(CPU_NAME);
-            name.replace(index, std::strlen(CPU_NAME), OCC_NAME);
-
-            createObjects(name);
-
-            return 0;
-        }
-
-    private:
         /** @brief Create child OCC objects.
          *
          *  @param[in] occ - the occ name, such as occ0.
          */
-        void createObjects(const std::string& occ)
-        {
-            auto path = fs::path(OCC_CONTROL_ROOT) / occ;
+        void createObjects(const std::string& occ);
 
-            passThroughObjects.emplace_back(
-                std::make_unique<PassThrough>(
-                    bus,
-                    path.c_str()));
-
-            statusObjects.emplace_back(
-                std::make_unique<Status>(
-                    bus,
-                    event,
-                    path.c_str()));
-
-            // Create the power cap monitor object for master occ (0)
-            if (!pcap)
-            {
-                pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
-                                                        bus,
-                                                        *statusObjects.front());
-            }
-        }
+        /** @brief Callback handler invoked by Status object when the OccActive
+         *         property is changed. This is needed to make sure that the
+         *         error detection is started only after all the OCCs are bound.
+         *         Similarly, when one of the OCC gets its OccActive property
+         *         un-set, then the OCC error detection needs to be stopped on
+         *         all the OCCs
+         */
+        void statusCallBack(bool status);
 
         /** @brief reference to the bus */
         sdbusplus::bus::bus& bus;
@@ -138,6 +76,9 @@ struct Manager
 
         /** @brief sbdbusplus match objects */
         std::vector<sdbusplus::bus::match_t> cpuMatches;
+
+        /** @brief Number of OCCs that are bound */
+        uint8_t activeCount = 0;
 };
 
 } // namespace occ

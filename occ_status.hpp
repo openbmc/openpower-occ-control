@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
 #include <org/open_power/OCC/Status/server.hpp>
@@ -42,13 +43,18 @@ class Status : public Interface
         /** @brief Constructs the Status object and
          *         the underlying device object
          *
-         *  @param[in] bus  - DBus bus to attach to
-         *  @param[in] path - DBus object path
+         *  @param[in] bus      - DBus bus to attach to
+         *  @param[in] event    - sd_event unique pointer reference
+         *  @param[in] path     - DBus object path
+         *  @param[in] callBack - Callback handler to invoke during
+         *                        property change
          */
-        Status(sdbusplus::bus::bus& bus, EventPtr& event, const char* path)
+        Status(sdbusplus::bus::bus& bus, EventPtr& event,
+               const char* path, std::function<void(bool)> callBack)
             : Interface(bus, path),
               bus(bus),
               path(path),
+              callBack(callBack),
               instance(((this->path.back() - '0'))),
               device(event,
                      name + std::to_string(instance + 1),
@@ -81,6 +87,18 @@ class Status : public Interface
          */
         bool occActive(bool value) override;
 
+        /** @brief Starts OCC error detection */
+        inline void addErrorWatch()
+        {
+            return device.addErrorWatch();
+        }
+
+        /** @brief Stops OCC error detection */
+        inline void removeErrorWatch()
+        {
+            return device.removeErrorWatch();
+        }
+
     private:
 
         /** @brief sdbus handle */
@@ -88,6 +106,11 @@ class Status : public Interface
 
         /** @brief OCC dbus object path */
         std::string path;
+
+        /** @brief Callback handler to be invoked during property change.
+         *         This is a handler in Manager class
+         */
+        std::function<void(bool)> callBack;
 
         /** @brief occ name prefix */
         std::string name = OCC_NAME;
