@@ -56,25 +56,37 @@ void Error::registerCallBack()
 // Starts to watch for errors
 void Error::addWatch()
 {
-    // Open the file
-    openFile();
+    if (!watching)
+    {
+        // Open the file
+        openFile();
 
-    // register the callback handler
-    registerCallBack();
+        // register the callback handler
+        registerCallBack();
+
+        // Set we are watching the error
+        watching = true;
+    }
 }
 
 // Stops watching for errors
 void Error::removeWatch()
 {
-    // Close the file
-    if (fd >= 0)
+    if (watching)
     {
-        close(fd);
-    }
+        // Close the file
+        if (fd >= 0)
+        {
+            close(fd);
+        }
 
-    // Reduce the reference count. Since there is only one instances
-    // of add_io, this will result empty loop
-    eventSource.reset();
+        // Reduce the reference count. Since there is only one instances
+        // of add_io, this will result empty loop
+        eventSource.reset();
+
+        // We are no more watching the error
+        watching = false;
+    }
 }
 
 // Callback handler when there is an activity on the FD

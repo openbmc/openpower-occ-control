@@ -70,6 +70,9 @@ class Error
         /** @brief File descriptor to watch for errors */
         int fd = -1;
 
+        /** @brief Current state of error watching */
+        bool watching = false;
+
         /** @brief attaches FD to events and sets up callback handler */
         void registerCallBack();
 

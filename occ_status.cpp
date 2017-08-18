@@ -28,20 +28,22 @@ bool Status::occActive(bool value)
             // Bind the device
             device.bind();
 
-            // And watch for errors
-            // Commenting until we solve the occ error monitoring issue
-            // TODO: openbmc/openbmc#2126
-            // device.addErrorWatch();
+            // Call into Manager to let know that we have bound
+            if (this->callBack)
+            {
+                this->callBack(value);
+            }
         }
         else
         {
-            // Stop watching for errors
-            // Commenting until we solve the occ error monitoring issue
-            // TODO: openbmc/openbmc#2126
-            // device.removeErrorWatch();
-
             // Do the unbind.
             device.unBind();
+
+            // Call into Manager to let know that we have un-bound
+            if (this->callBack)
+            {
+                this->callBack(value);
+            }
 
             // Indicate the hub FSI scan needs to be done again
             hubFsiScanDone = false;
