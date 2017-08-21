@@ -23,7 +23,7 @@ constexpr auto toChar(size_t c)
     return map[c];
 }
 
-std::vector<std::string> get()
+std::vector<std::string> get(sdbusplus::bus::bus& bus)
 {
     namespace fs = std::experimental::filesystem;
     using Path = std::string;
@@ -31,7 +31,6 @@ std::vector<std::string> get()
     using Interface = std::string;
     using Interfaces = std::vector<Interface>;
 
-    auto bus = sdbusplus::bus::new_default();
     auto mapper =
         bus.new_method_call(
             "xyz.openbmc_project.ObjectMapper",
