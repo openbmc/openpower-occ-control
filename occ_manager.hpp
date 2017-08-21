@@ -44,7 +44,7 @@ struct Manager
             event(event)
         {
             // Check if CPU inventory exists already.
-            auto occs = open_power::occ::finder::get();
+            auto occs = open_power::occ::finder::get(bus);
             if (occs.empty())
             {
                 // Need to watch for CPU inventory creation.
