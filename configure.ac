@@ -65,10 +65,6 @@ AC_ARG_VAR(OCC_CONTROL_ROOT, [The Dbus root])
 AS_IF([test "x$OCC_CONTROL_ROOT" == "x"], [OCC_CONTROL_ROOT="/org/open_power/control"])
 AC_DEFINE_UNQUOTED([OCC_CONTROL_ROOT], ["$OCC_CONTROL_ROOT"], [The Dbus root])
 
-AC_ARG_VAR(INVENTORY_ITEM_INTERFACE, [The Inventory.Item interface])
-AS_IF([test "x$INVENTORY_ITEM_INTERFACE" == "x"], [INVENTORY_ITEM_INTERFACE="xyz.openbmc_project.Inventory.Item"])
-AC_DEFINE_UNQUOTED([INVENTORY_ITEM_INTERFACE], ["$INVENTORY_ITEM_INTERFACE"], [The Inventory.Item root])
-
 AC_ARG_VAR(CPU_PATH, [CPU inventory path])
 AS_IF([test "x$CPU_PATH" == "x"], [CPU_PATH="/xyz/openbmc_project/inventory/system/chassis/motherboard/cpu"])
 AC_DEFINE_UNQUOTED([CPU_PATH], ["$CPU_PATH"], [CPU inventory path])
