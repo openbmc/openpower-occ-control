@@ -7,7 +7,6 @@
 #include <xyz/openbmc_project/Common/error.hpp>
 #include "occ_finder.hpp"
 #include "config.h"
-
 namespace open_power
 {
 namespace occ
@@ -21,6 +20,40 @@ constexpr auto toChar(size_t c)
 {
     constexpr auto map = "0123456789abcdef";
     return map[c];
+}
+
+template <typename T>
+T getDbusProperty(sdbusplus::bus::bus& bus,
+                  const std::string& service,
+                  const std::string& objPath,
+                  const std::string& interface,
+                  const std::string& property)
+{
+    using namespace sdbusplus::xyz::openbmc_project::Common::Error;
+
+    constexpr auto PROPERTY_INTF = "org.freedesktop.DBus.Properties";
+
+    auto method = bus.new_method_call(
+                      service.c_str(),
+                      objPath.c_str(),
+                      PROPERTY_INTF,
+                      "Get");
+    method.append(interface, property);
+
+    auto reply = bus.call(method);
+    if (reply.is_method_error())
+    {
+         log<level::ERR>("Failed to get property",
+                        entry("PROPERTY=%s", property.c_str()),
+                        entry("PATH=%s", objPath.c_str()),
+                        entry("INTERFACE=%s", interface.c_str()));
+        elog<InternalFailure>();
+    }
+
+    sdbusplus::message::variant<T> value;
+    reply.read(value);
+
+    return sdbusplus::message::variant_ns::get<T>(value);
 }
 
 std::vector<std::string> get(sdbusplus::bus::bus& bus)
@@ -40,7 +73,12 @@ std::vector<std::string> get(sdbusplus::bus::bus& bus)
 
     auto depth = 0;
     Path path = CPU_SUBPATH;
-    Interfaces interfaces{INVENTORY_ITEM_INTERFACE};
+    Interfaces interfaces
+    {
+        "xyz.openbmc_project.Inventory.Item",
+        "xyz.openbmc_project.State.Decorator.OperationalStatus"
+    };
+
     mapper.append(path);
     mapper.append(depth);
     mapper.append(interfaces);
@@ -66,14 +104,52 @@ std::vector<std::string> get(sdbusplus::bus::bus& bus)
     {
         fs::path p(path);
         p /= std::string(CPU_NAME) + toChar(count);
-        if (response.end() != response.find(p.string()))
+
+        auto entry = response.find(p.string());
+        if (response.end() != entry)
         {
-            occs.emplace_back(std::string(OCC_NAME) +
-                              toChar(count));
+            Criteria match{};
+            match.emplace_back(std::make_tuple(
+                               "xyz.openbmc_project.Inventory.Item",
+                               "Present",
+                               true));
+
+            match.emplace_back(std::make_tuple(
+                               "xyz.openbmc_project.State.Decorator.OperationalStatus",
+                               "Functional",
+                               true));
+
+            // Select only if the CPU is marked 'Present' and 'Functional'
+            // Local variable to make it readable
+            auto path = entry->first;
+            auto service = entry->second.begin()->first;
+            if (matchCriteria(bus, path, service, match))
+            {
+                occs.emplace_back(std::string(OCC_NAME) +
+                                  toChar(count));
+            }
         }
     }
 
     return occs;
+}
+
+bool matchCriteria(sdbusplus::bus::bus& bus,
+                   const std::string& path,
+                   const std::string& service,
+                   const Criteria& match)
+{
+    for (const auto& iter: match)
+    {
+        auto result = getDbusProperty<bool>(bus, service, path,
+                                            std::get<0>(iter),
+                                            std::get<1>(iter));
+        if (result != std::get<2>(iter))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 } // namespace finder
