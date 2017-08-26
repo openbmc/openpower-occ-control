@@ -76,10 +76,6 @@ AC_ARG_VAR(OCC_CONTROL_ROOT, [The Dbus root])
 AS_IF([test "x$OCC_CONTROL_ROOT" == "x"], [OCC_CONTROL_ROOT="/org/open_power/control"])
 AC_DEFINE_UNQUOTED([OCC_CONTROL_ROOT], ["$OCC_CONTROL_ROOT"], [The Dbus root])
 
-AC_ARG_VAR(CPU_PATH, [CPU inventory path])
-AS_IF([test "x$CPU_PATH" == "x"], [CPU_PATH="/xyz/openbmc_project/inventory/system/chassis/motherboard/cpu"])
-AC_DEFINE_UNQUOTED([CPU_PATH], ["$CPU_PATH"], [CPU inventory path])
-
 AC_ARG_VAR(MAX_CPUS, [The max number of CPUs])
 AS_IF([test "x$MAX_CPUS" == "x"], [MAX_CPUS=2])
 AC_DEFINE_UNQUOTED([MAX_CPUS], [$MAX_CPUS], [The max number of CPUs])
@@ -120,7 +116,6 @@ AC_DEFINE_UNQUOTED([FSI_SCAN_FILE], ["$FSI_SCAN_FILE"], [The File to write for i
 AC_ARG_VAR(OCC_DEV_PATH, [The OCC device path in /dev])
 AS_IF([test "x$OCC_DEV_PATH" == "x"], [OCC_DEV_PATH="/dev/occ"])
 AC_DEFINE_UNQUOTED([OCC_DEV_PATH], ["$OCC_DEV_PATH"], [The OCC device path in /dev])
-
 AC_ARG_VAR(PS_DERATING_FACTOR, [The power supply derating factor])
 AS_IF([test "x$PS_DERATING_FACTOR" == "x"], [PS_DERATING_FACTOR=90])
 AC_DEFINE_UNQUOTED([PS_DERATING_FACTOR], [$PS_DERATING_FACTOR], [The power supply derating factor])

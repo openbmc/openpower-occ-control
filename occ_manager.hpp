@@ -12,13 +12,19 @@
 #include "occ_status.hpp"
 #include "occ_finder.hpp"
 #include "config.h"
-#include "i2c_occ.hpp"
-
 namespace sdbusRule = sdbusplus::bus::match::rules;
+
 namespace open_power
 {
 namespace occ
 {
+constexpr auto invRootPath  = "/xyz/openbmc_project/inventory";
+constexpr auto cpuIntf = "xyz.openbmc_project.Inventory.Item.Cpu";
+using DbusValue = sdbusplus::message::variant<bool, int64_t, std::string>;
+using DbusProperty = std::string;
+using DbusPropertyMap = std::map<DbusProperty, DbusValue>;
+using DbusInterface = std::string;
+using DbusInterfaceMap = std::map<DbusInterface, DbusPropertyMap>;
 
 /** @class Manager
  *  @brief Builds and manages OCC objects
@@ -44,25 +50,16 @@ struct Manager
             bus(bus),
             event(event)
         {
-#ifdef I2C_OCC
-            // I2C OCC status objects are initialized directly
-            initStatusObjects();
-#else
             // Check if CPU inventory exists already.
             auto occs = open_power::occ::finder::get(bus);
             if (occs.empty())
             {
-                // Need to watch for CPU inventory creation.
-                for (auto id = 0; id < MAX_CPUS; ++id)
-                {
-                    auto path = std::string(CPU_PATH) + std::to_string(id);
-                    cpuMatches.emplace_back(
-                        bus,
-                        sdbusRule::interfacesAdded() +
-                        sdbusRule::argNpath(0, path),
-                        std::bind(std::mem_fn(&Manager::cpuCreated),
-                                  this, std::placeholders::_1));
-                }
+                cpuMatches = std::make_unique<sdbusplus::bus::match_t>(
+                                bus,
+                                sdbusRule::interfacesAdded() +
+                                sdbusRule::path_namespace(invRootPath),
+                                std::bind(std::mem_fn(&Manager::cpuCreated),
+                                this, std::placeholders::_1));
             }
             else
             {
@@ -72,7 +69,6 @@ struct Manager
                     createObjects(occ);
                 }
             }
-#endif
         }
 
     private:
@@ -85,18 +81,23 @@ struct Manager
          */
         int cpuCreated(sdbusplus::message::message& msg)
         {
+            //Interface data is of the fromat a{sa{sv}}
             namespace fs = std::experimental::filesystem;
 
-            sdbusplus::message::object_path o;
-            msg.read(o);
-            fs::path cpuPath(std::string(std::move(o)));
+            sdbusplus::message::object_path objectPath;
+            msg.read(objectPath);
 
-            auto name = cpuPath.filename().string();
-            auto index = name.find(CPU_NAME);
-            name.replace(index, std::strlen(CPU_NAME), OCC_NAME);
-
-            createObjects(name);
-
+            DbusInterfaceMap intfList;
+            msg.read(intfList);
+            const auto& it = intfList.find(cpuIntf);
+            if (it != intfList.end())
+            {
+                fs::path cpuPath((std::string(std::move(objectPath))));
+                auto name = cpuPath.filename().string();
+                auto index = name.find(CPU_NAME);
+                name.replace(index, std::strlen(CPU_NAME), OCC_NAME);
+                createObjects(name);
+            }
             return 0;
         }
 
@@ -189,35 +190,10 @@ struct Manager
         std::unique_ptr<open_power::occ::powercap::PowerCap> pcap;
 
         /** @brief sbdbusplus match objects */
-        std::vector<sdbusplus::bus::match_t> cpuMatches;
+        std::unique_ptr<sdbusplus::bus::match_t> cpuMatches;
 
         /** @brief Number of OCCs that are bound */
         uint8_t activeCount = 0;
-
-#ifdef I2C_OCC
-        /** @brief Init Status objects for I2C OCC devices
-         *
-         * It iterates in /sys/bus/i2c/devices, finds all occ hwmon devices
-         * and creates status objects.
-         */
-        void initStatusObjects()
-        {
-            // Make sure we have a valid path string
-            static_assert(sizeof(DEV_PATH) != 0);
-
-            auto deviceNames = i2c_occ::getOccHwmonDevices(DEV_PATH);
-            for (auto& name : deviceNames)
-            {
-                i2c_occ::i2cToDbus(name);
-                auto path = fs::path(OCC_CONTROL_ROOT) / name;
-                statusObjects.emplace_back(
-                    std::make_unique<Status>(
-                        bus,
-                        event,
-                        path.c_str()));
-            }
-        }
-#endif
 };
 
 } // namespace occ
