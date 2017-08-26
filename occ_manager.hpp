@@ -19,6 +19,13 @@ namespace open_power
 {
 namespace occ
 {
+constexpr auto invRootPath  = "/xyz/openbmc_project/inventory";
+constexpr auto cpuIntf = "xyz.openbmc_project.Inventory.Item.Cpu";
+using DbusValue = sdbusplus::message::variant<bool, int64_t, std::string>;
+using DbusProperty = std::string;
+using DbusPropertyMap = std::map<DbusProperty, DbusValue>;
+using DbusInterface = std::string;
+using DbusInterfaceMap = std::map<DbusInterface, DbusPropertyMap>;
 
 /** @class Manager
  *  @brief Builds and manages OCC objects
@@ -53,17 +60,12 @@ struct Manager
             auto occs = open_power::occ::finder::get(bus);
             if (occs.empty())
             {
-                // Need to watch for CPU inventory creation.
-                for (auto id = 0; id < MAX_CPUS; ++id)
-                {
-                    auto path = std::string(CPU_PATH) + std::to_string(id);
-                    cpuMatches.emplace_back(
-                        bus,
-                        sdbusRule::interfacesAdded() +
-                        sdbusRule::argNpath(0, path),
-                        std::bind(std::mem_fn(&Manager::cpuCreated),
-                                  this, std::placeholders::_1));
-                }
+                cpuMatch = std::make_unique<sdbusplus::bus::match_t>(
+                                bus,
+                                sdbusRule::interfacesAdded() +
+                                sdbusRule::path_namespace(invRootPath),
+                                std::bind(std::mem_fn(&Manager::cpuCreated),
+                                this, std::placeholders::_1));
             }
             else
             {
@@ -87,18 +89,23 @@ struct Manager
          */
         int cpuCreated(sdbusplus::message::message& msg)
         {
+            //Interface data is of the fromat a{sa{sv}}
             namespace fs = std::experimental::filesystem;
 
-            sdbusplus::message::object_path o;
-            msg.read(o);
-            fs::path cpuPath(std::string(std::move(o)));
+            sdbusplus::message::object_path objectPath;
+            msg.read(objectPath);
 
-            auto name = cpuPath.filename().string();
-            auto index = name.find(CPU_NAME);
-            name.replace(index, std::strlen(CPU_NAME), OCC_NAME);
-
-            createObjects(name);
-
+            DbusInterfaceMap intfList;
+            msg.read(intfList);
+            const auto& it = intfList.find(cpuIntf);
+            if (it != intfList.end())
+            {
+                fs::path cpuPath((std::string(std::move(objectPath))));
+                auto name = cpuPath.filename().string();
+                auto index = name.find(CPU_NAME);
+                name.replace(index, std::strlen(CPU_NAME), OCC_NAME);
+                createObjects(name);
+            }
             return 0;
         }
 
@@ -191,7 +198,7 @@ struct Manager
         std::unique_ptr<open_power::occ::powercap::PowerCap> pcap;
 
         /** @brief sbdbusplus match objects */
-        std::vector<sdbusplus::bus::match_t> cpuMatches;
+        std::unique_ptr<sdbusplus::bus::match_t> cpuMatch;
 
         /** @brief Number of OCCs that are bound */
         uint8_t activeCount = 0;
