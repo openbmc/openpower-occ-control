@@ -12,8 +12,9 @@
 #include "occ_status.hpp"
 #include "occ_finder.hpp"
 #include "config.h"
-
+#include <iostream>
 namespace sdbusRule = sdbusplus::bus::match::rules;
+
 namespace open_power
 {
 namespace occ
@@ -47,20 +48,17 @@ struct Manager
             auto occs = open_power::occ::finder::get(bus);
             if (occs.empty())
             {
-                // Need to watch for CPU inventory creation.
-                for (auto id = 0; id < MAX_CPUS; ++id)
-                {
-                    auto path = std::string(CPU_PATH) + std::to_string(id);
-                    cpuMatches.emplace_back(
-                        bus,
-                        sdbusRule::interfacesAdded() +
-                        sdbusRule::argNpath(0, path),
-                        std::bind(std::mem_fn(&Manager::cpuCreated),
-                                  this, std::placeholders::_1));
-                }
+                std::cout << "DEVENDER occ control occ empty " << CPU_INTF << std::endl;
+                cpuMatches.emplace_back(
+                    bus,
+                    sdbusRule::interfacesAdded() +
+                    sdbusRule::path(CPU_INTF),
+                    std::bind(std::mem_fn(&Manager::cpuCreated),
+                              this, std::placeholders::_1));
             }
             else
             {
+                std::cout << "DEVENDER occ contorl OCC not empty" << std::endl;
                 for (const auto& occ : occs)
                 {
                     // CPU inventory exists already, OCC objects can be created.
@@ -84,11 +82,12 @@ struct Manager
             sdbusplus::message::object_path o;
             msg.read(o);
             fs::path cpuPath(std::string(std::move(o)));
-
+            std::cout << "DEVENDER cpuCreated cpuPath " << cpuPath << std::endl;
             auto name = cpuPath.filename().string();
             auto index = name.find(CPU_NAME);
+            std::cout << "DEVENDER cpuCreated name " << name << std::endl;
             name.replace(index, std::strlen(CPU_NAME), OCC_NAME);
-
+            std::cout << "DEVENDER cpuCreated createObjects name " << name << std::endl;
             createObjects(name);
 
             return 0;
