@@ -150,6 +150,19 @@ std::string Error::readFile(int len) const
             phosphor::logging::org::open_power::OCC::Device::
                 ReadFailure::CALLOUT_DEVICE_PATH(file.c_str()));
     }
+
+    // Need to seek to START, else the poll returns immediately telling
+    // there is data to be read
+    r = lseek(fd, 0, SEEK_SET);
+    if (r < 0)
+    {
+        log<level::ERR>("Failure seeking error file to START");
+        elog<ConfigFailure>(
+            phosphor::logging::org::open_power::OCC::Device::
+                ConfigFailure::CALLOUT_ERRNO(errno),
+            phosphor::logging::org::open_power::OCC::Device::
+                ConfigFailure::CALLOUT_DEVICE_PATH(file.c_str()));
+    }
     return std::string(data.get());
 }
 
