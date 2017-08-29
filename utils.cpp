@@ -13,8 +13,8 @@ using InternalFailure = sdbusplus::xyz::openbmc_project::Common::
                             Error::InternalFailure;
 
 std::string getService(sdbusplus::bus::bus& bus,
-                       const std::string& intf,
-                       const std::string& path)
+                       const std::string& path,
+                       const std::string& intf)
 {
     auto mapperCall = bus.new_method_call("xyz.openbmc_project.ObjectMapper",
                                           "/xyz/openbmc_project/object_mapper",
