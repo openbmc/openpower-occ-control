@@ -113,10 +113,6 @@ AC_DEFINE_UNQUOTED([OCC_HWMON_PATH], ["$OCC_HWMON_PATH"], [The OCC hwmon path])
 AC_DEFINE_UNQUOTED([DEV_PATH], ["$DEV_PATH"], [The device path])
 AC_DEFINE_UNQUOTED([I2C_OCC_DEVICE_NAME], ["$I2C_OCC_DEVICE_NAME"], [The device name of i2c occ hwmon])
 
-AC_ARG_VAR(FSI_SCAN_FILE, [The File to write for initiating FSI rescan])
-AS_IF([test "x$FSI_SCAN_FILE" == "x"], [FSI_SCAN_FILE="/sys/devices/platform/gpio-fsi/fsi0/slave@00:00/00:00:00:0a/fsi1/rescan"])
-AC_DEFINE_UNQUOTED([FSI_SCAN_FILE], ["$FSI_SCAN_FILE"], [The File to write for initiating FSI rescan])
-
 AC_ARG_VAR(OCC_DEV_PATH, [The OCC device path in /dev])
 AS_IF([test "x$OCC_DEV_PATH" == "x"], [OCC_DEV_PATH="/dev/occ"])
 AC_DEFINE_UNQUOTED([OCC_DEV_PATH], ["$OCC_DEV_PATH"], [The OCC device path in /dev])
