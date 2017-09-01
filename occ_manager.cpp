@@ -126,12 +126,13 @@ void Manager::initStatusObjects()
     for (auto& name : deviceNames)
     {
         i2c_occ::i2cToDbus(name);
+        name = std::string(OCC_NAME) + '_' + name;
         auto path = fs::path(OCC_CONTROL_ROOT) / name;
         statusObjects.emplace_back(
-                std::make_unique<Status>(
-                    bus,
-                    event,
-                    path.c_str()));
+            std::make_unique<Status>(
+                bus,
+                event,
+                path.c_str()));
     }
 }
 #endif

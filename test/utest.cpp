@@ -11,7 +11,7 @@ class VerifyOccInput : public ::testing::Test
             bus(sdbusplus::bus::new_default()),
             rc(sd_event_default(&event)),
             eventP(event),
-            occStatus(bus, eventP, "/test/path"),
+            occStatus(bus, eventP, "/test/path/occ1"),
             pcap(bus,occStatus)
         {
             EXPECT_GE(rc, 0);
