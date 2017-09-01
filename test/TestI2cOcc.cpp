@@ -144,9 +144,13 @@ TEST(TestI2cDbusNames, dbusToI2c)
 
 TEST(TestI2cDbusNames, getI2cDeviceName)
 {
-    auto path = "/org/open_power/control/4_0050"s;
+    auto path = "/org/open_power/control/occ_4_0050"s;
     auto name = getI2cDeviceName(path);
     EXPECT_EQ(STR_4_0050, name);
+
+    // With invalid occ path, the code shall assert
+    path = "/org/open_power/control/SomeInvalidPath"s;
+    EXPECT_DEATH(getI2cDeviceName(path), "");
 }
 
 } // namespace i2c_occ
