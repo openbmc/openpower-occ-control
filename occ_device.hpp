@@ -6,7 +6,6 @@
 #include "occ_errors.hpp"
 #include "config.h"
 
-
 namespace open_power
 {
 namespace occ
@@ -59,6 +58,19 @@ class Device
         {
            // Unbind the device
            return write(unBindPath, config);
+        }
+
+        /** @brief Returns if device is already bound.
+         *
+         *  On device bind, a soft link by the name $config
+         *  gets created in OCC_HWMON_PATH and gets removed
+         *  on unbind
+         *
+         *  @return true if bound, else false
+         */
+        inline bool bound() const
+        {
+            return fs::exists(OCC_HWMON_PATH + config);
         }
 
         /** @brief Starts to monitor for errors */
