@@ -8,9 +8,11 @@
 #include <phosphor-logging/log.hpp>
 #include <phosphor-logging/elog.hpp>
 #include <powercap.hpp>
+#include <xyz/openbmc_project/Control/Host/server.hpp>
 #include "occ_pass_through.hpp"
 #include "occ_status.hpp"
 #include "occ_finder.hpp"
+#include "utils.hpp"
 #include "config.h"
 #include "i2c_occ.hpp"
 
@@ -19,6 +21,9 @@ namespace open_power
 {
 namespace occ
 {
+
+// IPMID's host control application
+namespace HostControl = sdbusplus::xyz::openbmc_project::Control::server;
 
 /** @class Manager
  *  @brief Builds and manages OCC objects
@@ -42,12 +47,23 @@ struct Manager
         Manager(sdbusplus::bus::bus& bus,
                 EventPtr& event) :
             bus(bus),
-            event(event)
+            event(event),
+            hostControlSignal(
+                     bus,
+                     sdbusRule::type::signal() +
+                     sdbusRule::member("CommandComplete") +
+                     sdbusRule::path("/xyz/openbmc_project/control/host0") +
+                     sdbusRule::interface("xyz.openbmc_project.Control.Host") +
+                     sdbusRule::argN(0, HostControl::convertForMessage(
+                             HostControl::Host::Command::Heartbeat)),
+                     std::bind(std::mem_fn(&Manager::hostControlEvent),
+                            this, std::placeholders::_1))
         {
 #ifdef I2C_OCC
             // I2C OCC status objects are initialized directly
             initStatusObjects();
 #else
+
             // Check if CPU inventory exists already.
             auto occs = open_power::occ::finder::get(bus);
             if (occs.empty())
@@ -74,6 +90,7 @@ struct Manager
             }
 #endif
         }
+
 
     private:
         /** @brief Callback that responds to cpu creation in the inventory -
@@ -128,6 +145,11 @@ struct Manager
                                                         bus,
                                                         *statusObjects.front());
             }
+
+            // Now that the objects are created, send a HeartBeat command to
+            // Host and if that responds with Success, then set the OCC Active
+            // status to "true"
+            sendHeartBeat();
         }
 
         /** @brief Callback handler invoked by Status object when the OccActive
@@ -194,6 +216,24 @@ struct Manager
         /** @brief Number of OCCs that are bound */
         uint8_t activeCount = 0;
 
+        /** @brief Subscribe to host control signal for heartbeat command
+         *
+         *  As part of application start, a heartbeat command would be sent to
+         *  host and if host responds to that with success, then the OCCActive
+         *  is set to `true`. If host responds with a timeout failure, then
+         *  no updates would be done to OCCActive
+         **/
+        sdbusplus::bus::match_t hostControlSignal;
+
+        /** @brief Callback function on host control signals
+         *
+         *  @param[in]  msg - Data associated with subscribed signal
+         */
+        void hostControlEvent(sdbusplus::message::message& msg);
+
+        /** @brief Sends a Heartbeat command to host control command handler */
+        void sendHeartBeat();
+
 #ifdef I2C_OCC
         /** @brief Init Status objects for I2C OCC devices
          *
@@ -219,6 +259,63 @@ struct Manager
         }
 #endif
 };
+
+// Sends heartbeat message to host control command handler
+void Manager::sendHeartBeat()
+{
+    using namespace phosphor::logging;
+    constexpr auto CONTROL_HOST_PATH = "/xyz/openbmc_project/control/host0";
+    constexpr auto CONTROL_HOST_INTF = "xyz.openbmc_project.Control.Host";
+
+    // This will throw exception on failure
+    auto service = getService(bus, CONTROL_HOST_PATH, CONTROL_HOST_INTF);
+
+    auto method = bus.new_method_call(service.c_str(),
+                                      CONTROL_HOST_PATH,
+                                      CONTROL_HOST_INTF,
+                                      "Execute");
+    // Heartbeat control command
+    method.append(convertForMessage(
+                      HostControl::Host::Command::Heartbeat).c_str());
+
+    bus.call_noreply(method);
+    return;
+}
+
+// Handler called by Host control command handler to convey the
+// status of the executed command
+void Manager::hostControlEvent(sdbusplus::message::message& msg)
+{
+    using namespace phosphor::logging;
+
+    std::string cmdCompleted{};
+    std::string cmdStatus{};
+
+    msg.read(cmdCompleted, cmdStatus);
+
+    if(HostControl::Host::convertCommandFromString(cmdCompleted) ==
+            HostControl::Host::Command::Heartbeat)
+    {
+        if(HostControl::Host::convertResultFromString(cmdStatus) ==
+                HostControl::Host::Result::Success)
+        {
+            // Host responded to Heartbeat. Set the OccActive to true
+            for (const auto& status: statusObjects)
+            {
+                status->occActive(true);
+            }
+        }
+        else
+        {
+            // Must be a Timeout. Log an error trace
+            log<level::ERR>("Error invoking Heartbeat command.");
+        }
+    }
+
+    // Not watching for any other command now. Add when something
+    // gets watched later
+    return;
+}
 
 } // namespace occ
 } // namespace open_power
