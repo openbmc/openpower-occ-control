@@ -48,6 +48,7 @@ struct Manager
             // I2C OCC status objects are initialized directly
             initStatusObjects();
 #else
+
             // Check if CPU inventory exists already.
             auto occs = open_power::occ::finder::get(bus);
             if (occs.empty())
@@ -74,6 +75,7 @@ struct Manager
             }
 #endif
         }
+
 
     private:
         /** @brief Callback that responds to cpu creation in the inventory -

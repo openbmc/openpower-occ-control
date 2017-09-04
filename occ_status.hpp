@@ -55,7 +55,7 @@ class Status : public Interface
                EventPtr& event,
                const char* path,
                std::function<void(bool)> callBack = nullptr)
-            : Interface(bus, path),
+            : Interface(bus, path, true),
               bus(bus),
               path(path),
               callBack(callBack),
@@ -78,7 +78,14 @@ class Status : public Interface
                      std::bind(std::mem_fn(&Status::hostControlEvent),
                             this, std::placeholders::_1))
         {
-            // Nothing to do here
+            // Check to see if we have OCC already bound.  If so, just set it
+            if (device.bound())
+            {
+                this->occActive(true);
+            }
+
+            // Announce that we are ready
+            this->emit_object_added();
         }
 
         /** @brief Since we are overriding the setter-occActive but not the
