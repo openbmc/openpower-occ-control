@@ -6,7 +6,6 @@
 #include "occ_errors.hpp"
 #include "config.h"
 
-
 namespace open_power
 {
 namespace occ
@@ -59,6 +58,17 @@ class Device
         {
            // Unbind the device
            return write(unBindPath, config);
+        }
+
+        /** @brief Returns if device is already bound.
+         *
+         *  Presence of error file indicates that it's bound
+         *
+         *  @return true if bound, else false
+         */
+        inline bool bound() const
+        {
+            return error.fileExists();
         }
 
         /** @brief Starts to monitor for errors */

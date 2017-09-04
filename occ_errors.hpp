@@ -54,6 +54,12 @@ class Error
         /** @brief Removes error watch */
         void removeWatch();
 
+        /** @brief Returns if the error file exists */
+        inline bool fileExists() const
+        {
+            return fs::exists(file);
+        }
+
     private:
         /** @brief sd_event wrapped in unique_ptr */
         EventPtr& event;
