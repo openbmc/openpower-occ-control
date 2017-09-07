@@ -17,6 +17,7 @@ openpower_occ_control_SOURCES = \
 
 libocc_control_la_SOURCES = \
 	occ_pass_through.cpp \
+	occ_manager.cpp \
 	occ_status.cpp \
 	occ_device.cpp \
 	occ_errors.cpp \
