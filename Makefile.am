@@ -3,6 +3,7 @@ noinst_HEADERS = \
 	occ_pass_through.hpp \
 	occ_status.hpp \
 	powercap.hpp \
+	occ_perfmode.hpp \
 	occ_errors.hpp \
 	occ_events.hpp \
 	occ_finder.hpp \
@@ -21,6 +22,7 @@ libocc_control_la_SOURCES = \
 	occ_device.cpp \
 	occ_errors.cpp \
 	powercap.cpp \
+	occ_perfmode.cpp \
 	org/open_power/OCC/Device/error.cpp \
 	occ_finder.cpp \
 	i2c_occ.cpp \
