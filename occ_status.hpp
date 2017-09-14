@@ -70,7 +70,9 @@ class Status : public Interface
                      name + std::to_string(instance + 1),
 #endif
                      manager,
-                     std::bind(&Status::deviceErrorHandler, this)),
+                     *this,
+                     std::bind(std::mem_fn(&Status::deviceErrorHandler), this,
+                               std::placeholders::_1)),
               hostControlSignal(
                      bus,
                      sdbusRule::type::signal() +
@@ -151,8 +153,11 @@ class Status : public Interface
          **/
         sdbusplus::bus::match_t hostControlSignal;
 
-        /** @brief Callback handler when device errors are detected */
-        void deviceErrorHandler();
+        /** @brief Callback handler when device errors are detected
+         *
+         *  @param[in]  error - True if an error is reported, false otherwise
+         */
+        void deviceErrorHandler(bool error);
 
         /** @brief Callback function on host control signals
          *
