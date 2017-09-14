@@ -117,18 +117,10 @@ void Error::analyzeEvent()
     // A non-zero data indicates an error condition
     // Let the caller take appropriate action on this
     auto data = readFile(len);
-    log<level::INFO>("Error file updated",
-                     entry("ERROR=%s", data.c_str()));
-    if (data.empty() ||
-            data.front() == NO_ERROR)
-    {
-        return;
-    }
-
-    // This must be an error
+    bool error = !(data.empty() || data.front() == NO_ERROR);
     if (callBack)
     {
-        callBack();
+        callBack(error);
     }
     return;
 }

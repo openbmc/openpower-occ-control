@@ -32,7 +32,7 @@ class Error
          */
         Error(EventPtr& event,
               const fs::path& file,
-              std::function<void()> callBack = nullptr) :
+              std::function<void(bool)> callBack = nullptr) :
             event(event),
             file(fs::path(DEV_PATH) / file),
             callBack(callBack)
@@ -97,7 +97,7 @@ class Error
         const fs::path file;
 
         /** @brief Optional function to call on error scenario */
-        std::function<void()> callBack;
+        std::function<void(bool)> callBack;
 
         /** @brief Reads file data
          *

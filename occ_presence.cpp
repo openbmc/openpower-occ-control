@@ -48,7 +48,7 @@ void Presence::analyzeEvent()
                          entry("OCC_OCCS=%d", occsPresent)));
         if (callBack)
         {
-            callBack();
+            callBack(true);
         }
     }
 }
