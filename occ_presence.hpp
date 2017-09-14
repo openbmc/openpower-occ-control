@@ -30,7 +30,7 @@ class Presence : public Error
         Presence(EventPtr& event,
               const fs::path& file,
               const Manager& mgr,
-              std::function<void()> callBack = nullptr) :
+              std::function<void(bool)> callBack = nullptr) :
             Error(event, file, callBack),
             manager(mgr)
         {

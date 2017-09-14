@@ -1,5 +1,6 @@
 #include <iostream>
 #include "occ_device.hpp"
+#include "occ_status.hpp"
 
 namespace open_power
 {
@@ -23,6 +24,21 @@ bool Device::master() const
     file >> master;
     file.close();
     return (master != 0);
+}
+
+void Device::throttleProcTempCallback(bool error)
+{
+        statusObject.throttleProcTemp(error);
+}
+
+void Device::throttleProcPowerCallback(bool error)
+{
+        statusObject.throttleProcPower(error);
+}
+
+void Device::throttleMemTempCallback(bool error)
+{
+        statusObject.throttleMemTemp(error);
 }
 
 } // namespace occ
