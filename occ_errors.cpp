@@ -118,16 +118,10 @@ void Error::analyzeEvent()
     // A non-zero data indicates an error condition
     // Let the caller take appropriate action on this
     auto data = readFile(len);
-    if (data.empty() ||
-            data.front() == NO_ERROR)
-    {
-        return;
-    }
-
-    // This must be an error
+    bool error = !(data.empty() || data.front() == NO_ERROR);
     if (callBack)
     {
-        callBack();
+        callBack(error);
     }
     return;
 }

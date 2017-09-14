@@ -11,6 +11,7 @@ namespace open_power
 namespace occ
 {
 
+class Status;
 namespace fs = std::experimental::filesystem;
 
 /** @class Device
@@ -34,14 +35,25 @@ class Device
          */
         Device(EventPtr& event,
                const std::string& name,
-               std::function<void()> callBack = nullptr) :
+               Status *status,
+               std::function<void(bool)> callBack = nullptr) :
 #ifdef I2C_OCC
             config(name),
 #else
             config(name + '-' + "dev0"),
 #endif
             errorFile(fs::path(config) / "occ_error"),
-            error(event, errorFile, callBack)
+            statusObject(status),
+            error(event, errorFile, callBack),
+            throttleTemp(event, fs::path(config) / "occ_dvfs_ot",
+                         std::bind(std::mem_fn(&Device::throttleTempCallback),
+                                   this, std::placeholders::_1)),
+            throttlePower(event, fs::path(config) / "occ_dvfs_power",
+                          std::bind(std::mem_fn(&Device::throttlePowerCallback),
+                                    this, std::placeholders::_1)),
+            throttleMem(event, fs::path(config) / "occ_mem_throttle",
+                        std::bind(std::mem_fn(&Device::throttleMemCallback),
+                                  this, std::placeholders::_1))
         {
             // Nothing to do here
         }
@@ -76,13 +88,19 @@ class Device
         /** @brief Starts to monitor for errors */
         inline void addErrorWatch()
         {
-            return error.addWatch();
+            throttleTemp.addWatch();
+            throttlePower.addWatch();
+            throttleMem.addWatch();
+            error.addWatch();
         }
 
         /** @brief stops monitoring for errors */
         inline void removeErrorWatch()
         {
-           return error.removeWatch();
+            error.removeWatch();
+            throttleMem.removeWatch();
+            throttlePower.removeWatch();
+            throttleTemp.removeWatch();
         }
 
     private:
@@ -103,8 +121,16 @@ class Device
          */
         static fs::path unBindPath;
 
+        /**  Store the associated Status instance */
+        const std::unique_ptr<Status> statusObject;
+
         /** Abstraction of error monitoring */
         Error error;
+
+        /** Error instances for watching for throttling events */
+        Error throttleTemp;
+        Error throttlePower;
+        Error throttleMem;
 
         /** @brief file writer to achieve bind and unbind
          *
@@ -120,6 +146,24 @@ class Device
             file.close();
             return;
         }
+
+        /** @brief callback for the proc temp throttle event
+         *
+         * @param[in] error - True if an error is reported, false otherwise
+         */
+        void throttleTempCallback(bool error);
+
+        /** @brief callback for the proc power throttle event
+         *
+         * @param[in] error - True if an error is reported, false otherwise
+         */
+        void throttlePowerCallback(bool error);
+
+        /** @brief callback for the proc temp throttle event
+         *
+         * @param[in] error - True if an error is reported, false otherwise
+         */
+        void throttleMemCallback(bool error);
 };
 
 } // namespace occ
