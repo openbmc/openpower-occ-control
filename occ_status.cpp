@@ -42,13 +42,17 @@ bool Status::occActive(bool value)
 }
 
 // Callback handler when a device error is reported.
-void Status::deviceErrorHandler()
+void Status::deviceErrorHandler(bool error)
 {
-    // This would deem OCC inactive
-    this->occActive(false);
+    // Make sure we have an error
+    if (error)
+    {
+        // This would deem OCC inactive
+        this->occActive(false);
 
-    // Reset the OCC
-    this->resetOCC();
+        // Reset the OCC
+        this->resetOCC();
+    }
 }
 
 // Sends message to host control command handler to reset OCC
