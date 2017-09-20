@@ -6,14 +6,19 @@
 #include <unistd.h>
 #include <phosphor-logging/log.hpp>
 #include <phosphor-logging/elog.hpp>
-#include <org/open_power/OCC/Device/error.hpp>
+#include <xyz/openbmc_project/Common/Callout/error.hpp>
+#include <phosphor-logging/elog-errors.hpp>
 #include "occ_pass_through.hpp"
-#include "elog-errors.hpp"
 #include "config.h"
 namespace open_power
 {
 namespace occ
 {
+
+// Common Device error
+using DeviceError = sdbusplus::xyz::openbmc_project::
+                            Common::Callout::Error::Device;
+using namespace phosphor::logging;
 
 PassThrough::PassThrough(
     sdbusplus::bus::bus& bus,
@@ -32,18 +37,16 @@ PassThrough::PassThrough(
 
 void PassThrough::openDevice()
 {
-    using namespace phosphor::logging;
-    using namespace sdbusplus::org::open_power::OCC::Device::Error;
-
     fd = open(devicePath.c_str(), O_RDWR | O_NONBLOCK);
     if (fd < 0)
     {
-        // This would log and terminate since its not handled.
-        elog<OpenFailure>(
-            phosphor::logging::org::open_power::OCC::Device::
-                OpenFailure::CALLOUT_ERRNO(errno),
-            phosphor::logging::org::open_power::OCC::Device::
-                OpenFailure::CALLOUT_DEVICE_PATH(devicePath.c_str()));
+
+        log<level::ERR>("Opening passthrough device failed");
+        elog<DeviceError>(
+            phosphor::logging::xyz::openbmc_project::Common::
+                Callout::Device::CALLOUT_ERRNO(errno),
+            phosphor::logging::xyz::openbmc_project::Common::
+                Callout::Device::CALLOUT_DEVICE_PATH(devicePath.c_str()));
     }
     return;
 }
@@ -58,9 +61,6 @@ void PassThrough::closeDevice()
 
 std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
 {
-    using namespace phosphor::logging;
-    using namespace sdbusplus::org::open_power::OCC::Device::Error;
-
     std::vector<int32_t> response {};
 
     // OCC only understands [bytes] so need array of bytes. Doing this
@@ -76,12 +76,12 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
     auto rc = write(fd, cmdInBytes.data(), size);
     if (rc < 0 || (rc != size))
     {
-        // This would log and terminate since its not handled.
-        elog<WriteFailure>(
-            phosphor::logging::org::open_power::OCC::Device::
-                WriteFailure::CALLOUT_ERRNO(errno),
-            phosphor::logging::org::open_power::OCC::Device::
-                WriteFailure::CALLOUT_DEVICE_PATH(devicePath.c_str()));
+        log<level::ERR>("Writing to OCC failed");
+        elog<DeviceError>(
+            phosphor::logging::xyz::openbmc_project::Common::
+                Callout::Device::CALLOUT_ERRNO(errno),
+            phosphor::logging::xyz::openbmc_project::Common::
+                Callout::Device::CALLOUT_DEVICE_PATH(devicePath.c_str()));
     }
 
     // Now read the response. This would be the content of occ-sram
@@ -106,12 +106,12 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
         }
         else
         {
-            // This would log and terminate since its not handled.
-            elog<ReadFailure>(
-                phosphor::logging::org::open_power::OCC::Device::
-                    ReadFailure::CALLOUT_ERRNO(errno),
-                phosphor::logging::org::open_power::OCC::Device::
-                    ReadFailure::CALLOUT_DEVICE_PATH(devicePath.c_str()));
+            log<level::ERR>("Reading from OCC failed");
+            elog<DeviceError>(
+                phosphor::logging::xyz::openbmc_project::Common::
+                    Callout::Device::CALLOUT_ERRNO(errno),
+                phosphor::logging::xyz::openbmc_project::Common::
+                    Callout::Device::CALLOUT_DEVICE_PATH(devicePath.c_str()));
         }
     }
 
