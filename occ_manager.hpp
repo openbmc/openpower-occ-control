@@ -23,8 +23,8 @@ struct Manager
         Manager() = delete;
         Manager(const Manager&) = delete;
         Manager& operator=(const Manager&) = delete;
-        Manager(Manager&&) = default;
-        Manager& operator=(Manager&&) = default;
+        Manager(Manager&&) = delete;
+        Manager& operator=(Manager&&) = delete;
         ~Manager() = default;
 
         /** @brief Adds OCC pass-through and status objects on the bus
@@ -44,6 +44,11 @@ struct Manager
 #else
             findAndCreateObjects();
 #endif
+        }
+
+        inline auto getNumOCCs() const
+        {
+            return activeCount;
         }
 
     private:
