@@ -46,6 +46,11 @@ struct Manager
 #endif
         }
 
+        inline auto getNumOCCs() const
+        {
+            return activeCount;
+        }
+
     private:
         /** @brief Checks if the CPU inventory is present and if so, creates
          *         the occ D-Bus objects. Else, registers a handler to be
