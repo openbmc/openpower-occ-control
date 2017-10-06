@@ -4,6 +4,7 @@
 #include <experimental/filesystem>
 #include "occ_events.hpp"
 #include "occ_errors.hpp"
+#include "occ_presence.hpp"
 #include "config.h"
 
 namespace open_power
@@ -11,6 +12,7 @@ namespace open_power
 namespace occ
 {
 
+class Manager;
 namespace fs = std::experimental::filesystem;
 
 /** @class Device
@@ -30,10 +32,12 @@ class Device
          *
          *  @param[in] event    - Unique ptr reference to sd_event
          *  @param[in] name     - OCC instance name
+         *  @param[in] manager  - OCC manager instance
          *  @param[in] callback - Optional callback on errors
          */
         Device(EventPtr& event,
                const std::string& name,
+               Manager *manager = nullptr,
                std::function<void()> callBack = nullptr) :
 #ifdef I2C_OCC
             config(name),
@@ -41,7 +45,9 @@ class Device
             config(name + '-' + "dev0"),
 #endif
             errorFile(fs::path(config) / "occ_error"),
-            error(event, errorFile, callBack)
+            error(event, errorFile, callBack),
+            presence(event, fs::path(config) / "occs_present", manager,
+                     callBack)
         {
             // Nothing to do here
         }
@@ -76,13 +82,20 @@ class Device
         /** @brief Starts to monitor for errors */
         inline void addErrorWatch()
         {
+            if (master())
+            {
+                presence.addWatch();
+            }
+
             return error.addWatch();
         }
 
         /** @brief stops monitoring for errors */
         inline void removeErrorWatch()
         {
-           return error.removeWatch();
+            // we can always safely remove watch even if we don't add it
+            presence.removeWatch();
+            return error.removeWatch();
         }
 
     private:
@@ -106,6 +119,9 @@ class Device
         /** Abstraction of error monitoring */
         Error error;
 
+        /** Abstraction of OCC presence monitoring */
+        Presence presence;
+
         /** @brief file writer to achieve bind and unbind
          *
          *  @param[in] filename - Name of file to be written
@@ -120,6 +136,9 @@ class Device
             file.close();
             return;
         }
+
+        /** @brief Returns if device represents the master OCC */
+        bool master() const;
 };
 
 } // namespace occ

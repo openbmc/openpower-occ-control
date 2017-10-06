@@ -14,6 +14,7 @@ namespace open_power
 namespace occ
 {
 
+class Manager;
 namespace Base = sdbusplus::org::open_power::OCC::server;
 using Interface = sdbusplus::server::object::object<Base::Status>;
 
@@ -48,12 +49,14 @@ class Status : public Interface
          *  @param[in] bus      - DBus bus to attach to
          *  @param[in] event    - sd_event unique pointer reference
          *  @param[in] path     - DBus object path
+         *  @param[in] manager  - OCC manager instance
          *  @param[in] callBack - Callback handler to invoke during
          *                        property change
          */
         Status(sdbusplus::bus::bus& bus,
                EventPtr& event,
                const char* path,
+               Manager *manager = nullptr,
                std::function<void(bool)> callBack = nullptr)
             : Interface(bus, path, true),
               bus(bus),
@@ -66,6 +69,7 @@ class Status : public Interface
 #else
                      name + std::to_string(instance + 1),
 #endif
+                     manager,
                      std::bind(&Status::deviceErrorHandler, this)),
               hostControlSignal(
                      bus,
