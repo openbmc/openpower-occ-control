@@ -6,6 +6,7 @@ noinst_HEADERS = \
 	occ_errors.hpp \
 	occ_events.hpp \
 	occ_finder.hpp \
+	occ_presence.hpp \
 	utils.hpp
 
 noinst_LTLIBRARIES = libocc_control.la
@@ -21,6 +22,7 @@ libocc_control_la_SOURCES = \
 	occ_status.cpp \
 	occ_device.cpp \
 	occ_errors.cpp \
+	occ_presence.cpp \
 	powercap.cpp \
 	org/open_power/OCC/Device/error.cpp \
 	occ_finder.cpp \

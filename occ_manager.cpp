@@ -72,6 +72,7 @@ void Manager::createObjects(const std::string& occ)
                 bus,
                 event,
                 path.c_str(),
+                *this,
                 std::bind(std::mem_fn(&Manager::statusCallBack),
                     this, std::placeholders::_1)));
 
@@ -133,7 +134,8 @@ void Manager::initStatusObjects()
                 std::make_unique<Status>(
                     bus,
                     event,
-                    path.c_str()));
+                    path.c_str(),
+                    *this));
     }
 }
 #endif

@@ -93,7 +93,6 @@ void Error::removeWatch()
 int Error::processEvents(sd_event_source* es, int fd,
                          uint32_t revents, void* userData)
 {
-    log<level::INFO>("Error file updated");
     auto error = static_cast<Error*>(userData);
 
     error->analyzeEvent();
@@ -118,6 +117,7 @@ void Error::analyzeEvent()
     // A non-zero data indicates an error condition
     // Let the caller take appropriate action on this
     auto data = readFile(len);
+    log<level::INFO>("Error file updated", entry("ERROR=%s", data.c_str()));
     if (data.empty() ||
             data.front() == NO_ERROR)
     {
