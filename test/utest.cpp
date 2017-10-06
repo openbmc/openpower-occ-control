@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <occ_events.hpp>
+#include <occ_manager.hpp>
 #include "powercap.hpp"
 
 using namespace open_power::occ;
@@ -11,7 +12,8 @@ class VerifyOccInput : public ::testing::Test
             bus(sdbusplus::bus::new_default()),
             rc(sd_event_default(&event)),
             eventP(event),
-            occStatus(bus, eventP, "/test/path/occ1"),
+            manager(bus, eventP),
+            occStatus(bus, eventP, "/test/path/occ1", manager),
             pcap(bus,occStatus)
         {
             EXPECT_GE(rc, 0);
@@ -25,6 +27,7 @@ class VerifyOccInput : public ::testing::Test
         int rc;
         open_power::occ::EventPtr eventP;
 
+        Manager manager;
         Status occStatus;
         powercap::PowerCap pcap;
 };

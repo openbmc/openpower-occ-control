@@ -61,15 +61,6 @@ class Error
         /** @brief event source wrapped in unique_ptr */
         EventSourcePtr eventSource;
 
-        /** Error file */
-        const fs::path file;
-
-        /** @brief Optional function to call on error scenario */
-        std::function<void()> callBack;
-
-        /** @brief File descriptor to watch for errors */
-        int fd = -1;
-
         /** @brief Current state of error watching */
         bool watching = false;
 
@@ -78,13 +69,6 @@ class Error
 
         /** @brief Opens the file and populates fd */
         void openFile();
-
-        /** @brief Reads file data
-         *
-         *  @return data read. Since its a /sysfs entry,
-         *          it would be a string
-         */
-        std::string readFile(int) const;
 
         /** @brief Callback handler when the FD has some activity on it
          *
@@ -103,7 +87,24 @@ class Error
          *         and makes a callback to error handler if the
          *         content denotes an error condition
          */
-        void analyzeEvent();
+        virtual void analyzeEvent();
+
+    protected:
+        /** @brief File descriptor to watch for errors */
+        int fd = -1;
+
+        /** Error file */
+        const fs::path file;
+
+        /** @brief Optional function to call on error scenario */
+        std::function<void()> callBack;
+
+        /** @brief Reads file data
+         *
+         *  @return data read. Since its a /sysfs entry,
+         *          it would be a string
+         */
+        std::string readFile(int) const;
 };
 
 } // namespace occ
