@@ -114,12 +114,7 @@ std::vector<std::string> get(sdbusplus::bus::bus& bus)
                                "Present",
                                true));
 
-            match.emplace_back(std::make_tuple(
-                               "xyz.openbmc_project.State.Decorator.OperationalStatus",
-                               "Functional",
-                               true));
-
-            // Select only if the CPU is marked 'Present' and 'Functional'
+            // Select only if the CPU is marked 'Present'.
             // Local variable to make it readable
             auto path = entry->first;
             auto service = entry->second.begin()->first;
