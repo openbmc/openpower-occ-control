@@ -100,7 +100,7 @@ void Status::hostControlEvent(sdbusplus::message::message& msg)
             // Must be a Timeout. Log an Erorr trace
             log<level::ERR>("Error resetting the OCC.",
                     entry("PATH=%s", path.c_str()),
-                    entry("SensorID=0x%X",sensorMap.at(instance)));
+                    entry("SENSORID=0x%X",sensorMap.at(instance)));
         }
     }
     return;
