@@ -38,6 +38,17 @@ bool Status::occActive(bool value)
             device.unBind();
         }
     }
+    else if (value && !device.bound())
+    {
+        // In it's constructor, Status checks Device::bound() to see if OCC is
+        // active or not.
+        // Device::bound() checks for occX-dev0 directory.
+        // We will lose occX-dev0 directories during FSI rescan.
+        // So, if we start this application (and construct Status), and then
+        // later do FSI rescan, we will end up with occActive = true and device
+        // NOT bound. Lets correct that situation here.
+        device.bind();
+    }
     return Base::Status::occActive(value);
 }
 
