@@ -38,6 +38,11 @@ bool Status::occActive(bool value)
             device.unBind();
         }
     }
+    else if (value && !device.bound())
+    {
+        // Device can get out of sync with occActive through fsi rescans, etc
+        device.bind();
+    }
     return Base::Status::occActive(value);
 }
 
