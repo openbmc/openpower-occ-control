@@ -38,6 +38,27 @@ bool Status::occActive(bool value)
             device.unBind();
         }
     }
+    else if (value && !device.bound())
+    {
+        // Existing error watch is on a dead file descriptor.
+        // TODO: openbmc/openbmc#2285
+        // removeErrorWatch();
+
+        /*
+         * In it's constructor, Status checks Device::bound() to see if OCC is
+         * active or not.
+         * Device::bound() checks for occX-dev0 directory.
+         * We will lose occX-dev0 directories during FSI rescan.
+         * So, if we start this application (and construct Status), and then
+         * later do FSI rescan, we will end up with occActive = true and device
+         * NOT bound. Lets correct that situation here.
+         */
+        device.bind();
+
+	// Add error watch again
+	// TODO: openbmc/openbmc#2285
+        // addErrorWatch();
+    }
     return Base::Status::occActive(value);
 }
 
@@ -100,7 +121,7 @@ void Status::hostControlEvent(sdbusplus::message::message& msg)
             // Must be a Timeout. Log an Erorr trace
             log<level::ERR>("Error resetting the OCC.",
                     entry("PATH=%s", path.c_str()),
-                    entry("SENSORID=0x%X",sensorMap.at(instance)));
+                    entry("SensorID=0x%X",sensorMap.at(instance)));
         }
     }
     return;
