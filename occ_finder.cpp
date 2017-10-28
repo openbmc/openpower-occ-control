@@ -1,3 +1,4 @@
+#include <cstring>
 #include <algorithm>
 #include <iterator>
 #include <experimental/filesystem>
@@ -75,8 +76,7 @@ std::vector<std::string> get(sdbusplus::bus::bus& bus)
     Path path = CPU_SUBPATH;
     Interfaces interfaces
     {
-        "xyz.openbmc_project.Inventory.Item",
-        "xyz.openbmc_project.State.Decorator.OperationalStatus"
+        "xyz.openbmc_project.Inventory.Item.Cpu",
     };
 
     mapper.append(path);
@@ -100,29 +100,24 @@ std::vector<std::string> get(sdbusplus::bus::bus& bus)
     }
 
     std::vector<std::string> occs;
-    for (auto count = 0; count < MAX_CPUS; ++count)
+    for (const auto& iter: response)
     {
-        fs::path p(path);
-        p /= std::string(CPU_NAME) + toChar(count);
+        Criteria match{};
+        match.emplace_back(std::make_tuple(
+                           "xyz.openbmc_project.Inventory.Item",
+                           "Present",
+                           true));
 
-        auto entry = response.find(p.string());
-        if (response.end() != entry)
+        // Select only if the CPU is marked 'Present'.
+        // Local variable to make it readable
+        auto path = iter.first;
+        auto service = iter.second.begin()->first;
+        if (matchCriteria(bus, path, service, match))
         {
-            Criteria match{};
-            match.emplace_back(std::make_tuple(
-                               "xyz.openbmc_project.Inventory.Item",
-                               "Present",
-                               true));
-
-            // Select only if the CPU is marked 'Present'.
-            // Local variable to make it readable
-            auto path = entry->first;
-            auto service = entry->second.begin()->first;
-            if (matchCriteria(bus, path, service, match))
-            {
-                occs.emplace_back(std::string(OCC_NAME) +
-                                  toChar(count));
-            }
+            auto index = path.find(CPU_NAME);
+            std::string occ(OCC_NAME);
+            occ.append(path.substr(index + std::strlen(CPU_NAME)));
+            occs.emplace_back(occ);
         }
     }
 
