@@ -13,19 +13,22 @@ namespace open_power
 namespace occ
 {
 
+constexpr auto invRootPath  = "/xyz/openbmc_project/inventory";
+constexpr auto cpuIntf = "xyz.openbmc_project.Inventory.Item.Cpu";
+using DbusValue = sdbusplus::message::variant<bool, int64_t, std::string>;
+using DbusProperty = std::string;
+using DbusPropertyMap = std::map<DbusProperty, DbusValue>;
+using DbusInterface = std::string;
+using DbusInterfaceMap = std::map<DbusInterface, DbusPropertyMap>;
+
 void Manager::findAndCreateObjects()
 {
     // Need to watch for CPU inventory creation.
-    for (auto id = 0; id < MAX_CPUS; ++id)
-    {
-        auto path = std::string(CPU_PATH) + std::to_string(id);
-        cpuMatches.emplace_back(
-                bus,
-                sdbusRule::interfacesAdded() +
-                sdbusRule::argNpath(0, path),
-                std::bind(std::mem_fn(&Manager::cpuCreated),
+    cpuMatch = std::make_unique<sdbusplus::bus::match_t>(
+                    bus,
+                    sdbusRule::interfacesAdded(invRootPath),
+                    std::bind(std::mem_fn(&Manager::cpuCreated),
                     this, std::placeholders::_1));
-    }
 
     // Check if CPU inventory exists already.
     auto occs = open_power::occ::finder::get(bus);
@@ -41,18 +44,23 @@ void Manager::findAndCreateObjects()
 
 int Manager::cpuCreated(sdbusplus::message::message& msg)
 {
+    //Interface data is of the fromat a{sa{sv}}
     namespace fs = std::experimental::filesystem;
 
-    sdbusplus::message::object_path o;
-    msg.read(o);
-    fs::path cpuPath(std::string(std::move(o)));
+    sdbusplus::message::object_path objectPath;
+    msg.read(objectPath);
 
-    auto name = cpuPath.filename().string();
-    auto index = name.find(CPU_NAME);
-    name.replace(index, std::strlen(CPU_NAME), OCC_NAME);
-
-    createObjects(name);
-
+    DbusInterfaceMap intfs;
+    msg.read(intfs);
+    const auto& it = intfs.find(cpuIntf);
+    if (it != intfs.end())
+    {
+        fs::path cpuPath((std::string(std::move(objectPath))));
+        auto name = cpuPath.filename().string();
+        auto index = name.find(CPU_NAME);
+        name.replace(index, std::strlen(CPU_NAME), OCC_NAME);
+        createObjects(name);
+    }
     return 0;
 }
 
