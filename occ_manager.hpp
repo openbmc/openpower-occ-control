@@ -97,8 +97,8 @@ struct Manager
         /** @brief Power cap monitor and occ notification object */
         std::unique_ptr<open_power::occ::powercap::PowerCap> pcap;
 
-        /** @brief sbdbusplus match objects */
-        std::vector<sdbusplus::bus::match_t> cpuMatches;
+        /** @brief sbdbusplus match object */
+        std::unique_ptr<sdbusplus::bus::match_t> cpuMatch;
 
         /** @brief Number of OCCs that are bound */
         uint8_t activeCount = 0;
