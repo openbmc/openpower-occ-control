@@ -18,21 +18,20 @@ bool Status::occActive(bool value)
             device.bind();
 
             // Call into Manager to let know that we have bound
-            // TODO: openbmc/openbmc#2285
-           /* if (this->callBack)
+            if (this->callBack)
             {
                 this->callBack(value);
-            }*/
+            }
         }
         else
         {
             // Call into Manager to let know that we will unbind.
             // Need to do this before doing un-bind since it will
             // result in slave error if Master is un-bound
-            /*if (this->callBack)
+            if (this->callBack)
             {
                 this->callBack(value);
-            }*/
+            }
 
             // Do the unbind.
             device.unBind();
