@@ -98,23 +98,6 @@ void Manager::statusCallBack(bool status)
     }
 
     activeCount += status ? 1 : -1;
-
-    // If all the OCCs are bound, then start error detection
-    if (activeCount == statusObjects.size())
-    {
-        for (const auto& occ: statusObjects)
-        {
-            occ->addErrorWatch();
-        }
-    }
-    else if (!status)
-    {
-        // If some OCCs are not bound yet, those will be a NO-OP
-        for (const auto& occ: statusObjects)
-        {
-            occ->removeErrorWatch();
-        }
-    }
 }
 
 #ifdef I2C_OCC

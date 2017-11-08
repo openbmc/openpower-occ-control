@@ -17,22 +17,27 @@ bool Status::occActive(bool value)
             // Bind the device
             device.bind();
 
+            // Start watching for errors
+            addErrorWatch();
+
             // Call into Manager to let know that we have bound
-            // TODO: openbmc/openbmc#2285
-           /* if (this->callBack)
+            if (this->callBack)
             {
                 this->callBack(value);
-            }*/
+            }
         }
         else
         {
             // Call into Manager to let know that we will unbind.
             // Need to do this before doing un-bind since it will
             // result in slave error if Master is un-bound
-            /*if (this->callBack)
+            if (this->callBack)
             {
                 this->callBack(value);
-            }*/
+            }
+
+            // Stop watching for errors
+            removeErrorWatch();
 
             // Do the unbind.
             device.unBind();
@@ -41,8 +46,7 @@ bool Status::occActive(bool value)
     else if (value && !device.bound())
     {
         // Existing error watch is on a dead file descriptor.
-        // TODO: openbmc/openbmc#2285
-        // removeErrorWatch();
+        removeErrorWatch();
 
         /*
          * In it's constructor, Status checks Device::bound() to see if OCC is
@@ -56,8 +60,7 @@ bool Status::occActive(bool value)
         device.bind();
 
         // Add error watch again
-        // TODO: openbmc/openbmc#2285
-        // addErrorWatch();
+        addErrorWatch();
     }
     return Base::Status::occActive(value);
 }
