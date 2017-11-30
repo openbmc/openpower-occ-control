@@ -35,8 +35,10 @@ public:
      * @param[in] occStatus - The occ status object
      */
     PowerCap(sdbusplus::bus::bus &bus,
-             Status &occStatus) :
+             Status &occStatus,
+             const std::string& occMasterName = OCC_MASTER_NAME) :
         bus(bus),
+        occMasterName(occMasterName),
         occStatus(occStatus),
         pcapMatch(
                 bus,
@@ -99,6 +101,9 @@ private:
 
     /** @brief Reference to sdbus **/
     sdbusplus::bus::bus& bus;
+
+    /** @brief The master occ name */
+    std::string occMasterName;
 
     /* @brief OCC Status object */
     Status &occStatus;

@@ -12,6 +12,8 @@ namespace i2c_occ
 
 namespace fs = std::experimental::filesystem;
 
+// The occ_master sysfs file
+constexpr auto OCC_MASTER_FILE = "occ_master";
 // The device name's length, e.g. "p8-occ-hwmon"
 constexpr auto DEVICE_NAME_LENGTH = 12;
 // The occ name's length, e.g. "occ"
@@ -20,6 +22,13 @@ constexpr auto OCC_NAME_LENGTH = 3;
 // static assert to make sure the i2c occ device name is expected
 static_assert(sizeof(I2C_OCC_DEVICE_NAME) -1 == DEVICE_NAME_LENGTH);
 static_assert(sizeof(OCC_NAME) -1 == OCC_NAME_LENGTH);
+
+static bool isMasterOcc(auto& p)
+{
+    auto f = p / OCC_MASTER_FILE;
+    auto str = getFileContent(f);
+    return !str.empty() && str[0] == '1';
+}
 
 std::string getFileContent(const fs::path& f)
 {
@@ -46,10 +55,22 @@ std::vector<std::string> getOccHwmonDevices(const char* path)
             auto str = getFileContent(f);
             if (str == I2C_OCC_DEVICE_NAME)
             {
-                result.emplace_back(p.path().filename());
+                if (isMasterOcc(p))
+                {
+                    // Insert master occ at the beginning
+                    result.emplace(result.begin(), p.path().filename());
+                }
+                else
+                {
+                    result.emplace_back(p.path().filename());
+                }
             }
         }
-        std::sort(result.begin(), result.end());
+    }
+    if (!result.empty())
+    {
+        // Sort the occ devices except for master
+        std::sort(result.begin() + 1, result.end());
     }
     return result;
 }

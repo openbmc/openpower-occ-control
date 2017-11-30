@@ -118,7 +118,7 @@ void PowerCap::writeOcc(uint32_t pcapValue)
     // Create path out to master occ hwmon entry
     std::unique_ptr<fs::path> fileName =
             std::make_unique<fs::path>(OCC_HWMON_PATH);
-    *fileName /= OCC_MASTER_NAME;
+    *fileName /= occMasterName;
     *fileName /= "/hwmon/";
 
     // Need to get the hwmonXX directory name, there better only be 1 dir
