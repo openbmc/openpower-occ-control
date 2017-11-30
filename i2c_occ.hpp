@@ -31,6 +31,7 @@ std::string getFileContent(const fs::path& f);
  * @param[in] path - The path to search
  *
  * @return A vector of strings containing the occ hwmon device path
+           where the first device is master occ
  */
 std::vector<std::string> getOccHwmonDevices(const char* path);
 

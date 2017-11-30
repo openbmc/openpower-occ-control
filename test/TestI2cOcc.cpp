@@ -28,6 +28,7 @@ const auto I2C_5_0051 = BASE + STR_5_0051;
 const auto I2C_6_0056 = BASE + STR_6_0056;
 const auto I2C_7_0057 = BASE + STR_7_0057;
 const auto NAME = "/name";
+const auto OCC_MASTER_NAME = "/occ_master";
 const auto P8_OCC_HWMON = "p8-occ-hwmon";
 
 const auto OTHER_STRING = "SomeOtherString123"s;
@@ -69,12 +70,24 @@ public:
         ofs << "p8-occ-hwmon\n"; // 4-0050/name is p8-occ-hwmon
         ofs.close();
 
+        ofs.open(I2C_4_0050 + OCC_MASTER_NAME);
+        ofs << "0\n"; // Make 4-0050 the slave occ
+        ofs.close();
+
         ofs.open(I2C_5_0051 + NAME);
         ofs << "p8-occ-hwmon\n"; // 5-0051/name is p8-occ-hwmon
         ofs.close();
 
+        ofs.open(I2C_5_0051 + OCC_MASTER_NAME);
+        ofs << "0\n"; // Make 5-0051 the slave occ
+        ofs.close();
+
         ofs.open(I2C_6_0056 + NAME);
         ofs << "p8-occ-hwmon\n"; // 6-0056/name is p8-occ-hwmon
+        ofs.close();
+
+        ofs.open(I2C_6_0056 + OCC_MASTER_NAME);
+        ofs << "1\n"; // Make 6-0056 the master occ
         ofs.close();
 
         ofs.open(I2C_7_0057 + NAME);
@@ -94,9 +107,11 @@ TEST_F(TestUtilGetOccHwmonDevices, getDevicesOK)
     // With test env, it shall find all the 4 p8-occ-hwmon devices
     auto ret = getOccHwmonDevices(BASE.c_str());
     EXPECT_EQ(4u, ret.size());
-    EXPECT_EQ(STR_4_0050, ret[0]);
-    EXPECT_EQ(STR_5_0051, ret[1]);
-    EXPECT_EQ(STR_6_0056, ret[2]);
+    // The first one shall be master occ
+    EXPECT_EQ(STR_6_0056, ret[0]);
+    // The left is sorted
+    EXPECT_EQ(STR_4_0050, ret[1]);
+    EXPECT_EQ(STR_5_0051, ret[2]);
     EXPECT_EQ(STR_7_0057, ret[3]);
 }
 
