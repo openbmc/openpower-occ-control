@@ -124,6 +124,7 @@ void Manager::initStatusObjects()
     static_assert(sizeof(DEV_PATH) != 0);
 
     auto deviceNames = i2c_occ::getOccHwmonDevices(DEV_PATH);
+    auto occMasterName = deviceNames.front();
     for (auto& name : deviceNames)
     {
         i2c_occ::i2cToDbus(name);
@@ -136,6 +137,11 @@ void Manager::initStatusObjects()
                 path.c_str(),
                 *this));
     }
+    // The first device is master occ
+    pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
+               bus,
+               *statusObjects.front(),
+               occMasterName);
 }
 #endif
 
