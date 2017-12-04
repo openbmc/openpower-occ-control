@@ -15,27 +15,11 @@ namespace occ
 
 void Manager::findAndCreateObjects()
 {
-    // Need to watch for CPU inventory creation.
     for (auto id = 0; id < MAX_CPUS; ++id)
     {
-        auto path = std::string(CPU_PATH) + std::to_string(id);
-        cpuMatches.emplace_back(
-                bus,
-                sdbusRule::interfacesAdded() +
-                sdbusRule::argNpath(0, path),
-                std::bind(std::mem_fn(&Manager::cpuCreated),
-                    this, std::placeholders::_1));
-    }
-
-    // Check if CPU inventory exists already.
-    auto occs = open_power::occ::finder::get(bus);
-    if (!occs.empty())
-    {
-        for (const auto& occ : occs)
-        {
-            // CPU inventory exists already, OCC objects can be created.
-            createObjects(occ);
-        }
+        // Create one occ per cpu
+        auto occ = std::string(OCC_NAME) + std::to_string(id);
+        createObjects(occ);
     }
 }
 
