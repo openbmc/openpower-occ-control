@@ -105,11 +105,6 @@ class Device
         /** @brief Starts to monitor for errors */
         inline void addErrorWatch()
         {
-            if (master())
-            {
-                presence.addWatch();
-            }
-
             throttleProcTemp.addWatch();
             throttleProcPower.addWatch();
             throttleMemTemp.addWatch();
@@ -126,6 +121,15 @@ class Device
             throttleMemTemp.removeWatch();
             throttleProcPower.removeWatch();
             throttleProcTemp.removeWatch();
+        }
+
+        /** @brief Starts to watch how many OCCs are present on the master */
+        inline void addPresenceWatchMaster()
+        {
+            if (master())
+            {
+                presence.addWatch();
+            }
         }
 
     private:

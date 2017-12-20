@@ -120,6 +120,12 @@ class Status : public Interface
             return device.removeErrorWatch();
         }
 
+        /** @brief Starts to watch how many OCCs are present on the master */
+        inline void addPresenceWatchMaster()
+        {
+            return device.addPresenceWatchMaster();
+        }
+
     private:
 
         /** @brief sdbus handle */

@@ -82,6 +82,15 @@ void Manager::statusCallBack(bool status)
     }
 
     activeCount += status ? 1 : -1;
+
+    // Only start presence detection if all the OCCs are bound
+    if (activeCount == statusObjects.size())
+    {
+        for (auto &obj : statusObjects)
+        {
+            obj->addPresenceWatchMaster();
+        }
+    }
 }
 
 #ifdef I2C_OCC
