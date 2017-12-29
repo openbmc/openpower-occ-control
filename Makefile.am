@@ -1,3 +1,4 @@
+if !INSTALL_ERROR_YAML
 # Build these headers, don't install them
 noinst_HEADERS = \
 	occ_pass_through.hpp \
@@ -75,3 +76,10 @@ org/open_power/OCC/Device/error.cpp: ${top_srcdir}/org/open_power/OCC/Device.err
 	$(SDBUSPLUSPLUS) -r $(top_srcdir) error exception-cpp org.open_power.OCC.Device > $@
 
 SUBDIRS = . test
+endif
+
+# Export error YAML to shared location
+yamldir = ${datadir}/phosphor-dbus-yaml/yaml
+nobase_yaml_DATA = \
+	org/open_power/OCC/Device.errors.yaml \
+	org/open_power/OCC/Device.metadata.yaml
