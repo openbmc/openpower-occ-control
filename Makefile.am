@@ -36,6 +36,12 @@ BUILT_SOURCES =  org/open_power/OCC/Device/error.hpp \
                  org/open_power/OCC/Device/error.cpp \
                  occ_sensor.hpp
 
+if GEN_ERRORS
+nobase_nodist_include_HEADERS = \
+                 phosphor-logging/elog-errors.hpp
+BUILT_SOURCES += phosphor-logging/elog-errors.hpp
+endif
+
 CLEANFILES = ${BUILT_SOURCES}
 
 REQ_MAKO_FILE ?= ${top_srcdir}/occ_sensor.mako.hpp
@@ -83,3 +89,23 @@ yamldir = ${datadir}/phosphor-dbus-yaml/yaml
 nobase_yaml_DATA = \
 	org/open_power/OCC/Device.errors.yaml \
 	org/open_power/OCC/Device.metadata.yaml
+
+# Generate phosphor-logging/elog-errors.hpp
+if GEN_ERRORS
+ELOG_MAKO ?= elog-gen-template.mako.hpp
+ELOG_DIR ?= ${OECORE_NATIVE_SYSROOT}${datadir}/phosphor-logging/elog
+ELOG_GEN_DIR ?= ${ELOG_DIR}/tools/
+ELOG_MAKO_DIR ?= ${ELOG_DIR}/tools/phosphor-logging/templates/
+YAML_DIR ?= ${OECORE_NATIVE_SYSROOT}${datadir}/phosphor-dbus-yaml/yaml
+phosphor-logging/elog-errors.hpp:
+	@mkdir -p ${YAML_DIR}/org/open_power/OCC/
+	# TODO openbmc/openbmc#2872
+	# YAML files should be copied as part of make and make install
+	@cp ${top_srcdir}/org/open_power/OCC/Device.errors.yaml ${YAML_DIR}/org/open_power/OCC/Device.errors.yaml
+	@cp ${top_srcdir}/org/open_power/OCC/Device.metadata.yaml ${YAML_DIR}/org/open_power/OCC/Device.metadata.yaml
+	@mkdir -p `dirname $@`
+	# TODO openbmc/openbmc#2872
+	# elog-gen.py parser should be placed in /usr/bin
+	@chmod 777 $(ELOG_GEN_DIR)/elog-gen.py
+	$(AM_V_at)$(PYTHON) $(ELOG_GEN_DIR)/elog-gen.py -y ${YAML_DIR} -t ${ELOG_MAKO_DIR} -m ${ELOG_MAKO} -o $@
+endif
