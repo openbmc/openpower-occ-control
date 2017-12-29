@@ -8,7 +8,7 @@
 #include <org/open_power/OCC/Device/error.hpp>
 #include "occ_presence.hpp"
 #include "occ_manager.hpp"
-#include "elog-errors.hpp"
+#include "phosphor-logging/elog-errors.hpp"
 
 namespace open_power
 {

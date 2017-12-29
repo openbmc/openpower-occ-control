@@ -4,7 +4,7 @@
 #include <org/open_power/OCC/Device/error.hpp>
 #include "occ_manager.hpp"
 #include "occ_events.hpp"
-#include "elog-errors.hpp"
+#include "phosphor-logging/elog-errors.hpp"
 #include "config.h"
 
 using namespace phosphor::logging;
