@@ -10,63 +10,72 @@ AM_PROG_AR
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
-# Suppress the --with-libtool-sysroot error
-LT_INIT
+# Check for compiler, packages only when install_error_yaml optional feature
+# is disabled
+AC_ARG_ENABLE([install_error_yaml],
+    AS_HELP_STRING([--enable-install_error_yaml], [Enable installing error yaml file]),
+        [], [install_error_yaml=yes])
+AM_CONDITIONAL([INSTALL_ERROR_YAML], [test "x$enable_install_error_yaml" = "xyes"])
+AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
 
-# gtest
-# Check/set gtest specific functions.
-AX_PTHREAD([GTEST_CPPFLAGS="-DGTEST_HAS_PTHREAD=1"],[GTEST_CPPFLAGS="-DGTEST_HAS_PTHREAD=0"])
-AC_SUBST(GTEST_CPPFLAGS)
+    # Suppress the --with-libtool-sysroot error
+    LT_INIT
 
-# Test cases require SDK so only build if we're told to (and SDK is available)
-AC_ARG_ENABLE([oe-sdk],
-    AS_HELP_STRING([--enable-oe-sdk], [Link testcases absolutely against OE SDK so they can be ran within it.])
-)
-AC_ARG_VAR(OECORE_TARGET_SYSROOT,
-    [Path to the OE SDK SYSROOT])
-AS_IF([test "x$enable_oe_sdk" == "xyes"],
-    AS_IF([test "x$OECORE_TARGET_SYSROOT" == "x"],
-          AC_MSG_ERROR([OECORE_TARGET_SYSROOT must be set with --enable-oe-sdk])
+    # gtest
+    # Check/set gtest specific functions.
+    AX_PTHREAD([GTEST_CPPFLAGS="-DGTEST_HAS_PTHREAD=1"],[GTEST_CPPFLAGS="-DGTEST_HAS_PTHREAD=0"])
+    AC_SUBST(GTEST_CPPFLAGS)
+
+    # Test cases require SDK so only build if we're told to (and SDK is available)
+    AC_ARG_ENABLE([oe-sdk],
+        AS_HELP_STRING([--enable-oe-sdk], [Link testcases absolutely against OE SDK so they can be ran within it.])
     )
-    AC_MSG_NOTICE([Enabling OE-SDK at $OECORE_TARGET_SYSROOT])
-    [
-        testcase_flags="-Wl,-rpath,\${OECORE_TARGET_SYSROOT}/lib"
-        testcase_flags="${testcase_flags} -Wl,-rpath,\${OECORE_TARGET_SYSROOT}/usr/lib"
-        testcase_flags="${testcase_flags} -Wl,-dynamic-linker,`find \${OECORE_TARGET_SYSROOT}/lib/ld-*.so | sort -r -n | head -n1`"
-    ]
-    AC_SUBST([OESDK_TESTCASE_FLAGS], [$testcase_flags])
-)
+    AC_ARG_VAR(OECORE_TARGET_SYSROOT,
+        [Path to the OE SDK SYSROOT])
+    AS_IF([test "x$enable_oe_sdk" == "xyes"],
+        AS_IF([test "x$OECORE_TARGET_SYSROOT" == "x"],
+              AC_MSG_ERROR([OECORE_TARGET_SYSROOT must be set with --enable-oe-sdk])
+        )
+        AC_MSG_NOTICE([Enabling OE-SDK at $OECORE_TARGET_SYSROOT])
+        [
+            testcase_flags="-Wl,-rpath,\${OECORE_TARGET_SYSROOT}/lib"
+            testcase_flags="${testcase_flags} -Wl,-rpath,\${OECORE_TARGET_SYSROOT}/usr/lib"
+            testcase_flags="${testcase_flags} -Wl,-dynamic-linker,`find \${OECORE_TARGET_SYSROOT}/lib/ld-*.so | sort -r -n | head -n1`"
+        ]
+        AC_SUBST([OESDK_TESTCASE_FLAGS], [$testcase_flags])
+    )
 
-PKG_CHECK_MODULES([SDBUSPLUS], [sdbusplus],,\
-    AC_MSG_ERROR(["Requires sdbusplus package."]))
-PKG_CHECK_MODULES([PHOSPHOR_LOGGING], [phosphor-logging],,\
-    AC_MSG_ERROR(["Requires phosphor-logging package."]))
-PKG_CHECK_MODULES([OPENPOWER_DBUS_INTERFACES], [openpower-dbus-interfaces],,\
-    AC_MSG_ERROR(["Requires openpower-dbus-interfaces package."]))
-PKG_CHECK_MODULES([PHOSPHOR_DBUS_INTERFACES], [phosphor-dbus-interfaces],,\
-    AC_MSG_ERROR(["Requires phosphor-dbus-interfaces package."]))
+    PKG_CHECK_MODULES([SDBUSPLUS], [sdbusplus],,\
+        AC_MSG_ERROR(["Requires sdbusplus package."]))
+    PKG_CHECK_MODULES([PHOSPHOR_LOGGING], [phosphor-logging],,\
+        AC_MSG_ERROR(["Requires phosphor-logging package."]))
+    PKG_CHECK_MODULES([OPENPOWER_DBUS_INTERFACES], [openpower-dbus-interfaces],,\
+        AC_MSG_ERROR(["Requires openpower-dbus-interfaces package."]))
+    PKG_CHECK_MODULES([PHOSPHOR_DBUS_INTERFACES], [phosphor-dbus-interfaces],,\
+        AC_MSG_ERROR(["Requires phosphor-dbus-interfaces package."]))
 
-# Check for sdbusplus
-PKG_CHECK_MODULES([SDBUSPLUS], [sdbusplus],, [AC_MSG_ERROR(["sdbusplus packaged required and not found"])])
+    # Check for sdbusplus
+    PKG_CHECK_MODULES([SDBUSPLUS], [sdbusplus],, [AC_MSG_ERROR(["sdbusplus packaged required and not found"])])
 
-# Check for sdbus++ tool
-AC_PATH_PROG([SDBUSPLUSPLUS], [sdbus++])
-AS_IF([test "x$SDBUSPLUSPLUS" == "x"], AC_MSG_ERROR([Cannot find sdbus++]))
+    # Check for sdbus++ tool
+    AC_PATH_PROG([SDBUSPLUSPLUS], [sdbus++])
+    AS_IF([test "x$SDBUSPLUSPLUS" == "x"], AC_MSG_ERROR([Cannot find sdbus++]))
 
-# Checks for typedefs, structures, and compiler characteristics.
-AX_CXX_COMPILE_STDCXX_14([noext])
-AX_APPEND_COMPILE_FLAGS([-Wall -Werror], [CXXFLAGS])
+    # Checks for typedefs, structures, and compiler characteristics.
+    AX_CXX_COMPILE_STDCXX_14([noext])
+    AX_APPEND_COMPILE_FLAGS([-Wall -Werror], [CXXFLAGS])
 
-AC_ARG_ENABLE([i2c-occ],
-    AS_HELP_STRING([--enable-i2c-occ], [Enable I2C OCC support])
-)
-AS_IF([test "x$enable_i2c_occ" == "xyes"],
-    AC_MSG_NOTICE([Enabling I2C OCC])
-    [
-        cpp_flags="-DI2C_OCC"
-    ]
-    AC_SUBST([CPPFLAGS], [$cpp_flags])
-)
+    AC_ARG_ENABLE([i2c-occ],
+        AS_HELP_STRING([--enable-i2c-occ], [Enable I2C OCC support])
+    )
+    AS_IF([test "x$enable_i2c_occ" == "xyes"],
+        AC_MSG_NOTICE([Enabling I2C OCC])
+        [
+            cpp_flags="-DI2C_OCC"
+        ]
+        AC_SUBST([CPPFLAGS], [$cpp_flags])
+    )
+])
 
 AC_ARG_VAR(OCC_CONTROL_BUSNAME, [The Dbus busname to own])
 AS_IF([test "x$OCC_CONTROL_BUSNAME" == "x"], [OCC_CONTROL_BUSNAME="org.open_power.OCC.Control"])
