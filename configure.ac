@@ -14,7 +14,7 @@ AC_PROG_MAKE_SET
 # is disabled
 AC_ARG_ENABLE([install_error_yaml],
     AS_HELP_STRING([--enable-install_error_yaml], [Enable installing error yaml file]),
-        [], [install_error_yaml=yes])
+        [], [install_error_yaml=no])
 AM_CONDITIONAL([INSTALL_ERROR_YAML], [test "x$enable_install_error_yaml" = "xyes"])
 AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
 
