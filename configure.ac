@@ -14,7 +14,7 @@ AC_PROG_MAKE_SET
 # is disabled
 AC_ARG_ENABLE([install_error_yaml],
     AS_HELP_STRING([--enable-install_error_yaml], [Enable installing error yaml file]),
-        [], [install_error_yaml=yes])
+        [], [install_error_yaml=no])
 AM_CONDITIONAL([INSTALL_ERROR_YAML], [test "x$enable_install_error_yaml" = "xyes"])
 AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
 
@@ -76,7 +76,6 @@ AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
         AC_SUBST([CPPFLAGS], [$cpp_flags])
     )
 ])
-
 AC_ARG_VAR(OCC_CONTROL_BUSNAME, [The Dbus busname to own])
 AS_IF([test "x$OCC_CONTROL_BUSNAME" == "x"], [OCC_CONTROL_BUSNAME="org.open_power.OCC.Control"])
 AC_DEFINE_UNQUOTED([OCC_CONTROL_BUSNAME], ["$OCC_CONTROL_BUSNAME"], [The DBus busname to own])
@@ -138,7 +137,6 @@ AC_DEFINE_UNQUOTED([CPU_SUBPATH], ["$CPU_SUBPATH"], [The subpath containing CPU 
 AC_ARG_VAR(YAML_PATH, [The path to the yaml config files.])
 AS_IF([test "x$YAML_PATH" == "x"], [YAML_PATH="$srcdir/example"])
 AC_DEFINE_UNQUOTED([YAML_PATH], ["$YAML_PATH"], [The path to the yaml config files])
-
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile test/Makefile])
 AC_OUTPUT
