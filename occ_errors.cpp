@@ -129,24 +129,35 @@ void Error::analyzeEvent()
 std::string Error::readFile(int len) const
 {
     auto data = std::make_unique<char[]>(len+1);
+    auto retries = 3;
 
-    // This file get created soon after binding. A value of 0 is
-    // deemed success and anything else is a Failure
-    // Since all the sysfs files would have size of 4096, if we read 0
-    // bytes -or- value '0', then it just means we are fine
-    auto r = read(fd, data.get(), len);
-    if (r < 0)
+    // OCC / FSI have intermittent issues so retry all reads
+    while (true)
     {
-        elog<ReadFailure>(
-            phosphor::logging::org::open_power::OCC::Device::
-                ReadFailure::CALLOUT_ERRNO(errno),
-            phosphor::logging::org::open_power::OCC::Device::
-                ReadFailure::CALLOUT_DEVICE_PATH(file.c_str()));
+        // This file get created soon after binding. A value of 0 is
+        // deemed success and anything else is a Failure
+        // Since all the sysfs files would have size of 4096, if we read 0
+        // bytes -or- value '0', then it just means we are fine
+        auto r = read(fd, data.get(), len);
+        if (r < 0)
+        {
+            retries--;
+            if (retries == 0)
+            {
+                elog<ReadFailure>(
+                    phosphor::logging::org::open_power::OCC::Device::
+                        ReadFailure::CALLOUT_ERRNO(errno),
+                    phosphor::logging::org::open_power::OCC::Device::
+                        ReadFailure::CALLOUT_DEVICE_PATH(file.c_str()));
+                break;
+            }
+            continue;
+        }
+        break;
     }
-
     // Need to seek to START, else the poll returns immediately telling
     // there is data to be read
-    r = lseek(fd, 0, SEEK_SET);
+    auto r = lseek(fd, 0, SEEK_SET);
     if (r < 0)
     {
         log<level::ERR>("Failure seeking error file to START");
