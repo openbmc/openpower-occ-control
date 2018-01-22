@@ -130,6 +130,7 @@ std::string Error::readFile(int len) const
 {
     auto data = std::make_unique<char[]>(len+1);
     auto retries = 3;
+    auto delay = std::chrono::milliseconds{100};
 
     // OCC / FSI have intermittent issues so retry all reads
     while (true)
@@ -151,6 +152,7 @@ std::string Error::readFile(int len) const
                         ReadFailure::CALLOUT_DEVICE_PATH(file.c_str()));
                 break;
             }
+            std::this_thread::sleep_for(delay);
             continue;
         }
         break;
