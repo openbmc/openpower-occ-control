@@ -1,4 +1,13 @@
 #include <iostream>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <errno.h>
+#include <phosphor-logging/log.hpp>
+#include <phosphor-logging/elog.hpp>
+#include <xyz/openbmc_project/Common/error.hpp>
+#include <org/open_power/OCC/Device/error.hpp>
+#include "elog-errors.hpp"
 #include "occ_device.hpp"
 #include "occ_status.hpp"
 
@@ -9,6 +18,45 @@ namespace occ
 
 fs::path Device::bindPath = fs::path(OCC_HWMON_PATH) / "bind";
 fs::path Device::unBindPath = fs::path(OCC_HWMON_PATH) / "unbind";
+
+void Device::write(const fs::path& fileName, const std::string& data)
+{
+    using namespace phosphor::logging;
+
+    auto retries = 3;
+    auto delay = std::chrono::milliseconds{100};
+    auto fd = open(fileName.c_str(), O_WRONLY);
+
+    if (fd < 0)
+    {
+        log<level::ERR>("Failure opening OCC Device for write",
+                        entry("ERROR=%s", strerror(-errno)),
+                        entry("PATH=%s", fileName.c_str()));
+        return;
+    }
+
+    // OCC / FSI have intermittent issues so retry all binds
+    while (true)
+    {
+        auto rc = ::write(fd, data.data(), data.size());
+        if (rc < 0)
+        {
+            retries--;
+            if (retries == 0)
+            {
+                log<level::ERR>("Failure writing OCC Device",
+                                entry("ERROR=%s", strerror(-errno)),
+                                entry("PATH=%s", fileName.c_str()));
+                break;
+            }
+            std::this_thread::sleep_for(delay);
+            continue;
+        }
+        break;
+    }
+
+    close(fd);
+}
 
 bool Device::master() const
 {
