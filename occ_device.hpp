@@ -170,14 +170,7 @@ class Device
          *  @param[in] data     - Data to be written to
          *  @return             - None
          */
-        void write(const fs::path& fileName, const std::string& data)
-        {
-            // If there is an error, move the exception all the way up
-            std::ofstream file(fileName, std::ios::out);
-            file << data;
-            file.close();
-            return;
-        }
+        void write(const fs::path& fileName, const std::string& data);
 
         /** @brief Returns if device represents the master OCC */
         bool master() const;
