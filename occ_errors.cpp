@@ -142,6 +142,8 @@ std::string Error::readFile(int len) const
         auto r = read(fd, data.get(), len);
         if (r < 0)
         {
+            log<level::ERR>("Failed to read Error or Presence",
+                            entry("ERROR=%s", strerror(-errno)));
             retries--;
             if (retries == 0)
             {

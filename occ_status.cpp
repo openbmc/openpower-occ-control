@@ -10,10 +10,14 @@ namespace occ
 // Handles updates to occActive property
 bool Status::occActive(bool value)
 {
+    using namespace phosphor::logging;
+
     if (value != this->occActive())
     {
         if (value)
         {
+            log<level::INFO>("occActive set true; bind the device");
+
             // Bind the device
             device.bind();
 
@@ -37,6 +41,8 @@ bool Status::occActive(bool value)
             // Stop watching for errors
             removeErrorWatch();
 
+            log<level::INFO>("occActive set false; unbind the device");
+
             // Do the unbind.
             device.unBind();
         }
@@ -45,6 +51,8 @@ bool Status::occActive(bool value)
     {
         // Existing error watch is on a dead file descriptor.
         removeErrorWatch();
+
+        log<level::INFO>("occActive set true; rebind the device");
 
         /*
          * In it's constructor, Status checks Device::bound() to see if OCC is
