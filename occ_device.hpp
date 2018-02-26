@@ -41,11 +41,7 @@ class Device
                const Manager& manager,
                Status& status,
                std::function<void(bool)> callBack = nullptr) :
-#ifdef I2C_OCC
             config(name),
-#else
-            config(name + '-' + "dev0"),
-#endif
             errorFile(fs::path(config) / "occ_error"),
             statusObject(status),
             error(event, errorFile, callBack),

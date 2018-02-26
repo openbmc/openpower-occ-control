@@ -30,6 +30,9 @@ using instanceID = int;
 // IPMI sensor ID for a given OCC instance
 using sensorID = uint8_t;
 
+// OCC sysfs name prefix
+const std::string sysfsName = "occ-hwmon";
+
 /** @class Status
  *  @brief Implementation of OCC Active Status
  */
@@ -67,7 +70,7 @@ class Status : public Interface
 #ifdef I2C_OCC
                      i2c_occ::getI2cDeviceName(path),
 #else
-                     name + std::to_string(instance + 1),
+                     sysfsName + "." + std::to_string(instance + 1),
 #endif
                      manager,
                      *this,
@@ -138,9 +141,6 @@ class Status : public Interface
          *         This is a handler in Manager class
          */
         std::function<void(bool)> callBack;
-
-        /** @brief occ name prefix */
-        std::string name = OCC_NAME;
 
         /** @brief OCC instance number. Ex, 0,1, etc */
         int instance;
