@@ -67,7 +67,7 @@ class Status : public Interface
 #ifdef I2C_OCC
                      i2c_occ::getI2cDeviceName(path),
 #else
-                     name + std::to_string(instance + 1),
+                     sysfs_name + "." + std::to_string(instance + 1),
 #endif
                      manager,
                      *this,
@@ -140,7 +140,7 @@ class Status : public Interface
         std::function<void(bool)> callBack;
 
         /** @brief occ name prefix */
-        std::string name = OCC_NAME;
+        std::string sysfs_name = "occ-hwmon";
 
         /** @brief OCC instance number. Ex, 0,1, etc */
         int instance;
