@@ -108,7 +108,7 @@ private:
     /* @brief OCC Status object */
     Status &occStatus;
 
-    /** @brief Used to subscribe to dbus pcap propety changes **/
+    /** @brief Used to subscribe to dbus pcap property changes **/
     sdbusplus::bus::match_t pcapMatch;
 
  };

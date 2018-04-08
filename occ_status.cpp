@@ -123,7 +123,7 @@ void Status::hostControlEvent(sdbusplus::message::message& msg)
         if(Control::Host::convertCommandFromString(cmdCompleted) ==
                 Control::Host::Command::OCCReset)
         {
-            // Must be a Timeout. Log an Erorr trace
+            // Must be a Timeout. Log an Error trace
             log<level::ERR>("Error resetting the OCC.",
                     entry("PATH=%s", path.c_str()),
                     entry("SENSORID=0x%X",sensorMap.at(instance)));
