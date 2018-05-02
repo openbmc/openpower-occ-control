@@ -74,6 +74,7 @@ class Status : public Interface
 #endif
                      manager,
                      *this,
+                     instance,
                      std::bind(std::mem_fn(&Status::deviceErrorHandler), this,
                                std::placeholders::_1)),
               hostControlSignal(
