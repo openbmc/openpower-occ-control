@@ -5,6 +5,7 @@
 #include <sdbusplus/server/object.hpp>
 #include <org/open_power/OCC/Status/server.hpp>
 #include <org/open_power/Control/Host/server.hpp>
+#include "occ_bus.hpp"
 #include "occ_events.hpp"
 #include "occ_device.hpp"
 #include "i2c_occ.hpp"
@@ -66,6 +67,7 @@ class Status : public Interface
               path(path),
               callBack(callBack),
               instance(((this->path.back() - '0'))),
+              occBus(instance),
               device(event,
 #ifdef I2C_OCC
                      i2c_occ::getI2cDeviceName(path),
@@ -74,6 +76,7 @@ class Status : public Interface
 #endif
                      manager,
                      *this,
+                     occBus,
                      std::bind(std::mem_fn(&Status::deviceErrorHandler), this,
                                std::placeholders::_1)),
               hostControlSignal(
@@ -147,6 +150,9 @@ class Status : public Interface
 
         /** @brief OCC instance to Sensor ID mapping */
         static const std::map<instanceID, sensorID> sensorMap;
+
+        /** @brief OCC bus driver manager */
+        Bus occBus;
 
         /** @brief OCC device object to do bind and unbind */
         Device device;
