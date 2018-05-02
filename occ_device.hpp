@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <experimental/filesystem>
+#include "occ_bus.hpp"
 #include "occ_events.hpp"
 #include "occ_errors.hpp"
 #include "occ_presence.hpp"
@@ -34,16 +35,20 @@ class Device
          *  @param[in] event    - Unique ptr reference to sd_event
          *  @param[in] name     - OCC instance name
          *  @param[in] manager  - OCC manager instance
+         *  @param[in] status   - OCC status instance
+         *  @param[in] instance - OCC device index
          *  @param[in] callback - Optional callback on errors
          */
         Device(EventPtr& event,
                const std::string& name,
                const Manager& manager,
                Status& status,
+               int instance,
                std::function<void(bool)> callBack = nullptr) :
             config(name),
             errorFile(fs::path(config) / "occ_error"),
             statusObject(status),
+            busObject(instance),
             error(event, errorFile, callBack),
             presence(event,
                      fs::path(config) / "occs_present",
@@ -74,6 +79,9 @@ class Device
         /** @brief Binds device to the OCC driver */
         inline void bind()
         {
+            // Reset this OCC's bus driver
+            busObject.reset();
+
             // Bind the device
             return write(bindPath, config);
         }
@@ -128,6 +136,21 @@ class Device
             }
         }
 
+        /** @brief file writer to achieve bind and unbind
+         *
+         *  @param[in] filename - Name of file to be written
+         *  @param[in] data     - Data to be written to
+         *  @return             - None
+         */
+        static void write(const fs::path& fileName, const std::string& data)
+        {
+            // If there is an error, move the exception all the way up
+            std::ofstream file(fileName, std::ios::out);
+            file << data;
+            file.close();
+            return;
+        }
+
     private:
         /** @brief Config value to be used to do bind and unbind */
         const std::string config;
@@ -149,6 +172,9 @@ class Device
         /**  Store the associated Status instance */
         Status& statusObject;
 
+        /**  Store the associated Bus instance */
+        const Bus busObject;
+
         /** Abstraction of error monitoring */
         Error error;
 
@@ -159,21 +185,6 @@ class Device
         Error throttleProcTemp;
         Error throttleProcPower;
         Error throttleMemTemp;
-
-        /** @brief file writer to achieve bind and unbind
-         *
-         *  @param[in] filename - Name of file to be written
-         *  @param[in] data     - Data to be written to
-         *  @return             - None
-         */
-        void write(const fs::path& fileName, const std::string& data)
-        {
-            // If there is an error, move the exception all the way up
-            std::ofstream file(fileName, std::ios::out);
-            file << data;
-            file.close();
-            return;
-        }
 
         /** @brief Returns if device represents the master OCC */
         bool master() const;

@@ -4,6 +4,7 @@ noinst_HEADERS = \
 	occ_pass_through.hpp \
 	occ_status.hpp \
 	powercap.hpp \
+        occ_bus.hpp \
 	occ_errors.hpp \
 	occ_events.hpp \
 	occ_finder.hpp \
@@ -21,6 +22,7 @@ libocc_control_la_SOURCES = \
 	occ_pass_through.cpp \
 	occ_manager.cpp \
 	occ_status.cpp \
+        occ_bus.cpp \
 	occ_device.cpp \
 	occ_errors.cpp \
 	occ_presence.cpp \
