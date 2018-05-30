@@ -132,7 +132,7 @@ void PowerCap::writeOcc(uint32_t pcapValue)
     auto pcapString {std::to_string(pcapValue)};
 
     log<level::INFO>("Writing pcap value to hwmon",
-                     entry("PCAP_PATH=%s",*fileName),
+                     entry("PCAP_PATH=%s",fileName->c_str()),
                      entry("PCAP_VALUE=%s",pcapString.c_str()));
     // Open the hwmon file and write the power cap
     std::ofstream file(*fileName, std::ios::out);

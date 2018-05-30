@@ -44,8 +44,8 @@ void Presence::analyzeEvent()
     if (manager.getNumOCCs() != occsPresent)
     {
         log<level::INFO>("OCC presence mismatch",
-                         entry("BMC_OCCS=%d", manager.getNumOCCs(),
-                         entry("OCC_OCCS=%d", occsPresent)));
+                         entry("BMC_OCCS=%d", manager.getNumOCCs()),
+                         entry("OCC_OCCS=%d", occsPresent));
         if (callBack)
         {
             callBack(true);
