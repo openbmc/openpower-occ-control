@@ -35,6 +35,12 @@ void PassThrough::openDevice()
     using namespace phosphor::logging;
     using namespace sdbusplus::org::open_power::OCC::Device::Error;
 
+    if (!occActive)
+    {
+         log<level::INFO>("OCC is inactive; cannot perform pass-through");
+         return;
+    }
+
     fd = open(devicePath.c_str(), O_RDWR | O_NONBLOCK);
     if (fd < 0)
     {
@@ -53,6 +59,7 @@ void PassThrough::closeDevice()
     if (fd >= 0)
     {
         close(fd);
+        fd = -1;
     }
 }
 
@@ -62,6 +69,14 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
     using namespace sdbusplus::org::open_power::OCC::Device::Error;
 
     std::vector<int32_t> response {};
+
+    openDevice();
+
+    if (fd < 0)
+    {
+        // OCC is inactive; empty response
+        return response;
+    }
 
     // OCC only understands [bytes] so need array of bytes. Doing this
     // because rest-server currently treats all int* as 32 bit integer.
@@ -115,6 +130,8 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
         }
     }
 
+    closeDevice();
+
     return response;
 }
 
@@ -131,10 +148,11 @@ void PassThrough::activeStatusEvent(sdbusplus::message::message& msg)
         // Extract the OccActive property
         if (sdbusplus::message::variant_ns::get<bool>(propertyMap->second))
         {
-            this->openDevice();
+            occActive = true;
         }
         else
         {
+            occActive = false;
             this->closeDevice();
         }
     }
