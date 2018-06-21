@@ -60,6 +60,9 @@ class PassThrough : public Iface
          */
         std::string devicePath;
 
+        /** @brief Indicates whether or not the OCC is currently active */
+        bool occActive = false;
+
         /** brief file descriptor associated with occ device */
         int fd = -1;
 
