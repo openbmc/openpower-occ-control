@@ -14,6 +14,6 @@ utest_CPPFLAGS = $(GTEST_CPPFLAGS) \
 
 utest_CXXFLAGS = $(PTHREAD_CFLAGS)
 
-utest_LDFLAGS = -lgmock_main \
+utest_LDFLAGS = -lgtest -lgmock -lgmock_main \
                 $(PTHREAD_LIBS) \
                 $(OESDK_TESTCASE_FLAGS)
