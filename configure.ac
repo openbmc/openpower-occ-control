@@ -105,7 +105,6 @@ AC_ARG_VAR(OCC_MASTER_NAME, [The OCC master object name])
 AS_IF([test "x$OCC_MASTER_NAME" == "x"], [OCC_MASTER_NAME="occ-hwmon.1"])
 AC_DEFINE_UNQUOTED([OCC_MASTER_NAME], ["$OCC_MASTER_NAME"], [The OCC master object name])
 
-AC_ARG_VAR(OCC_BUS_PATH, [The OCC bus device path])
 AC_ARG_VAR(OCC_HWMON_PATH, [The OCC hwmon path])
 AC_ARG_VAR(DEV_PATH, [The device path])
 AC_ARG_VAR(I2C_OCC_DEVICE_NAME, [The device name of i2c occ hwmon])
@@ -116,11 +115,9 @@ AS_IF([test "x$enable_i2c_occ" == "xyes"],
     AS_IF([test "x$I2C_OCC_DEVICE_NAME" == "x"], [I2C_OCC_DEVICE_NAME="p8-occ-hwmon"]),
 
     # Else, define occ hwmon path for FSI
-    AS_IF([test "x$OCC_BUS_PATH" == "x"], [OCC_BUS_PATH="/sys/bus/fsi/drivers/sbefifo/"])
     AS_IF([test "x$OCC_HWMON_PATH" == "x"], [OCC_HWMON_PATH="/sys/bus/platform/drivers/occ-hwmon/"])
     AS_IF([test "x$DEV_PATH" == "x"], [DEV_PATH="/sys/bus/platform/devices/"]),
 )
-AC_DEFINE_UNQUOTED([OCC_BUS_PATH], ["$OCC_BUS_PATH"], [The OCC bus device path])
 AC_DEFINE_UNQUOTED([OCC_HWMON_PATH], ["$OCC_HWMON_PATH"], [The OCC hwmon path])
 AC_DEFINE_UNQUOTED([DEV_PATH], ["$DEV_PATH"], [The device path])
 AC_DEFINE_UNQUOTED([I2C_OCC_DEVICE_NAME], ["$I2C_OCC_DEVICE_NAME"], [The device name of i2c occ hwmon])
