@@ -1,13 +1,16 @@
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <errno.h>
-#include <phosphor-logging/log.hpp>
-#include <phosphor-logging/elog.hpp>
-#include <xyz/openbmc_project/Common/error.hpp>
-#include <org/open_power/OCC/Device/error.hpp>
 #include "occ_errors.hpp"
+
 #include "elog-errors.hpp"
+
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+
+#include <org/open_power/OCC/Device/error.hpp>
+#include <phosphor-logging/elog.hpp>
+#include <phosphor-logging/log.hpp>
+#include <xyz/openbmc_project/Common/error.hpp>
 namespace open_power
 {
 namespace occ
@@ -18,8 +21,8 @@ constexpr auto NO_ERROR = '0';
 
 using namespace phosphor::logging;
 using namespace sdbusplus::org::open_power::OCC::Device::Error;
-using InternalFailure = sdbusplus::xyz::openbmc_project::Common::
-                                Error::InternalFailure;
+using InternalFailure =
+    sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure;
 
 // Populate the file descriptor on the error file
 void Error::openFile()
@@ -29,11 +32,10 @@ void Error::openFile()
     fd = open(file.c_str(), O_RDONLY | O_NONBLOCK);
     if (fd < 0)
     {
-        elog<OpenFailure>(
-            phosphor::logging::org::open_power::OCC::Device::
-                OpenFailure::CALLOUT_ERRNO(errno),
-            phosphor::logging::org::open_power::OCC::Device::
-                OpenFailure::CALLOUT_DEVICE_PATH(file.c_str()));
+        elog<OpenFailure>(phosphor::logging::org::open_power::OCC::Device::
+                              OpenFailure::CALLOUT_ERRNO(errno),
+                          phosphor::logging::org::open_power::OCC::Device::
+                              OpenFailure::CALLOUT_DEVICE_PATH(file.c_str()));
     }
 }
 
@@ -41,14 +43,14 @@ void Error::openFile()
 void Error::registerCallBack()
 {
     decltype(eventSource.get()) sourcePtr = nullptr;
-    auto r = sd_event_add_io(event.get(), &sourcePtr, fd,
-                             EPOLLPRI | EPOLLERR, processEvents, this);
+    auto r = sd_event_add_io(event.get(), &sourcePtr, fd, EPOLLPRI | EPOLLERR,
+                             processEvents, this);
     eventSource.reset(sourcePtr);
 
     if (r < 0)
     {
         log<level::ERR>("Failed to register callback handler",
-                entry("ERROR=%s", strerror(-r)));
+                        entry("ERROR=%s", strerror(-r)));
         elog<InternalFailure>();
     }
 }
@@ -90,8 +92,8 @@ void Error::removeWatch()
 }
 
 // Callback handler when there is an activity on the FD
-int Error::processEvents(sd_event_source* es, int fd,
-                         uint32_t revents, void* userData)
+int Error::processEvents(sd_event_source* es, int fd, uint32_t revents,
+                         void* userData)
 {
     auto error = static_cast<Error*>(userData);
 
@@ -108,10 +110,10 @@ void Error::analyzeEvent()
     if (r < 0)
     {
         elog<ConfigFailure>(
-            phosphor::logging::org::open_power::OCC::Device::
-                ConfigFailure::CALLOUT_ERRNO(errno),
-            phosphor::logging::org::open_power::OCC::Device::
-                ConfigFailure::CALLOUT_DEVICE_PATH(file.c_str()));
+            phosphor::logging::org::open_power::OCC::Device::ConfigFailure::
+                CALLOUT_ERRNO(errno),
+            phosphor::logging::org::open_power::OCC::Device::ConfigFailure::
+                CALLOUT_DEVICE_PATH(file.c_str()));
     }
 
     // A non-zero data indicates an error condition
@@ -128,7 +130,7 @@ void Error::analyzeEvent()
 // Reads so many bytes as passed in
 std::string Error::readFile(int len) const
 {
-    auto data = std::make_unique<char[]>(len+1);
+    auto data = std::make_unique<char[]>(len + 1);
     auto retries = 3;
     auto delay = std::chrono::milliseconds{100};
 
@@ -164,10 +166,10 @@ std::string Error::readFile(int len) const
     {
         log<level::ERR>("Failure seeking error file to START");
         elog<ConfigFailure>(
-            phosphor::logging::org::open_power::OCC::Device::
-                ConfigFailure::CALLOUT_ERRNO(errno),
-            phosphor::logging::org::open_power::OCC::Device::
-                ConfigFailure::CALLOUT_DEVICE_PATH(file.c_str()));
+            phosphor::logging::org::open_power::OCC::Device::ConfigFailure::
+                CALLOUT_ERRNO(errno),
+            phosphor::logging::org::open_power::OCC::Device::ConfigFailure::
+                CALLOUT_DEVICE_PATH(file.c_str()));
     }
     return std::string(data.get());
 }

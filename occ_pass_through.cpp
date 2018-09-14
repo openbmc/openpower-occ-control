@@ -1,31 +1,31 @@
-#include <memory>
-#include <algorithm>
-#include <fcntl.h>
-#include <errno.h>
-#include <string>
-#include <unistd.h>
-#include <phosphor-logging/log.hpp>
-#include <phosphor-logging/elog.hpp>
-#include <org/open_power/OCC/Device/error.hpp>
-#include "occ_pass_through.hpp"
-#include "elog-errors.hpp"
 #include "config.h"
+
+#include "occ_pass_through.hpp"
+
+#include "elog-errors.hpp"
+
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#include <algorithm>
+#include <memory>
+#include <org/open_power/OCC/Device/error.hpp>
+#include <phosphor-logging/elog.hpp>
+#include <phosphor-logging/log.hpp>
+#include <string>
 namespace open_power
 {
 namespace occ
 {
 
-PassThrough::PassThrough(
-    sdbusplus::bus::bus& bus,
-    const char* path) :
-    Iface(bus, path),
-    path(path),
+PassThrough::PassThrough(sdbusplus::bus::bus& bus, const char* path) :
+    Iface(bus, path), path(path),
     devicePath(OCC_DEV_PATH + std::to_string((this->path.back() - '0') + 1)),
     activeStatusSignal(
-            bus,
-            sdbusRule::propertiesChanged(path, "org.open_power.OCC.Status"),
-            std::bind(std::mem_fn(&PassThrough::activeStatusEvent),
-                this, std::placeholders::_1))
+        bus, sdbusRule::propertiesChanged(path, "org.open_power.OCC.Status"),
+        std::bind(std::mem_fn(&PassThrough::activeStatusEvent), this,
+                  std::placeholders::_1))
 {
     // Nothing to do.
 }
@@ -37,8 +37,8 @@ void PassThrough::openDevice()
 
     if (!occActive)
     {
-         log<level::INFO>("OCC is inactive; cannot perform pass-through");
-         return;
+        log<level::INFO>("OCC is inactive; cannot perform pass-through");
+        return;
     }
 
     fd = open(devicePath.c_str(), O_RDWR | O_NONBLOCK);
@@ -46,10 +46,10 @@ void PassThrough::openDevice()
     {
         // This would log and terminate since its not handled.
         elog<OpenFailure>(
-            phosphor::logging::org::open_power::OCC::Device::
-                OpenFailure::CALLOUT_ERRNO(errno),
-            phosphor::logging::org::open_power::OCC::Device::
-                OpenFailure::CALLOUT_DEVICE_PATH(devicePath.c_str()));
+            phosphor::logging::org::open_power::OCC::Device::OpenFailure::
+                CALLOUT_ERRNO(errno),
+            phosphor::logging::org::open_power::OCC::Device::OpenFailure::
+                CALLOUT_DEVICE_PATH(devicePath.c_str()));
     }
     return;
 }
@@ -68,7 +68,7 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
     using namespace phosphor::logging;
     using namespace sdbusplus::org::open_power::OCC::Device::Error;
 
-    std::vector<int32_t> response {};
+    std::vector<int32_t> response{};
 
     openDevice();
 
@@ -85,7 +85,7 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
 
     // Populate uint8_t version of vector.
     std::transform(command.begin(), command.end(), cmdInBytes.begin(),
-            [](decltype(cmdInBytes)::value_type x){return x;});
+                   [](decltype(cmdInBytes)::value_type x) { return x; });
 
     ssize_t size = cmdInBytes.size() * sizeof(decltype(cmdInBytes)::value_type);
     auto rc = write(fd, cmdInBytes.data(), size);
@@ -93,16 +93,16 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
     {
         // This would log and terminate since its not handled.
         elog<WriteFailure>(
-            phosphor::logging::org::open_power::OCC::Device::
-                WriteFailure::CALLOUT_ERRNO(errno),
-            phosphor::logging::org::open_power::OCC::Device::
-                WriteFailure::CALLOUT_DEVICE_PATH(devicePath.c_str()));
+            phosphor::logging::org::open_power::OCC::Device::WriteFailure::
+                CALLOUT_ERRNO(errno),
+            phosphor::logging::org::open_power::OCC::Device::WriteFailure::
+                CALLOUT_DEVICE_PATH(devicePath.c_str()));
     }
 
     // Now read the response. This would be the content of occ-sram
-    while(1)
+    while (1)
     {
-        uint8_t data {};
+        uint8_t data{};
         auto len = read(fd, &data, sizeof(data));
         if (len > 0)
         {
@@ -123,10 +123,10 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
         {
             // This would log and terminate since its not handled.
             elog<ReadFailure>(
-                phosphor::logging::org::open_power::OCC::Device::
-                    ReadFailure::CALLOUT_ERRNO(errno),
-                phosphor::logging::org::open_power::OCC::Device::
-                    ReadFailure::CALLOUT_DEVICE_PATH(devicePath.c_str()));
+                phosphor::logging::org::open_power::OCC::Device::ReadFailure::
+                    CALLOUT_ERRNO(errno),
+                phosphor::logging::org::open_power::OCC::Device::ReadFailure::
+                    CALLOUT_DEVICE_PATH(devicePath.c_str()));
         }
     }
 

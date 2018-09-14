@@ -1,12 +1,14 @@
+#include "config.h"
+
+#include "occ_finder.hpp"
+
 #include <algorithm>
-#include <iterator>
 #include <experimental/filesystem>
-#include <sdbusplus/server.hpp>
+#include <iterator>
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/log.hpp>
+#include <sdbusplus/server.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
-#include "occ_finder.hpp"
-#include "config.h"
 namespace open_power
 {
 namespace occ
@@ -23,27 +25,22 @@ constexpr auto toChar(size_t c)
 }
 
 template <typename T>
-T getDbusProperty(sdbusplus::bus::bus& bus,
-                  const std::string& service,
-                  const std::string& objPath,
-                  const std::string& interface,
+T getDbusProperty(sdbusplus::bus::bus& bus, const std::string& service,
+                  const std::string& objPath, const std::string& interface,
                   const std::string& property)
 {
     using namespace sdbusplus::xyz::openbmc_project::Common::Error;
 
     constexpr auto PROPERTY_INTF = "org.freedesktop.DBus.Properties";
 
-    auto method = bus.new_method_call(
-                      service.c_str(),
-                      objPath.c_str(),
-                      PROPERTY_INTF,
-                      "Get");
+    auto method = bus.new_method_call(service.c_str(), objPath.c_str(),
+                                      PROPERTY_INTF, "Get");
     method.append(interface, property);
 
     auto reply = bus.call(method);
     if (reply.is_method_error())
     {
-         log<level::ERR>("Failed to get property",
+        log<level::ERR>("Failed to get property",
                         entry("PROPERTY=%s", property.c_str()),
                         entry("PATH=%s", objPath.c_str()),
                         entry("INTERFACE=%s", interface.c_str()));
@@ -65,19 +62,15 @@ std::vector<std::string> get(sdbusplus::bus::bus& bus)
     using Interfaces = std::vector<Interface>;
 
     auto mapper =
-        bus.new_method_call(
-            "xyz.openbmc_project.ObjectMapper",
-            "/xyz/openbmc_project/object_mapper",
-            "xyz.openbmc_project.ObjectMapper",
-            "GetSubTree");
+        bus.new_method_call("xyz.openbmc_project.ObjectMapper",
+                            "/xyz/openbmc_project/object_mapper",
+                            "xyz.openbmc_project.ObjectMapper", "GetSubTree");
 
     auto depth = 0;
     Path path = CPU_SUBPATH;
-    Interfaces interfaces
-    {
+    Interfaces interfaces{
         "xyz.openbmc_project.Inventory.Item",
-        "xyz.openbmc_project.State.Decorator.OperationalStatus"
-    };
+        "xyz.openbmc_project.State.Decorator.OperationalStatus"};
 
     mapper.append(path);
     mapper.append(depth);
@@ -110,9 +103,7 @@ std::vector<std::string> get(sdbusplus::bus::bus& bus)
         {
             Criteria match{};
             match.emplace_back(std::make_tuple(
-                               "xyz.openbmc_project.Inventory.Item",
-                               "Present",
-                               true));
+                "xyz.openbmc_project.Inventory.Item", "Present", true));
 
             // Select only if the CPU is marked 'Present'.
             // Local variable to make it readable
@@ -120,8 +111,7 @@ std::vector<std::string> get(sdbusplus::bus::bus& bus)
             auto service = entry->second.begin()->first;
             if (matchCriteria(bus, path, service, match))
             {
-                occs.emplace_back(std::string(OCC_NAME) +
-                                  toChar(count));
+                occs.emplace_back(std::string(OCC_NAME) + toChar(count));
             }
         }
     }
@@ -129,16 +119,13 @@ std::vector<std::string> get(sdbusplus::bus::bus& bus)
     return occs;
 }
 
-bool matchCriteria(sdbusplus::bus::bus& bus,
-                   const std::string& path,
-                   const std::string& service,
-                   const Criteria& match)
+bool matchCriteria(sdbusplus::bus::bus& bus, const std::string& path,
+                   const std::string& service, const Criteria& match)
 {
-    for (const auto& iter: match)
+    for (const auto& iter : match)
     {
-        auto result = getDbusProperty<bool>(bus, service, path,
-                                            std::get<0>(iter),
-                                            std::get<1>(iter));
+        auto result = getDbusProperty<bool>(
+            bus, service, path, std::get<0>(iter), std::get<1>(iter));
         if (result != std::get<2>(iter))
         {
             return false;

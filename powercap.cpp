@@ -1,5 +1,5 @@
-#include <powercap.hpp>
 #include <phosphor-logging/log.hpp>
+#include <powercap.hpp>
 
 namespace open_power
 {
@@ -8,7 +8,7 @@ namespace occ
 namespace powercap
 {
 
-constexpr auto PCAP_PATH    = "/xyz/openbmc_project/control/host0/power_cap";
+constexpr auto PCAP_PATH = "/xyz/openbmc_project/control/host0/power_cap";
 constexpr auto PCAP_INTERFACE = "xyz.openbmc_project.Control.Power.Cap";
 
 constexpr auto MAPPER_BUSNAME = "xyz.openbmc_project.ObjectMapper";
@@ -20,21 +20,17 @@ constexpr auto POWER_CAP_ENABLE_PROP = "PowerCapEnable";
 
 using namespace phosphor::logging;
 
-std::string PowerCap::getService(std::string path,
-                                 std::string interface)
+std::string PowerCap::getService(std::string path, std::string interface)
 {
-    auto mapper = bus.new_method_call(MAPPER_BUSNAME,
-                                      MAPPER_PATH,
-                                      MAPPER_INTERFACE,
-                                      "GetObject");
+    auto mapper = bus.new_method_call(MAPPER_BUSNAME, MAPPER_PATH,
+                                      MAPPER_INTERFACE, "GetObject");
 
     mapper.append(path, std::vector<std::string>({interface}));
     auto mapperResponseMsg = bus.call(mapper);
 
     if (mapperResponseMsg.is_method_error())
     {
-        log<level::ERR>("Error in mapper call",
-                        entry("PATH=%s", path.c_str()),
+        log<level::ERR>("Error in mapper call", entry("PATH=%s", path.c_str()),
                         entry("INTERFACE=%s", interface.c_str()));
         // TODO openbmc/openbmc#851 - Once available, throw returned error
         throw std::runtime_error("Error in mapper call");
@@ -64,17 +60,16 @@ uint32_t PowerCap::getOccInput(uint32_t pcap, bool pcapEnabled)
 
     // If pcap is not disabled then just return the pcap with the derating
     // factor applied.
-    return( (static_cast<uint64_t>(pcap) * PS_DERATING_FACTOR) /100);
+    return ((static_cast<uint64_t>(pcap) * PS_DERATING_FACTOR) / 100);
 }
 
 uint32_t PowerCap::getPcap()
 {
-    auto settingService = getService(PCAP_PATH,PCAP_INTERFACE);
+    auto settingService = getService(PCAP_PATH, PCAP_INTERFACE);
 
-    auto method = this->bus.new_method_call(settingService.c_str(),
-                                            PCAP_PATH,
-                                            "org.freedesktop.DBus.Properties",
-                                            "Get");
+    auto method =
+        this->bus.new_method_call(settingService.c_str(), PCAP_PATH,
+                                  "org.freedesktop.DBus.Properties", "Get");
 
     method.append(PCAP_INTERFACE, POWER_CAP_PROP);
     auto reply = this->bus.call(method);
@@ -92,12 +87,11 @@ uint32_t PowerCap::getPcap()
 
 bool PowerCap::getPcapEnabled()
 {
-    auto settingService = getService(PCAP_PATH,PCAP_INTERFACE);
+    auto settingService = getService(PCAP_PATH, PCAP_INTERFACE);
 
-    auto method = this->bus.new_method_call(settingService.c_str(),
-                                            PCAP_PATH,
-                                            "org.freedesktop.DBus.Properties",
-                                            "Get");
+    auto method =
+        this->bus.new_method_call(settingService.c_str(), PCAP_PATH,
+                                  "org.freedesktop.DBus.Properties", "Get");
 
     method.append(PCAP_INTERFACE, POWER_CAP_ENABLE_PROP);
     auto reply = this->bus.call(method);
@@ -117,7 +111,7 @@ void PowerCap::writeOcc(uint32_t pcapValue)
 {
     // Create path out to master occ hwmon entry
     std::unique_ptr<fs::path> fileName =
-            std::make_unique<fs::path>(OCC_HWMON_PATH);
+        std::make_unique<fs::path>(OCC_HWMON_PATH);
     *fileName /= occMasterName;
     *fileName /= "/hwmon/";
 
@@ -129,11 +123,11 @@ void PowerCap::writeOcc(uint32_t pcapValue)
     // Append on the hwmon string where we write the user power cap
     *fileName /= "/caps1_user";
 
-    auto pcapString {std::to_string(pcapValue)};
+    auto pcapString{std::to_string(pcapValue)};
 
     log<level::INFO>("Writing pcap value to hwmon",
-                     entry("PCAP_PATH=%s",fileName->c_str()),
-                     entry("PCAP_VALUE=%s",pcapString.c_str()));
+                     entry("PCAP_PATH=%s", fileName->c_str()),
+                     entry("PCAP_VALUE=%s", pcapString.c_str()));
     // Open the hwmon file and write the power cap
     std::ofstream file(*fileName, std::ios::out);
     file << pcapString;
@@ -160,8 +154,8 @@ void PowerCap::pcapChanged(sdbusplus::message::message& msg)
     auto valPropMap = msgData.find(POWER_CAP_PROP);
     if (valPropMap != msgData.end())
     {
-        pcap = sdbusplus::message::variant_ns::get<uint32_t>(
-            valPropMap->second);
+        pcap =
+            sdbusplus::message::variant_ns::get<uint32_t>(valPropMap->second);
         pcapEnabled = getPcapEnabled();
     }
     else
@@ -169,8 +163,8 @@ void PowerCap::pcapChanged(sdbusplus::message::message& msg)
         valPropMap = msgData.find(POWER_CAP_ENABLE_PROP);
         if (valPropMap != msgData.end())
         {
-            pcapEnabled = sdbusplus::message::variant_ns::get<bool>(
-                valPropMap->second);
+            pcapEnabled =
+                sdbusplus::message::variant_ns::get<bool>(valPropMap->second);
             pcap = getPcap();
         }
         else
@@ -180,9 +174,8 @@ void PowerCap::pcapChanged(sdbusplus::message::message& msg)
         }
     }
 
-    log<level::INFO>("Power Cap Property Change",
-                     entry("PCAP=%u",pcap),
-                     entry("PCAP_ENABLED=%u",pcapEnabled));
+    log<level::INFO>("Power Cap Property Change", entry("PCAP=%u", pcap),
+                     entry("PCAP_ENABLED=%u", pcapEnabled));
 
     // Determine desired action to write to occ
 
@@ -194,8 +187,8 @@ void PowerCap::pcapChanged(sdbusplus::message::message& msg)
     return;
 }
 
-} // namespace open_power
+} // namespace powercap
 
 } // namespace occ
 
-}// namespace powercap
+} // namespace open_power

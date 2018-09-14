@@ -1,14 +1,17 @@
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <errno.h>
-#include <phosphor-logging/log.hpp>
-#include <phosphor-logging/elog.hpp>
-#include <xyz/openbmc_project/Common/error.hpp>
-#include <org/open_power/OCC/Device/error.hpp>
 #include "occ_presence.hpp"
-#include "occ_manager.hpp"
+
 #include "elog-errors.hpp"
+#include "occ_manager.hpp"
+
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+
+#include <org/open_power/OCC/Device/error.hpp>
+#include <phosphor-logging/elog.hpp>
+#include <phosphor-logging/log.hpp>
+#include <xyz/openbmc_project/Common/error.hpp>
 
 namespace open_power
 {
@@ -27,10 +30,10 @@ void Presence::analyzeEvent()
     if (r < 0)
     {
         elog<ConfigFailure>(
-            phosphor::logging::org::open_power::OCC::Device::
-                ConfigFailure::CALLOUT_ERRNO(errno),
-            phosphor::logging::org::open_power::OCC::Device::
-                ConfigFailure::CALLOUT_DEVICE_PATH(file.c_str()));
+            phosphor::logging::org::open_power::OCC::Device::ConfigFailure::
+                CALLOUT_ERRNO(errno),
+            phosphor::logging::org::open_power::OCC::Device::ConfigFailure::
+                CALLOUT_DEVICE_PATH(file.c_str()));
     }
 
     auto data = readFile(len);

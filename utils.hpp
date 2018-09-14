@@ -16,8 +16,7 @@ namespace occ
  * @return            Service name
  * @error             InternalFailure exception thrown
  */
-std::string getService(sdbusplus::bus::bus& bus,
-                       const std::string& path,
+std::string getService(sdbusplus::bus::bus& bus, const std::string& path,
                        const std::string& intf);
 } // namespace occ
 } // namespace open_power

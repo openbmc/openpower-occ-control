@@ -1,9 +1,10 @@
+#include "config.h"
+
+#include "i2c_occ.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <fstream>
-
-#include "config.h"
-#include "i2c_occ.hpp"
 
 #ifdef I2C_OCC
 
@@ -20,8 +21,8 @@ constexpr auto DEVICE_NAME_LENGTH = 12;
 constexpr auto OCC_NAME_LENGTH = 3;
 
 // static assert to make sure the i2c occ device name is expected
-static_assert(sizeof(I2C_OCC_DEVICE_NAME) -1 == DEVICE_NAME_LENGTH);
-static_assert(sizeof(OCC_NAME) -1 == OCC_NAME_LENGTH);
+static_assert(sizeof(I2C_OCC_DEVICE_NAME) - 1 == DEVICE_NAME_LENGTH);
+static_assert(sizeof(OCC_NAME) - 1 == OCC_NAME_LENGTH);
 
 static bool isMasterOcc(const fs::directory_entry& p)
 {
@@ -48,7 +49,7 @@ std::vector<std::string> getOccHwmonDevices(const char* path)
 
     if (fs::is_directory(path))
     {
-        for (auto & p : fs::directory_iterator(path))
+        for (auto& p : fs::directory_iterator(path))
         {
             // Check if a device's name is "p8-occ-hwmon"
             auto f = p / "name";
@@ -102,4 +103,3 @@ std::string getI2cDeviceName(const std::string& dbusPath)
 } // namespace i2c_occ
 
 #endif
-
