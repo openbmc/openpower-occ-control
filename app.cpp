@@ -1,17 +1,19 @@
-#include <phosphor-logging/log.hpp>
-#include <phosphor-logging/elog.hpp>
-#include <xyz/openbmc_project/Common/error.hpp>
-#include <org/open_power/OCC/Device/error.hpp>
-#include "occ_manager.hpp"
-#include "occ_events.hpp"
-#include "elog-errors.hpp"
 #include "config.h"
+
+#include "elog-errors.hpp"
+#include "occ_events.hpp"
+#include "occ_manager.hpp"
+
+#include <org/open_power/OCC/Device/error.hpp>
+#include <phosphor-logging/elog.hpp>
+#include <phosphor-logging/log.hpp>
+#include <xyz/openbmc_project/Common/error.hpp>
 
 using namespace phosphor::logging;
 
 using namespace sdbusplus::org::open_power::OCC::Device::Error;
-using InternalFailure = sdbusplus::xyz::openbmc_project::Common::
-                                Error::InternalFailure;
+using InternalFailure =
+    sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure;
 
 int main(int argc, char* argv[])
 {

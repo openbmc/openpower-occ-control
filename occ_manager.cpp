@@ -1,12 +1,15 @@
-#include <experimental/filesystem>
-#include <phosphor-logging/log.hpp>
-#include <phosphor-logging/elog-errors.hpp>
-#include <xyz/openbmc_project/Common/error.hpp>
-#include "occ_finder.hpp"
-#include "occ_manager.hpp"
-#include "i2c_occ.hpp"
-#include "utils.hpp"
 #include "config.h"
+
+#include "occ_manager.hpp"
+
+#include "i2c_occ.hpp"
+#include "occ_finder.hpp"
+#include "utils.hpp"
+
+#include <experimental/filesystem>
+#include <phosphor-logging/elog-errors.hpp>
+#include <phosphor-logging/log.hpp>
+#include <xyz/openbmc_project/Common/error.hpp>
 
 namespace open_power
 {
@@ -45,33 +48,26 @@ void Manager::createObjects(const std::string& occ)
     auto path = fs::path(OCC_CONTROL_ROOT) / occ;
 
     passThroughObjects.emplace_back(
-            std::make_unique<PassThrough>(
-                bus,
-                path.c_str()));
+        std::make_unique<PassThrough>(bus, path.c_str()));
 
-    statusObjects.emplace_back(
-            std::make_unique<Status>(
-                bus,
-                event,
-                path.c_str(),
-                *this,
-                std::bind(std::mem_fn(&Manager::statusCallBack),
-                    this, std::placeholders::_1)));
+    statusObjects.emplace_back(std::make_unique<Status>(
+        bus, event, path.c_str(), *this,
+        std::bind(std::mem_fn(&Manager::statusCallBack), this,
+                  std::placeholders::_1)));
 
     // Create the power cap monitor object for master occ (0)
     if (!pcap)
     {
         pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
-                bus,
-                *statusObjects.front());
+            bus, *statusObjects.front());
     }
 }
 
 void Manager::statusCallBack(bool status)
 {
     using namespace phosphor::logging;
-    using InternalFailure = sdbusplus::xyz::openbmc_project::Common::
-        Error::InternalFailure;
+    using InternalFailure =
+        sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure;
 
     // At this time, it won't happen but keeping it
     // here just in case something changes in the future
@@ -86,7 +82,7 @@ void Manager::statusCallBack(bool status)
     // Only start presence detection if all the OCCs are bound
     if (activeCount == statusObjects.size())
     {
-        for (auto &obj : statusObjects)
+        for (auto& obj : statusObjects)
         {
             obj->addPresenceWatchMaster();
         }
@@ -107,17 +103,11 @@ void Manager::initStatusObjects()
         name = std::string(OCC_NAME) + '_' + name;
         auto path = fs::path(OCC_CONTROL_ROOT) / name;
         statusObjects.emplace_back(
-            std::make_unique<Status>(
-                bus,
-                event,
-                path.c_str(),
-                *this));
+            std::make_unique<Status>(bus, event, path.c_str(), *this));
     }
     // The first device is master occ
     pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
-               bus,
-               *statusObjects.front(),
-               occMasterName);
+        bus, *statusObjects.front(), occMasterName);
 }
 #endif
 

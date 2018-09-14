@@ -1,7 +1,9 @@
-#include <phosphor-logging/log.hpp>
 #include "occ_status.hpp"
+
 #include "occ_sensor.hpp"
 #include "utils.hpp"
+
+#include <phosphor-logging/log.hpp>
 namespace open_power
 {
 namespace occ
@@ -87,17 +89,13 @@ void Status::resetOCC()
     // This will throw exception on failure
     auto service = getService(bus, CONTROL_HOST_PATH, CONTROL_HOST_INTF);
 
-    auto method = bus.new_method_call(service.c_str(),
-                                      CONTROL_HOST_PATH,
-                                      CONTROL_HOST_INTF,
-                                      "Execute");
+    auto method = bus.new_method_call(service.c_str(), CONTROL_HOST_PATH,
+                                      CONTROL_HOST_INTF, "Execute");
     // OCC Reset control command
-    method.append(convertForMessage(
-                Control::Host::Command::OCCReset).c_str());
+    method.append(convertForMessage(Control::Host::Command::OCCReset).c_str());
 
     // OCC Sensor ID for callout reasons
-    method.append(sdbusplus::message::variant<uint8_t>(
-                        sensorMap.at(instance)));
+    method.append(sdbusplus::message::variant<uint8_t>(sensorMap.at(instance)));
     bus.call_noreply(method);
     return;
 }
@@ -114,19 +112,19 @@ void Status::hostControlEvent(sdbusplus::message::message& msg)
     msg.read(cmdCompleted, cmdStatus);
 
     log<level::DEBUG>("Host control signal values",
-                      entry("COMMAND=%s",cmdCompleted.c_str()),
-                      entry("STATUS=%s",cmdStatus.c_str()));
+                      entry("COMMAND=%s", cmdCompleted.c_str()),
+                      entry("STATUS=%s", cmdStatus.c_str()));
 
-    if(Control::Host::convertResultFromString(cmdStatus) !=
-            Control::Host::Result::Success)
+    if (Control::Host::convertResultFromString(cmdStatus) !=
+        Control::Host::Result::Success)
     {
-        if(Control::Host::convertCommandFromString(cmdCompleted) ==
-                Control::Host::Command::OCCReset)
+        if (Control::Host::convertCommandFromString(cmdCompleted) ==
+            Control::Host::Command::OCCReset)
         {
             // Must be a Timeout. Log an Error trace
             log<level::ERR>("Error resetting the OCC.",
-                    entry("PATH=%s", path.c_str()),
-                    entry("SENSORID=0x%X",sensorMap.at(instance)));
+                            entry("PATH=%s", path.c_str()),
+                            entry("SENSORID=0x%X", sensorMap.at(instance)));
         }
     }
     return;

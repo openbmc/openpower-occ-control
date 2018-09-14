@@ -1,9 +1,11 @@
 #pragma once
 
+#include "config.h"
+
+#include "occ_status.hpp"
+
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/bus/match.hpp>
-#include "occ_status.hpp"
-#include "config.h"
 
 namespace open_power
 {
@@ -24,7 +26,7 @@ namespace sdbusRule = sdbusplus::bus::match::rules;
 
 class PowerCap
 {
-public:
+  public:
     /** @brief PowerCap object to inform occ of changes to cap
      *
      * This object will monitor for changes to the power cap setting and
@@ -34,22 +36,19 @@ public:
      * @param[in] bus       - The Dbus bus object
      * @param[in] occStatus - The occ status object
      */
-    PowerCap(sdbusplus::bus::bus &bus,
-             Status &occStatus,
+    PowerCap(sdbusplus::bus::bus& bus, Status& occStatus,
              const std::string& occMasterName = OCC_MASTER_NAME) :
         bus(bus),
-        occMasterName(occMasterName),
-        occStatus(occStatus),
+        occMasterName(occMasterName), occStatus(occStatus),
         pcapMatch(
-                bus,
-                sdbusRule::member("PropertiesChanged") +
+            bus,
+            sdbusRule::member("PropertiesChanged") +
                 sdbusRule::path(
                     "/xyz/openbmc_project/control/host0/power_cap") +
                 sdbusRule::argN(0, "xyz.openbmc_project.Control.Power.Cap") +
                 sdbusRule::interface("org.freedesktop.DBus.Properties"),
-                std::bind(std::mem_fn(&PowerCap::pcapChanged),
-                          this, std::placeholders::_1))
-    {};
+            std::bind(std::mem_fn(&PowerCap::pcapChanged), this,
+                      std::placeholders::_1)){};
 
     /** @brief Return the appropriate value to write to the OCC
      *
@@ -60,8 +59,7 @@ public:
      */
     uint32_t getOccInput(uint32_t pcap, bool pcapEnabled);
 
-private:
-
+  private:
     /** @brief Callback for pcap setting changes
      *
      * Process change and inform OCC
@@ -78,8 +76,7 @@ private:
      *
      * @return Distinct service name for input path/interface
      */
-    std::string getService(std::string path,
-                           std::string interface);
+    std::string getService(std::string path, std::string interface);
 
     /** @brief Get the power cap property
      *
@@ -106,15 +103,14 @@ private:
     std::string occMasterName;
 
     /* @brief OCC Status object */
-    Status &occStatus;
+    Status& occStatus;
 
     /** @brief Used to subscribe to dbus pcap property changes **/
     sdbusplus::bus::match_t pcapMatch;
+};
 
- };
-
-} // namespace open_power
+} // namespace powercap
 
 } // namespace occ
 
-}// namespace powercap
+} // namespace open_power
