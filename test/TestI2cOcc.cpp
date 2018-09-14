@@ -1,9 +1,10 @@
+#include "i2c_occ.hpp"
+
 #include <experimental/filesystem>
 #include <fstream>
-#include <gtest/gtest.h>
 #include <string>
 
-#include "i2c_occ.hpp"
+#include <gtest/gtest.h>
 
 #ifdef I2C_OCC
 namespace i2c_occ
@@ -33,10 +34,9 @@ const auto P8_OCC_HWMON = "p8-occ-hwmon";
 
 const auto OTHER_STRING = "SomeOtherString123"s;
 
-
 class TestUtilGetOccHwmonDevices : public testing::Test
 {
-public:
+  public:
     TestUtilGetOccHwmonDevices()
     {
         // Prepare env for test case
@@ -171,4 +171,3 @@ TEST(TestI2cDbusNames, getI2cDeviceName)
 } // namespace i2c_occ
 
 #endif // I2C_OCC
-
