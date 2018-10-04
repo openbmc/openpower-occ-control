@@ -62,7 +62,7 @@ AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
     AS_IF([test "x$SDBUSPLUSPLUS" == "x"], AC_MSG_ERROR([Cannot find sdbus++]))
 
     # Checks for typedefs, structures, and compiler characteristics.
-    AX_CXX_COMPILE_STDCXX_14([noext])
+    AX_CXX_COMPILE_STDCXX_17([noext])
     AX_APPEND_COMPILE_FLAGS([-Wall -Werror], [CXXFLAGS])
 
     AC_ARG_ENABLE([i2c-occ],
