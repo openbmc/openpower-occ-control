@@ -1,6 +1,8 @@
 #pragma once
 
 #include <systemd/sd-event.h>
+
+#include <memory>
 namespace open_power
 {
 namespace occ
