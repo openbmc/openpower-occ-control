@@ -1,0 +1,9 @@
+Ok-To-Test+1: Jenkins <openbmc-ci-admin@ozlabs.org>
+Code-Review+1: Gunnar Mills <gmills@us.ibm.com>
+Verified+1: Jenkins <openbmc-ci-admin@ozlabs.org>
+Code-Review+2: Brad Bishop <bradleyb@fuzziesquirrel.com>
+Submitted-by: Brad Bishop <bradleyb@fuzziesquirrel.com>
+Submitted-at: Fri, 19 Oct 2018 14:11:51 +0000
+Reviewed-on: https://gerrit.openbmc-project.xyz/14355
+Project: openbmc/openpower-occ-control
+Branch: refs/heads/master
