@@ -1,3 +1,4 @@
+#include <cassert>
 #include <phosphor-logging/log.hpp>
 #include <powercap.hpp>
 
@@ -82,7 +83,7 @@ uint32_t PowerCap::getPcap()
     sdbusplus::message::variant<uint32_t> pcap;
     reply.read(pcap);
 
-    return pcap.get<uint32_t>();
+    return sdbusplus::message::variant_ns::get<uint32_t>(pcap);
 }
 
 bool PowerCap::getPcapEnabled()
@@ -104,7 +105,7 @@ bool PowerCap::getPcapEnabled()
     sdbusplus::message::variant<bool> pcapEnabled;
     reply.read(pcapEnabled);
 
-    return pcapEnabled.get<bool>();
+    return sdbusplus::message::variant_ns::get<bool>(pcapEnabled);
 }
 
 void PowerCap::writeOcc(uint32_t pcapValue)
