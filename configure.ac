@@ -46,17 +46,13 @@ AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
         AC_SUBST([OESDK_TESTCASE_FLAGS], [$testcase_flags])
     )
 
-    PKG_CHECK_MODULES([SDBUSPLUS], [sdbusplus],,\
-        AC_MSG_ERROR(["Requires sdbusplus package."]))
-    PKG_CHECK_MODULES([PHOSPHOR_LOGGING], [phosphor-logging],,\
-        AC_MSG_ERROR(["Requires phosphor-logging package."]))
-    PKG_CHECK_MODULES([OPENPOWER_DBUS_INTERFACES], [openpower-dbus-interfaces],,\
-        AC_MSG_ERROR(["Requires openpower-dbus-interfaces package."]))
-    PKG_CHECK_MODULES([PHOSPHOR_DBUS_INTERFACES], [phosphor-dbus-interfaces],,\
-        AC_MSG_ERROR(["Requires phosphor-dbus-interfaces package."]))
+    PKG_CHECK_MODULES([SDBUSPLUS], [sdbusplus])
+    PKG_CHECK_MODULES([PHOSPHOR_LOGGING], [phosphor-logging])
+    PKG_CHECK_MODULES([OPENPOWER_DBUS_INTERFACES], [openpower-dbus-interfaces])
+    PKG_CHECK_MODULES([PHOSPHOR_DBUS_INTERFACES], [phosphor-dbus-interfaces])
 
     # Check for sdbusplus
-    PKG_CHECK_MODULES([SDBUSPLUS], [sdbusplus],, [AC_MSG_ERROR(["sdbusplus packaged required and not found"])])
+    PKG_CHECK_MODULES([SDBUSPLUS], [sdbusplus])
 
     # Check for sdbus++ tool
     AC_PATH_PROG([SDBUSPLUSPLUS], [sdbus++])
