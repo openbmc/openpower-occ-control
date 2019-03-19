@@ -55,6 +55,11 @@ class Error
     /** @brief Removes error watch */
     void removeWatch();
 
+    inline void setFile(const fs::path& f)
+    {
+        file = fs::path(DEV_PATH) / f;
+    }
+
   private:
     /** @brief sd_event wrapped in unique_ptr */
     EventPtr& event;
@@ -95,7 +100,7 @@ class Error
     int fd = -1;
 
     /** Error file */
-    const fs::path file;
+    fs::path file;
 
     /** @brief Optional function to call on error scenario */
     std::function<void(bool)> callBack;
