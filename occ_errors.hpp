@@ -36,7 +36,7 @@ class Error
     Error(EventPtr& event, const fs::path& file,
           std::function<void(bool)> callBack = nullptr) :
         event(event),
-        file(fs::path(DEV_PATH) / file), callBack(callBack)
+        file(file), callBack(callBack)
     {
         // Nothing to do here.
     }
@@ -50,10 +50,15 @@ class Error
     }
 
     /** @brief Starts to monitor for error conditions */
-    void addWatch();
+    void addWatch(bool noPoll = false);
 
     /** @brief Removes error watch */
     void removeWatch();
+
+    inline void setFile(const fs::path& f)
+    {
+        file = f;
+    }
 
   private:
     /** @brief sd_event wrapped in unique_ptr */
@@ -95,7 +100,7 @@ class Error
     int fd = -1;
 
     /** Error file */
-    const fs::path file;
+    fs::path file;
 
     /** @brief Optional function to call on error scenario */
     std::function<void(bool)> callBack;
