@@ -8,6 +8,7 @@
 
 #include <experimental/filesystem>
 #include <fstream>
+#include <org/open_power/OCC/Device/error.hpp>
 
 namespace open_power
 {
@@ -17,6 +18,7 @@ namespace occ
 class Manager;
 class Status;
 namespace fs = std::experimental::filesystem;
+using namespace sdbusplus::org::open_power::OCC::Device::Error;
 
 /** @class Device
  *  @brief Binds and unbinds the OCC driver upon request
@@ -45,7 +47,7 @@ class Device
         error(event, errorFile, callBack),
         presence(event, fs::path(config) / "occs_present", manager, callBack),
         throttleProcTemp(
-            event, fs::path(config) / "occ_dvfs_ot",
+            event, fs::path(config) / "occ_dvfs_overtemp",
             std::bind(std::mem_fn(&Device::throttleProcTempCallback), this,
                       std::placeholders::_1)),
         throttleProcPower(
@@ -89,7 +91,17 @@ class Device
     /** @brief Starts to monitor for errors */
     inline void addErrorWatch()
     {
-        throttleProcTemp.addWatch();
+        try
+        {
+            throttleProcTemp.addWatch();
+        }
+        catch (const OpenFailure& e)
+        {
+            // try the old kernel version
+            throttleProcTemp.setFile(fs::path(config) / "occ_dvfs_ot");
+            throttleProcTemp.addWatch();
+        }
+
         throttleProcPower.addWatch();
         throttleMemTemp.addWatch();
         error.addWatch();
