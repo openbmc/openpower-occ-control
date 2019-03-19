@@ -1,5 +1,6 @@
 #include "powercap.hpp"
 
+#include <experimental/filesystem>
 #include <occ_events.hpp>
 #include <occ_manager.hpp>
 
@@ -42,4 +43,28 @@ TEST_F(VerifyOccInput, PcapEnabled)
 {
     uint32_t occInput = pcap.getOccInput(100, true);
     EXPECT_EQ(occInput, 90);
+}
+
+TEST(VerifyPathParsing, EmptyPath)
+{
+    std::experimental::filesystem::path path = "";
+    std::string parsed = Device::getPathBack(path);
+
+    EXPECT_STREQ(parsed.c_str(), "");
+}
+
+TEST(VerifyPathParsing, FilenamePath)
+{
+    std::experimental::filesystem::path path = "/test/foo.bar";
+    std::string parsed = Device::getPathBack(path);
+
+    EXPECT_STREQ(parsed.c_str(), "foo.bar");
+}
+
+TEST(VerifyPathParsing, DirectoryPath)
+{
+    std::experimental::filesystem::path path = "/test/bar/";
+    std::string parsed = Device::getPathBack(path);
+
+    EXPECT_STREQ(parsed.c_str(), "bar");
 }
