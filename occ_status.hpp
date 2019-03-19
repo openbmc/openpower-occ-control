@@ -67,7 +67,8 @@ class Status : public Interface
 #ifdef I2C_OCC
                i2c_occ::getI2cDeviceName(path),
 #else
-               sysfsName + "." + std::to_string(instance + 1),
+               fs::path(DEV_PATH) /
+                   fs::path(sysfsName + "." + std::to_string(instance + 1)),
 #endif
                manager, *this,
                std::bind(std::mem_fn(&Status::deviceErrorHandler), this,
