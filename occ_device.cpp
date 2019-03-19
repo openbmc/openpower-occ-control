@@ -15,7 +15,7 @@ fs::path Device::unBindPath = fs::path(OCC_HWMON_PATH) / "unbind";
 bool Device::master() const
 {
     int master;
-    auto masterFile = fs::path(DEV_PATH) / config / "occ_master";
+    auto masterFile = devPath / "occ_master";
     std::ifstream file(masterFile, std::ios::in);
 
     if (!file)
