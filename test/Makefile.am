@@ -6,7 +6,8 @@ TESTS = $(check_PROGRAMS)
 
 utest_LDADD = $(top_builddir)/libocc_control.la -lstdc++fs
 
-utest_SOURCES = utest.cpp \
+utest_SOURCES = error_files_tests.cpp \
+                utest.cpp \
                 TestI2cOcc.cpp
 
 utest_CPPFLAGS = $(GTEST_CPPFLAGS) \

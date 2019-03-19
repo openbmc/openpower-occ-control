@@ -8,6 +8,7 @@
 
 #include <experimental/filesystem>
 #include <fstream>
+#include <org/open_power/OCC/Device/error.hpp>
 
 namespace open_power
 {
@@ -17,6 +18,7 @@ namespace occ
 class Manager;
 class Status;
 namespace fs = std::experimental::filesystem;
+using namespace sdbusplus::org::open_power::OCC::Device::Error;
 
 /** @class Device
  *  @brief Binds and unbinds the OCC driver upon request
@@ -34,25 +36,25 @@ class Device
     /** @brief Constructs the Device object
      *
      *  @param[in] event    - Unique ptr reference to sd_event
-     *  @param[in] name     - OCC instance name
+     *  @param[in] path     - Path to the OCC instance
      *  @param[in] manager  - OCC manager instance
      *  @param[in] callback - Optional callback on errors
      */
-    Device(EventPtr& event, const std::string& name, const Manager& manager,
+    Device(EventPtr& event, const fs::path& path, const Manager& manager,
            Status& status, std::function<void(bool)> callBack = nullptr) :
-        config(name),
-        errorFile(fs::path(config) / "occ_error"), statusObject(status),
-        error(event, errorFile, callBack),
-        presence(event, fs::path(config) / "occs_present", manager, callBack),
+        config(get_path_back(path)),
+        devPath(path), statusObject(status),
+        error(event, path / "occ_error", callBack),
+        presence(event, path / "occs_present", manager, callBack),
         throttleProcTemp(
-            event, fs::path(config) / "occ_dvfs_ot",
+            event, path / "occ_dvfs_overtemp",
             std::bind(std::mem_fn(&Device::throttleProcTempCallback), this,
                       std::placeholders::_1)),
         throttleProcPower(
-            event, fs::path(config) / "occ_dvfs_power",
+            event, path / "occ_dvfs_power",
             std::bind(std::mem_fn(&Device::throttleProcPowerCallback), this,
                       std::placeholders::_1)),
-        throttleMemTemp(event, fs::path(config) / "occ_mem_throttle",
+        throttleMemTemp(event, path / "occ_mem_throttle",
                         std::bind(std::mem_fn(&Device::throttleMemTempCallback),
                                   this, std::placeholders::_1))
     {
@@ -86,13 +88,29 @@ class Device
         return fs::exists(OCC_HWMON_PATH + config);
     }
 
-    /** @brief Starts to monitor for errors */
-    inline void addErrorWatch()
+    /** @brief Starts to monitor for errors
+     *
+     *  @param[in] noPoll - Indicates whether or not the error file should
+     *                      actually be polled for changes. Disabling polling is
+     *                      necessary for error files that don't support the
+                            poll file operation.
+     */
+    inline void addErrorWatch(bool noPoll = false)
     {
-        throttleProcTemp.addWatch();
-        throttleProcPower.addWatch();
-        throttleMemTemp.addWatch();
-        error.addWatch();
+        try
+        {
+            throttleProcTemp.addWatch(noPoll);
+        }
+        catch (const OpenFailure& e)
+        {
+            // try the old kernel version
+            throttleProcTemp.setFile(devPath / "occ_dvfs_ot");
+            throttleProcTemp.addWatch(noPoll);
+        }
+
+        throttleProcPower.addWatch(noPoll);
+        throttleMemTemp.addWatch(noPoll);
+        error.addWatch(noPoll);
     }
 
     /** @brief stops monitoring for errors */
@@ -100,7 +118,6 @@ class Device
     {
         // we can always safely remove watch even if we don't add it
         presence.removeWatch();
-        error.removeWatch();
         error.removeWatch();
         throttleMemTemp.removeWatch();
         throttleProcPower.removeWatch();
@@ -120,8 +137,8 @@ class Device
     /** @brief Config value to be used to do bind and unbind */
     const std::string config;
 
-    /** @brief This file contains 0 for success, non-zero for errors */
-    const fs::path errorFile;
+    /** @brief This directory contains the error files */
+    const fs::path devPath;
 
     /**  @brief To bind the device to the OCC driver, do:
      *
@@ -147,6 +164,31 @@ class Device
     Error throttleProcTemp;
     Error throttleProcPower;
     Error throttleMemTemp;
+
+    /** @brief helper function to get the last part of the path
+     *
+     * @param[in] path - Path to parse
+     * @return         - Last directory name in the path
+     */
+    std::string get_path_back(const fs::path& path)
+    {
+        if (path.empty())
+            return std::string();
+
+        // Points to the last element in the path
+        auto conf = --path.end();
+
+        // The last element will be empty if the path ends in '/'
+        // Verify there is an element before too
+        if (conf->empty() && conf != path.begin())
+        {
+            return *(--conf);
+        }
+        else
+        {
+            return *conf;
+        }
+    }
 
     /** @brief file writer to achieve bind and unbind
      *
