@@ -56,15 +56,18 @@ void Error::registerCallBack()
 }
 
 // Starts to watch for errors
-void Error::addWatch()
+void Error::addWatch(bool poll)
 {
     if (!watching)
     {
         // Open the file
         openFile();
 
-        // register the callback handler
-        registerCallBack();
+        if (poll)
+        {
+            // register the callback handler
+            registerCallBack();
+        }
 
         // Set we are watching the error
         watching = true;
