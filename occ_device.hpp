@@ -45,7 +45,7 @@ class Device
         error(event, errorFile, callBack),
         presence(event, fs::path(config) / "occs_present", manager, callBack),
         throttleProcTemp(
-            event, fs::path(config) / "occ_dvfs_ot",
+            event, fs::path(config) / "occ_dvfs_overtemp",
             std::bind(std::mem_fn(&Device::throttleProcTempCallback), this,
                       std::placeholders::_1)),
         throttleProcPower(
