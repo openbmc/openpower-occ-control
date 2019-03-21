@@ -95,7 +95,8 @@ void Status::resetOCC()
     method.append(convertForMessage(Control::Host::Command::OCCReset).c_str());
 
     // OCC Sensor ID for callout reasons
-    method.append(sdbusplus::message::variant<uint8_t>(sensorMap.at(instance)));
+    method.append(sdbusplus::message::variant<uint8_t>(
+        std::get<0>(sensorMap.at(instance))));
     bus.call_noreply(method);
     return;
 }
@@ -122,9 +123,9 @@ void Status::hostControlEvent(sdbusplus::message::message& msg)
             Control::Host::Command::OCCReset)
         {
             // Must be a Timeout. Log an Error trace
-            log<level::ERR>("Error resetting the OCC.",
-                            entry("PATH=%s", path.c_str()),
-                            entry("SENSORID=0x%X", sensorMap.at(instance)));
+            log<level::ERR>(
+                "Error resetting the OCC.", entry("PATH=%s", path.c_str()),
+                entry("SENSORID=0x%X", std::get<0>(sensorMap.at(instance))));
         }
     }
     return;

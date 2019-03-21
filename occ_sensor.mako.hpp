@@ -6,6 +6,8 @@
 #pragma once
 
 #include <map>
+#include <string>
+#include <tuple>
 
 namespace open_power
 {
@@ -14,15 +16,18 @@ namespace occ
 
 using instanceID = int;
 using sensorID = uint8_t;
-const std::map<instanceID, sensorID> Status::sensorMap = {
+using sensorName = std::string;
+using sensorDefs = std::tuple<sensorID, sensorName>;
+const std::map<instanceID, sensorDefs> Status::sensorMap = {
 \
 % for occ in occDict:
 <%
     instance = occ.get("Instance")
     id = occ.get("SensorID")
+    name = occ.get("SensorName")
 %>\
 \
-    { ${instance}, ${id} },\
+    { ${instance}, { ${id}, "${name}" },\
 
 % endfor
 };

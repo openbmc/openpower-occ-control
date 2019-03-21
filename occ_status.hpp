@@ -31,6 +31,12 @@ using instanceID = int;
 // IPMI sensor ID for a given OCC instance
 using sensorID = uint8_t;
 
+// Human readable sensor name for DBus tree. E.g. "CPU0_OCC"
+using sensorName = std::string;
+
+// OCC sensors definitions in the map
+using sensorDefs = std::tuple<sensorID, sensorName>;
+
 // OCC sysfs name prefix
 const std::string sysfsName = "occ-hwmon";
 
@@ -60,9 +66,8 @@ class Status : public Interface
     Status(sdbusplus::bus::bus& bus, EventPtr& event, const char* path,
            const Manager& manager,
            std::function<void(bool)> callBack = nullptr) :
-        Interface(bus, path, true),
-        bus(bus), path(path), callBack(callBack),
-        instance(((this->path.back() - '0'))),
+        Interface(bus, getDbusPath(path), true),
+        bus(bus), path(path), callBack(callBack), instance(getInstance(path)),
         device(event,
 #ifdef I2C_OCC
                i2c_occ::getI2cDeviceName(path),
@@ -139,8 +144,8 @@ class Status : public Interface
     /** @brief OCC instance number. Ex, 0,1, etc */
     int instance;
 
-    /** @brief OCC instance to Sensor ID mapping */
-    static const std::map<instanceID, sensorID> sensorMap;
+    /** @brief OCC instance to Sensor definitions mapping */
+    static const std::map<instanceID, sensorDefs> sensorMap;
 
     /** @brief OCC device object to do bind and unbind */
     Device device;
@@ -168,6 +173,39 @@ class Status : public Interface
     /** @brief Sends a message to host control command handler to reset OCC
      */
     void resetOCC();
+
+    /** @brief Determines the instance ID by specified object path.
+     *  @param[in]  path  Estimated OCC Dbus object path
+     *  @return  Instance number
+     */
+    static int getInstance(const std::string& path)
+    {
+        return (path.empty() ? 0 : path.back() - '0');
+    }
+
+    /** @brief Override the sensor name with name from the definition.
+     *  @param[in]  estimatedPath - Estimated OCC Dbus object path
+     *  @return  Fixed OCC DBus object path
+     */
+    static std::string getDbusPath(const std::string& estimatedPath)
+    {
+        if (!estimatedPath.empty())
+        {
+            auto it sensorMap.find(getInstance(estimatedPath));
+            if (sensorMap.end() != it)
+            {
+                auto& name = std::get<1>(it->second);
+                if (!name.empty() && name != "None")
+                {
+                    auto path = fs::path(estimatedPath);
+                    path.replace_filename(name);
+                    return path.string();
+                }
+            }
+        }
+
+        return estimatedPath;
+    }
 };
 
 } // namespace occ
