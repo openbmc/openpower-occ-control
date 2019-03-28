@@ -12,7 +12,7 @@ noinst_HEADERS = \
 
 noinst_LTLIBRARIES = libocc_control.la
 
-sbin_PROGRAMS = openpower-occ-control
+bin_PROGRAMS = openpower-occ-control
 
 openpower_occ_control_SOURCES = \
 	app.cpp
