@@ -1,4 +1,8 @@
 - Instance: 0
   SensorID: 0x08
+  # The SensorName field is optional. 
+  # If it will absent the full device name will be used.   
+  SensorName: occ0
 - Instance: 1
   SensorID: 0x09
+  SensorName: occ1
