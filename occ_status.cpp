@@ -62,6 +62,17 @@ bool Status::occActive(bool value)
         // Add error watch again
         addErrorWatch();
     }
+    else if (!value && device.bound())
+    {
+        removeErrorWatch();
+
+        // In the event that the application never receives the active signal
+        // even though the OCC is active (this can occur if the BMC is rebooted
+        // with the host on, since the initial OCC driver probe will discover
+        // the OCCs), this application needs to be able to unbind the device
+        // when we get the OCC inactive signal.
+        device.unBind();
+    }
     return Base::Status::occActive(value);
 }
 
