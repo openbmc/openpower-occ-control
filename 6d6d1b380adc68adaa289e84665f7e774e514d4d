@@ -1,0 +1,10 @@
+Ok-To-Test+1: Jenkins <openbmc-ci-admin@ozlabs.org>
+Verified+1: Jenkins <openbmc-ci-admin@ozlabs.org>
+Code-Review+1: Lei YU <mine260309@gmail.com>
+Code-Review+1: Alexander Filippov <a.filippov@yadro.com>
+Code-Review+2: Edward A. James <eajames@us.ibm.com>
+Submitted-by: Edward A. James <eajames@us.ibm.com>
+Submitted-at: Wed, 24 Apr 2019 18:47:57 +0000
+Reviewed-on: https://gerrit.openbmc-project.xyz/c/openbmc/openpower-occ-control/+/20825
+Project: openbmc/openpower-occ-control
+Branch: refs/heads/master
