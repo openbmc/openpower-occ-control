@@ -1,6 +1,7 @@
 #include <cassert>
 #include <phosphor-logging/log.hpp>
 #include <powercap.hpp>
+#include <regex>
 
 namespace open_power
 {
@@ -20,6 +21,7 @@ constexpr auto POWER_CAP_PROP = "PowerCap";
 constexpr auto POWER_CAP_ENABLE_PROP = "PowerCapEnable";
 
 using namespace phosphor::logging;
+namespace fs = std::filesystem;
 
 std::string PowerCap::getService(std::string path, std::string interface)
 {
@@ -108,6 +110,19 @@ bool PowerCap::getPcapEnabled()
     return sdbusplus::message::variant_ns::get<bool>(pcapEnabled);
 }
 
+std::string PowerCap::getPcapFilename(const fs::path& path)
+{
+    std::regex expr{"power\\d+_cap_user$"};
+    for (auto& file : fs::directory_iterator(path))
+    {
+        if (std::regex_search(file.path().string(), expr))
+        {
+            return file.path().filename();
+        }
+    }
+    return std::string{};
+}
+
 void PowerCap::writeOcc(uint32_t pcapValue)
 {
     // Create path out to master occ hwmon entry
@@ -122,9 +137,19 @@ void PowerCap::writeOcc(uint32_t pcapValue)
     // Now set our path to this full path, including this hwmonXX directory
     fileName = std::make_unique<fs::path>(*fs::directory_iterator(*fileName));
     // Append on the hwmon string where we write the user power cap
-    *fileName /= "/caps1_user";
 
-    auto pcapString{std::to_string(pcapValue)};
+    auto baseName = getPcapFilename(*fileName);
+    if (baseName.empty())
+    {
+        log<level::ERR>("Could not find a power cap file to write to",
+                        entry("PATH=%s", *fileName->c_str()));
+        return;
+    }
+    *fileName /= baseName;
+
+    uint64_t microWatts = pcapValue * 1000000ull;
+
+    auto pcapString{std::to_string(microWatts)};
 
     log<level::INFO>("Writing pcap value to hwmon",
                      entry("PCAP_PATH=%s", fileName->c_str()),
