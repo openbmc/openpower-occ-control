@@ -21,7 +21,7 @@ constexpr auto POWER_CAP_PROP = "PowerCap";
 constexpr auto POWER_CAP_ENABLE_PROP = "PowerCapEnable";
 
 using namespace phosphor::logging;
-namespace fs = std::filesystem;
+namespace fs = std::experimental::filesystem;
 
 std::string PowerCap::getService(std::string path, std::string interface)
 {
