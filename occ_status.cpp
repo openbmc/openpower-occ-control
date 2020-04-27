@@ -3,6 +3,8 @@
 #include "occ_sensor.hpp"
 #include "utils.hpp"
 
+#include <cassert>
+#include <iostream>
 #include <phosphor-logging/log.hpp>
 namespace open_power
 {
@@ -90,13 +92,65 @@ void Status::deviceErrorHandler(bool error)
     }
 }
 
-// Sends message to host control command handler to reset OCC
-void Status::resetOCC()
+using namespace phosphor::logging;
+
+// Dbus call from PLDM/IPMI that leads to reset of OCC
+void Status::resetOCCDbus()
 {
-    using namespace phosphor::logging;
+#ifdef ENABLE_PLDM
+
+    static constexpr auto pldmObjPath = "/xyz/openbmc_project/pldm";
+    static constexpr auto pdrInterface = "xyz.openbmc_project.PLDM.PDR";
+
+    uint8_t tid = 0;
+    uint8_t mctpEid = 10;
+    uint8_t instanceId = 0;
+    std::vector<std::vector<uint8_t>> pdrList;
+
+    auto service = getService(bus, pldmObjPath, pdrInterface);
+    try
+    {
+        auto method = bus.new_method_call(service.c_str(), pldmObjPath,
+                                          pdrInterface, "FindStateEffecterPDR");
+        method.append(tid);
+        method.append(PLDM_ENTITY_PROC_MODULE);
+        method.append(PLDM_STATE_SET_BOOT_RESTART_CAUSE);
+        auto reply = bus.call(method);
+        reply.read(pdrList);
+    }
+    catch (const std::exception& e)
+    {
+        log<level::ERR>("FindStateEffecterPDR returned error, ",
+                        entry("ERROR = %s", e.what()));
+        return;
+    }
+
+    try
+    {
+        static constexpr auto pldmRequester =
+            "xyz.openbmc_project.PLDM.Requester";
+        auto method = bus.new_method_call(service.c_str(), pldmObjPath,
+                                          pldmRequester, "GetInstanceId");
+        method.append(mctpEid);
+        auto reply = bus.call(method);
+        reply.read(instanceId);
+    }
+    catch (const std::exception& e)
+    {
+        log<level::ERR>("GetInstanceId dbus call returned error, ",
+                        entry("ERROR = %d", e.what()));
+        return;
+    }
+    // entity instance will be the instance of this class incremented by 1.
+    // The PLDM entity instance numbering starts from 1 and not 0,
+    // whereas this class starts numbering OCC instances from 0
+    uint16_t entityInstance = static_cast<uint16_t>(instance) + 1;
+
+    return resetOCCPLDM(pdrList, mctpEid, instanceId, entityInstance);
+
+#else
     constexpr auto CONTROL_HOST_PATH = "/org/open_power/control/host0";
     constexpr auto CONTROL_HOST_INTF = "org.open_power.Control.Host";
-
     // This will throw exception on failure
     auto service = getService(bus, CONTROL_HOST_PATH, CONTROL_HOST_INTF);
 
@@ -109,14 +163,14 @@ void Status::resetOCC()
     method.append(std::variant<uint8_t>(std::get<0>(sensorMap.at(instance))));
     bus.call_noreply(method);
     return;
+
+#endif
 }
 
 // Handler called by Host control command handler to convey the
 // status of the executed command
 void Status::hostControlEvent(sdbusplus::message::message& msg)
 {
-    using namespace phosphor::logging;
-
     std::string cmdCompleted{};
     std::string cmdStatus{};
 
@@ -141,5 +195,114 @@ void Status::hostControlEvent(sdbusplus::message::message& msg)
     return;
 }
 
-} // namespace occ
+#ifdef ENABLE_PLDM
+std::vector<uint8_t> prepareSetStateEffecterReq(pldm_state_effecter_pdr* pdr,
+                                                uint8_t instanceId)
+{
+    assert(pdr->composite_effecter_count != 0);
+    auto possibleStates =
+        reinterpret_cast<state_effecter_possible_states*>(pdr->possible_states);
+    std::vector<set_effecter_state_field> stateField(
+        compositeEffecterCount * sizeof(set_effecter_state_field));
+
+    std::vector<uint8_t> request(
+        sizeof(pldm_msg_hdr) + sizeof(pdr->effecter_id) +
+        sizeof(pdr->composite_effecter_count) + stateField.size());
+    auto requestMsg = reinterpret_cast<pldm_msg*>(request.data());
+    for (uint8_t effecters = 1; effecters <= compositeEffecterCount;
+         effecters++)
+    {
+        if (possibleStates->state_set_id == PLDM_STATE_SET_BOOT_RESTART_CAUSE)
+        {
+            stateField.emplace_back(set_effecter_state_field{
+                PLDM_REQUEST_SET, PLDM_ENTITY_PROC_MODULE});
+        }
+        else
+        {
+            stateField.emplace_back(
+                set_effecter_state_field{PLDM_NO_CHANGE, 0});
+        }
+        pdr->possible_states += possibleStates->possible_states_size +
+                                sizeof(PLDM_STATE_SET_BOOT_RESTART_CAUSE) +
+                                sizeof(possibleStates->possible_states_size);
+        possibleStates = reinterpret_cast<state_effecter_possible_states*>(
+            pdr->possible_states);
+    }
+    auto rc = encode_set_state_effecter_states_req(
+        instanceId, pdr->effecter_id, pdr->composite_effecter_count,
+        stateField.data(), requestMsg);
+    if (rc != PLDM_SUCCESS)
+    {
+        log<level::ERR>("encode set effecter states request returned error ",
+                        entry("RC=%d", rc));
+    }
+    return request;
+}
+
+uint8_t* pldmSendRecv(std::vector<uint8_t>& request, uint8_t mctpEid,
+                      size_t& pdrResponseMsgSize)
+{
+    int fd = pldm_open();
+    FileDescriptor FileDesc(fd);
+    if (-1 == fd)
+    {
+        log<level::ERR>("failed to init mctp");
+    }
+    uint8_t* pdrResponseMsg = nullptr;
+    auto requesterRC =
+        pldm_send_recv(mctpEid, fd, request.data(), request.size(),
+                       &pdrResponseMsg, &pdrResponseMsgSize);
+    if (requesterRC != 0)
+    {
+        log<level::ERR>("PLDM send receive failed, rc:",
+                        entry("RC=%d", requesterRC));
+    }
+}
+return pdrResponseMsg;
+}
+
+void resetOCCPLDM(std::vector<std::vector<uint8_t>>& pdrList, uint8_t mctpEid,
+                  uint8_t instanceId, uint16_t entityInstance)
+{
+    for (const auto& pdr : pdrList)
+    {
+        auto pdr = reinterpret_cast<const pldm_state_effecter_pdr*>(pdr.data());
+
+        if (pdr->hdr.type == PLDM_STATE_EFFECTER_PDR &&
+            pdr->entity_instance == entityInstance)
+        {
+            auto stateEffecReqMsg = prepareSetStateEffecterReq(pdr, instanceId);
+            size_t pdrResponseMsgSize{};
+            auto pdrResponseMsg =
+                pldmSendRecv(stateEffecReqMsg, mctpEid, pdrResponseMsgSize);
+            std::unique_ptr<uint8_t, decltype(std::free)*> pdrResponseMsgPtr{
+                pdrResponseMsg, std::free};
+            uint8_t completionCode;
+            auto response =
+                reinterpret_cast<pldm_msg*>(pdrResponseMsgPtr.get());
+            auto rc = decode_set_state_effecter_states_resp(
+                response, pdrResponseMsgSize - sizeof(pldm_msg_hdr),
+                &completionCode);
+            if (rc != PLDM_SUCCESS || completionCode != PLDM_SUCCESS)
+            {
+                log<level::ERR>(
+                    "decode set effecter states request returned error.",
+                    entry("RC=%d", rc),
+                    entry("COMPLETION_CODE=%d", completionCode));
+            }
+        }
+        else
+        {
+            if (pdrVec == pdrList.back())
+            {
+                log<level::ERR>("PDR of type state effecter not found.");
+                return;
+            }
+        }
+    }
+    return;
+}
+#endif
+
+} // namespace open_power
 } // namespace open_power

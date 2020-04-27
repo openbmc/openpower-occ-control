@@ -18,3 +18,5 @@ utest_CXXFLAGS = $(PTHREAD_CFLAGS)
 utest_LDFLAGS = -lgtest -lgmock -lgmock_main \
                 $(PTHREAD_LIBS) \
                 $(OESDK_TESTCASE_FLAGS)
+
+include enable-pldm-utest.mk
