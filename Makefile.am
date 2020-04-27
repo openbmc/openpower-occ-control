@@ -31,6 +31,7 @@ libocc_control_la_SOURCES = \
 	utils.cpp
 
 openpower_occ_control_LDADD = libocc_control.la -lstdc++fs
+                
 
 BUILT_SOURCES =  org/open_power/OCC/Device/error.hpp \
                  org/open_power/OCC/Device/error.cpp \
@@ -64,6 +65,8 @@ libocc_control_la_LDFLAGS = $(generic_ld_flags)
 openpower_occ_control_CXXFLAGS = $(generic_cxx_flags)
 
 openpower_occ_control_LDFLAGS = $(generic_ld_flags)
+
+include enable-pldm.mk
 
 org/open_power/OCC/Device/error.hpp: ${top_srcdir}/org/open_power/OCC/Device.errors.yaml
 	@mkdir -p `dirname $@`
