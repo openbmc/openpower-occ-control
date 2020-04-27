@@ -46,12 +46,22 @@ AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
         AC_SUBST([OESDK_TESTCASE_FLAGS], [$testcase_flags])
     )
 
+    AC_ARG_WITH([occ-reset],
+    [AS_HELP_STRING([--with-occ-reset-transport], [Enable PLDM support])],
+    [AX_APPEND_COMPILE_FLAGS([-DENABLE_PLDM], [CXXFLAGS])]
+    )
+
     PKG_CHECK_MODULES([SDBUSPLUS], [sdbusplus])
     PKG_CHECK_MODULES([PHOSPHOR_LOGGING], [phosphor-logging])
     PKG_CHECK_MODULES([PHOSPHOR_DBUS_INTERFACES], [phosphor-dbus-interfaces])
 
     # Check for sdbusplus
     PKG_CHECK_MODULES([SDBUSPLUS], [sdbusplus])
+
+    AM_CONDITIONAL([ENABLE_PLDM], [test "$with_occ_reset_transport" == "pldm"])	
+    AS_IF([test "$with_occ_reset_transport" == "pldm"],	
+        [AX_PKG_CHECK_MODULES([LIBPLDM], [libpldm])]	
+    )
 
     # Check for sdbus++ tool
     AC_PATH_PROG([SDBUSPLUSPLUS], [sdbus++])

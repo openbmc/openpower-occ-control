@@ -1,12 +1,21 @@
 #pragma once
 
+#include "file.hpp"
 #include "i2c_occ.hpp"
 #include "occ_device.hpp"
 #include "occ_events.hpp"
 
+#ifdef ENABLE_PLDM
+#include <libpldm/entity.h>
+#include <libpldm/platform.h>
+#include <libpldm/pldm.h>
+#include <libpldm/state_set.h>
+#endif
+
 #include <functional>
 #include <org/open_power/Control/Host/server.hpp>
 #include <org/open_power/OCC/Status/server.hpp>
+#include <phosphor-logging/log.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
 
@@ -171,9 +180,17 @@ class Status : public Interface
      */
     void hostControlEvent(sdbusplus::message::message& msg);
 
+    /** @brief Dbus call from PLDM/IPMI that leads to reset of OCC
+     */
+    void resetOCCDbus();
+
     /** @brief Sends a message to host control command handler to reset OCC
      */
-    void resetOCC();
+    void resetOCC()
+    {
+        resetOCCDbus();
+        return;
+    }
 
     /** @brief Determines the instance ID by specified object path.
      *  @param[in]  path  Estimated OCC Dbus object path
@@ -208,6 +225,34 @@ class Status : public Interface
         return estimatedPath;
     }
 };
+
+#ifdef ENABLE_PLDM
+/** @brief Get state effecter request msg from PDR vector
+ *  @param[in] pdr - state effecter pdr sent by PLDM
+ *  @param[in] instanceId - instance ID of OCC reset
+ *  @return PLDM request message vector
+ */
+std::vector<uint8_t> prepareSetStateEffecterReq(pldm_state_effecter_pdr* pdr,
+                                                uint8_t instanceId);
+
+/** @brief Get state effecter request msg from PDR vector
+ *  @param[in] request - PLDM request message vector
+ *  @param[in] mctpEid - mctp eid to send pldm request message
+ *  @param[in] pdrResponseMsgSize - size of response message received from PLDM
+ *  @return PDR response message from PLDM
+ */
+uint8_t* pldmSendRecv(std::vector<uint8_t> request, uint8_t mctpEid,
+                      size_t& pdrResponseMsgSize);
+
+/** @brief PLDM sends a message to host control command handler to reset OCC
+ *  @param[in] pdrList - List of PDRs from PLDM
+ *  @param[in] mctpEid - mctp eid to send pldm request message
+ *  @param[in] instanceId - instance ID of OCC reset
+ *  @param[in] entityInstance - entity instance ID
+ */
+void resetOCCPLDM(std::vector<std::vector<uint8_t>>& pdrList, uint8_t mctpEid,
+                  uint8_t instanceId, uint16_t entityInstance);
+#endif
 
 } // namespace occ
 } // namespace open_power
