@@ -8,7 +8,8 @@ utest_LDADD = $(top_builddir)/libocc_control.la -lstdc++fs
 
 utest_SOURCES = error_files_tests.cpp \
                 utest.cpp \
-                TestI2cOcc.cpp
+                TestI2cOcc.cpp \
+                occ_reset_test.cpp
 
 utest_CPPFLAGS = $(GTEST_CPPFLAGS) \
                  $(AM_CPPFLAGS)
