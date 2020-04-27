@@ -5,10 +5,14 @@ check_PROGRAMS = utest
 TESTS = $(check_PROGRAMS)
 
 utest_LDADD = $(top_builddir)/libocc_control.la -lstdc++fs
+              $(top_srcdir)/pldm/libpldm.so \
+              $(top_srcdir)/pldm/libpldm.so.0 \
+              $(top_srcdir)/pldm/libpldm.so.0.1
 
 utest_SOURCES = error_files_tests.cpp \
                 utest.cpp \
-                TestI2cOcc.cpp
+                TestI2cOcc.cpp \
+                occ_reset_test.cpp
 
 utest_CPPFLAGS = $(GTEST_CPPFLAGS) \
                  $(AM_CPPFLAGS)
