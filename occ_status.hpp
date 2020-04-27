@@ -96,6 +96,7 @@ class Status : public Interface
 
         // Announce that we are ready
         this->emit_object_added();
+        this->resetOCC();
     }
 
     /** @brief Since we are overriding the setter-occActive but not the
