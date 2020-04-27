@@ -3,7 +3,10 @@
 #include "occ_sensor.hpp"
 #include "utils.hpp"
 
+#include <pldm/libpldm/requester/pldm.h>
+
 #include <phosphor-logging/log.hpp>
+#include <pldm/tool/pldm_cmd_helper.hpp>
 namespace open_power
 {
 namespace occ
@@ -93,6 +96,83 @@ void Status::deviceErrorHandler(bool error)
 // Sends message to host control command handler to reset OCC
 void Status::resetOCC()
 {
+    // IF BUILD PLDM
+    dbus_api::Pdr p;
+    dbus_api::Requester requester;
+    this->instance = 1;
+    uint16_t containerId = 0;
+    uint16_t entityType = 67;
+    uint16_t stateSetId = 192;
+    mctp_eid_t mctp_eid = 10;
+    uint8_t instanceId;
+
+    auto pdrVec =
+        p.findStateEffecterPDR(containerId, entityType, instance, stateSetId);
+    pldm_state_effecter_pdr* pdr =
+        reinterpret_cast<pldm_state_effecter_pdr*>(pdrVec.data());
+
+    if (pdr->hdr.type == PLDM_STATE_EFFECTER_PDR)
+    {
+        uint16_t effecterID = pdr->effecter_id;
+        uint8_t compositeEffecterCount = pdr->composite_effecter_count;
+        state_effecter_possible_states* possibleStates =
+            reinterpret_cast<state_effecter_possible_states*>(
+                pdr->possible_states);
+
+        std::vector<uint8_t> setStateEffecReqMsg(
+            sizeof(pldm_msg_hdr) + PLDM_SET_STATE_EFFECTER_STATES_REQ_BYTES);
+        auto setStateEffecReq =
+            reinterpret_cast<pldm_msg*>(setStateEffecReqMsg.data());
+
+        uint8_t* pdrResponseMsg = nullptr;
+        size_t pdrResponseMsgSize{};
+
+        for (uint8_t effecters = 0x01; effecters <= compositeEffecterCount;
+             effecters++)
+        {
+            if (possibleStates->state_set_id == stateSetId)
+            {
+                set_effecter_state_field stateField =
+                    reinterpret_cast<set_effecter_state_field*>(
+                        possibleStates->states);
+                stateField->set_request = PLDM_REQUEST_SET;
+                stateField->effecter_state = 3;
+                instanceId = requester.getInstanceId(mctp_eid);
+                auto rc = encode_set_state_effecter_states_req(
+                    instance_Id, effecterID, compositeEffecterCount, stateField,
+                    setStateEffecReq);
+                if (rc != PLDM_SUCCESS)
+                {
+                    int fd = pldm_open();
+                    if (-1 == fd)
+                    {
+                        std::cerr << "failed to init mctp "
+                                  << "\n";
+                        return -1;
+                    }
+                    pldm_send_recv(mctp_eid, fd, setStateEffecReqMsg.data(),
+                                   setStateEffecReqMsg.size(), &pdrResponseMsg,
+                                   &pdrResponseMsgSize);
+                    Logger(pldmVerbose, "Response Message:", "");
+                    std::vector<uint8_t> responseMsg;
+                    responseMsg.resize(pdrResponseMsgSize);
+                    memcpy(responseMsg.data(), pdrResponseMsg,
+                           responseMsg.size());
+
+                    free(pdrResponseMsg);
+                    printBuffer(responseMsg, pldmVerbose);
+                }
+            }
+            else
+            {
+                possibleStates += possibleStatesSize + sizeof(stateSetID) +
+                                  sizeof(possibleStatesSize);
+            }
+        }
+    }
+    return;
+    // IF BUILD IPMI
+
     using namespace phosphor::logging;
     constexpr auto CONTROL_HOST_PATH = "/org/open_power/control/host0";
     constexpr auto CONTROL_HOST_INTF = "org.open_power.Control.Host";
