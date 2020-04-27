@@ -71,6 +71,17 @@ AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
         ]
         AC_SUBST([CPPFLAGS], [$cpp_flags])
     )
+
+    AC_ARG_ENABLE([pldm],
+        AS_HELP_STRING([--pldm], [Enable PLDM support])
+    )
+    AS_IF([test "x$enable_pldm" == "xyes"],
+        AC_MSG_NOTICE([Enabling PLDM])
+        [
+            cpp_flags="-DPLDM"
+        ]
+        AC_SUBST([CPPFLAGS], [$cpp_flags])
+    )
 ])
 
 AC_ARG_VAR(OCC_CONTROL_BUSNAME, [The Dbus busname to own])
