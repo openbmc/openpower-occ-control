@@ -4,7 +4,9 @@ check_PROGRAMS = utest
 # Run all 'check' test programs
 TESTS = $(check_PROGRAMS)
 
-utest_LDADD = $(top_builddir)/libocc_control.la -lstdc++fs
+utest_LDADD = \
+	$(LIBPLDM_LIBS) \
+	$(top_builddir)/libocc_control.la -lstdc++fs
 
 utest_SOURCES = error_files_tests.cpp \
                 utest.cpp \
@@ -13,7 +15,9 @@ utest_SOURCES = error_files_tests.cpp \
 utest_CPPFLAGS = $(GTEST_CPPFLAGS) \
                  $(AM_CPPFLAGS)
 
-utest_CXXFLAGS = $(PTHREAD_CFLAGS)
+utest_CXXFLAGS = \
+	$(LIBPLDM_CFLAGS) \
+	$(PTHREAD_CFLAGS)
 
 utest_LDFLAGS = -lgtest -lgmock -lgmock_main \
                 $(PTHREAD_LIBS) \
