@@ -1,12 +1,18 @@
 #pragma once
 
+#include "file.hpp"
 #include "i2c_occ.hpp"
 #include "occ_device.hpp"
 #include "occ_events.hpp"
 
+#include <libpldm/platform.h>
+#include <libpldm/pldm.h>
+
+#include <cassert>
 #include <functional>
 #include <org/open_power/Control/Host/server.hpp>
 #include <org/open_power/OCC/Status/server.hpp>
+#include <phosphor-logging/log.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
 
@@ -171,9 +177,17 @@ class Status : public Interface
      */
     void hostControlEvent(sdbusplus::message::message& msg);
 
+    /** @brief Dbus call from PLDM/IPMI that leads to reset of OCC
+     */
+    void resetOCCDbus();
+
     /** @brief Sends a message to host control command handler to reset OCC
      */
-    void resetOCC();
+    void resetOCC()
+    {
+        resetOCCDbus();
+        return;
+    }
 
     /** @brief Determines the instance ID by specified object path.
      *  @param[in]  path  Estimated OCC Dbus object path
@@ -208,6 +222,22 @@ class Status : public Interface
         return estimatedPath;
     }
 };
+
+/** @brief Get state effecter request msg from PDR vector
+ */
+std::vector<uint8_t> getStateEffecterRequest(pldm_state_effecter_pdr* pdr,
+                                             uint8_t instanceId);
+
+/** @brief Get state effecter request msg from PDR vector
+ */
+uint8_t* pldmSendRecv(std::vector<uint8_t>& request, uint8_t mctpEid,
+                      size_t& pdrResponseMsgSize);
+
+/** @brief PLDM sends a message to host control command handler to reset OCC
+ */
+void resetOCCPLDM(std::vector<std::vector<uint8_t>>& pdrList, uint8_t mctpEid,
+                  uint8_t instanceId, uint16_t stateSetId,
+                  uint16_t entityInstance);
 
 } // namespace occ
 } // namespace open_power

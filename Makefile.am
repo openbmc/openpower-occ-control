@@ -30,7 +30,10 @@ libocc_control_la_SOURCES = \
 	i2c_occ.cpp \
 	utils.cpp
 
-openpower_occ_control_LDADD = libocc_control.la -lstdc++fs
+openpower_occ_control_LDADD = \
+        libocc_control.la -lstdc++fs \
+        $(LIBPLDM_LIBS)
+                
 
 BUILT_SOURCES =  org/open_power/OCC/Device/error.hpp \
                  org/open_power/OCC/Device/error.cpp \
@@ -61,9 +64,13 @@ libocc_control_la_CXXFLAGS = $(generic_cxx_flags)
 
 libocc_control_la_LDFLAGS = $(generic_ld_flags)
 
-openpower_occ_control_CXXFLAGS = $(generic_cxx_flags)
+openpower_occ_control_CXXFLAGS = \
+        $(generic_cxx_flags) \
+        $(LIBPLDM_CFLAGS)
 
 openpower_occ_control_LDFLAGS = $(generic_ld_flags)
+
+#include enable-pldm.mk
 
 org/open_power/OCC/Device/error.hpp: ${top_srcdir}/org/open_power/OCC/Device.errors.yaml
 	@mkdir -p `dirname $@`
