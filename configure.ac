@@ -52,6 +52,7 @@ AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
 
     # Check for sdbusplus
     PKG_CHECK_MODULES([SDBUSPLUS], [sdbusplus])
+    PKG_CHECK_MODULES([LIBPLDM], [libpldm])
 
     # Check for sdbus++ tool
     AC_PATH_PROG([SDBUSPLUSPLUS], [sdbus++])
@@ -71,6 +72,18 @@ AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
         ]
         AC_SUBST([CPPFLAGS], [$cpp_flags])
     )
+
+    #AC_ARG_ENABLE([pldm],
+    #	AS_HELP_STRING([--enable_pldm], [Enable PLDM support])
+    #)
+    #AS_IF([test "x$enable_pldm" == "xyes"],
+    #    AC_MSG_NOTICE([Enabling PLDM])
+    #    [
+    #        cpp_flags="-DPLDM"
+    #        AX_PKG_CHECK_MODULES([LIBPLDM], [libpldm])
+    #    ]
+    #    AC_SUBST([CPPFLAGS], [$cpp_flags])
+    #)
 ])
 
 AC_ARG_VAR(OCC_CONTROL_BUSNAME, [The Dbus busname to own])
