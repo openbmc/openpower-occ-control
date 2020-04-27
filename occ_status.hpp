@@ -1,12 +1,18 @@
 #pragma once
 
+#include "file.hpp"
 #include "i2c_occ.hpp"
 #include "occ_device.hpp"
 #include "occ_events.hpp"
 
+#include <libpldm/platform.h>
+#include <libpldm/pldm.h>
+
+#include <cassert>
 #include <functional>
 #include <org/open_power/Control/Host/server.hpp>
 #include <org/open_power/OCC/Status/server.hpp>
+#include <phosphor-logging/log.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
 
@@ -171,9 +177,141 @@ class Status : public Interface
      */
     void hostControlEvent(sdbusplus::message::message& msg);
 
+    /** @brief PLDM sends a message to host control command handler to reset OCC
+     */
+    template <class PLDMInterface>
+    void resetOCCPLDM(PLDMInterface* intf,
+                      std::vector<std::vector<uint8_t>>& pdrList,
+                      uint8_t mctpEid, uint8_t instanceId, uint16_t stateSetId)
+    {
+        using namespace phosphor::logging;
+
+        // entity instance will be the instance of this class incremented by 1.
+        // The PLDM entity instance numbering starts from 1 and not 0.
+        // whereas this class starts numbering OCC instances from 0
+        uint16_t entityInstance = static_cast<uint16_t>(instance) + 1;
+        static constexpr auto PLDM_OCC_RESET_STATE_VALUE = 3;
+
+        for (const auto& pdrVec : pdrList)
+        {
+            auto pdr = reinterpret_cast<pldm_state_effecter_pdr*>(
+                const_cast<uint8_t*>(pdrVec.data()));
+
+            if (pdr->hdr.type == PLDM_STATE_EFFECTER_PDR &&
+                pdr->entity_instance == entityInstance)
+            {
+                auto effecterID = pdr->effecter_id;
+                auto compositeEffecterCount = pdr->composite_effecter_count;
+                assert(compositeEffecterCount != 0);
+                auto possibleStates =
+                    reinterpret_cast<state_effecter_possible_states*>(
+                        pdr->possible_states);
+                std::vector<set_effecter_state_field> stateField(
+                    compositeEffecterCount * sizeof(set_effecter_state_field));
+
+                std::vector<uint8_t> stateEffecReqMsg(
+                    sizeof(pldm_msg_hdr) + sizeof(effecterID) +
+                    sizeof(compositeEffecterCount) + stateField.size());
+                auto stateEffecReq =
+                    reinterpret_cast<pldm_msg*>(stateEffecReqMsg.data());
+
+                for (uint8_t effecters = 1; effecters <= compositeEffecterCount;
+                     effecters++)
+                {
+                    if (possibleStates->state_set_id == stateSetId)
+                    {
+                        stateField.emplace_back(set_effecter_state_field{
+                            PLDM_REQUEST_SET, PLDM_OCC_RESET_STATE_VALUE});
+                    }
+                    else
+                    {
+                        stateField.emplace_back(
+                            set_effecter_state_field{PLDM_NO_CHANGE, 0});
+                    }
+                    possibleStates +=
+                        possibleStates->possible_states_size +
+                        sizeof(stateSetId) +
+                        sizeof(possibleStates->possible_states_size);
+                }
+                auto rc = encode_set_state_effecter_states_req(
+                    instanceId, effecterID, compositeEffecterCount,
+                    stateField.data(), stateEffecReq);
+                if (rc != PLDM_SUCCESS)
+                {
+                    log<level::ERR>(
+                        "encode set effecter states request returned error ",
+                        entry("RC = %d", rc));
+                    return;
+                }
+                int fd = pldm_open();
+                FileDescriptor FileDesc(fd);
+                if (-1 == fd)
+                {
+                    log<level::ERR>("failed to init mctp");
+                    return;
+                }
+                uint8_t* pdrResponseMsg = nullptr;
+                size_t pdrResponseMsgSize{};
+                auto requesterRC =
+                    pldmSendRecv(mctpEid, fd, stateEffecReqMsg.data(),
+                                 stateEffecReqMsg.size(), &pdrResponseMsg,
+                                 &pdrResponseMsgSize);
+                std::unique_ptr<uint8_t, decltype(std::free)*>
+                    pdrResponseMsgPtr{pdrResponseMsg, std::free};
+                if (requesterRC != 0)
+                {
+                    log<level::ERR>("PLDM send receive failed, rc:",
+                                    entry("RC = %d", requesterRC));
+                    return;
+                }
+                uint8_t completionCode;
+                auto response =
+                    reinterpret_cast<pldm_msg*>(pdrResponseMsgPtr.get());
+                rc = decode_set_state_effecter_states_resp(
+                    response, pdrResponseMsgSize - sizeof(pldm_msg_hdr),
+                    &completionCode);
+                if (rc != PLDM_SUCCESS || completionCode != PLDM_SUCCESS)
+                {
+                    log<level::ERR>(
+                        "decode set effecter states request returned error.",
+                        entry("RC = %d", rc),
+                        entry("COMPLETION_CODE = %d", completionCode));
+                    return;
+                }
+            }
+            else
+            {
+                if (pdrVec == pdrList[pdrList.size() - 1])
+                {
+                    log<level::ERR>("PDR of type state effecter not found.");
+                    return;
+                }
+            }
+        }
+        return;
+    }
+
+    /** @brief Dbus call from PLDM/IPMI that leads to reset of OCC
+     */
+    void resetOCCDbus();
+
+    /** @brief Wrapper function for pldm_send_recv defined in PLDM
+     */
+    uint8_t pldmSendRecv(mctp_eid_t eid, int mctp_fd,
+                         const uint8_t* pldm_req_msg, size_t req_msg_len,
+                         uint8_t** pldm_resp_msg, size_t* resp_msg_len)
+    {
+        return pldm_send_recv(eid, mctp_fd, pldm_req_msg, req_msg_len,
+                              pldm_resp_msg, resp_msg_len);
+    }
+
     /** @brief Sends a message to host control command handler to reset OCC
      */
-    void resetOCC();
+    void resetOCC()
+    {
+        resetOCCDbus();
+        return;
+    }
 
     /** @brief Determines the instance ID by specified object path.
      *  @param[in]  path  Estimated OCC Dbus object path

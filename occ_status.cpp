@@ -90,18 +90,72 @@ void Status::deviceErrorHandler(bool error)
     }
 }
 
-// Sends message to host control command handler to reset OCC
-void Status::resetOCC()
+// Dbus call from PLDM/IPMI that leads to reset of OCC
+void Status::resetOCCDbus()
 {
     using namespace phosphor::logging;
+
+#ifdef ENABLE_PLDM
+    static constexpr auto pldmObjPath = "/xyz/openbmc_project/pldm";
+    static constexpr auto pdrInterface = "xyz.openbmc_project.PLDM.PDR";
+    static constexpr auto PLDM_OCC_ENTITY_TYPE = 67;
+    static constexpr auto PLDM_OCC_RESET_STATE_ID = 192;
+    static constexpr auto MCTP_EID = 10;
+
+    uint8_t tid = 0;
+    uint16_t entityType = PLDM_OCC_ENTITY_TYPE;
+    uint16_t stateSetId = PLDM_OCC_RESET_STATE_ID;
+    uint8_t mctpEid = MCTP_EID;
+    std::vector<std::vector<uint8_t>> pdrList;
+
+    try
+    {
+        auto service = getService(bus, pldmObjPath, pdrInterface);
+        auto method = bus.new_method_call(service.c_str(), pldmObjPath,
+                                          pdrInterface, "FindStateEffecterPDR");
+        method.append(tid);
+        method.append(entityType);
+        method.append(stateSetId);
+        auto reply = bus.call(method);
+        reply.read(pdrList);
+    }
+    catch (const std::exception& e)
+    {
+        log<level::ERR>("FindStateEffecterPDR dbus call returned error, ",
+                        entry("ERROR = %d", e.what()));
+        return;
+    }
+
+    try
+    {
+        static constexpr auto pldmRequester =
+            "xyz.openbmc_project.PLDM.Requester";
+        method = bus.new_method_call(service.c_str(), pldmObjPath,
+                                     pldmRequester, "GetInstanceId");
+        method.append(mctpEid);
+        reply = bus.call(method);
+        uint8_t instanceId = 0;
+        reply.read(instanceId);
+    }
+    catch (const std::exception& e)
+    {
+        log<level::ERR>("GetInstanceId dbus call returned error, ",
+                        entry("ERROR = %d", e.what()));
+        return;
+    }
+    PLDMInterface intf;
+    return resetOCCPLDM<PLDMInterface>(&intf, pdrList, mctpEid, instanceId,
+                                       stateSetId);
+
+#else
     constexpr auto CONTROL_HOST_PATH = "/org/open_power/control/host0";
     constexpr auto CONTROL_HOST_INTF = "org.open_power.Control.Host";
-
     // This will throw exception on failure
     auto service = getService(bus, CONTROL_HOST_PATH, CONTROL_HOST_INTF);
 
     auto method = bus.new_method_call(service.c_str(), CONTROL_HOST_PATH,
                                       CONTROL_HOST_INTF, "Execute");
+
     // OCC Reset control command
     method.append(convertForMessage(Control::Host::Command::OCCReset).c_str());
 
@@ -109,6 +163,8 @@ void Status::resetOCC()
     method.append(std::variant<uint8_t>(std::get<0>(sensorMap.at(instance))));
     bus.call_noreply(method);
     return;
+
+#endif
 }
 
 // Handler called by Host control command handler to convey the
