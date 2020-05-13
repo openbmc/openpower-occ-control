@@ -146,7 +146,7 @@ void PassThrough::activeStatusEvent(sdbusplus::message::message& msg)
     if (propertyMap != msgData.end())
     {
         // Extract the OccActive property
-        if (sdbusplus::message::variant_ns::get<bool>(propertyMap->second))
+        if (std::get<bool>(propertyMap->second))
         {
             occActive = true;
         }

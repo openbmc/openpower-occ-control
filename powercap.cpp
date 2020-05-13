@@ -85,7 +85,7 @@ uint32_t PowerCap::getPcap()
     sdbusplus::message::variant<uint32_t> pcap;
     reply.read(pcap);
 
-    return sdbusplus::message::variant_ns::get<uint32_t>(pcap);
+    return std::get<uint32_t>(pcap);
 }
 
 bool PowerCap::getPcapEnabled()
@@ -107,7 +107,7 @@ bool PowerCap::getPcapEnabled()
     sdbusplus::message::variant<bool> pcapEnabled;
     reply.read(pcapEnabled);
 
-    return sdbusplus::message::variant_ns::get<bool>(pcapEnabled);
+    return std::get<bool>(pcapEnabled);
 }
 
 std::string PowerCap::getPcapFilename(const fs::path& path)
@@ -180,8 +180,7 @@ void PowerCap::pcapChanged(sdbusplus::message::message& msg)
     auto valPropMap = msgData.find(POWER_CAP_PROP);
     if (valPropMap != msgData.end())
     {
-        pcap =
-            sdbusplus::message::variant_ns::get<uint32_t>(valPropMap->second);
+        pcap = std::get<uint32_t>(valPropMap->second);
         pcapEnabled = getPcapEnabled();
     }
     else
@@ -189,8 +188,7 @@ void PowerCap::pcapChanged(sdbusplus::message::message& msg)
         valPropMap = msgData.find(POWER_CAP_ENABLE_PROP);
         if (valPropMap != msgData.end())
         {
-            pcapEnabled =
-                sdbusplus::message::variant_ns::get<bool>(valPropMap->second);
+            pcapEnabled = std::get<bool>(valPropMap->second);
             pcap = getPcap();
         }
         else
