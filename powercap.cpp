@@ -82,7 +82,7 @@ uint32_t PowerCap::getPcap()
         log<level::ERR>("Error in getPcap prop");
         return 0;
     }
-    sdbusplus::message::variant<uint32_t> pcap;
+    std::variant<uint32_t> pcap;
     reply.read(pcap);
 
     return std::get<uint32_t>(pcap);
@@ -104,7 +104,7 @@ bool PowerCap::getPcapEnabled()
         log<level::ERR>("Error in getPcapEnabled prop");
         return 0;
     }
-    sdbusplus::message::variant<bool> pcapEnabled;
+    std::variant<bool> pcapEnabled;
     reply.read(pcapEnabled);
 
     return std::get<bool>(pcapEnabled);
@@ -173,7 +173,7 @@ void PowerCap::pcapChanged(sdbusplus::message::message& msg)
     bool pcapEnabled = false;
 
     std::string msgSensor;
-    std::map<std::string, sdbusplus::message::variant<uint32_t, bool>> msgData;
+    std::map<std::string, std::variant<uint32_t, bool>> msgData;
     msg.read(msgSensor, msgData);
 
     // Retrieve which property changed via the msg and read the other one

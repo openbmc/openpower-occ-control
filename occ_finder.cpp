@@ -47,7 +47,7 @@ T getDbusProperty(sdbusplus::bus::bus& bus, const std::string& service,
         elog<InternalFailure>();
     }
 
-    sdbusplus::message::variant<T> value;
+    std::variant<T> value;
     reply.read(value);
 
     return std::get<T>(value);
