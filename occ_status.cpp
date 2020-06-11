@@ -106,8 +106,7 @@ void Status::resetOCC()
     method.append(convertForMessage(Control::Host::Command::OCCReset).c_str());
 
     // OCC Sensor ID for callout reasons
-    method.append(sdbusplus::message::variant<uint8_t>(
-        std::get<0>(sensorMap.at(instance))));
+    method.append(std::variant<uint8_t>(std::get<0>(sensorMap.at(instance))));
     bus.call_noreply(method);
     return;
 }

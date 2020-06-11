@@ -4,6 +4,7 @@
 #include <occ_events.hpp>
 #include <occ_manager.hpp>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 using namespace open_power::occ;

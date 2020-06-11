@@ -47,10 +47,10 @@ T getDbusProperty(sdbusplus::bus::bus& bus, const std::string& service,
         elog<InternalFailure>();
     }
 
-    sdbusplus::message::variant<T> value;
+    std::variant<T> value;
     reply.read(value);
 
-    return sdbusplus::message::variant_ns::get<T>(value);
+    return std::get<T>(value);
 }
 
 std::vector<std::string> get(sdbusplus::bus::bus& bus)

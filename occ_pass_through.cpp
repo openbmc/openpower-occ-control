@@ -139,14 +139,14 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
 void PassThrough::activeStatusEvent(sdbusplus::message::message& msg)
 {
     std::string statusInterface;
-    std::map<std::string, sdbusplus::message::variant<bool>> msgData;
+    std::map<std::string, std::variant<bool>> msgData;
     msg.read(statusInterface, msgData);
 
     auto propertyMap = msgData.find("OccActive");
     if (propertyMap != msgData.end())
     {
         // Extract the OccActive property
-        if (sdbusplus::message::variant_ns::get<bool>(propertyMap->second))
+        if (std::get<bool>(propertyMap->second))
         {
             occActive = true;
         }

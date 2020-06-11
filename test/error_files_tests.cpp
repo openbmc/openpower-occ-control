@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <fstream>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 constexpr auto num_error_files = 8;

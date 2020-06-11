@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #ifdef I2C_OCC
