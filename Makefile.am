@@ -65,6 +65,8 @@ openpower_occ_control_CXXFLAGS = $(generic_cxx_flags)
 
 openpower_occ_control_LDFLAGS = $(generic_ld_flags)
 
+include pldm.mk
+
 org/open_power/OCC/Device/error.hpp: ${top_srcdir}/org/open_power/OCC/Device.errors.yaml
 	@mkdir -p `dirname $@`
 	$(SDBUSPLUSPLUS) -r $(top_srcdir) error exception-header org.open_power.OCC.Device > $@
