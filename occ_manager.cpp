@@ -89,6 +89,11 @@ void Manager::statusCallBack(bool status)
     }
 }
 
+bool Manager::updateOCCActive(instanceID instance, bool status)
+{
+    return (statusObjects[instance])->occActive(status);
+}
+
 #ifdef I2C_OCC
 void Manager::initStatusObjects()
 {
