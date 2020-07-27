@@ -71,6 +71,19 @@ AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
         ]
         AC_SUBST([CPPFLAGS], [$cpp_flags])
     )
+
+    AC_ARG_WITH([host-communication-protocol],
+        AS_HELP_STRING([--with-host-communication-protocol], [To specify the host communication protocol])
+    )
+    AM_CONDITIONAL([ENABLE_PLDM], [test "$with_host_communication_protocol" == "pldm"])
+    AS_IF([test "x$with_host_communication_protocol" == "xpldm"],
+        AC_MSG_NOTICE([Enabling PLDM])
+        [
+            cpp_flags="$CPPFLAGS -DPLDM"
+            AX_PKG_CHECK_MODULES([LIBPLDM], [libpldm])
+        ]
+        AC_SUBST([CPPFLAGS], [$cpp_flags])
+    )
 ])
 
 AC_ARG_VAR(OCC_CONTROL_BUSNAME, [The Dbus busname to own])
