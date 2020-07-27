@@ -111,5 +111,12 @@ void Manager::initStatusObjects()
 }
 #endif
 
+#ifdef PLDM
+bool Manager::updateOCCActive(instanceID instance, bool status)
+{
+    return (statusObjects[instance])->occActive(status);
+}
+#endif
+
 } // namespace occ
 } // namespace open_power

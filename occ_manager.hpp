@@ -2,6 +2,9 @@
 
 #include "occ_pass_through.hpp"
 #include "occ_status.hpp"
+#ifdef PLDM
+#include "pldm.hpp"
+#endif
 #include "powercap.hpp"
 
 #include <cstring>
@@ -34,7 +37,15 @@ struct Manager
      *  @param[in] bus   - handle to the bus
      *  @param[in] event - Unique ptr reference to sd_event
      */
-    Manager(sdbusplus::bus::bus& bus, EventPtr& event) : bus(bus), event(event)
+    Manager(sdbusplus::bus::bus& bus, EventPtr& event) :
+        bus(bus), event(event)
+#ifdef PLDM
+        ,
+        pldmHandle(std::make_unique<pldm::Interface>(
+            bus, std::bind(std::mem_fn(&Manager::updateOCCActive), this,
+                           std::placeholders::_1, std::placeholders::_2)))
+#endif
+
     {
 #ifdef I2C_OCC
         // I2C OCC status objects are initialized directly
@@ -85,6 +96,19 @@ struct Manager
     /** @brief Sends a Heartbeat command to host control command handler */
     void sendHeartBeat();
 
+    /** @brief Callback handler invoked by the PLDM event handler when state of
+     *         the OCC is toggled by the host. The caller passes the instance
+     *         of the OCC and state of the OCC.
+     *
+     *  @param[in] instance - instance of the OCC
+     *  @param[in] status - true when the OCC goes active and false when the OCC
+     * goes inactive
+     *
+     *  @return true if setting the state of OCC is successful and false if it
+     * fails.
+     */
+    bool updateOCCActive(instanceID instance, bool status);
+
     /** @brief reference to the bus */
     sdbusplus::bus::bus& bus;
 
@@ -113,6 +137,10 @@ struct Manager
      * and creates status objects.
      */
     void initStatusObjects();
+#endif
+
+#ifdef PLDM
+    std::unique_ptr<pldm::Interface> pldmHandle = nullptr;
 #endif
 };
 
