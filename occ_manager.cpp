@@ -53,7 +53,13 @@ void Manager::createObjects(const std::string& occ)
     statusObjects.emplace_back(std::make_unique<Status>(
         bus, event, path.c_str(), *this,
         std::bind(std::mem_fn(&Manager::statusCallBack), this,
-                  std::placeholders::_1)));
+                  std::placeholders::_1)
+#ifdef PLDM
+            ,
+        std::bind(std::mem_fn(&pldm::Interface::resetOCC), pldmHandle.get(),
+                  std::placeholders::_1)
+#endif
+            ));
 
     // Create the power cap monitor object for master occ (0)
     if (!pcap)

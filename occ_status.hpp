@@ -62,10 +62,18 @@ class Status : public Interface
      *  @param[in] manager  - OCC manager instance
      *  @param[in] callBack - Callback handler to invoke during
      *                        property change
+     *  @param[in] resetCallBack - callback handler to invoke for resetting the
+     *                             OCC if PLDM is the host communication
+     *                             protocol
      */
     Status(sdbusplus::bus::bus& bus, EventPtr& event, const char* path,
-           const Manager& manager,
-           std::function<void(bool)> callBack = nullptr) :
+           const Manager& manager, std::function<void(bool)> callBack = nullptr
+#ifdef PLDM
+           ,
+           std::function<void(instanceID)> resetCallBack = nullptr
+#endif
+           ) :
+
         Interface(bus, getDbusPath(path).c_str(), true),
         bus(bus), path(path), callBack(callBack), instance(getInstance(path)),
         device(event,
@@ -87,6 +95,10 @@ class Status : public Interface
                                        Control::Host::Command::OCCReset)),
             std::bind(std::mem_fn(&Status::hostControlEvent), this,
                       std::placeholders::_1))
+#ifdef PLDM
+        ,
+        resetCallBack(resetCallBack)
+#endif
     {
         // Check to see if we have OCC already bound.  If so, just set it
         if (device.bound())
@@ -207,6 +219,9 @@ class Status : public Interface
 
         return estimatedPath;
     }
+#ifdef PLDM
+    std::function<void(instanceID)> resetCallBack = nullptr;
+#endif
 };
 
 } // namespace occ
