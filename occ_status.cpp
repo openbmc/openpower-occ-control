@@ -93,6 +93,12 @@ void Status::deviceErrorHandler(bool error)
 // Sends message to host control command handler to reset OCC
 void Status::resetOCC()
 {
+#ifdef PLDM
+    if (resetCallBack)
+    {
+        resetCallBack(instance);
+    }
+#else
     using namespace phosphor::logging;
     constexpr auto CONTROL_HOST_PATH = "/org/open_power/control/host0";
     constexpr auto CONTROL_HOST_INTF = "org.open_power.Control.Host";
@@ -109,6 +115,7 @@ void Status::resetOCC()
     method.append(std::variant<uint8_t>(std::get<0>(sensorMap.at(instance))));
     bus.call_noreply(method);
     return;
+#endif
 }
 
 // Handler called by Host control command handler to convey the
