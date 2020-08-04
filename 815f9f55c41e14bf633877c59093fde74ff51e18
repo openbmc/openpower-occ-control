@@ -1,0 +1,10 @@
+Ok-To-Test+1: OpenBMC CI <openbmcbump-ci@yahoo.com>
+Verified+1: OpenBMC CI <openbmcbump-ci@yahoo.com>
+Code-Review+1: Varsha Kaverappa <vkaverap@in.ibm.com>
+Code-Review+1: Deepak Kodihalli <dkodihal@in.ibm.com>
+Code-Review+2: Edward A. James <eajames@us.ibm.com>
+Submitted-by: Tom Joseph <tomjoseph@in.ibm.com>
+Submitted-at: Tue, 04 Aug 2020 14:21:56 +0000
+Reviewed-on: https://gerrit.openbmc-project.xyz/c/openbmc/openpower-occ-control/+/35088
+Project: openbmc/openpower-occ-control
+Branch: refs/heads/master
