@@ -10,6 +10,8 @@
 #include <cstring>
 #include <functional>
 #include <sdbusplus/bus.hpp>
+#include <sdeventplus/event.hpp>
+#include <sdeventplus/utility/timer.hpp>
 #include <vector>
 
 namespace sdbusRule = sdbusplus::bus::match::rules;
@@ -17,6 +19,9 @@ namespace open_power
 {
 namespace occ
 {
+
+/** @brief Default time, in seconds, between OCC poll commands */
+constexpr unsigned int defaultPollingInterval = 10;
 
 /** @class Manager
  *  @brief Builds and manages OCC objects
@@ -38,7 +43,12 @@ struct Manager
      *  @param[in] event - Unique ptr reference to sd_event
      */
     Manager(sdbusplus::bus::bus& bus, EventPtr& event) :
-        bus(bus), event(event)
+        bus(bus), event(event), pollInterval(defaultPollingInterval),
+        sdpEvent(sdeventplus::Event::get_default()),
+        _pollTimer(
+            std::make_unique<
+                sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
+                sdpEvent, std::bind(&Manager::pollerTimerExpired, this)))
 #ifdef PLDM
         ,
         pldmHandle(std::make_unique<pldm::Interface>(
@@ -55,10 +65,23 @@ struct Manager
 #endif
     }
 
+    /** @brief Return the number of bound OCCs */
     inline auto getNumOCCs() const
     {
         return activeCount;
     }
+
+    /** @brief Send a command to specified OCC instance and return response
+     *
+     *  @param[in] instance  - Instance number of OCC to send command to
+     *  @param[in] command   - Command data to send
+     *  @param[out] response - Response data from the OCC
+     *
+     *  @returns CmdStatus::SUCCESS on success
+     */
+    CmdStatus sendOccCommand(const uint8_t instance,
+                             const std::vector<std::uint8_t>& command,
+                             std::vector<std::uint8_t>& response) const;
 
   private:
     /** @brief Checks if the CPU inventory is present and if so, creates
@@ -117,6 +140,20 @@ struct Manager
     /** @brief Number of OCCs that are bound */
     uint8_t activeCount = 0;
 
+    /** @brief Number of seconds between poll commands */
+    uint8_t pollInterval;
+
+    /** @brief Poll timer event */
+    sdeventplus::Event sdpEvent;
+
+    /**
+     * @brief The timer to be used once the OCC goes active.  When it expires,
+     *        a POLL command will be sent to the OCC and then timer restarted.
+     */
+    std::unique_ptr<
+        sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>
+        _pollTimer;
+
 #ifdef I2C_OCC
     /** @brief Init Status objects for I2C OCC devices
      *
@@ -142,6 +179,12 @@ struct Manager
 
     std::unique_ptr<pldm::Interface> pldmHandle = nullptr;
 #endif
+
+    /**
+     * @brief Called when poll timer expires and forces a POLL command to the
+     * OCC. The poll timer will then be restarted.
+     * */
+    void pollerTimerExpired();
 };
 
 } // namespace occ
