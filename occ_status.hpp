@@ -3,6 +3,7 @@
 #include "i2c_occ.hpp"
 #include "occ_device.hpp"
 #include "occ_events.hpp"
+#include "occ_poller.hpp"
 
 #include <functional>
 #include <org/open_power/Control/Host/server.hpp>
@@ -94,11 +95,24 @@ class Status : public Interface
                 sdbusRule::argN(0, Control::convertForMessage(
                                        Control::Host::Command::OCCReset)),
             std::bind(std::mem_fn(&Status::hostControlEvent), this,
-                      std::placeholders::_1))
+                      std::placeholders::_1)),
+        occCmd(instance, bus,
+               (fs::path(OCC_CONTROL_ROOT) /
+                (std::string(OCC_NAME) + std::to_string(instance)))
+                   .c_str())
 #ifdef PLDM
         ,
         resetCallBack(resetCallBack)
 #endif
+        ,
+        poller(event, instance, bus,
+#ifdef I2C_OCC
+               fs::path(DEV_PATH) / i2c_occ::getI2cDeviceName(path),
+#else
+               fs::path(DEV_PATH) /
+                   fs::path(sysfsName + "." + std::to_string(instance + 1)),
+#endif
+               manager)
     {
         // Check to see if we have OCC already bound.  If so, just set it
         if (device.bound())
@@ -142,6 +156,18 @@ class Status : public Interface
         return device.addPresenceWatchMaster();
     }
 
+    /** @brief Send the command to the OCC and collect the response
+     *
+     *  @param[in] command - command to pass-through
+     *  @param[out] rsponse - response
+     *  returns SUCCESS if response was received
+     */
+    CmdStatus sendCommand(const std::vector<std::uint8_t>& command,
+                          std::vector<std::uint8_t>& response)
+    {
+        return occCmd.send(command, response);
+    }
+
   private:
     /** @brief sdbus handle */
     sdbusplus::bus::bus& bus;
@@ -170,6 +196,9 @@ class Status : public Interface
      *  and we need to catch that to log an error
      **/
     sdbusplus::bus::match_t hostControlSignal;
+
+    /** @brief Command object to send commands to the OCC */
+    OccCommand occCmd;
 
     /** @brief Callback handler when device errors are detected
      *
@@ -222,6 +251,8 @@ class Status : public Interface
 #ifdef PLDM
     std::function<void(instanceID)> resetCallBack = nullptr;
 #endif
+
+    Poller poller;
 };
 
 } // namespace occ

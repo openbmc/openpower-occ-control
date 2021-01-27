@@ -124,5 +124,75 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
 }
 #endif
 
+// Send command to specified OCC instance and return response data
+//
+// instance is the OCC instance: 0xFF for master, 0=first OCC, 1=second, ...
+// command is vector: [0] = command, [1-2] = data length, [3-] = data
+// response contains full OCC response packet (excluding checksum)
+//          [0] = seq, [1] = cmd, [2] = status, [3-4] = data length, [5-] = data
+//
+// Returns SUCCESS when valid response was received
+CmdStatus Manager::sendOccCommand(const uint8_t instance,
+                                  const std::vector<std::uint8_t>& command,
+                                  std::vector<std::uint8_t>& response) const
+{
+    using namespace phosphor::logging;
+    CmdStatus status = CmdStatus::FAILURE;
+    response.clear();
+
+    uint8_t targetInstance = instance;
+    if (instance == 0xFF)
+    {
+        // Determine master and use that - first instance is always master
+        targetInstance = 0;
+    }
+
+    if ((targetInstance < activeCount) && (command.size() >= 3))
+    {
+        status = statusObjects[targetInstance]->sendCommand(command, response);
+        if (status == CmdStatus::SUCCESS)
+        {
+            if (response.size() >= 7)
+            {
+                // Strip off 2 byte checksum
+                response.pop_back();
+                response.pop_back();
+            }
+            else
+            {
+                log<level::ERR>(fmt::format("Manager::sendOccCommand: Invalid "
+                                            "command response ({} bytes)",
+                                            response.size())
+                                    .c_str());
+                status = CmdStatus::FAILURE;
+            }
+        }
+        else
+        {
+            if (status == CmdStatus::OPEN_FAILURE)
+            {
+                log<level::WARNING>("Manager::sendOccCommand: Ignoring request "
+                                    "- OCC currently not active");
+            }
+            else
+            {
+                log<level::ERR>(fmt::format("Manager::sendOccCommand: Send of "
+                                            "command failed with status {}",
+                                            status)
+                                    .c_str());
+            }
+        }
+    }
+    else
+    {
+        log<level::ERR>(fmt::format("Manager::sendOccCommand: Unable to send "
+                                    "command to OCC{} (size={})",
+                                    targetInstance, command.size())
+                            .c_str());
+    }
+
+    return status;
+}
+
 } // namespace occ
 } // namespace open_power

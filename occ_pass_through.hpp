@@ -1,6 +1,11 @@
 #pragma once
 
+#include "occ_command.hpp"
+
+#include <fmt/core.h>
+
 #include <org/open_power/OCC/PassThrough/server.hpp>
+#include <phosphor-logging/log.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
 #include <string>
@@ -23,6 +28,7 @@ class PassThrough : public Iface
 {
   public:
     PassThrough() = delete;
+    ~PassThrough() = default;
     PassThrough(const PassThrough&) = delete;
     PassThrough& operator=(const PassThrough&) = delete;
     PassThrough(PassThrough&&) = default;
@@ -34,16 +40,12 @@ class PassThrough : public Iface
      */
     PassThrough(sdbusplus::bus::bus& bus, const char* path);
 
-    ~PassThrough()
-    {
-        closeDevice();
-    }
-
     /** @brief Pass through command to OCC
      *  @param[in] command - command to pass-through
      *  @returns OCC response as an array
      */
     std::vector<std::int32_t> send(std::vector<std::int32_t> command) override;
+    std::vector<std::uint8_t> send(std::vector<std::uint8_t> command);
 
   private:
     /** @brief Pass-through occ path on the bus */
@@ -58,11 +60,11 @@ class PassThrough : public Iface
      */
     std::string devicePath;
 
+    /** @brief OCC instance number */
+    int occInstance;
+
     /** @brief Indicates whether or not the OCC is currently active */
     bool occActive = false;
-
-    /** brief file descriptor associated with occ device */
-    int fd = -1;
 
     /** @brief Subscribe to OCC Status signal
      *
@@ -71,17 +73,29 @@ class PassThrough : public Iface
      */
     sdbusplus::bus::match_t activeStatusSignal;
 
-    /** Opens devicePath and populates file descritor */
-    void openDevice();
-
-    /** Closed the fd associated with opened device */
-    void closeDevice();
+    /** @brief Object to send commands to the OCC */
+    OccCommand occCmd;
 
     /** @brief Callback function on OCC Status change signals
      *
      *  @param[in]  msg - Data associated with subscribed signal
      */
     void activeStatusEvent(sdbusplus::message::message& msg);
+
+    /** @brief Determines the instance ID by specified object path.
+     *  @return  OCC instance number
+     */
+    int getInstance()
+    {
+        using namespace phosphor::logging;
+
+        const uint8_t instance = path.empty() ? 0 : path.back() - '0';
+        log<level::INFO>(fmt::format("PassThrough::getInstace() devicePath[{}] "
+                                     "& path[{}] is for OCC{}",
+                                     devicePath, path, instance)
+                             .c_str());
+        return (instance);
+    }
 };
 
 } // namespace occ
