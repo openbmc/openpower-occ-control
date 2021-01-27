@@ -55,10 +55,23 @@ struct Manager
 #endif
     }
 
+    /** @brief Return the number of bound OCCs */
     inline auto getNumOCCs() const
     {
         return activeCount;
     }
+
+    /** @brief Send a command to specified OCC instance and return response
+     *
+     *  @param[in] instance  - Instance number of OCC to send command to
+     *  @param[in] command   - Command data to send
+     *  @param[out] response - Response data from the OCC
+     *
+     *  @returns CmdStatus::SUCCESS on success
+     */
+    CmdStatus sendOccCommand(const uint8_t instance,
+                             const std::vector<std::uint8_t>& command,
+                             std::vector<std::uint8_t>& response) const;
 
   private:
     /** @brief Checks if the CPU inventory is present and if so, creates

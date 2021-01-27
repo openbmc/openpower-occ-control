@@ -12,15 +12,20 @@ namespace occ
 // Handles updates to occActive property
 bool Status::occActive(bool value)
 {
+    using namespace phosphor::logging;
     if (value != this->occActive())
     {
         if (value)
         {
+            log<level::INFO>(">>Status::occActive changed to true");
             // Bind the device
             device.bind();
 
             // Start watching for errors
             addErrorWatch();
+
+            // Start periodic polling of the OCC
+            poller.startPoller();
 
             // Call into Manager to let know that we have bound
             if (this->callBack)
@@ -30,6 +35,7 @@ bool Status::occActive(bool value)
         }
         else
         {
+            log<level::INFO>(">>Status::occActive changed to false");
             // Call into Manager to let know that we will unbind.
             if (this->callBack)
             {
@@ -93,13 +99,15 @@ void Status::deviceErrorHandler(bool error)
 // Sends message to host control command handler to reset OCC
 void Status::resetOCC()
 {
+    using namespace phosphor::logging;
 #ifdef PLDM
+    log<level::INFO>(">>Status::resetOCC(PLDM)");
     if (resetCallBack)
     {
         this->resetCallBack(instance);
     }
 #else
-    using namespace phosphor::logging;
+    log<level::INFO>(">>Status::resetOCC()");
     constexpr auto CONTROL_HOST_PATH = "/org/open_power/control/host0";
     constexpr auto CONTROL_HOST_INTF = "org.open_power.Control.Host";
 

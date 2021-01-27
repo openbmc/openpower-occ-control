@@ -1,12 +1,15 @@
 #include "pldm.hpp"
 
 #include "file.hpp"
+#include "occ_poller.hpp"
 
 #include <libpldm/entity.h>
 #include <libpldm/platform.h>
 #include <libpldm/state_set.h>
 
 #include <phosphor-logging/log.hpp>
+
+#include "fmt/core.h"
 
 namespace pldm
 {
@@ -114,25 +117,27 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
         return;
     }
 
-    bool newState{};
     if (eventState == static_cast<EventState>(
                           PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_IN_SERVICE))
     {
-        newState = callBack(sensorEntry->second, true);
+        log<level::INFO>(
+            fmt::format("PLDM: OCC{} is RUNNING", sensorEntry->second).c_str());
+        callBack(sensorEntry->second, true);
     }
     else if (eventState ==
              static_cast<EventState>(
                  PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_STOPPED))
     {
-        newState = callBack(sensorEntry->second, false);
+        log<level::INFO>(
+            fmt::format("PLDM: OCC{} has now STOPPED", sensorEntry->second)
+                .c_str());
+        callBack(sensorEntry->second, false);
     }
     else
     {
         return;
     }
 
-    log<level::INFO>("pldm: Updated OCCActive state",
-                     entry("STATE=%s", newState ? "true" : "false"));
     return;
 }
 
