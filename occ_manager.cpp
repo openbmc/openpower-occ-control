@@ -45,7 +45,12 @@ int Manager::cpuCreated(sdbusplus::message::message& msg)
 
 void Manager::createObjects(const std::string& occ)
 {
+    using namespace phosphor::logging;
     auto path = fs::path(OCC_CONTROL_ROOT) / occ;
+    std::string m = "Manager::createObjects(" + occ + ") called";
+    log<level::INFO>(m.c_str());
+    m = std::string("Manager::createObjects: path: ") + path.c_str();
+    log<level::INFO>(m.c_str());
 
     passThroughObjects.emplace_back(
         std::make_unique<PassThrough>(bus, path.c_str()));
@@ -120,6 +125,9 @@ void Manager::initStatusObjects()
 #ifdef PLDM
 bool Manager::updateOCCActive(instanceID instance, bool status)
 {
+    using namespace phosphor::logging;
+    std::string m = "Manager::updateOCCActive(OCC" + std::to_string(instance) + ", status=" + std::to_string(status) + ") called - PLDM";
+    log<level::INFO>(m.c_str());
     return (statusObjects[instance])->occActive(status);
 }
 #endif

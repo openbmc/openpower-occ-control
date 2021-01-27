@@ -8,6 +8,9 @@ noinst_HEADERS = \
 	occ_events.hpp \
 	occ_finder.hpp \
 	occ_presence.hpp \
+	occ_state.hpp \
+	occ_poller.hpp \
+	occ_command.hpp \
 	utils.hpp
 
 noinst_LTLIBRARIES = libocc_control.la
@@ -24,13 +27,20 @@ libocc_control_la_SOURCES = \
 	occ_device.cpp \
 	occ_errors.cpp \
 	occ_presence.cpp \
+	occ_state.cpp \
+	occ_poller.cpp \
+	occ_command.cpp \
 	powercap.cpp \
 	org/open_power/OCC/Device/error.cpp \
 	occ_finder.cpp \
 	i2c_occ.cpp \
 	utils.cpp
 
-openpower_occ_control_LDADD = libocc_control.la -lstdc++fs
+openpower_occ_control_LDADD = \
+	libocc_control.la \
+	-lstdc++fs \
+	$(SDBUSPLUS_LIBS) \
+	$(SDEVENTPLUS_LIBS)
 
 BUILT_SOURCES =  org/open_power/OCC/Device/error.hpp \
                  org/open_power/OCC/Device/error.cpp \

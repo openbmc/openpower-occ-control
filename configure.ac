@@ -49,6 +49,7 @@ AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
     PKG_CHECK_MODULES([SDBUSPLUS], [sdbusplus])
     PKG_CHECK_MODULES([PHOSPHOR_LOGGING], [phosphor-logging])
     PKG_CHECK_MODULES([PHOSPHOR_DBUS_INTERFACES], [phosphor-dbus-interfaces])
+    PKG_CHECK_MODULES([SDEVENTPLUS], [sdeventplus])
 
     # Check for sdbusplus
     PKG_CHECK_MODULES([SDBUSPLUS], [sdbusplus])

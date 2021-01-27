@@ -8,6 +8,8 @@
 
 #include <phosphor-logging/log.hpp>
 
+#include "occ_poller.hpp"
+
 namespace pldm
 {
 
@@ -118,12 +120,16 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
     if (eventState == static_cast<EventState>(
                           PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_IN_SERVICE))
     {
+        std::string m = "PLDM OCC" + std::to_string(sensorEntry->second) + " is now RUNNING now)";
+        log<level::INFO>(m.c_str());
         newState = callBack(sensorEntry->second, true);
     }
     else if (eventState ==
              static_cast<EventState>(
                  PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_STOPPED))
     {
+        std::string m = "PLDM OCC" + std::to_string(sensorEntry->second) + " has now STOPPED now)";
+        log<level::INFO>(m.c_str());
         newState = callBack(sensorEntry->second, false);
     }
     else

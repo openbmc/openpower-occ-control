@@ -3,6 +3,7 @@
 #include "i2c_occ.hpp"
 #include "occ_device.hpp"
 #include "occ_events.hpp"
+#include "occ_poller.hpp"
 
 #include <functional>
 #include <org/open_power/Control/Host/server.hpp>
@@ -99,6 +100,15 @@ class Status : public Interface
         ,
         resetCallBack(resetCallBack)
 #endif
+            ,
+        poller(event, instance, bus,
+#ifdef I2C_OCC
+               fs::path(DEV_PATH) / i2c_occ::getI2cDeviceName(path),
+#else
+               fs::path(DEV_PATH) /
+                   fs::path(sysfsName + "." + std::to_string(instance + 1)),
+#endif
+               manager)
     {
         // Check to see if we have OCC already bound.  If so, just set it
         if (device.bound())
@@ -222,6 +232,9 @@ class Status : public Interface
 #ifdef PLDM
     std::function<void(instanceID)> resetCallBack = nullptr;
 #endif
+
+    Poller poller;
+
 };
 
 } // namespace occ
