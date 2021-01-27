@@ -4,6 +4,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <fmt/core.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
@@ -30,10 +31,14 @@ void Error::openFile()
     using namespace phosphor::logging;
 
     fd = open(file.c_str(), O_RDONLY | O_NONBLOCK);
+    const int open_errno = errno;
     if (fd < 0)
     {
+        log<level::ERR>(
+            fmt::format("Error::openFile: open failed (errno={})", open_errno)
+                .c_str());
         elog<OpenFailure>(phosphor::logging::org::open_power::OCC::Device::
-                              OpenFailure::CALLOUT_ERRNO(errno),
+                              OpenFailure::CALLOUT_ERRNO(open_errno),
                           phosphor::logging::org::open_power::OCC::Device::
                               OpenFailure::CALLOUT_DEVICE_PATH(file.c_str()));
     }

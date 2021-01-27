@@ -4,7 +4,12 @@ check_PROGRAMS = utest
 # Run all 'check' test programs
 TESTS = $(check_PROGRAMS)
 
-utest_LDADD = $(top_builddir)/libocc_control.la -lstdc++fs
+utest_LDADD = \
+	$(top_builddir)/libocc_control.la \
+	-lstdc++fs
+	$(SDBUSPLUS_LIBS) \
+	$(SDEVENTPLUS_LIBS) \
+	$(FMT_LIBS)
 
 utest_SOURCES = error_files_tests.cpp \
                 utest.cpp \
