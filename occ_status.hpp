@@ -1,6 +1,7 @@
 #pragma once
 
 #include "i2c_occ.hpp"
+#include "occ_command.hpp"
 #include "occ_device.hpp"
 #include "occ_events.hpp"
 
@@ -94,7 +95,11 @@ class Status : public Interface
                 sdbusRule::argN(0, Control::convertForMessage(
                                        Control::Host::Command::OCCReset)),
             std::bind(std::mem_fn(&Status::hostControlEvent), this,
-                      std::placeholders::_1))
+                      std::placeholders::_1)),
+        occCmd(instance, bus,
+               (fs::path(OCC_CONTROL_ROOT) /
+                (std::string(OCC_NAME) + std::to_string(instance)))
+                   .c_str())
 #ifdef PLDM
         ,
         resetCallBack(resetCallBack)
@@ -142,6 +147,21 @@ class Status : public Interface
         return device.addPresenceWatchMaster();
     }
 
+    /** @brief Send the command to the OCC and collect the response
+     *
+     *  @param[in] command - command to pass-through
+     *  @param[out] rsponse - response
+     *  returns SUCCESS if response was received
+     */
+    CmdStatus sendCommand(const std::vector<std::uint8_t>& command,
+                          std::vector<std::uint8_t>& response)
+    {
+        return occCmd.send(command, response);
+    }
+
+    /** @brief Read OCC state (will trigger kernel to poll the OCC) */
+    void readOccState();
+
   private:
     /** @brief sdbus handle */
     sdbusplus::bus::bus& bus;
@@ -155,7 +175,10 @@ class Status : public Interface
     std::function<void(bool)> callBack;
 
     /** @brief OCC instance number. Ex, 0,1, etc */
-    int instance;
+    unsigned int instance;
+
+    /** @brief The last state read from the OCC */
+    unsigned int lastState = 0;
 
     /** @brief OCC instance to Sensor definitions mapping */
     static const std::map<instanceID, sensorDefs> sensorMap;
@@ -170,6 +193,9 @@ class Status : public Interface
      *  and we need to catch that to log an error
      **/
     sdbusplus::bus::match_t hostControlSignal;
+
+    /** @brief Command object to send commands to the OCC */
+    OccCommand occCmd;
 
     /** @brief Callback handler when device errors are detected
      *

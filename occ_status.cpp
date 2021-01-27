@@ -3,17 +3,23 @@
 #include "occ_sensor.hpp"
 #include "utils.hpp"
 
+#include <fmt/core.h>
+
 #include <phosphor-logging/log.hpp>
 namespace open_power
 {
 namespace occ
 {
+using namespace phosphor::logging;
 
 // Handles updates to occActive property
 bool Status::occActive(bool value)
 {
     if (value != this->occActive())
     {
+        log<level::INFO>(fmt::format("Status::occActive OCC{} changed to {}",
+                                     instance, value)
+                             .c_str());
         if (value)
         {
             // Bind the device
@@ -21,6 +27,9 @@ bool Status::occActive(bool value)
 
             // Start watching for errors
             addErrorWatch();
+
+            // Reset last OCC state
+            lastState = 0;
 
             // Call into Manager to let know that we have bound
             if (this->callBack)
@@ -93,13 +102,15 @@ void Status::deviceErrorHandler(bool error)
 // Sends message to host control command handler to reset OCC
 void Status::resetOCC()
 {
+    using namespace phosphor::logging;
 #ifdef PLDM
+    log<level::INFO>(">>Status::resetOCC(PLDM)");
     if (resetCallBack)
     {
         this->resetCallBack(instance);
     }
 #else
-    using namespace phosphor::logging;
+    log<level::INFO>(">>Status::resetOCC()");
     constexpr auto CONTROL_HOST_PATH = "/org/open_power/control/host0";
     constexpr auto CONTROL_HOST_INTF = "org.open_power.Control.Host";
 
@@ -146,6 +157,44 @@ void Status::hostControlEvent(sdbusplus::message::message& msg)
         }
     }
     return;
+}
+
+void Status::readOccState()
+{
+    unsigned int state;
+    const fs::path filename =
+        fs::path(DEV_PATH) /
+        fs::path(sysfsName + "." + std::to_string(instance + 1)) / "occ_state";
+    log<level::DEBUG>(
+        fmt::format("Status::readOccState: reading OCC{} state from {}",
+                    instance, filename.c_str())
+            .c_str());
+
+    std::ifstream file(filename, std::ios::in);
+    const int open_errno = errno;
+    if (file)
+    {
+        file >> state;
+        if (state != lastState)
+        {
+            // Trace OCC state changes
+            log<level::INFO>(
+                fmt::format("Status::readOccState: OCC{} state 0x{:02X}",
+                            instance, state)
+                    .c_str());
+            lastState = state;
+        }
+        file.close();
+    }
+    else
+    {
+        // If not able to read, OCC may be offline
+        log<level::DEBUG>(
+            fmt::format("Status::readOccState: open failed (errno={})",
+                        open_errno)
+                .c_str());
+        lastState = 0;
+    }
 }
 
 } // namespace occ
