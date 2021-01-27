@@ -60,6 +60,11 @@ struct Manager
         return activeCount;
     }
 
+    // Send a command to specified OCC instance and return response
+    CmdStatus sendOccCommand(const uint8_t instance,
+                             const std::vector<std::int32_t> &command,
+                             std::vector<std::int32_t> &response) const;
+
   private:
     /** @brief Checks if the CPU inventory is present and if so, creates
      *         the occ D-Bus objects. Else, registers a handler to be

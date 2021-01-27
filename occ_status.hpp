@@ -3,6 +3,7 @@
 #include "i2c_occ.hpp"
 #include "occ_device.hpp"
 #include "occ_events.hpp"
+#include "occ_poller.hpp"
 
 #include <functional>
 #include <org/open_power/Control/Host/server.hpp>
@@ -47,11 +48,13 @@ class Status : public Interface
 {
   public:
     Status() = delete;
-    ~Status() = default;
+    //~Status() = default;
     Status(const Status&) = delete;
     Status& operator=(const Status&) = delete;
     Status(Status&&) = default;
     Status& operator=(Status&&) = default;
+
+    OccCommand* occ_pt;
 
     /** @brief Constructs the Status object and
      *         the underlying device object
@@ -75,6 +78,7 @@ class Status : public Interface
            ) :
 
         Interface(bus, getDbusPath(path).c_str(), true),
+        occ_pt(nullptr),
         bus(bus), path(path), callBack(callBack), instance(getInstance(path)),
         device(event,
 #ifdef I2C_OCC
@@ -99,7 +103,20 @@ class Status : public Interface
         ,
         resetCallBack(resetCallBack)
 #endif
+            ,
+        poller(event, instance, bus,
+#ifdef I2C_OCC
+               fs::path(DEV_PATH) / i2c_occ::getI2cDeviceName(path),
+#else
+               fs::path(DEV_PATH) /
+                   fs::path(sysfsName + "." + std::to_string(instance + 1)),
+#endif
+               manager)
     {
+        auto occ = std::string(OCC_NAME) + std::to_string(instance);
+        auto path2 = fs::path(OCC_CONTROL_ROOT) / occ;
+        occ_pt = new OccCommand(instance, bus, path2.c_str());
+
         // Check to see if we have OCC already bound.  If so, just set it
         if (device.bound())
         {
@@ -108,6 +125,11 @@ class Status : public Interface
 
         // Announce that we are ready
         this->emit_object_added();
+    }
+
+    ~Status()
+    {
+        if (occ_pt != nullptr) delete occ_pt;
     }
 
     /** @brief Since we are overriding the setter-occActive but not the
@@ -222,6 +244,9 @@ class Status : public Interface
 #ifdef PLDM
     std::function<void(instanceID)> resetCallBack = nullptr;
 #endif
+
+    Poller poller;
+
 };
 
 } // namespace occ

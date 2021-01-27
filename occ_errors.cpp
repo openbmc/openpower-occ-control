@@ -29,11 +29,16 @@ void Error::openFile()
 {
     using namespace phosphor::logging;
 
+    log<level::INFO>("Error::openFile: calling open",
+                     entry("DEVICE=%s", file.c_str()));
     fd = open(file.c_str(), O_RDONLY | O_NONBLOCK);
+    const int open_errno = errno;
     if (fd < 0)
     {
+        log<level::ERR>("Error::openFile: open failed",
+                        entry("ERRNO=%d", open_errno));
         elog<OpenFailure>(phosphor::logging::org::open_power::OCC::Device::
-                              OpenFailure::CALLOUT_ERRNO(errno),
+                              OpenFailure::CALLOUT_ERRNO(open_errno),
                           phosphor::logging::org::open_power::OCC::Device::
                               OpenFailure::CALLOUT_DEVICE_PATH(file.c_str()));
     }

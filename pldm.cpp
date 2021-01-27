@@ -8,6 +8,9 @@
 
 #include <phosphor-logging/log.hpp>
 
+#include "occ_poller.hpp"
+#include "fmt/core.h"
+
 namespace pldm
 {
 
@@ -118,12 +121,14 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
     if (eventState == static_cast<EventState>(
                           PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_IN_SERVICE))
     {
+        log<level::INFO>(fmt::format("PLDM: OCC{} is RUNNING", sensorEntry->second).c_str());
         newState = callBack(sensorEntry->second, true);
     }
     else if (eventState ==
              static_cast<EventState>(
                  PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_STOPPED))
     {
+        log<level::INFO>(fmt::format("PLDM: OCC{} has now STOPPED", sensorEntry->second).c_str());
         newState = callBack(sensorEntry->second, false);
     }
     else
@@ -131,8 +136,7 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
         return;
     }
 
-    log<level::INFO>("pldm: Updated OCCActive state",
-                     entry("STATE=%s", newState ? "true" : "false"));
+    log<level::INFO>(fmt::format("pldm: Updated OCCActive state to {}", newState).c_str());
     return;
 }
 
