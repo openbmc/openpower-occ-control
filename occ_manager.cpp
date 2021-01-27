@@ -16,6 +16,8 @@ namespace open_power
 namespace occ
 {
 
+using namespace phosphor::logging;
+
 void Manager::findAndCreateObjects()
 {
     for (auto id = 0; id < MAX_CPUS; ++id)
@@ -46,6 +48,8 @@ int Manager::cpuCreated(sdbusplus::message::message& msg)
 void Manager::createObjects(const std::string& occ)
 {
     auto path = fs::path(OCC_CONTROL_ROOT) / occ;
+    log<level::INFO>(fmt::format("Manager::createObjects({}, path:{})",
+                                 occ, path.c_str()).c_str());
 
     passThroughObjects.emplace_back(
         std::make_unique<PassThrough>(bus, path.c_str()));
@@ -71,7 +75,6 @@ void Manager::createObjects(const std::string& occ)
 
 void Manager::statusCallBack(bool status)
 {
-    using namespace phosphor::logging;
     using InternalFailure =
         sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure;
 
@@ -120,9 +123,78 @@ void Manager::initStatusObjects()
 #ifdef PLDM
 bool Manager::updateOCCActive(instanceID instance, bool status)
 {
+    log<level::INFO>(fmt::format("Manager::updateOCCActive(OCC{}, status={}) called",
+                                 instance, status).c_str());
+
     return (statusObjects[instance])->occActive(status);
 }
 #endif
+
+
+// Send command to specified OCC instance and return response data
+//
+// instance is the OCC instance: 0xFF for master, 0 = first OCC, 1 = second OCC, ...
+// command is vector: [0] = command, [1-2] = data length, [3-] = data
+// response contains full OCC response packet (excluding checksum)
+//          [0] = seq, [1] = cmd, [2] = status, [3-4] = data length, [5-] = data
+//
+// Returns SUCCESS when valid response was received
+CmdStatus Manager::sendOccCommand(const uint8_t instance,
+                                  const std::vector<std::int32_t> &command,
+                                  std::vector<std::int32_t> &response) const
+{
+    CmdStatus status = FAILURE;
+    response.clear();
+
+    uint8_t target_instance = instance;
+    if (instance == 0xFF)
+    {
+        // Determine master and use that - TODO: FIRST INSTANCE IS ALWAYS MASTER???
+        target_instance = 0;
+    }
+
+    if ((target_instance < activeCount) &&
+        (command.size() >= 3) &&
+        (statusObjects[target_instance]->occ_pt != nullptr))
+    {
+        status = statusObjects[target_instance]->occ_pt->send(command, response);
+        if (status == SUCCESS)
+        {
+            if (response.size() >= 7)
+            {
+                // Strip off 2 byte checksum
+                response.pop_back();
+                response.pop_back();
+            }
+            else
+            {
+                log<level::ERR>(fmt::format("Manager::sendOccCommand: Invalid command response ({} bytes)",
+                                            response.size()).c_str());
+                status = FAILURE;
+            }
+        }
+        else
+        {
+            if (status == OPEN_FAILURE)
+            {
+                log<level::WARNING>("Manager::sendOccCommand: Ignoring request - OCC currently not active");
+            }
+            else
+            {
+                log<level::ERR>(fmt::format("Manager::sendOccCommand: Send of command failed with status {}",
+                                            status).c_str());
+            }
+        }
+    }
+    else
+    {
+        log<level::ERR>(fmt::format("Manager::sendOccCommand: Send of command failed with status {}",
+                                    status).c_str());
+    }
+
+    return status;
+}
+
 
 } // namespace occ
 } // namespace open_power
