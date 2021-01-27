@@ -16,6 +16,8 @@ namespace open_power
 namespace occ
 {
 
+using namespace phosphor::logging;
+
 void Manager::findAndCreateObjects()
 {
     for (auto id = 0; id < MAX_CPUS; ++id)
@@ -71,7 +73,6 @@ void Manager::createObjects(const std::string& occ)
 
 void Manager::statusCallBack(bool status)
 {
-    using namespace phosphor::logging;
     using InternalFailure =
         sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure;
 
@@ -92,6 +93,24 @@ void Manager::statusCallBack(bool status)
         {
             obj->addPresenceWatchMaster();
         }
+    }
+
+    if ((!_pollTimer->isEnabled()) && (activeCount > 0))
+    {
+        log<level::INFO>(fmt::format("Manager::statusCallBack(): {} OCCs will "
+                                     "be polled every {} seconds",
+                                     activeCount, pollInterval)
+                             .c_str());
+
+        // Send poll and start OCC poll timer
+        pollerTimerExpired();
+    }
+    else if ((_pollTimer->isEnabled()) && (activeCount == 0))
+    {
+        // Stop OCC poll timer
+        log<level::INFO>("Manager::statusCallBack(): OCCs are not running, "
+                         "stopping poll timer");
+        _pollTimer->setEnabled(false);
     }
 }
 
@@ -123,6 +142,32 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
     return (statusObjects[instance])->occActive(status);
 }
 #endif
+
+void Manager::pollerTimerExpired()
+{
+    if (activeCount == 0)
+    {
+        // No OCCs running, so poll timer will not be restarted
+        log<level::INFO>("Manager::pollerTimerExpire(): No OCCs running, poll "
+                         "timer not restarted");
+    }
+
+    if (!_pollTimer)
+    {
+        log<level::ERR>(
+            "Manager::pollerTimerExpired() ERROR: Timer not defined");
+        return;
+    }
+
+    for (auto& obj : statusObjects)
+    {
+        // Read sysfs to force kernel to poll OCC
+        obj->readOccState();
+    }
+
+    // Restart OCC poll timer
+    _pollTimer->restartOnce(std::chrono::seconds(pollInterval));
+}
 
 } // namespace occ
 } // namespace open_power
