@@ -104,7 +104,7 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
     EventState eventState{};
     EventState previousEventState{};
 
-    msg.read(tid, sensorId, sensorOffset, eventState, previousEventState);
+    msg.read(tid, sensorId, msgSensorOffset, eventState, previousEventState);
 
     auto sensorEntry = sensorToOCCInstance.find(sensorId);
     if (sensorEntry == sensorToOCCInstance.end() ||
