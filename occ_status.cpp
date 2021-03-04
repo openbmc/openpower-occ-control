@@ -1,15 +1,21 @@
 #include "occ_status.hpp"
 
 #include "occ_sensor.hpp"
+#include "powermode.hpp"
 #include "utils.hpp"
 
 #include <fmt/core.h>
 
+#ifdef POWER10
+#include <com/ibm/Host/Target/server.hpp>
+#endif
 #include <phosphor-logging/log.hpp>
+
 namespace open_power
 {
 namespace occ
 {
+
 using namespace phosphor::logging;
 
 // Handles updates to occActive property
@@ -134,8 +140,6 @@ void Status::resetOCC()
 // status of the executed command
 void Status::hostControlEvent(sdbusplus::message::message& msg)
 {
-    using namespace phosphor::logging;
-
     std::string cmdCompleted{};
     std::string cmdStatus{};
 
@@ -185,6 +189,14 @@ void Status::readOccState()
                             instance, state)
                     .c_str());
             lastState = state;
+
+#ifdef POWER10
+            if ((OccState(state) == OccState::ACTIVE) && (device.master()))
+            {
+                // Kernel detected that the master OCC went to active state
+                occsWentActive();
+            }
+#endif
         }
         file.close();
     }
@@ -198,6 +210,264 @@ void Status::readOccState()
         lastState = 0;
     }
 }
+
+#ifdef POWER10
+// Check if Hypervisor target is PowerVM
+bool Status::isPowerVM()
+{
+    using namespace open_power::occ::powermode;
+    namespace Hyper = sdbusplus::com::ibm::Host::server;
+    constexpr auto HYPE_PATH = "/com/ibm/host0/hypervisor";
+    constexpr auto HYPE_INTERFACE = "com.ibm.Host.Target";
+    constexpr auto HYPE_PROP = "Target";
+
+    bool powerVmTarget = false;
+
+    // This will throw exception on failure
+    auto service = getService(bus, HYPE_PATH, HYPE_INTERFACE);
+    auto method = bus.new_method_call(service.c_str(), HYPE_PATH,
+                                      "org.freedesktop.DBus.Properties", "Get");
+    method.append(HYPE_INTERFACE, HYPE_PROP);
+    auto reply = bus.call(method);
+
+    std::variant<std::string> hyperEntryValue;
+    reply.read(hyperEntryValue);
+    auto propVal = std::get<std::string>(hyperEntryValue);
+    if (Hyper::Target::convertHypervisorFromString(propVal) ==
+        Hyper::Target::Hypervisor::PowerVM)
+    {
+        powerVmTarget = true;
+    }
+
+    log<level::DEBUG>(
+        fmt::format("Status::isPowerVM returning {}", powerVmTarget).c_str());
+
+    return powerVmTarget;
+}
+
+// Get the requested power mode
+SysPwrMode Status::getMode()
+{
+    using namespace open_power::occ::powermode;
+    SysPwrMode pmode = SysPwrMode::NO_CHANGE;
+
+    // This will throw exception on failure
+    auto service = getService(bus, PMODE_PATH, PMODE_INTERFACE);
+    auto method = bus.new_method_call(service.c_str(), PMODE_PATH,
+                                      "org.freedesktop.DBus.Properties", "Get");
+    method.append(PMODE_INTERFACE, POWER_MODE_PROP);
+    auto reply = bus.call(method);
+
+    std::variant<std::string> stateEntryValue;
+    reply.read(stateEntryValue);
+    auto propVal = std::get<std::string>(stateEntryValue);
+    pmode = powermode::convertStringToMode(propVal);
+
+    log<level::DEBUG>(
+        fmt::format("Status::getMode returning {}", pmode).c_str());
+
+    return pmode;
+}
+
+// Special processing that needs to happen once the OCCs change to ACTIVE state
+void Status::occsWentActive()
+{
+    CmdStatus status = CmdStatus::SUCCESS;
+
+    status = sendModeChange();
+    if (status != CmdStatus::SUCCESS)
+    {
+        log<level::ERR>(fmt::format("Status::occsWentActive: OCC mode "
+                                    "change failed with status {}",
+                                    status)
+                            .c_str());
+    }
+
+    status = sendIpsData();
+    if (status != CmdStatus::SUCCESS)
+    {
+        log<level::ERR>(
+            fmt::format(
+                "Status::occsWentActive: Sending Idle Power Save Config data"
+                " failed with status {}",
+                status)
+                .c_str());
+    }
+}
+
+// Send mode change request to the master OCC
+CmdStatus Status::sendModeChange()
+{
+    CmdStatus status = CmdStatus::FAILURE;
+
+    if (!device.master())
+    {
+        log<level::ERR>(
+            fmt::format("Status::sendModeChange: MODE CHANGE does not "
+                        "get sent to slave OCC{}",
+                        instance)
+                .c_str());
+        return status;
+    }
+    if (!isPowerVM())
+    {
+        // Mode change is only supported on PowerVM systems
+        log<level::DEBUG>("Status::sendModeChange: MODE CHANGE does not "
+                          "get sent on non-PowerVM systems");
+        return CmdStatus::SUCCESS;
+    }
+
+    const SysPwrMode newMode = getMode();
+
+    if (VALID_POWER_MODE_SETTING(newMode))
+    {
+        std::vector<std::uint8_t> cmd, rsp;
+        cmd.push_back(uint8_t(CmdType::SET_MODE_AND_STATE));
+        cmd.push_back(0x00); // Data Length (2 bytes)
+        cmd.push_back(0x06);
+        cmd.push_back(0x30); // Data (Version)
+        cmd.push_back(uint8_t(OccState::NO_CHANGE));
+        cmd.push_back(uint8_t(newMode));
+        cmd.push_back(0x00); // Mode Data (Freq Point)
+        cmd.push_back(0x00); //
+        cmd.push_back(0x00); // reserved
+        log<level::INFO>(fmt::format("Status::sendModeChange: SET_MODE({}) "
+                                     "command to OCC{} ({} bytes)",
+                                     newMode, instance, cmd.size())
+                             .c_str());
+        status = occCmd.send(cmd, rsp);
+        if (status == CmdStatus::SUCCESS)
+        {
+            if (rsp.size() == 5)
+            {
+                if (RspStatus::SUCCESS == RspStatus(rsp[2]))
+                {
+                    log<level::DEBUG>("Status::sendModeChange: - Mode change "
+                                      "completed successfully");
+                }
+                else
+                {
+                    log<level::ERR>(
+                        fmt::format("Status::sendModeChange: SET MODE "
+                                    "failed with status 0x{:02X}",
+                                    rsp[2])
+                            .c_str());
+                }
+            }
+            else
+            {
+                log<level::ERR>(
+                    "Status::sendModeChange: INVALID SET MODE response");
+                dump_hex(rsp);
+            }
+        }
+        else
+        {
+            if (status == CmdStatus::OPEN_FAILURE)
+            {
+                log<level::WARNING>(
+                    "Status::sendModeChange: OCC not active yet");
+            }
+            else
+            {
+                log<level::ERR>("Status::sendModeChange: SET_MODE FAILED!");
+            }
+        }
+    }
+    else
+    {
+        log<level::ERR>(
+            fmt::format(
+                "Status::sendModeChange: Unable to set power mode to {}",
+                newMode)
+                .c_str());
+    }
+
+    return status;
+}
+
+// Send Idle Power Saver config data to the master OCC
+CmdStatus Status::sendIpsData()
+{
+    CmdStatus status = CmdStatus::FAILURE;
+
+    if (!device.master())
+    {
+        log<level::ERR>(
+            fmt::format("Status::sendIpsData: SET_CFG_DATA[IPS] does not "
+                        "get sent to slave OCC{}",
+                        instance)
+                .c_str());
+        return status;
+    }
+    if (!isPowerVM())
+    {
+        // Idle Power Saver data is only supported on PowerVM systems
+        log<level::DEBUG>("Status::sendIpsData: SET_CFG_DATA[IPS] does not "
+                          "get sent on non-PowerVM systems");
+        return CmdStatus::SUCCESS;
+    }
+
+    std::vector<std::uint8_t> cmd, rsp;
+    cmd.push_back(uint8_t(CmdType::SET_CONFIG_DATA));
+    cmd.push_back(0x00); // Data Length (2 bytes)
+    cmd.push_back(0x09);
+    // Data:
+    cmd.push_back(0x11); // Config Format: IPS Settings
+    cmd.push_back(0x00); // Version
+    cmd.push_back(0x01); // IPS Enable: enabled
+    cmd.push_back(0x00); // Enter Delay Time (240s)
+    cmd.push_back(0xF0); //
+    cmd.push_back(0x08); // Enter Utilization (8%)
+    cmd.push_back(0x00); // Exit Delay Time (10s)
+    cmd.push_back(0x0A); //
+    cmd.push_back(0x0C); // Exit Utilization (12%)
+    log<level::INFO>(fmt::format("Status::sendIpsData: SET_CFG_DATA[IPS] "
+                                 "command to OCC{} ({} bytes)",
+                                 instance, cmd.size())
+                         .c_str());
+    status = occCmd.send(cmd, rsp);
+    if (status == CmdStatus::SUCCESS)
+    {
+        if (rsp.size() == 5)
+        {
+            if (RspStatus::SUCCESS == RspStatus(rsp[2]))
+            {
+                log<level::DEBUG>("Status::sendIpsData: - SET_CFG_DATA[IPS] "
+                                  "completed successfully");
+            }
+            else
+            {
+                log<level::ERR>(
+                    fmt::format("Status::sendIpsData: SET_CFG_DATA[IPS] "
+                                "failed with status 0x{:02X}",
+                                rsp[2])
+                        .c_str());
+            }
+        }
+        else
+        {
+            log<level::ERR>(
+                "Status::sendIpsData: INVALID SET_CFG_DATA[IPS] response");
+            dump_hex(rsp);
+        }
+    }
+    else
+    {
+        if (status == CmdStatus::OPEN_FAILURE)
+        {
+            log<level::WARNING>("Status::sendIpsData: OCC not active yet");
+        }
+        else
+        {
+            log<level::ERR>("Status::sendIpsData: SET_CFG_DATA[IPS] FAILED!");
+        }
+    }
+
+    return status;
+}
+
+#endif // POWER10
 
 } // namespace occ
 } // namespace open_power

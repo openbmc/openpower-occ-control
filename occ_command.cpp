@@ -140,107 +140,139 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
 #else
     log<level::DEBUG>("OccCommand::send: calling write()");
 #endif
-    auto rc = write(fd, command.data(), command.size());
-    if ((rc < 0) || (rc != (int)command.size()))
-    {
-        const int write_errno = errno;
-        log<level::ERR>("OccCommand::send: write failed");
-        // This would log and terminate since its not handled.
-        elog<WriteFailure>(
-            phosphor::logging::org::open_power::OCC::Device::WriteFailure::
-                CALLOUT_ERRNO(write_errno),
-            phosphor::logging::org::open_power::OCC::Device::WriteFailure::
-                CALLOUT_DEVICE_PATH(devicePath.c_str()));
-    }
-    else
-    {
-        log<level::DEBUG>("OccCommand::send: write succeeded");
-    }
 
-    // Now read the response. This would be the content of occ-sram
-    while (1)
+    int retries = 1; // Allow a retry if a command fails to get valid response
+    do
     {
-        uint8_t data{};
-        auto len = read(fd, &data, sizeof(data));
-        const int read_errno = errno;
-        if (len > 0)
+        auto rc = write(fd, command.data(), command.size());
+        if ((rc < 0) || (rc != (int)command.size()))
         {
-            response.emplace_back(data);
-        }
-        else if (len < 0 && read_errno == EAGAIN)
-        {
-            // We may have data coming still.
-            // This driver does not need a sleep for a retry.
-            continue;
-        }
-        else if (len == 0)
-        {
-            log<level::DEBUG>("OccCommand::send: read completed");
-            // We have read all that we can.
-            status = CmdStatus::SUCCESS;
-            break;
-        }
-        else
-        {
-            log<level::ERR>("OccCommand::send: read failed");
+            const int write_errno = errno;
+            log<level::ERR>("OccCommand::send: write failed");
             // This would log and terminate since its not handled.
-            elog<ReadFailure>(
-                phosphor::logging::org::open_power::OCC::Device::ReadFailure::
-                    CALLOUT_ERRNO(read_errno),
-                phosphor::logging::org::open_power::OCC::Device::ReadFailure::
+            elog<WriteFailure>(
+                phosphor::logging::org::open_power::OCC::Device::WriteFailure::
+                    CALLOUT_ERRNO(write_errno),
+                phosphor::logging::org::open_power::OCC::Device::WriteFailure::
                     CALLOUT_DEVICE_PATH(devicePath.c_str()));
         }
-    }
+        else
+        {
+            log<level::DEBUG>("OccCommand::send: write succeeded");
+        }
 
-    if (response.size() > 2)
-    {
+        // Now read the response. This would be the content of occ-sram
+        while (1)
+        {
+            uint8_t data{};
+            auto len = read(fd, &data, sizeof(data));
+            const int read_errno = errno;
+            if (len > 0)
+            {
+                response.emplace_back(data);
+            }
+            else if (len < 0 && read_errno == EAGAIN)
+            {
+                // We may have data coming still.
+                // This driver does not need a sleep for a retry.
+                continue;
+            }
+            else if (len == 0)
+            {
+                log<level::DEBUG>("OccCommand::send: read completed");
+                // We have read all that we can.
+                status = CmdStatus::SUCCESS;
+                break;
+            }
+            else
+            {
+                log<level::ERR>("OccCommand::send: read failed");
+                // This would log and terminate since its not handled.
+                elog<ReadFailure>(
+                    phosphor::logging::org::open_power::OCC::Device::
+                        ReadFailure::CALLOUT_ERRNO(read_errno),
+                    phosphor::logging::org::open_power::OCC::Device::
+                        ReadFailure::CALLOUT_DEVICE_PATH(devicePath.c_str()));
+            }
+        }
+
+        if (response.size() > 2)
+        {
 #ifdef TRACE_PACKETS
-        log<level::INFO>(
-            fmt::format(
-                "OCC{}: Received 0x{:02X} response (length={} w/checksum)",
-                occInstance, cmd_type, response.size())
-                .c_str());
-        dump_hex(response, 64);
+            log<level::INFO>(
+                fmt::format(
+                    "OCC{}: Received 0x{:02X} response (length={} w/checksum)",
+                    occInstance, cmd_type, response.size())
+                    .c_str());
+            dump_hex(response, 64);
 #endif
 
-        // Validate checksum (last 2 bytes of response)
-        const unsigned int csumIndex = response.size() - 2;
-        const uint32_t rspChecksum =
-            (response[csumIndex] << 8) + response[csumIndex + 1];
-        uint32_t calcChecksum = 0;
-        for (unsigned int index = 0; index < csumIndex; ++index)
-        {
-            calcChecksum += response[index];
-        }
-        while (calcChecksum > 0xFFFF)
-        {
-            calcChecksum = (calcChecksum & 0xFFFF) + (calcChecksum >> 16);
-        }
-        if (calcChecksum != rspChecksum)
-        {
-            log<level::ERR>(fmt::format("OCC{}: Checksum Mismatch: response "
-                                        "0x{:04X}, calculated 0x{:04X}",
-                                        occInstance, rspChecksum, calcChecksum)
-                                .c_str());
-            dump_hex(response);
-            status = CmdStatus::INVALID_CHECKSUM;
+            // Validate checksum (last 2 bytes of response)
+            const unsigned int csumIndex = response.size() - 2;
+            const uint32_t rspChecksum =
+                (response[csumIndex] << 8) + response[csumIndex + 1];
+            uint32_t calcChecksum = 0;
+            for (unsigned int index = 0; index < csumIndex; ++index)
+            {
+                calcChecksum += response[index];
+            }
+            while (calcChecksum > 0xFFFF)
+            {
+                calcChecksum = (calcChecksum & 0xFFFF) + (calcChecksum >> 16);
+            }
+            if (calcChecksum != rspChecksum)
+            {
+                log<level::ERR>(
+                    fmt::format("OCC{}: Checksum Mismatch: response "
+                                "0x{:04X}, calculated 0x{:04X}",
+                                occInstance, rspChecksum, calcChecksum)
+                        .c_str());
+                dump_hex(response);
+                status = CmdStatus::INVALID_CHECKSUM;
+            }
+            else
+            {
+                // Validate response was for the specified command
+                if (command[0] == response[1])
+                {
+                    // Valid response received
+
+                    // Strip off 2 byte checksum
+                    response.pop_back();
+                    response.pop_back();
+                    break;
+                }
+                else
+                {
+                    log<level::ERR>(
+                        fmt::format(
+                            "OccCommand::send: Response command mismatch "
+                            "(sent: "
+                            "0x{:02X}, rsp: 0x{:02X}, rsp seq#: 0x{:02X}",
+                            command[0], response[1], response[0])
+                            .c_str());
+                    dump_hex(response, 64);
+                }
+            }
         }
         else
         {
-            // Strip off 2 byte checksum
-            response.pop_back();
-            response.pop_back();
+            log<level::ERR>(
+                fmt::format(
+                    "OccCommand::send: Invalid OCC{} response length: {}",
+                    occInstance, response.size())
+                    .c_str());
+            status = CmdStatus::FAILURE;
+            dump_hex(response);
         }
-    }
-    else
-    {
-        log<level::ERR>(
-            fmt::format("OccCommand::send: Invalid OCC{} response length: {}",
-                        occInstance, response.size())
-                .c_str());
-        status = CmdStatus::FAILURE;
-        dump_hex(response);
-    }
+
+        if (retries > 0)
+        {
+            log<level::ERR>("OccCommand::send: Command will be retried");
+            response.clear();
+        }
+
+    } while (retries-- > 0);
 
     closeDevice();
 
