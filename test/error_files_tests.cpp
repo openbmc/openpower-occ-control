@@ -7,12 +7,13 @@
 
 #include <gtest/gtest.h>
 
-constexpr auto num_error_files = 8;
+constexpr auto num_error_files = 10;
 constexpr auto device = "occ-hwmon.1";
 constexpr auto error = "occ_error";
 constexpr auto errorMem = "occ_mem_throttle";
 constexpr auto errorPower = "occ_dvfs_power";
 constexpr auto errorTemp = "occ_dvfs_overtemp";
+constexpr auto errorState = "occ_state";
 constexpr auto legacyDevice = "occ-hwmon.2";
 constexpr auto legacyErrorTemp = "occ_dvfs_ot";
 constexpr auto noError = "0";
@@ -52,10 +53,12 @@ class ErrorFiles : public ::testing::Test
         files[1] = devicePath / errorMem;
         files[2] = devicePath / errorPower;
         files[3] = devicePath / errorTemp;
-        files[4] = legacyDevicePath / error;
-        files[5] = legacyDevicePath / errorMem;
-        files[6] = legacyDevicePath / errorPower;
-        files[7] = legacyDevicePath / legacyErrorTemp;
+        files[4] = devicePath / errorState;
+        files[5] = legacyDevicePath / error;
+        files[6] = legacyDevicePath / errorMem;
+        files[7] = legacyDevicePath / errorPower;
+        files[8] = legacyDevicePath / legacyErrorTemp;
+        files[9] = legacyDevicePath / errorState;
 
         for (const fs::path& f : files)
         {
