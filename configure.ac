@@ -74,7 +74,7 @@ AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
         AC_SUBST([CPPFLAGS], [$cpp_flags])
     )
 
-    AC_ARG_WITH([host-communication-protocol],
+    AC_ARG_ENABLE([host-communication-protocol],
         AS_HELP_STRING([--with-host-communication-protocol], [To specify the host communication protocol])
     )
     AM_CONDITIONAL([ENABLE_PLDM], [test "$with_host_communication_protocol" == "pldm"])
@@ -83,6 +83,18 @@ AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
         [
             cpp_flags="$CPPFLAGS -DPLDM"
             AX_PKG_CHECK_MODULES([LIBPLDM], [libpldm])
+        ]
+        AC_SUBST([CPPFLAGS], [$cpp_flags])
+    )
+
+    AC_ARG_ENABLE([power10-support],
+        AS_HELP_STRING([--with-power10-support], [To specify if system has power10 support])
+    )
+    AM_CONDITIONAL([POWER10_SUPPORT], [test "$with_power10_support" == "yes"])
+    AS_IF([test "x$with_power10_support" == "xyes"],
+        AC_MSG_NOTICE([Enabling POWER10])
+        [
+            cpp_flags="$CPPFLAGS -DPOWER10"
         ]
         AC_SUBST([CPPFLAGS], [$cpp_flags])
     )

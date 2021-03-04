@@ -1,0 +1,91 @@
+#include <fmt/core.h>
+
+#include <cassert>
+#include <phosphor-logging/log.hpp>
+#include <powermode.hpp>
+#include <regex>
+#include <xyz/openbmc_project/Control/Power/Mode/server.hpp>
+
+namespace open_power
+{
+namespace occ
+{
+namespace powermode
+{
+
+using namespace phosphor::logging;
+using Mode = sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
+
+void PowerMode::modeChanged(sdbusplus::message::message& msg)
+{
+    if (!occStatus.occActive())
+    {
+        // Nothing to  do
+        return;
+    }
+
+    SysPwrMode pmode = SysPwrMode::NO_CHANGE;
+
+    std::map<std::string, std::variant<std::string>> properties{};
+    std::string interface;
+    std::string propVal;
+    msg.read(interface, properties);
+    const auto stateEntry = properties.find(POWER_MODE_PROP);
+    if (stateEntry != properties.end())
+    {
+        auto stateEntryValue = stateEntry->second;
+        propVal = std::get<std::string>(stateEntryValue);
+        pmode = convertStringToMode(propVal);
+
+        if (pmode != SysPwrMode::NO_CHANGE)
+        {
+            log<level::INFO>(
+                fmt::format("Power Mode Change Requested: {}", propVal)
+                    .c_str());
+
+            // Trigger mode change to OCC
+            occStatus.sendModeChange();
+        }
+    }
+
+    return;
+}
+
+// Convert PowerMode string to OCC SysPwrMode
+SysPwrMode convertStringToMode(const std::string i_string)
+{
+    SysPwrMode pmode = SysPwrMode::NO_CHANGE;
+
+    Mode::PowerMode mode = Mode::convertPowerModeFromString(i_string);
+    if (mode == Mode::PowerMode::MaximumPerformance)
+    {
+        pmode = SysPwrMode::MAX_PERF;
+    }
+    else if (mode == Mode::PowerMode::PowerSaving)
+    {
+        pmode = SysPwrMode::POWER_SAVING;
+    }
+    else if (mode == Mode::PowerMode::Static)
+    {
+        pmode = SysPwrMode::DISABLE;
+    }
+    else if (mode == Mode::PowerMode::OEM)
+    {
+        pmode = SysPwrMode::DYNAMIC_PERF;
+    }
+    else
+    {
+        log<level::ERR>(
+            fmt::format("convertStringToMode: Invalid Power Mode specified: {}",
+                        i_string)
+                .c_str());
+    }
+
+    return pmode;
+}
+
+} // namespace powermode
+
+} // namespace occ
+
+} // namespace open_power
