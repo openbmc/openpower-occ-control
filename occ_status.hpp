@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <org/open_power/Control/Host/server.hpp>
+#include <org/open_power/Control/Power/Mode/server.hpp>
 #include <org/open_power/OCC/Status/server.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
@@ -147,6 +148,18 @@ class Status : public Interface
         return device.addPresenceWatchMaster();
     }
 
+    /** @brief Send the command to the OCC and collect the response
+     *
+     *  @param[in] command - command to pass-through
+     *  @param[out] rsponse - response
+     *  @return SUCCESS if response was received
+     */
+    CmdStatus sendCommand(const std::vector<std::uint8_t>& command,
+                          std::vector<std::uint8_t>& response)
+    {
+        return occCmd.send(command, response);
+    }
+
     /** @brief Read OCC state (will trigger kernel to poll the OCC) */
     void readOccState();
 
@@ -209,6 +222,19 @@ class Status : public Interface
     {
         return (path.empty() ? 0 : path.back() - '0');
     }
+
+    /** @brief Handle additional tasks when the OCCs reach active state */
+    void occsWentActive();
+
+    /** @brief Send mode change command to the master OCC
+     *  @return SUCCESS on success
+     */
+    CmdStatus sendModeChange();
+
+    /** @brief Send Idle Power Saver config data to the master OCC
+     *  @return SUCCESS on success
+     */
+    CmdStatus sendIpsData();
 
     /** @brief Override the sensor name with name from the definition.
      *  @param[in]  estimatedPath - Estimated OCC Dbus object path
