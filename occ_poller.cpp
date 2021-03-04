@@ -35,6 +35,7 @@ void Poller::startPoller()
 void Poller::pollerTimerExpired()
 {
     static bool L_traced = false;
+    static uint8_t L_last_state = 0x00;
     if (manager.getNumOCCs() > 0)
     {
         if (!_pollTimer)
@@ -58,6 +59,22 @@ void Poller::pollerTimerExpired()
             {
                 log<level::DEBUG>(fmt::format("Poller::pollerTimerExpired() POLL response had {} bytes",
                                              rsp.size()).c_str());
+                if (rsp.size() >= 9)
+                {
+                    if (rsp[9] != L_last_state)
+                    {
+                        // OCC state changed
+                        log<level::INFO>(fmt::format("OCC{} changed to state {} (from {})",
+                                                     occ_instance, rsp[9], L_last_state).c_str());
+                        L_last_state = rsp[9];
+
+                        if ((rsp[9] == 0x03) && (occ_instance == 0)) // Master state is active
+                        {
+                            log<level::INFO>("Poller::pollerTimerExpired: OCC went active");
+                            manager.occsWentActive();
+                        }
+                    }
+                }
             }
             else
             {

@@ -65,6 +65,9 @@ struct Manager
                              const std::vector<std::int32_t> &command,
                              std::vector<std::int32_t> &response) const;
 
+    // Handle additional tasks when the OCCs reach active state
+    int occsWentActive() const;
+
   private:
     /** @brief Checks if the CPU inventory is present and if so, creates
      *         the occ D-Bus objects. Else, registers a handler to be
@@ -147,6 +150,10 @@ struct Manager
 
     std::unique_ptr<pldm::Interface> pldmHandle = nullptr;
 #endif
+
+    // Send mode change request to the Master OCC
+    int modeChange() const;
+
 };
 
 } // namespace occ

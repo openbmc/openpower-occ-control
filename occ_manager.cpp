@@ -191,5 +191,78 @@ CmdStatus Manager::sendOccCommand(const uint8_t instance,
 }
 
 
+// Special processing that needs to happen once the OCCs change to ACTIVE state
+int Manager::occsWentActive() const
+{
+    int rc = 0;
+
+    rc = modeChange();
+
+    return rc;
+}
+
+
+// Send mode change request to the OCC
+int Manager::modeChange() const
+{
+    using namespace phosphor::logging;
+    int rc = -1;
+
+    log<level::INFO>("Manager::modeChange: Sending CHANGE_MODE to OCC");
+
+    std::vector<std::int32_t> cmd, rsp;
+    cmd.push_back(0x20); // Command (SET_MODE_AND_STATE)
+    cmd.push_back(0x00); // Data Length (2 bytes)
+    cmd.push_back(0x06);
+    cmd.push_back(0x30); // Data (Version)
+    cmd.push_back(0x00); // State (no change)
+    cmd.push_back(0x0C); // Mode (TODO: read from saved data)
+    cmd.push_back(0x00); // Mode Data (Freq Point)
+    cmd.push_back(0x00); //
+    cmd.push_back(0x00); // reserved
+    log<level::DEBUG>(fmt::format("Manager::modeChange: SET_MODE command ({} bytes)",
+                                 cmd.size()).c_str());
+    CmdStatus status = sendOccCommand(0xFF, cmd, rsp); // Send to MASTER
+    if (status == SUCCESS)
+    {
+        if (rsp.size() == 5)
+        {
+            if (rsp[1] == 0x20) // rsp command (SET MODE AND STATE)
+            {
+                if (rsp[2] == 0x00) // rsp status (SUCCESS)
+                {
+                    log<level::DEBUG>("Manager::modeChange: - Mode change completed successfully");
+                    rc = 0;
+                }
+                else
+                {
+                    log<level::ERR>(fmt::format("Manager::modeChange: SET MODE failed with status 0x{:02X}",
+                                                rsp[2]).c_str());
+                }
+            }
+            else
+            {
+                log<level::ERR>(fmt::format("Manager::modeChange: SET MODE response command mismatch"
+                                            " (received 0x{:02x}, expected 0x20)", rsp[1]).c_str());
+            }
+        }
+        else
+        {
+            log<level::ERR>("Manager::modeChange: INVALID SET MODE response");
+        }
+    }
+    else
+    {
+        if (status == OPEN_FAILURE)
+            log<level::WARNING>("Manager::modeChange: OCC not active yet");
+        else
+            log<level::ERR>("Manager::modeChange: SET_MODE FAILED!");
+    }
+
+    return rc;
+}
+
+
+
 } // namespace occ
 } // namespace open_power
