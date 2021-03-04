@@ -140,6 +140,9 @@ class Device
      */
     static std::string getPathBack(const fs::path& path);
 
+    /** @brief Returns true if device represents the master OCC */
+    bool master() const;
+
   private:
     /** @brief Config value to be used to do bind and unbind */
     const std::string config;
@@ -186,9 +189,6 @@ class Device
         file.close();
         return;
     }
-
-    /** @brief Returns if device represents the master OCC */
-    bool master() const;
 
     /** @brief callback for the proc temp throttle event
      *
