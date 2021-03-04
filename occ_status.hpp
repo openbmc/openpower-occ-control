@@ -210,6 +210,21 @@ class Status : public Interface
         return (path.empty() ? 0 : path.back() - '0');
     }
 
+#ifdef POWER10
+    /** @brief Handle additional tasks when the OCCs reach active state */
+    void occsWentActive();
+
+    /** @brief Send mode change command to the master OCC
+     *  @return SUCCESS on success
+     */
+    CmdStatus sendModeChange();
+
+    /** @brief Send Idle Power Saver config data to the master OCC
+     *  @return SUCCESS on success
+     */
+    CmdStatus sendIpsData();
+#endif // POWER10
+
     /** @brief Override the sensor name with name from the definition.
      *  @param[in]  estimatedPath - Estimated OCC Dbus object path
      *  @return  Fixed OCC DBus object path

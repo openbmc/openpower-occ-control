@@ -6,6 +6,9 @@
 #include "pldm.hpp"
 #endif
 #include "powercap.hpp"
+#ifdef POWER10
+#include "powermode.hpp"
+#endif
 
 #include <cstring>
 #include <functional>
@@ -121,6 +124,11 @@ struct Manager
 
     /** @brief Power cap monitor and occ notification object */
     std::unique_ptr<open_power::occ::powercap::PowerCap> pcap;
+
+#ifdef POWER10
+    /** @brief Power cap monitor and occ notification object */
+    std::unique_ptr<open_power::occ::powermode::PowerMode> pmode;
+#endif
 
     /** @brief sbdbusplus match objects */
     std::vector<sdbusplus::bus::match_t> cpuMatches;
