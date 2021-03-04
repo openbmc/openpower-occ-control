@@ -15,6 +15,58 @@ namespace occ
 // For waiting on signals
 namespace sdbusRule = sdbusplus::bus::match::rules;
 
+enum class CmdType
+{
+    POLL = 0x00,
+    CLEAR_ERROR_LOG = 0x12,
+    SET_MODE_AND_STATE = 0x20,
+    SET_CONFIG_DATA = 0x21,
+    SET_USER_PCAP = 0x22,
+    RESET_PREP = 0x25,
+    DEBUG_PASS_THROUGH = 0x40,
+    AME_PASS_THROUGH = 0x41,
+    GET_FIELD_DEBUG_DATA = 0x42,
+    MFG_TEST = 0x53
+};
+
+enum class OccState
+{
+    NO_CHANGE = 0x00,
+    STANDBY = 0x01,
+    OBSERVATION = 0x02,
+    ACTIVE = 0x03,
+    SAFE = 0x04,
+    CHARACTERIZATION = 0x05,
+};
+
+enum class SysPwrMode
+{
+    NO_CHANGE = 0,
+    DISABLE = 0x01,      // Disable / Static Base Frequencey
+    SFP = 0x03,          // Static Frequency Point (requires freqPt)
+    SAFE = 0x04,         // reported when system is in SAFE mode (not settable)
+    POWER_SAVING = 0x05, // Static Power Saving
+    DYNAMIC_PERF = 0x0A, // Dynamic / Balanced Performance
+    FFO = 0x0B,          // Fixed Frequency Override (requires freqPt)
+    MAX_PERF = 0x0C      // Maximum Performance
+};
+#define VALID_POWER_MODE_SETTING(mode)                                         \
+    ((mode == SysPwrMode::DISABLE) || (mode == SysPwrMode::POWER_SAVING) ||    \
+     (mode == SysPwrMode::DYNAMIC_PERF) || (mode == SysPwrMode::MAX_PERF))
+
+enum class RspStatus
+{
+    SUCCESS = 0x00,
+    CONDITIONAL_SUCCESS = 0x01,
+    INVALID_COMMAND = 0x11,
+    INVALID_COMMAND_LENGTH = 0x12,
+    INVALID_DATA_FIELD = 0x13,
+    CHECKSUM_FAILURE = 0x14,
+    INTERNAL_ERROR = 0x15,
+    PRESENT_STATE_PROHIBITS = 0x16,
+    COMMAND_IN_PROGRESS = 0xFF
+};
+
 enum class CmdStatus
 {
     SUCCESS,
