@@ -5,6 +5,7 @@
 #include "occ_errors.hpp"
 #include "occ_events.hpp"
 #include "occ_presence.hpp"
+#include "occ_state.hpp"
 
 #include <experimental/filesystem>
 #include <fstream>
@@ -46,6 +47,7 @@ class Device
         devPath(path), statusObject(status),
         error(event, path / "occ_error", callBack),
         presence(event, path / "occs_present", manager, callBack),
+        stateChange(event, path / "occ_state", manager, callBack),
         throttleProcTemp(
             event, path / "occ_dvfs_overtemp",
             std::bind(std::mem_fn(&Device::throttleProcTempCallback), this,
@@ -111,6 +113,7 @@ class Device
         throttleProcPower.addWatch(poll);
         throttleMemTemp.addWatch(poll);
         error.addWatch(poll);
+        stateChange.addWatch(poll);
     }
 
     /** @brief stops monitoring for errors */
@@ -118,6 +121,7 @@ class Device
     {
         // we can always safely remove watch even if we don't add it
         presence.removeWatch();
+        stateChange.removeWatch();
         error.removeWatch();
         throttleMemTemp.removeWatch();
         throttleProcPower.removeWatch();
@@ -139,6 +143,9 @@ class Device
      * @return         - Last directory name in the path
      */
     static std::string getPathBack(const fs::path& path);
+
+    /** @brief Returns if device represents the master OCC */
+    bool master() const;
 
   private:
     /** @brief Config value to be used to do bind and unbind */
@@ -167,6 +174,9 @@ class Device
     /** Abstraction of OCC presence monitoring */
     Presence presence;
 
+    /** Abstraction of OCC state monitoring */
+    StateChange stateChange;
+
     /** Error instances for watching for throttling events */
     Error throttleProcTemp;
     Error throttleProcPower;
@@ -186,9 +196,6 @@ class Device
         file.close();
         return;
     }
-
-    /** @brief Returns if device represents the master OCC */
-    bool master() const;
 
     /** @brief callback for the proc temp throttle event
      *
