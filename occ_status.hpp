@@ -149,6 +149,16 @@ class Status : public Interface
     /** @brief Read OCC state (will trigger kernel to poll the OCC) */
     void readOccState();
 
+#ifdef POWER10
+    /** @brief Handle additional tasks when the OCCs reach active state */
+    void occsWentActive();
+
+    /** @brief Send mode change command to the master OCC
+     *  @return SUCCESS on success
+     */
+    CmdStatus sendModeChange();
+#endif // POWER10
+
   private:
     /** @brief OCC dbus object path */
     std::string path;
@@ -205,6 +215,23 @@ class Status : public Interface
     {
         return (path.empty() ? 0 : path.back() - '0');
     }
+
+#ifdef POWER10
+    /** @brief Query the current Hypervisor target
+     * @return true if the current Hypervisor target is PowerVM
+     */
+    bool isPowerVM();
+
+    /** @brief Get the requested power mode property
+     * @return Power mode
+     */
+    SysPwrMode getMode();
+
+    /** @brief Send Idle Power Saver config data to the master OCC
+     *  @return SUCCESS on success
+     */
+    CmdStatus sendIpsData();
+#endif // POWER10
 
     /** @brief Override the sensor name with name from the definition.
      *  @param[in]  estimatedPath - Estimated OCC Dbus object path
