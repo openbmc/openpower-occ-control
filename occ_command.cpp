@@ -231,6 +231,18 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
             response.pop_back();
             response.pop_back();
         }
+
+        // Validate response is for this sent command
+        if (command[0] != response[1])
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "OccCommand::send: Response command mismatch (sent: "
+                    "0x{:02X}, rsp: 0x{:02X}, rsp seq#: 0x{:02X}",
+                    command[0], response[1], response[0])
+                    .c_str());
+            dump_hex(response, 64);
+        }
     }
     else
     {
