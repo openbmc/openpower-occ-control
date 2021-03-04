@@ -69,6 +69,15 @@ void Manager::createObjects(const std::string& occ)
         pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
             bus, *statusObjects.front());
     }
+
+#ifdef POWER10
+    // Create the power mode monitor object for master occ (0)
+    if (!pmode)
+    {
+        pmode = std::make_unique<open_power::occ::powermode::PowerMode>(
+            bus, *statusObjects.front());
+    }
+#endif
 }
 
 void Manager::statusCallBack(bool status)
@@ -133,6 +142,10 @@ void Manager::initStatusObjects()
     // The first device is master occ
     pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
         bus, *statusObjects.front(), occMasterName);
+#ifdef POWER10
+    pmode = std::make_unique<open_power::occ::powermode::PowerMode>(
+        bus, *statusObjects.front(), occMasterName);
+#endif
 }
 #endif
 

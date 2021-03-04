@@ -10,6 +10,11 @@ namespace open_power
 {
 namespace occ
 {
+constexpr auto PMODE_PATH = "/xyz/openbmc_project/control/host0/power_mode";
+constexpr auto PMODE_INTERFACE = "xyz.openbmc_project.Control.Power.Mode";
+
+constexpr auto POWER_MODE_PROP = "PowerMode";
+
 using namespace phosphor::logging;
 
 // Handles updates to occActive property
@@ -185,6 +190,14 @@ void Status::readOccState()
                             instance, state)
                     .c_str());
             lastState = state;
+
+#ifdef POWER10
+            if ((state == 0x03) && (device.master()))
+            {
+                // Kernel detected that the master OCC went to active state
+                occsWentActive();
+            }
+#endif
         }
         file.close();
     }
@@ -198,6 +211,281 @@ void Status::readOccState()
         lastState = 0;
     }
 }
+
+#ifdef POWER10
+// Get the current mode
+uint8_t Status::getMode()
+{
+    // This will throw exception on failure
+    auto service = getService(bus, PMODE_PATH, PMODE_INTERFACE);
+    auto method = bus.new_method_call(service.c_str(), PMODE_PATH,
+                                      "org.freedesktop.DBus.Properties", "Get");
+    method.append(PMODE_INTERFACE, POWER_MODE_PROP);
+    auto reply = bus.call(method);
+
+    if (reply.is_method_error())
+    {
+        log<level::ERR>("Error in getMode prop");
+        return 0;
+    }
+
+    uint8_t pmode = 0;
+    std::variant<std::string> stateEntryValue;
+    reply.read(stateEntryValue);
+    auto propVal = std::get<std::string>(stateEntryValue);
+    if (propVal == "xyz.openbmc_project.Control.Power.Mode.PowerMode."
+                   "MaximumPerformance")
+    {
+        log<level::INFO>("getMode: PowerMode(MaxPerf)");
+        pmode = 12;
+    }
+    else if (propVal ==
+             "xyz.openbmc_project.Control.Power.Mode.PowerMode.PowerSaving")
+    {
+        log<level::INFO>("getMode: PowerMode(PowerSaving)");
+        pmode = 5;
+    }
+    else if (propVal ==
+             "xyz.openbmc_project.Control.Power.Mode.PowerMode.Static")
+    {
+        log<level::INFO>("getMode: PowerMode(Static)");
+        pmode = 1;
+    }
+    else if (propVal == "xyz.openbmc_project.Control.Power.Mode.PowerMode.OEM")
+    {
+        log<level::INFO>("getMode: PowerMode(OEM)");
+        pmode = 10;
+    }
+    else
+    {
+        log<level::ERR>(
+            fmt::format("getMode: Invalid PowerMode specified: {}", propVal)
+                .c_str());
+    }
+
+    log<level::INFO>(
+        fmt::format("Status::getMode returning {}", pmode).c_str());
+
+    return pmode;
+}
+
+// Special processing that needs to happen once the OCCs change to ACTIVE state
+void Status::occsWentActive()
+{
+    CmdStatus status = CmdStatus::SUCCESS;
+
+    status = sendModeChange();
+    if (status != CmdStatus::SUCCESS)
+    {
+        log<level::ERR>(fmt::format("Status::occsWentActive: OCC mode "
+                                    "change failed with status {}",
+                                    status)
+                            .c_str());
+    }
+
+    status = sendIpsData();
+    if (status != CmdStatus::SUCCESS)
+    {
+        log<level::ERR>(
+            fmt::format(
+                "Status::occsWentActive: Sending Idle Power Save Config data"
+                " failed with status {}",
+                status)
+                .c_str());
+    }
+}
+
+// Send mode change request to the master OCC
+CmdStatus Status::sendModeChange()
+{
+    CmdStatus status = CmdStatus::FAILURE;
+
+    if (device.master())
+    {
+        log<level::INFO>("Status::sendModeChange: Reading current PowerMode");
+        const uint8_t newMode = getMode();
+        log<level::INFO>(
+            fmt::format(
+                "Status::sendModeChange: Sending CHANGE_MODE to master OCC{}",
+                instance)
+                .c_str());
+
+        std::vector<std::uint8_t> cmd, rsp;
+        cmd.push_back(0x20); // Command (SET_MODE_AND_STATE)
+        cmd.push_back(0x00); // Data Length (2 bytes)
+        cmd.push_back(0x06);
+        cmd.push_back(0x30);    // Data (Version)
+        cmd.push_back(0x00);    // State (no change)
+        cmd.push_back(newMode); // Mode
+        cmd.push_back(0x00);    // Mode Data (Freq Point)
+        cmd.push_back(0x00);    //
+        cmd.push_back(0x00);    // reserved
+        log<level::INFO>(
+            fmt::format(
+                "Status::sendModeChange: SET_MODE({}) command ({} bytes)",
+                newMode, cmd.size())
+                .c_str());
+        status = occCmd.send(cmd, rsp);
+        if (status == CmdStatus::SUCCESS)
+        {
+            if (rsp.size() == 5)
+            {
+                if (rsp[1] == 0x20) // rsp command (SET MODE AND STATE)
+                {
+                    if (rsp[2] == 0x00) // rsp status (SUCCESS)
+                    {
+                        log<level::INFO>(
+                            "Status::sendModeChange: - Mode change "
+                            "completed successfully");
+                    }
+                    else
+                    {
+                        log<level::ERR>(
+                            fmt::format("Status::sendModeChange: SET MODE "
+                                        "failed with status 0x{:02X}",
+                                        rsp[2])
+                                .c_str());
+                    }
+                }
+                else
+                {
+                    log<level::ERR>(
+                        fmt::format("Status::sendModeChange: SET MODE response "
+                                    "command mismatch"
+                                    " (received 0x{:02x}, expected 0x20)",
+                                    rsp[1])
+                            .c_str());
+                }
+            }
+            else
+            {
+                log<level::ERR>(
+                    "Status::sendModeChange: INVALID SET MODE response");
+                dump_hex(rsp);
+            }
+        }
+        else
+        {
+            if (status == CmdStatus::OPEN_FAILURE)
+            {
+                log<level::WARNING>(
+                    "Status::sendModeChange: OCC not active yet");
+            }
+            else
+            {
+                log<level::ERR>("Status::sendModeChange: SET_MODE FAILED!");
+            }
+        }
+    }
+    else
+    {
+        log<level::ERR>(
+            fmt::format("Status::sendModeChange: MODE CHANGE does not "
+                        "get sent to slave OCC{}",
+                        instance)
+                .c_str());
+    }
+    return status;
+}
+
+// Send Idle Power Saver config data to the master OCC
+CmdStatus Status::sendIpsData()
+{
+    CmdStatus status = CmdStatus::FAILURE;
+
+    if (device.master())
+    {
+        log<level::INFO>(
+            fmt::format(
+                "Status::sendIpsData: Sending default IPS data to master OCC{}",
+                instance)
+                .c_str());
+
+        std::vector<std::uint8_t> cmd, rsp;
+        cmd.push_back(0x21); // Command (SEND_CFG_DATA)
+        cmd.push_back(0x00); // Data Length (2 bytes)
+        cmd.push_back(0x09);
+        // Data:
+        cmd.push_back(0x11); // Config Format: IPS Settings
+        cmd.push_back(0x00); // Version
+        cmd.push_back(0x01); // IPS Enable: enabled
+        cmd.push_back(0x00); // Enter Delay Time (240s)
+        cmd.push_back(0xF0); //
+        cmd.push_back(0x08); // Enter Utilization (8%)
+        cmd.push_back(0x00); // Exit Delay Time (10s)
+        cmd.push_back(0x0A); //
+        cmd.push_back(0x0C); // Exit Utilization (12%)
+        log<level::INFO>(
+            fmt::format(
+                "Status::sendIpsData: SET_CFG_DATA[IPS] command ({} bytes)",
+                cmd.size())
+                .c_str());
+        status = occCmd.send(cmd, rsp);
+        if (status == CmdStatus::SUCCESS)
+        {
+            if (rsp.size() == 5)
+            {
+                if (rsp[1] == 0x21) // rsp command (SET CONFIG DATA)
+                {
+                    if (rsp[2] == 0x00) // rsp status (SUCCESS)
+                    {
+                        log<level::INFO>(
+                            "Status::sendIpsData: - SET_CFG_DATA[IPS] "
+                            "completed successfully");
+                    }
+                    else
+                    {
+                        log<level::ERR>(
+                            fmt::format(
+                                "Status::sendIpsData: SET_CFG_DATA[IPS] "
+                                "failed with status 0x{:02X}",
+                                rsp[2])
+                                .c_str());
+                    }
+                }
+                else
+                {
+                    log<level::ERR>(
+                        fmt::format(
+                            "Status::sendIpsData: SET_CFG_DATA[IPS] response "
+                            "command mismatch"
+                            " (received 0x{:02x}, expected 0x21)",
+                            rsp[1])
+                            .c_str());
+                }
+            }
+            else
+            {
+                log<level::ERR>(
+                    "Status::sendIpsData: INVALID SET_CFG_DATA[IPS] response");
+                dump_hex(rsp);
+            }
+        }
+        else
+        {
+            if (status == CmdStatus::OPEN_FAILURE)
+            {
+                log<level::WARNING>("Status::sendIpsData: OCC not active yet");
+            }
+            else
+            {
+                log<level::ERR>(
+                    "Status::sendIpsData: SET_CFG_DATA[IPS] FAILED!");
+            }
+        }
+    }
+    else
+    {
+        log<level::ERR>(
+            fmt::format("Status::sendIpsData: SET_CFG_DATA[IPS] does not "
+                        "get sent to slave OCC{}",
+                        instance)
+                .c_str());
+    }
+    return status;
+}
+
+#endif // POWER10
 
 } // namespace occ
 } // namespace open_power
