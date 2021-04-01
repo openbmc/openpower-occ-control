@@ -351,6 +351,138 @@
     },
     {
       "key": {
+        "uuid": "0481f34d_4fc8676d",
+        "filename": "occ_poller.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-04-01T19:14:59Z",
+      "side": 1,
+      "message": "make debug?",
+      "revId": "5cb5a37da92e4d4419ae1e2248bc4cbf4c4e5cfd",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4ce647de_a10ba4b4",
+        "filename": "occ_poller.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-04-01T19:14:59Z",
+      "side": 1,
+      "message": "I don\u0027t see this used to trace anything?",
+      "range": {
+        "startLine": 38,
+        "startChar": 2,
+        "endLine": 38,
+        "endChar": 33
+      },
+      "revId": "5cb5a37da92e4d4419ae1e2248bc4cbf4c4e5cfd",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ea3a53cb_b91c13bd",
+        "filename": "occ_poller.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-04-01T19:14:59Z",
+      "side": 1,
+      "message": "you can just do this in the ctor if you want:\ncmd{0, 0, 1, 0x20};",
+      "range": {
+        "startLine": 54,
+        "startChar": 5,
+        "endLine": 57,
+        "endChar": 28
+      },
+      "revId": "5cb5a37da92e4d4419ae1e2248bc4cbf4c4e5cfd",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a5c7c6bd_c44f4403",
+        "filename": "occ_poller.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-04-01T19:14:59Z",
+      "side": 1,
+      "message": "you probably want the callback now?",
+      "range": {
+        "startLine": 129,
+        "startChar": 0,
+        "endLine": 129,
+        "endChar": 5
+      },
+      "revId": "5cb5a37da92e4d4419ae1e2248bc4cbf4c4e5cfd",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8bf0e9a6_fad325f2",
+        "filename": "occ_poller.hpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-04-01T19:14:59Z",
+      "side": 1,
+      "message": "could probably change this to DEBUG?",
+      "range": {
+        "startLine": 54,
+        "startChar": 0,
+        "endLine": 55,
+        "endChar": 50
+      },
+      "revId": "5cb5a37da92e4d4419ae1e2248bc4cbf4c4e5cfd",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9d348630_31d8f25f",
+        "filename": "occ_poller.hpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-04-01T19:14:59Z",
+      "side": 1,
+      "message": "It looks like you\u0027re using Manager to send the command, so this can be removed?",
+      "range": {
+        "startLine": 83,
+        "startChar": 4,
+        "endLine": 83,
+        "endChar": 23
+      },
+      "revId": "5cb5a37da92e4d4419ae1e2248bc4cbf4c4e5cfd",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "de550101_d30ed047",
         "filename": "occ_status.hpp",
         "patchSetId": 7
