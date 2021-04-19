@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "d89cc8a9_944fc088",
+        "filename": "bootstrap.sh",
+        "patchSetId": 13
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-04-19T19:39:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "32e62b6a_1be7cf3e",
+      "range": {
+        "startLine": 11,
+        "startChar": 1,
+        "endLine": 11,
+        "endChar": 58
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0a2a8875_521bf6f0",
         "filename": "occ_command.cpp",
         "patchSetId": 13
@@ -45,6 +69,30 @@
       "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c2d72da8_1f57aaed",
+        "filename": "occ_command.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-04-19T19:39:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0a2a8875_521bf6f0",
+      "range": {
+        "startLine": 13,
+        "startChar": 0,
+        "endLine": 13,
+        "endChar": 19
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "c6846626_9fb07232",
+        "filename": "occ_command.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-04-19T19:39:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8d928480_98a0480a",
+      "range": {
+        "startLine": 44,
+        "startChar": 12,
+        "endLine": 44,
+        "endChar": 19
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "a9bb2134_d991ea11",
         "filename": "occ_manager.cpp",
         "patchSetId": 13
@@ -91,6 +163,30 @@
       "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0b02425a_9823d883",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 156,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-04-19T19:39:48Z",
+      "side": 1,
+      "message": "It was defined so others could use it, but I can remove until next commit.\nDone",
+      "parentUuid": "a9bb2134_d991ea11",
+      "range": {
+        "startLine": 154,
+        "startChar": 0,
+        "endLine": 156,
+        "endChar": 76
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     },
     {
       "key": {
@@ -117,6 +213,30 @@
     },
     {
       "key": {
+        "uuid": "3b0f810b_f6ec5647",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 240,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-04-19T19:39:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bdafe4b2_6fcc2738",
+      "range": {
+        "startLine": 217,
+        "startChar": 3,
+        "endLine": 240,
+        "endChar": 5
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4550e965_18d60f33",
         "filename": "occ_pass_through.cpp",
         "patchSetId": 13
@@ -137,6 +257,30 @@
       "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f258d61a_1a8f86e9",
+        "filename": "occ_pass_through.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-04-19T19:39:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4550e965_18d60f33",
+      "range": {
+        "startLine": 13,
+        "startChar": 0,
+        "endLine": 13,
+        "endChar": 19
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     },
     {
       "key": {
@@ -163,6 +307,30 @@
     },
     {
       "key": {
+        "uuid": "4515f71f_75c52376",
+        "filename": "occ_pass_through.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-04-19T19:39:48Z",
+      "side": 1,
+      "message": "The original interface with int32 was used for dbus so other apps can send pass through commands.  It requires the resize/transform (lines 44-49).\n\nWhen used within the occ-control app (from occ_control.cpp), that would not be needed so I split to optimize the code.",
+      "parentUuid": "56abbe76_35cab0f3",
+      "range": {
+        "startLine": 60,
+        "startChar": 0,
+        "endLine": 60,
+        "endChar": 68
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "096dea40_988030bd",
         "filename": "occ_pass_through.cpp",
         "patchSetId": 13
@@ -183,6 +351,30 @@
       "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b7fe5cde_294abfe8",
+        "filename": "occ_pass_through.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-04-19T19:39:48Z",
+      "side": 1,
+      "message": "I don\u0027t think that would simplifies the code since both the level and the text are different for this condition.",
+      "parentUuid": "096dea40_988030bd",
+      "range": {
+        "startLine": 89,
+        "startChar": 8,
+        "endLine": 96,
+        "endChar": 9
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     },
     {
       "key": {
@@ -209,6 +401,30 @@
     },
     {
       "key": {
+        "uuid": "7c5bac98_30caca44",
+        "filename": "occ_pass_through.hpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-04-19T19:39:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c88fe6ae_713abd47",
+      "range": {
+        "startLine": 48,
+        "startChar": 4,
+        "endLine": 48,
+        "endChar": 70
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "657be1c7_53b01a02",
         "filename": "occ_status.cpp",
         "patchSetId": 13
@@ -229,6 +445,30 @@
       "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "992b050f_89b16212",
+        "filename": "occ_status.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-04-19T19:39:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "657be1c7_53b01a02",
+      "range": {
+        "startLine": 105,
+        "startChar": 4,
+        "endLine": 105,
+        "endChar": 38
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     },
     {
       "key": {
@@ -255,6 +495,30 @@
     },
     {
       "key": {
+        "uuid": "cce8333a_606c61b1",
+        "filename": "occ_status.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-04-19T19:39:48Z",
+      "side": 1,
+      "message": "This is called in Manager::pollerTimerExpired() and it used to trigger the kernel to send a poll command to the OCC. (via sysfs)\nThe lastState is used to trace OCC state changes since they should be very rare, but good to know when they happen.",
+      "parentUuid": "bbb5e1a3_1ed7c639",
+      "range": {
+        "startLine": 164,
+        "startChar": 0,
+        "endLine": 164,
+        "endChar": 27
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "7103249a_a6d4fbaa",
         "filename": "occ_status.cpp",
         "patchSetId": 13
@@ -269,6 +533,24 @@
       "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6fd3b273_11ce0b4f",
+        "filename": "occ_status.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-04-19T19:39:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7103249a_a6d4fbaa",
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     },
     {
       "key": {
@@ -295,6 +577,30 @@
     },
     {
       "key": {
+        "uuid": "b4f31ba2_550bf1bc",
+        "filename": "occ_status.hpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 160,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-04-19T19:39:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "21d22fd7_b066d135",
+      "range": {
+        "startLine": 150,
+        "startChar": 0,
+        "endLine": 160,
+        "endChar": 5
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "33bddb03_8f653fc7",
         "filename": "pldm.cpp",
         "patchSetId": 13
@@ -315,6 +621,30 @@
       "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "66e0b842_5a9a3cfe",
+        "filename": "pldm.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-04-19T19:39:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "33bddb03_8f653fc7",
+      "range": {
+        "startLine": 11,
+        "startChar": 0,
+        "endLine": 11,
+        "endChar": 21
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     },
     {
       "key": {
@@ -341,6 +671,30 @@
     },
     {
       "key": {
+        "uuid": "41d4ffc9_2ccd9ed6",
+        "filename": "pldm.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 138,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-04-19T19:39:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "04d0477f_a0c7d3c5",
+      "range": {
+        "startLine": 135,
+        "startChar": 4,
+        "endLine": 138,
+        "endChar": 5
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9b8195c1_195cc5c6",
         "filename": "pldm.cpp",
         "patchSetId": 13
@@ -355,6 +709,24 @@
       "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3d67aa56_1a7e8fc5",
+        "filename": "pldm.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 356,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-04-19T19:39:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9b8195c1_195cc5c6",
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     }
   ]
 }
