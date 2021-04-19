@@ -727,6 +727,24 @@
       "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "e5b48c05_a1ccd31b",
+        "filename": "pldm.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 356,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-04-19T19:44:50Z",
+      "side": 1,
+      "message": "I did not change this, looks like it gets added automatically.  All files seem to have blank line at end.",
+      "parentUuid": "3d67aa56_1a7e8fc5",
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     }
   ]
 }
