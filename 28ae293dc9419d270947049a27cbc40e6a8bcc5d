@@ -1,0 +1,360 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "32e62b6a_1be7cf3e",
+        "filename": "bootstrap.sh",
+        "patchSetId": 13
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-19T03:41:56Z",
+      "side": 1,
+      "message": "nit: These changes are not within the scope of this commit. Coult you push a new commit for these changes?",
+      "range": {
+        "startLine": 11,
+        "startChar": 1,
+        "endLine": 11,
+        "endChar": 58
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0a2a8875_521bf6f0",
+        "filename": "occ_command.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-19T03:41:56Z",
+      "side": 1,
+      "message": "Remove?",
+      "range": {
+        "startLine": 13,
+        "startChar": 0,
+        "endLine": 13,
+        "endChar": 19
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8d928480_98a0480a",
+        "filename": "occ_command.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-19T03:41:56Z",
+      "side": 1,
+      "message": "This is C, not C++, Could you change it?",
+      "range": {
+        "startLine": 44,
+        "startChar": 12,
+        "endLine": 44,
+        "endChar": 19
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a9bb2134_d991ea11",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 156,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-19T03:41:56Z",
+      "side": 1,
+      "message": "I did not see where to call this method\nMaybe called this method in the next commit, so could you move this method to the next commit?",
+      "range": {
+        "startLine": 154,
+        "startChar": 0,
+        "endLine": 156,
+        "endChar": 76
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bdafe4b2_6fcc2738",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 240,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-19T03:41:56Z",
+      "side": 1,
+      "message": "nit: I like this way:\n```\nif (activeCount \u003c 1)\n{\n  log\u003clevel::INFO\u003e(\"Manager::pollerTimerExpire(): No OCCs running, poll \"\n                         \"timer not restarted\");\n  return;\n}\n\nif (!_pollTimer)\n{\n  log\u003clevel::ERR\u003e(\n                \"Manager::pollerTimerExpired() ERROR: Timer not defined\");\n  return;\n}\n\nfor (auto\u0026 obj : statusObjects)\n{\n   // Read sysfs to force kernel to poll OCC\n   obj-\u003ereadOccState();\n}\n\n// Restart OCC poll timer\n_pollTimer-\u003erestartOnce(std::chrono::seconds(pollInterval));\n```",
+      "range": {
+        "startLine": 217,
+        "startChar": 3,
+        "endLine": 240,
+        "endChar": 5
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4550e965_18d60f33",
+        "filename": "occ_pass_through.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-19T03:41:56Z",
+      "side": 1,
+      "message": "Why add this? Can we remove it?",
+      "range": {
+        "startLine": 13,
+        "startChar": 0,
+        "endLine": 13,
+        "endChar": 19
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "56abbe76_35cab0f3",
+        "filename": "occ_pass_through.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-19T03:41:56Z",
+      "side": 1,
+      "message": "I know this is overload, But I have a little confuse, why can not these two methods be merged?\nBecause I did not see where to call this method in other cpp files.",
+      "range": {
+        "startLine": 60,
+        "startChar": 0,
+        "endLine": 60,
+        "endChar": 68
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "096dea40_988030bd",
+        "filename": "occ_pass_through.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-19T03:41:56Z",
+      "side": 1,
+      "message": "nit: Use ternary expressions?",
+      "range": {
+        "startLine": 89,
+        "startChar": 8,
+        "endLine": 96,
+        "endChar": 9
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c88fe6ae_713abd47",
+        "filename": "occ_pass_through.hpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-19T03:41:56Z",
+      "side": 1,
+      "message": "Could you add doxygen if you cant merge this method?",
+      "range": {
+        "startLine": 48,
+        "startChar": 4,
+        "endLine": 48,
+        "endChar": 70
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "657be1c7_53b01a02",
+        "filename": "occ_status.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-19T03:41:56Z",
+      "side": 1,
+      "message": "Remove",
+      "range": {
+        "startLine": 105,
+        "startChar": 4,
+        "endLine": 105,
+        "endChar": 38
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bbb5e1a3_1ed7c639",
+        "filename": "occ_status.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-19T03:41:56Z",
+      "side": 1,
+      "message": "Could you explain what this method does in this commit?\nBecause I saw that you only updated the lastState value, but did not see where to use it.",
+      "range": {
+        "startLine": 164,
+        "startChar": 0,
+        "endLine": 164,
+        "endChar": 27
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7103249a_a6d4fbaa",
+        "filename": "occ_status.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-19T03:41:56Z",
+      "side": 1,
+      "message": "Could you add a blank line?",
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "21d22fd7_b066d135",
+        "filename": "occ_status.hpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 160,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-19T03:41:56Z",
+      "side": 1,
+      "message": "I did not see where to call this method\nMaybe called this method in the next commit, so could you move this method to the next commit?",
+      "range": {
+        "startLine": 150,
+        "startChar": 0,
+        "endLine": 160,
+        "endChar": 5
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "33bddb03_8f653fc7",
+        "filename": "pldm.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-19T03:41:56Z",
+      "side": 1,
+      "message": "#include \u003cfmt/core.h\u003e ?",
+      "range": {
+        "startLine": 11,
+        "startChar": 0,
+        "endLine": 11,
+        "endChar": 21
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "04d0477f_a0c7d3c5",
+        "filename": "pldm.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 138,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-19T03:41:56Z",
+      "side": 1,
+      "message": "Remove these?",
+      "range": {
+        "startLine": 135,
+        "startChar": 4,
+        "endLine": 138,
+        "endChar": 5
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9b8195c1_195cc5c6",
+        "filename": "pldm.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 356,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-19T03:41:56Z",
+      "side": 1,
+      "message": "This is an unnecessary change, please remove this line.",
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    }
+  ]
+}
