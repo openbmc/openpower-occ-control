@@ -331,6 +331,30 @@
     },
     {
       "key": {
+        "uuid": "a0f812db_fba83d0e",
+        "filename": "occ_pass_through.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-20T01:06:16Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "4515f71f_75c52376",
+      "range": {
+        "startLine": 60,
+        "startChar": 0,
+        "endLine": 60,
+        "endChar": 68
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "096dea40_988030bd",
         "filename": "occ_pass_through.cpp",
         "patchSetId": 13
@@ -366,6 +390,30 @@
       "side": 1,
       "message": "I don\u0027t think that would simplifies the code since both the level and the text are different for this condition.",
       "parentUuid": "096dea40_988030bd",
+      "range": {
+        "startLine": 89,
+        "startChar": 8,
+        "endLine": 96,
+        "endChar": 9
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "48fcb7af_9f182e60",
+        "filename": "occ_pass_through.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-20T01:06:16Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "b7fe5cde_294abfe8",
       "range": {
         "startLine": 89,
         "startChar": 8,
@@ -507,6 +555,30 @@
       "side": 1,
       "message": "This is called in Manager::pollerTimerExpired() and it used to trigger the kernel to send a poll command to the OCC. (via sysfs)\nThe lastState is used to trace OCC state changes since they should be very rare, but good to know when they happen.",
       "parentUuid": "bbb5e1a3_1ed7c639",
+      "range": {
+        "startLine": 164,
+        "startChar": 0,
+        "endLine": 164,
+        "endChar": 27
+      },
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b4cf36e_caaaab92",
+        "filename": "occ_status.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-20T01:06:16Z",
+      "side": 1,
+      "message": "Ack.\nThanks",
+      "parentUuid": "cce8333a_606c61b1",
       "range": {
         "startLine": 164,
         "startChar": 0,
@@ -742,6 +814,24 @@
       "side": 1,
       "message": "I did not change this, looks like it gets added automatically.  All files seem to have blank line at end.",
       "parentUuid": "3d67aa56_1a7e8fc5",
+      "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8cafeffa_fc05571d",
+        "filename": "pldm.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 356,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-04-20T01:06:16Z",
+      "side": 1,
+      "message": "Ack.",
+      "parentUuid": "e5b48c05_a1ccd31b",
       "revId": "28ae293dc9419d270947049a27cbc40e6a8bcc5d",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": false
