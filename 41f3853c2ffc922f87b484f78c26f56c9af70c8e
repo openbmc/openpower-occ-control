@@ -1,0 +1,404 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "96d5ca01_f1750c54",
+        "filename": "configure.ac",
+        "patchSetId": 10
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "why did you choose this over AC_ARG_ENABLE that others use?  From the documentation I guess it does look like they are handled exactly the same.",
+      "range": {
+        "startLine": 90,
+        "startChar": 4,
+        "endLine": 90,
+        "endChar": 15
+      },
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9405ae00_14a7543a",
+        "filename": "occ_command.hpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "Can you maybe add a comment here about why it\u0027s just checking those modes?  To me, it looks like you forgot a bunch ;)",
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ea587a5a_5191fa21",
+        "filename": "occ_status.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 232,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "this check isn\u0027t needed anymore.  bus.call() will always just throw an exception on any problem.",
+      "range": {
+        "startLine": 228,
+        "startChar": 1,
+        "endLine": 232,
+        "endChar": 5
+      },
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e5c13122_ad0d3e78",
+        "filename": "occ_status.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "Right after this, if you call this static function in the Mode class in the server.hpp:\n\n static PowerMode convertPowerModeFromString(const std::string\u0026 s);\n\nyou can then just deal with the enum directly, instead of doing the unwieldly string checks.",
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "da39f557_f149d417",
+        "filename": "occ_status.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 304,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "if you switched the logic you could save a level of indent, since this wraps the whole function, like:\n\nif (!device.master()))\n{\n   return status\n}\n...",
+      "range": {
+        "startLine": 304,
+        "startChar": 2,
+        "endLine": 304,
+        "endChar": 24
+      },
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2cc0a3e6_faec61f7",
+        "filename": "occ_status.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 306,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "probably not needed, since this just always runs every time the OCC goes active",
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c2aac5bf_d433a981",
+        "filename": "occ_status.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 311,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "in here and up above in getMode() there\u0027s a lot of traces.  Maybe you condense them all into a:\n\nSetting mode X on OCC Y\nwhich I guess is almost what you have below.",
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ce9849fd_c1265852",
+        "filename": "occ_status.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 342,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "probably not needed since its good path?",
+      "range": {
+        "startLine": 341,
+        "startChar": 13,
+        "endLine": 342,
+        "endChar": 58
+      },
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f00bc4d4_9742bcc4",
+        "filename": "occ_status.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 409,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "same comment as above",
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8e0499f5_3f4bcac4",
+        "filename": "occ_status.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 412,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "probably not needed, since you do it every time?",
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "faa28384_f8f047b9",
+        "filename": "occ_status.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 435,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "probably not needed?",
+      "range": {
+        "startLine": 431,
+        "startChar": 8,
+        "endLine": 435,
+        "endChar": 26
+      },
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d2be2200_0561a3a1",
+        "filename": "occ_status.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 445,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "probably not needed since good path?",
+      "range": {
+        "startLine": 445,
+        "startChar": 24,
+        "endLine": 445,
+        "endChar": 41
+      },
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "21e46faf_87f71f74",
+        "filename": "powermode.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "remove, or change to debug",
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ebcec41b_22911c5d",
+        "filename": "powermode.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "this will throw an exception if the path doesn\u0027t exist.  Probably not possible as long as the OCC driver is known to be loaded?",
+      "range": {
+        "startLine": 66,
+        "startChar": 21,
+        "endLine": 66,
+        "endChar": 44
+      },
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "47fea3e1_fbf12968",
+        "filename": "powermode.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "DEBUG or remove",
+      "range": {
+        "startLine": 70,
+        "startChar": 23,
+        "endLine": 70,
+        "endChar": 27
+      },
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "12b17de0_c222004b",
+        "filename": "powermode.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "i think this can just be a regular fs::path, no need for the unique_ptr",
+      "range": {
+        "startLine": 84,
+        "startChar": 3,
+        "endLine": 85,
+        "endChar": 34
+      },
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "47c83182_4b01f5f2",
+        "filename": "powermode.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "DEBUG?",
+      "range": {
+        "startLine": 108,
+        "startChar": 15,
+        "endLine": 108,
+        "endChar": 19
+      },
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d3e0a2df_45fd3ed5",
+        "filename": "powermode.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "you can use that sdbusplus convert function again here so you don\u0027t have to hardcode the values below.",
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "13ea3492_a2160e89",
+        "filename": "powermode.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "this also sends that IPS data again.  that must not matter?",
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "08f720cc_f1bbe5a2",
+        "filename": "powermode.hpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-05-27T20:19:31Z",
+      "side": 1,
+      "message": "there\u0027s also an sdbusrule for the whole propertiesChanged signal, like:\nhttps://github.com/openbmc/phosphor-fan-presence/blob/master/presence/tach.cpp#L62",
+      "revId": "41f3853c2ffc922f87b484f78c26f56c9af70c8e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    }
+  ]
+}
