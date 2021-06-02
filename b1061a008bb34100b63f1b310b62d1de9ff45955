@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "1d5db779_746ec7c5",
+        "filename": "occ_status.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 216,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-06-02T20:48:44Z",
+      "side": 1,
+      "message": "We just want to prevent the user interface from allowing a mode change when the system is not in PowerVM mode.  Since this interface is not tied to the UI and the fact that there is currently no support for OPAL mode, I think this basic check is sufficient.",
+      "parentUuid": "ff7fe402_3b992ee9",
+      "revId": "b1061a008bb34100b63f1b310b62d1de9ff45955",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "c881b578_f0f20e92",
         "filename": "occ_status.hpp",
         "patchSetId": 13
@@ -39,6 +57,30 @@
       "revId": "b1061a008bb34100b63f1b310b62d1de9ff45955",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f222de51_564873f4",
+        "filename": "occ_status.hpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 225,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-06-02T20:48:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c881b578_f0f20e92",
+      "range": {
+        "startLine": 225,
+        "startChar": 27,
+        "endLine": 225,
+        "endChar": 34
+      },
+      "revId": "b1061a008bb34100b63f1b310b62d1de9ff45955",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     }
   ]
 }
