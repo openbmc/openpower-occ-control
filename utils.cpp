@@ -75,6 +75,40 @@ const PropertyValue getProperty(const std::string& objectPath,
     return value;
 }
 
+std::optional<LABELVALUE> checkLabelValue(const std::string& value)
+{
+    // The ID 0xD0000002 is only 4 bytes long, but when converted to a string it
+    // is 8 characters long
+    // eg: Dimm2, the lable file is `D0000002` so value
+    // length = 2 byte(type) + 2 byte(reserve) + 4 byte(instace ID)
+    size_t valueLen = value.length();
+    size_t typeLen = 2;
+    size_t reserveLen = 2;
+    size_t instanceIDLen = 4;
+    if (valueLen != typeLen + reserveLen + instanceIDLen)
+    {
+        return std::nullopt;
+    }
+
+    size_t offset = 0;
+    std::string type = value.substr(offset, typeLen);
+    offset += typeLen;
+    std::string reserve = value.substr(offset, reserveLen);
+    offset += reserveLen;
+
+    if ("00" != reserve)
+    {
+        return std::nullopt;
+    }
+
+    const char* start = value.data() + offset;
+    uint16_t instanceID = static_cast<uint16_t>(std::strtol(start, NULL, 16));
+
+    LABELVALUE labelValue{type, instanceID};
+
+    return std::make_optional(std::move(labelValue));
+}
+
 } // namespace utils
 } // namespace occ
 } // namespace open_power

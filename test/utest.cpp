@@ -1,4 +1,5 @@
 #include "powercap.hpp"
+#include "utils.hpp"
 
 #include <experimental/filesystem>
 #include <occ_events.hpp>
@@ -65,4 +66,18 @@ TEST(VerifyPathParsing, DirectoryPath)
     std::string parsed = Device::getPathBack(path);
 
     EXPECT_STREQ(parsed.c_str(), "bar");
+}
+
+TEST(VerifyLabelValue, checkLabelValue)
+{
+    const std::string value = "D0000002";
+
+    auto labelValue = checkLabelValue(value);
+    EXPECT_NE(labelValue, std::nullopt);
+
+    std::string reType = "D0";
+    uint16_t reID = 2;
+    auto& [type, instanceID] = *labelValue;
+    EXPECT_EQ(type, reType);
+    EXPECT_EQ(instanceID, reID);
 }
