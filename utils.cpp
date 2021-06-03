@@ -1,3 +1,5 @@
+#include "utils.hpp"
+
 #include <phosphor-logging/elog-errors.hpp>
 #include <sdbusplus/bus.hpp>
 #include <string>
@@ -46,6 +48,38 @@ std::string getService(sdbusplus::bus::bus& bus, const std::string& path,
         elog<InternalFailure>();
     }
     return mapperResponse.begin()->first;
+}
+
+std::optional<LABLEVALUE> checkLabelValue(const std::string& value)
+{
+    // eg: Dimm2, the lable file is `D0000002`
+    // so value length = 2 byte(type) + 2 byte(reserve) + 4 byte(instace ID)
+    size_t valueLen = value.length();
+    size_t typeLen = 2;
+    size_t reserveLen = 2;
+    size_t instaceIDLen = 4;
+    if (valueLen != typeLen + reserveLen + instaceIDLen)
+    {
+        return std::nullopt;
+    }
+
+    size_t offset = 0;
+    std::string type = value.substr(offset, typeLen);
+    offset += typeLen;
+    std::string reserve = value.substr(offset, reserveLen);
+    offset += reserveLen;
+
+    if ("00" != reserve)
+    {
+        return std::nullopt;
+    }
+
+    const char* start = value.data() + offset;
+    uint32_t instaceID = (uint32_t)std::strtol(start, NULL, 16);
+
+    LABLEVALUE labelValue{type, instaceID};
+
+    return std::make_optional(std::move(labelValue));
 }
 
 } // namespace occ
