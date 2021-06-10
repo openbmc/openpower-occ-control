@@ -25,6 +25,7 @@ libocc_control_la_SOURCES = \
 	occ_errors.cpp \
 	occ_presence.cpp \
 	occ_command.cpp \
+	occ_dbus.cpp \
 	powercap.cpp \
 	org/open_power/OCC/Device/error.cpp \
 	i2c_occ.cpp \
