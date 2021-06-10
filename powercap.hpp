@@ -3,6 +3,7 @@
 #include "config.h"
 
 #include "occ_status.hpp"
+#include "utils.hpp"
 
 #include <experimental/filesystem>
 #include <sdbusplus/bus.hpp>
@@ -15,6 +16,7 @@ namespace occ
 namespace powercap
 {
 
+using namespace open_power::occ::utils;
 namespace sdbusRule = sdbusplus::bus::match::rules;
 
 /** @class PowerCap
@@ -34,15 +36,14 @@ class PowerCap
      * power cap enable properties.  If a change is detected, and the occ
      * is active, then this object will notify the OCC of the change.
      *
-     * @param[in] bus       - The Dbus bus object
      * @param[in] occStatus - The occ status object
      */
-    PowerCap(sdbusplus::bus::bus& bus, Status& occStatus,
+    PowerCap(Status& occStatus,
              const std::string& occMasterName = OCC_MASTER_NAME) :
-        bus(bus),
-        occMasterName(occMasterName), occStatus(occStatus),
+        occMasterName(occMasterName),
+        occStatus(occStatus),
         pcapMatch(
-            bus,
+            DBusHandler::getBus(),
             sdbusRule::member("PropertiesChanged") +
                 sdbusRule::path(
                     "/xyz/openbmc_project/control/host0/power_cap") +
@@ -69,15 +70,6 @@ class PowerCap
      *
      */
     void pcapChanged(sdbusplus::message::message& msg);
-
-    /** @brief Look up DBUS service for input path/interface
-     *
-     * @param[in]  path       - DBUS path
-     * @param[in]  path       - DBUS interface
-     *
-     * @return Distinct service name for input path/interface
-     */
-    std::string getService(std::string path, std::string interface);
 
     /** @brief Get the power cap property
      *
@@ -110,9 +102,6 @@ class PowerCap
     std::string
         getPcapFilename(const std::experimental::filesystem::path& path);
 
-    /** @brief Reference to sdbus **/
-    sdbusplus::bus::bus& bus;
-
     /** @brief The master occ name */
     std::string occMasterName;
 
@@ -121,6 +110,9 @@ class PowerCap
 
     /** @brief Used to subscribe to dbus pcap property changes **/
     sdbusplus::bus::match_t pcapMatch;
+
+    /** DBusHandler class handles the D-Bus operations */
+    DBusHandler dBusHandler;
 };
 
 } // namespace powercap

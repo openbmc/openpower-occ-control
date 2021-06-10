@@ -1,6 +1,7 @@
 #pragma once
 
 #include "occ_errors.hpp"
+#include "utils.hpp"
 
 #include <org/open_power/OCC/PassThrough/server.hpp>
 #include <sdbusplus/bus.hpp>
@@ -12,6 +13,7 @@ namespace open_power
 namespace occ
 {
 
+using namespace open_power::occ::utils;
 // For waiting on signals
 namespace sdbusRule = sdbusplus::bus::match::rules;
 
@@ -47,10 +49,9 @@ class OccCommand
     /** @brief Ctor to set up which OCC the command will go to
      *
      *  @param[in] instance - OCC instance
-     *  @param[in] bus - Bus to attach to
      *  @param[in] path - Path to attach at
      */
-    OccCommand(uint8_t instance, sdbusplus::bus::bus& bus, const char* path);
+    OccCommand(uint8_t instance, const char* path);
 
     /** @brief Dtor to clean up and close device */
     ~OccCommand()

@@ -56,13 +56,12 @@ void dump_hex(const std::vector<std::uint8_t>& data,
     }
 }
 
-OccCommand::OccCommand(uint8_t instance, sdbusplus::bus::bus& bus,
-                       const char* path) :
-    occInstance(instance),
-    path(path),
+OccCommand::OccCommand(uint8_t instance, const char* path) :
+    occInstance(instance), path(path),
     devicePath(OCC_DEV_PATH + std::to_string((this->path.back() - '0') + 1)),
     activeStatusSignal(
-        bus, sdbusRule::propertiesChanged(path, "org.open_power.OCC.Status"),
+        DBusHandler::getBus(),
+        sdbusRule::propertiesChanged(path, "org.open_power.OCC.Status"),
         std::bind(std::mem_fn(&OccCommand::activeStatusEvent), this,
                   std::placeholders::_1))
 {

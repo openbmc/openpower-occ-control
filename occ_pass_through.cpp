@@ -21,15 +21,16 @@ namespace open_power
 namespace occ
 {
 
-PassThrough::PassThrough(sdbusplus::bus::bus& bus, const char* path) :
-    Iface(bus, path), path(path),
+PassThrough::PassThrough(const char* path) :
+    Iface(DBusHandler::getBus(), path), path(path),
     devicePath(OCC_DEV_PATH + std::to_string((this->path.back() - '0') + 1)),
     occInstance(this->path.back() - '0'),
     activeStatusSignal(
-        bus, sdbusRule::propertiesChanged(path, "org.open_power.OCC.Status"),
+        DBusHandler::getBus(),
+        sdbusRule::propertiesChanged(path, "org.open_power.OCC.Status"),
         std::bind(std::mem_fn(&PassThrough::activeStatusEvent), this,
                   std::placeholders::_1)),
-    occCmd(occInstance, bus, path)
+    occCmd(occInstance, path)
 {
     // Nothing to do.
 }

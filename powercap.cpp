@@ -23,36 +23,6 @@ constexpr auto POWER_CAP_ENABLE_PROP = "PowerCapEnable";
 using namespace phosphor::logging;
 namespace fs = std::experimental::filesystem;
 
-std::string PowerCap::getService(std::string path, std::string interface)
-{
-    auto mapper = bus.new_method_call(MAPPER_BUSNAME, MAPPER_PATH,
-                                      MAPPER_INTERFACE, "GetObject");
-
-    mapper.append(path, std::vector<std::string>({interface}));
-    auto mapperResponseMsg = bus.call(mapper);
-
-    if (mapperResponseMsg.is_method_error())
-    {
-        log<level::ERR>("Error in mapper call", entry("PATH=%s", path.c_str()),
-                        entry("INTERFACE=%s", interface.c_str()));
-        // TODO openbmc/openbmc#851 - Once available, throw returned error
-        throw std::runtime_error("Error in mapper call");
-    }
-
-    std::map<std::string, std::vector<std::string>> mapperResponse;
-    mapperResponseMsg.read(mapperResponse);
-    if (mapperResponse.empty())
-    {
-        log<level::ERR>("Error reading mapper response",
-                        entry("PATH=%s", path.c_str()),
-                        entry("INTERFACE=%s", interface.c_str()));
-        // TODO openbmc/openbmc#1712 - Handle empty mapper resp. consistently
-        throw std::runtime_error("Error reading mapper response");
-    }
-
-    return mapperResponse.begin()->first;
-}
-
 uint32_t PowerCap::getOccInput(uint32_t pcap, bool pcapEnabled)
 {
     if (!pcapEnabled)
@@ -68,46 +38,42 @@ uint32_t PowerCap::getOccInput(uint32_t pcap, bool pcapEnabled)
 
 uint32_t PowerCap::getPcap()
 {
-    auto settingService = getService(PCAP_PATH, PCAP_INTERFACE);
-
-    auto method =
-        this->bus.new_method_call(settingService.c_str(), PCAP_PATH,
-                                  "org.freedesktop.DBus.Properties", "Get");
-
-    method.append(PCAP_INTERFACE, POWER_CAP_PROP);
-    auto reply = this->bus.call(method);
-
-    if (reply.is_method_error())
+    PropertyValue pcap{};
+    try
     {
-        log<level::ERR>("Error in getPcap prop");
+        pcap =
+            dBusHandler.getProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_PROP);
+
+        return std::get<uint32_t>(pcap);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        log<level::ERR>("Failed to get PowerCap property",
+                        entry("ERROR=%s", e.what()),
+                        entry("PATH=%s", PCAP_PATH));
+
         return 0;
     }
-    std::variant<uint32_t> pcap;
-    reply.read(pcap);
-
-    return std::get<uint32_t>(pcap);
 }
 
 bool PowerCap::getPcapEnabled()
 {
-    auto settingService = getService(PCAP_PATH, PCAP_INTERFACE);
-
-    auto method =
-        this->bus.new_method_call(settingService.c_str(), PCAP_PATH,
-                                  "org.freedesktop.DBus.Properties", "Get");
-
-    method.append(PCAP_INTERFACE, POWER_CAP_ENABLE_PROP);
-    auto reply = this->bus.call(method);
-
-    if (reply.is_method_error())
+    PropertyValue pcapEnabled{};
+    try
     {
-        log<level::ERR>("Error in getPcapEnabled prop");
-        return 0;
-    }
-    std::variant<bool> pcapEnabled;
-    reply.read(pcapEnabled);
+        pcapEnabled = dBusHandler.getProperty(PCAP_PATH, PCAP_INTERFACE,
+                                              POWER_CAP_ENABLE_PROP);
 
-    return std::get<bool>(pcapEnabled);
+        return std::get<bool>(pcapEnabled);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        log<level::ERR>("Failed to get PowerCapEnable property",
+                        entry("ERROR=%s", e.what()),
+                        entry("PATH=%s", PCAP_PATH));
+
+        return false;
+    }
 }
 
 std::string PowerCap::getPcapFilename(const fs::path& path)

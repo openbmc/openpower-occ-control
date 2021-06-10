@@ -12,9 +12,8 @@ class VerifyOccInput : public ::testing::Test
 {
   public:
     VerifyOccInput() :
-        bus(sdbusplus::bus::new_default()), rc(sd_event_default(&event)),
-        eventP(event), manager(bus, eventP),
-        occStatus(bus, eventP, "/test/path/occ1", manager), pcap(bus, occStatus)
+        rc(sd_event_default(&event)), eventP(event), manager(eventP),
+        occStatus(eventP, "/test/path/occ1", manager), pcap(occStatus)
     {
         EXPECT_GE(rc, 0);
         event = nullptr;
@@ -23,7 +22,6 @@ class VerifyOccInput : public ::testing::Test
     {
     }
 
-    sdbusplus::bus::bus bus;
     sd_event* event;
     int rc;
     open_power::occ::EventPtr eventP;

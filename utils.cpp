@@ -1,3 +1,5 @@
+#include "utils.hpp"
+
 #include <phosphor-logging/elog-errors.hpp>
 #include <sdbusplus/bus.hpp>
 #include <string>
@@ -6,47 +8,74 @@ namespace open_power
 {
 namespace occ
 {
-
+namespace utils
+{
 // For throwing exceptions
 using namespace phosphor::logging;
 using InternalFailure =
     sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure;
 
-std::string getService(sdbusplus::bus::bus& bus, const std::string& path,
-                       const std::string& intf)
+const std::string DBusHandler::getService(const std::string& path,
+                                          const std::string& interface) const
 {
-    auto mapperCall =
-        bus.new_method_call("xyz.openbmc_project.ObjectMapper",
-                            "/xyz/openbmc_project/object_mapper",
-                            "xyz.openbmc_project.ObjectMapper", "GetObject");
 
-    mapperCall.append(path);
-    mapperCall.append(std::vector<std::string>({intf}));
+    using InterfaceList = std::vector<std::string>;
+    std::map<std::string, std::vector<std::string>> mapperResponse;
 
-    auto mapperResponseMsg = bus.call(mapperCall);
+    auto& bus = DBusHandler::getBus();
 
+    auto mapper = bus.new_method_call(MAPPER_BUSNAME, MAPPER_OBJ_PATH,
+                                      MAPPER_IFACE, "GetObject");
+    mapper.append(path, InterfaceList({interface}));
+
+    auto mapperResponseMsg = bus.call(mapper);
     if (mapperResponseMsg.is_method_error())
     {
         log<level::ERR>("ERROR in getting service",
                         entry("PATH=%s", path.c_str()),
-                        entry("INTERFACE=%s", intf.c_str()));
+                        entry("INTERFACE=%s", interface.c_str()));
 
         elog<InternalFailure>();
     }
 
-    std::map<std::string, std::vector<std::string>> mapperResponse;
     mapperResponseMsg.read(mapperResponse);
-
-    if (mapperResponse.begin() == mapperResponse.end())
+    if (mapperResponse.empty())
     {
         log<level::ERR>("ERROR reading mapper response",
                         entry("PATH=%s", path.c_str()),
-                        entry("INTERFACE=%s", intf.c_str()));
+                        entry("INTERFACE=%s", interface.c_str()));
 
         elog<InternalFailure>();
     }
-    return mapperResponse.begin()->first;
+
+    // the value here will be the service name
+    return mapperResponse.cbegin()->first;
 }
 
+const PropertyValue
+    DBusHandler::getProperty(const std::string& objectPath,
+                             const std::string& interface,
+                             const std::string& propertyName) const
+{
+    PropertyValue value{};
+
+    auto& bus = DBusHandler::getBus();
+    auto service = getService(objectPath, interface);
+    if (service.empty())
+    {
+        return value;
+    }
+
+    auto method = bus.new_method_call(service.c_str(), objectPath.c_str(),
+                                      DBUS_PROPERTY_IFACE, "Get");
+    method.append(interface, propertyName);
+
+    auto reply = bus.call(method);
+    reply.read(value);
+
+    return value;
+}
+
+} // namespace utils
 } // namespace occ
 } // namespace open_power

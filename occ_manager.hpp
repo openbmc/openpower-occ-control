@@ -6,6 +6,7 @@
 #include "pldm.hpp"
 #endif
 #include "powercap.hpp"
+#include "utils.hpp"
 
 #include <cstring>
 #include <functional>
@@ -20,6 +21,7 @@ namespace open_power
 namespace occ
 {
 
+using namespace open_power::occ::utils;
 /** @brief Default time, in seconds, between OCC poll commands */
 constexpr unsigned int defaultPollingInterval = 10;
 
@@ -39,11 +41,10 @@ struct Manager
     /** @brief Adds OCC pass-through and status objects on the bus
      *         when corresponding CPU inventory is created.
      *
-     *  @param[in] bus   - handle to the bus
      *  @param[in] event - Unique ptr reference to sd_event
      */
-    Manager(sdbusplus::bus::bus& bus, EventPtr& event) :
-        bus(bus), event(event), pollInterval(defaultPollingInterval),
+    Manager(EventPtr& event) :
+        event(event), pollInterval(defaultPollingInterval),
         sdpEvent(sdeventplus::Event::get_default()),
         _pollTimer(
             std::make_unique<
@@ -52,8 +53,8 @@ struct Manager
 #ifdef PLDM
         ,
         pldmHandle(std::make_unique<pldm::Interface>(
-            bus, std::bind(std::mem_fn(&Manager::updateOCCActive), this,
-                           std::placeholders::_1, std::placeholders::_2)))
+            std::bind(std::mem_fn(&Manager::updateOCCActive), this,
+                      std::placeholders::_1, std::placeholders::_2)))
 #endif
 
     {
@@ -106,9 +107,6 @@ struct Manager
 
     /** @brief Sends a Heartbeat command to host control command handler */
     void sendHeartBeat();
-
-    /** @brief reference to the bus */
-    sdbusplus::bus::bus& bus;
 
     /** @brief reference to sd_event wrapped in unique_ptr */
     EventPtr& event;

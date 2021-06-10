@@ -1,6 +1,7 @@
 #pragma once
 
 #include "occ_command.hpp"
+#include "utils.hpp"
 
 #include <fmt/core.h>
 
@@ -15,6 +16,7 @@ namespace open_power
 namespace occ
 {
 
+using namespace open_power::occ::utils;
 using Iface = sdbusplus::server::object::object<
     sdbusplus::org::open_power::OCC::server::PassThrough>;
 
@@ -35,10 +37,9 @@ class PassThrough : public Iface
     PassThrough& operator=(PassThrough&&) = default;
 
     /** @brief Ctor to put pass-through d-bus object on the bus
-     *  @param[in] bus - Bus to attach to
      *  @param[in] path - Path to attach at
      */
-    PassThrough(sdbusplus::bus::bus& bus, const char* path);
+    PassThrough(const char* path);
 
     /** @brief Pass through command to OCC from dbus
      *  @param[in] command - command to pass-through
