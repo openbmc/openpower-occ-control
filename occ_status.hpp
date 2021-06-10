@@ -4,6 +4,7 @@
 #include "occ_command.hpp"
 #include "occ_device.hpp"
 #include "occ_events.hpp"
+#include "utils.hpp"
 
 #include <functional>
 #include <org/open_power/Control/Host/server.hpp>
@@ -57,7 +58,6 @@ class Status : public Interface
     /** @brief Constructs the Status object and
      *         the underlying device object
      *
-     *  @param[in] bus      - DBus bus to attach to
      *  @param[in] event    - sd_event unique pointer reference
      *  @param[in] path     - DBus object path
      *  @param[in] manager  - OCC manager instance
@@ -67,16 +67,16 @@ class Status : public Interface
      *                             OCC if PLDM is the host communication
      *                             protocol
      */
-    Status(sdbusplus::bus::bus& bus, EventPtr& event, const char* path,
-           const Manager& manager, std::function<void(bool)> callBack = nullptr
+    Status(EventPtr& event, const char* path, const Manager& manager,
+           std::function<void(bool)> callBack = nullptr
 #ifdef PLDM
            ,
            std::function<void(instanceID)> resetCallBack = nullptr
 #endif
            ) :
 
-        Interface(bus, getDbusPath(path).c_str(), true),
-        bus(bus), path(path), callBack(callBack), instance(getInstance(path)),
+        Interface(utils::getBus(), getDbusPath(path).c_str(), true),
+        path(path), callBack(callBack), instance(getInstance(path)),
         device(event,
 #ifdef I2C_OCC
                fs::path(DEV_PATH) / i2c_occ::getI2cDeviceName(path),
@@ -88,7 +88,7 @@ class Status : public Interface
                std::bind(std::mem_fn(&Status::deviceErrorHandler), this,
                          std::placeholders::_1)),
         hostControlSignal(
-            bus,
+            utils::getBus(),
             sdbusRule::type::signal() + sdbusRule::member("CommandComplete") +
                 sdbusRule::path("/org/open_power/control/host0") +
                 sdbusRule::interface("org.open_power.Control.Host") +
@@ -96,10 +96,9 @@ class Status : public Interface
                                        Control::Host::Command::OCCReset)),
             std::bind(std::mem_fn(&Status::hostControlEvent), this,
                       std::placeholders::_1)),
-        occCmd(instance, bus,
-               (fs::path(OCC_CONTROL_ROOT) /
-                (std::string(OCC_NAME) + std::to_string(instance)))
-                   .c_str())
+        occCmd(instance, (fs::path(OCC_CONTROL_ROOT) /
+                          (std::string(OCC_NAME) + std::to_string(instance)))
+                             .c_str())
 #ifdef PLDM
         ,
         resetCallBack(resetCallBack)
@@ -151,9 +150,6 @@ class Status : public Interface
     void readOccState();
 
   private:
-    /** @brief sdbus handle */
-    sdbusplus::bus::bus& bus;
-
     /** @brief OCC dbus object path */
     std::string path;
 

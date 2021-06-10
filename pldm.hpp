@@ -1,6 +1,7 @@
 #pragma once
 
 #include "occ_status.hpp"
+#include "utils.hpp"
 
 #include <libpldm/pldm.h>
 
@@ -48,17 +49,14 @@ class Interface
 
     /** @brief Constructs the PLDM Interface object for OCC functions
      *
-     *  @param[in] bus      - reference to systemd bus
      *  @param[in] callBack - callBack handler to invoke when the OCC state
      *                        changes.
      */
     explicit Interface(
-        sdbusplus::bus::bus& bus,
         std::function<bool(open_power::occ::instanceID, bool)> callBack) :
-        bus(bus),
         callBack(callBack),
         pldmEventSignal(
-            bus,
+            utils::getBus(),
             MatchRules::type::signal() +
                 MatchRules::member("StateSensorEvent") +
                 MatchRules::path("/xyz/openbmc_project/pldm") +
@@ -66,7 +64,7 @@ class Interface
             std::bind(std::mem_fn(&Interface::sensorEvent), this,
                       std::placeholders::_1)),
         hostStateSignal(
-            bus,
+            utils::getBus(),
             MatchRules::propertiesChanged("/xyz/openbmc_project/state/host0",
                                           "xyz.openbmc_project.State.Host"),
             std::bind(std::mem_fn(&Interface::hostStateEvent), this,
@@ -122,9 +120,6 @@ class Interface
     void resetOCC(open_power::occ::instanceID occInstanceId);
 
   private:
-    /** @brief reference to the systemd bus*/
-    sdbusplus::bus::bus& bus;
-
     /** @brief Callback handler to be invoked when the state of the OCC
      *         changes
      */

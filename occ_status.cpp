@@ -116,8 +116,9 @@ void Status::resetOCC()
     constexpr auto CONTROL_HOST_INTF = "org.open_power.Control.Host";
 
     // This will throw exception on failure
-    auto service = getService(bus, CONTROL_HOST_PATH, CONTROL_HOST_INTF);
+    auto service = utils::getService(CONTROL_HOST_PATH, CONTROL_HOST_INTF);
 
+    auto& bus = utils::getBus();
     auto method = bus.new_method_call(service.c_str(), CONTROL_HOST_PATH,
                                       CONTROL_HOST_INTF, "Execute");
     // OCC Reset control command
