@@ -14,7 +14,8 @@ utest_LDADD = \
 
 utest_SOURCES = error_files_tests.cpp \
                 utest.cpp \
-                TestI2cOcc.cpp
+                TestI2cOcc.cpp \
+                occ_dbus_test.cpp
 
 utest_CPPFLAGS = $(GTEST_CPPFLAGS) \
                  $(AM_CPPFLAGS)
