@@ -24,9 +24,8 @@ class ErrorFiles : public ::testing::Test
 {
   public:
     ErrorFiles() :
-        bus(sdbusplus::bus::new_default()), rc(sd_event_default(&event)),
-        pEvent(event), manager(bus, pEvent),
-        status(bus, pEvent, "/dummy1", manager)
+        rc(sd_event_default(&event)), pEvent(event), manager(pEvent),
+        status(pEvent, "/dummy1", manager)
     {
         EXPECT_GE(rc, 0);
         event = nullptr;
@@ -73,7 +72,6 @@ class ErrorFiles : public ::testing::Test
         fs::remove_all(occPath);
     }
 
-    sdbusplus::bus::bus bus;
     sd_event* event;
     int rc;
     open_power::occ::EventPtr pEvent;

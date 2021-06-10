@@ -3,7 +3,6 @@
 #include "occ_manager.hpp"
 
 #include "i2c_occ.hpp"
-#include "occ_finder.hpp"
 #include "utils.hpp"
 
 #include <experimental/filesystem>
@@ -50,10 +49,10 @@ void Manager::createObjects(const std::string& occ)
     auto path = fs::path(OCC_CONTROL_ROOT) / occ;
 
     passThroughObjects.emplace_back(
-        std::make_unique<PassThrough>(bus, path.c_str()));
+        std::make_unique<PassThrough>(path.c_str()));
 
     statusObjects.emplace_back(std::make_unique<Status>(
-        bus, event, path.c_str(), *this,
+        event, path.c_str(), *this,
         std::bind(std::mem_fn(&Manager::statusCallBack), this,
                   std::placeholders::_1)
 #ifdef PLDM
@@ -67,7 +66,7 @@ void Manager::createObjects(const std::string& occ)
     if (!pcap)
     {
         pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
-            bus, *statusObjects.front());
+            *statusObjects.front());
     }
 }
 
@@ -128,11 +127,11 @@ void Manager::initStatusObjects()
         name = std::string(OCC_NAME) + '_' + name;
         auto path = fs::path(OCC_CONTROL_ROOT) / name;
         statusObjects.emplace_back(
-            std::make_unique<Status>(bus, event, path.c_str(), *this));
+            std::make_unique<Status>(event, path.c_str(), *this));
     }
     // The first device is master occ
     pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
-        bus, *statusObjects.front(), occMasterName);
+        *statusObjects.front(), occMasterName);
 }
 #endif
 

@@ -3,6 +3,7 @@
 #include "elog-errors.hpp"
 #include "occ_events.hpp"
 #include "occ_manager.hpp"
+#include "utils.hpp"
 
 #include <org/open_power/OCC/Device/error.hpp>
 #include <phosphor-logging/elog.hpp>
@@ -17,7 +18,7 @@ using InternalFailure =
 
 int main(int argc, char* argv[])
 {
-    auto bus = sdbusplus::bus::new_default();
+    auto& bus = open_power::occ::utils::getBus();
 
     // Need sd_event to watch for OCC device errors
     sd_event* event = nullptr;
@@ -34,7 +35,7 @@ int main(int argc, char* argv[])
     bus.attach_event(eventP.get(), SD_EVENT_PRIORITY_NORMAL);
 
     sdbusplus::server::manager::manager objManager(bus, OCC_CONTROL_ROOT);
-    open_power::occ::Manager mgr(bus, eventP);
+    open_power::occ::Manager mgr(eventP);
 
     // Claim the bus since all the house keeping is done now
     bus.request_name(OCC_CONTROL_BUSNAME);
