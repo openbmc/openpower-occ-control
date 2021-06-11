@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "100b4c60_e12cd657",
+        "filename": "occ_manager.hpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-06-11T07:23:06Z",
+      "side": 1,
+      "message": "Okay, I will update it",
+      "parentUuid": "6c351243_a9b341d5",
+      "range": {
+        "startLine": 24,
+        "startChar": 0,
+        "endLine": 24,
+        "endChar": 39
+      },
+      "revId": "93a0e2ab9155bd8d32be920549640b846b0fbf99",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "10798ad2_67174d7d",
         "filename": "occ_status.hpp",
         "patchSetId": 1
@@ -36,6 +60,23 @@
       "writtenOn": "2021-06-10T20:06:25Z",
       "side": 1,
       "message": "Do you have plans on this ever containing anything but static, or could be static, methods?  I could see that being done so this can be mocked, but barring that, could everyone just use DbusHandler::getService(), etc calls so the object doesn\u0027t actually need to be created?",
+      "revId": "93a0e2ab9155bd8d32be920549640b846b0fbf99",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4f5fd56c_4f601692",
+        "filename": "occ_status.hpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-06-11T07:23:06Z",
+      "side": 1,
+      "message": "\u003e Do you have plans on this ever containing anything but static, or could be static, methods? \n\nThe original idea of using classes was to implement Unit Test and templates, etc.\n\n\u003e I could see that being done so this can be mocked, but barring that, could everyone just use DbusHandler::getService(), etc calls so the object doesn\u0027t actually need to be created?\n\nYes, I will update to all static methods",
       "revId": "93a0e2ab9155bd8d32be920549640b846b0fbf99",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
