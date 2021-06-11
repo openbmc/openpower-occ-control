@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "5f16d92f_105b23f7",
+        "filename": "occ_dbus.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-06-11T07:06:32Z",
+      "side": 1,
+      "message": "Right, we need to throw an exception",
+      "parentUuid": "1049a049_a545aa36",
+      "revId": "8f93cdd0c432e0303651a819f386ffa42bed1599",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "f6a43c29_b8ecc310",
         "filename": "occ_dbus.hpp",
         "patchSetId": 2
@@ -30,6 +48,24 @@
       "writtenOn": "2021-06-10T21:18:46Z",
       "side": 1,
       "message": "Since there\u0027s already existing OCC related D-Bus objects in this repo, can you either put this in a sensors namespace, or add Sensors to the class name?",
+      "revId": "8f93cdd0c432e0303651a819f386ffa42bed1599",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ae23c732_d947a2fb",
+        "filename": "occ_dbus.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-06-11T07:06:32Z",
+      "side": 1,
+      "message": "Sure, changed OccDBusSensors",
+      "parentUuid": "f6a43c29_b8ecc310",
       "revId": "8f93cdd0c432e0303651a819f386ffa42bed1599",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
