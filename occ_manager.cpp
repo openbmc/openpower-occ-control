@@ -3,11 +3,14 @@
 #include "occ_manager.hpp"
 
 #include "i2c_occ.hpp"
+#include "occ_dbus.hpp"
 #include "utils.hpp"
 
+#include <cmath>
 #include <experimental/filesystem>
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/log.hpp>
+#include <regex>
 #include <xyz/openbmc_project/Common/error.hpp>
 
 namespace open_power
@@ -162,10 +165,201 @@ void Manager::pollerTimerExpired()
     {
         // Read sysfs to force kernel to poll OCC
         obj->readOccState();
+        getProcDimmTemp();
     }
 
     // Restart OCC poll timer
     _pollTimer->restartOnce(std::chrono::seconds(pollInterval));
+}
+
+void Manager::readProcDimmTemp(const fs::path& path, const unsigned int& id)
+{
+    std::string state;
+    const int open_errno = errno;
+    std::regex expr{"temp\\d+_label$"};
+    for (auto& file : fs::directory_iterator(path))
+    {
+        if (std::regex_search(file.path().string(), expr))
+        {
+            std::ifstream fileOpen(file.path(), std::ios::in);
+
+            if (fileOpen)
+            {
+                fileOpen >> state;
+
+                fileOpen.close();
+            }
+            else
+            {
+                // If not able to read, OCC may be offline
+                log<level::DEBUG>(
+                    fmt::format("readProcDimmTemp: open failed(errno = {}) ",
+                                open_errno)
+                        .c_str());
+            }
+
+            auto labelValue = open_power::occ::utils::checkLabelValue(state);
+            auto& [type, instanceID] = *labelValue;
+
+            std::string sensorPath;
+
+            const std::string& tempLabel = "label";
+
+            std::string tmp = file.path().string();
+            std::string fruTypePathTmp =
+                tmp.substr(0, tmp.length() - tempLabel.length());
+            std::string fruTypePath = fruTypePathTmp + "fru_type";
+            std::ifstream fruTypeFile(fruTypePath, std::ios::in);
+            unsigned int fruTypeValue;
+            if (fruTypeFile)
+            {
+                fruTypeFile >> fruTypeValue;
+
+                fruTypeFile.close();
+            }
+            else
+            {
+                // If not able to read, OCC may be offline
+                log<level::DEBUG>(
+                    fmt::format("readProcDimmTemp: open failed(errno = {}) ",
+                                open_errno)
+                        .c_str());
+                continue;
+            }
+
+            if (type == OCC_DIMM_TEMP_SENSOR_TYPE)
+            {
+                if (fruTypeValue != 2)
+                {
+                    continue;
+                }
+
+                sensorPath = "/xyz/openbmc_project/sensors/"
+                             "temperature/dimm" +
+                             std::to_string(instanceID) + "_dram_temp";
+            }
+            else if (type == OCC_CPU_TEMP_SENSOR_TYPE)
+            {
+                if (fruTypeValue != 0)
+                {
+                    continue;
+                }
+                sensorPath = "/xyz/openbmc_project/sensors/"
+                             "temperature/proc" +
+                             std::to_string(id) + "_core" +
+                             std::to_string(instanceID) + "_temp";
+            }
+            else
+            {
+                continue;
+            }
+
+            std::string tmpFaultPath = file.path().string();
+            std::string faultPathTmp = tmpFaultPath.substr(
+                0, tmpFaultPath.length() - tempLabel.length());
+            std::string faultPath = fruTypePathTmp + "fault";
+
+            std::ifstream faultPathFile(faultPath, std::ios::in);
+            unsigned int faultValue;
+            if (faultPathFile)
+            {
+                faultPathFile >> faultValue;
+
+                faultPathFile.close();
+            }
+
+            if (faultValue != 0)
+            {
+                double value = 0; // Todo: if faultValue != 0, set value to NaN.
+                open_power::occ::dbus::OccDBusSensors::getOccDBus().setValue(
+                    sensorPath, value);
+
+                continue;
+            }
+
+            std::string tmpInputPath = file.path().string();
+            std::string inputPathTmp = tmpInputPath.substr(
+                0, tmpInputPath.length() - tempLabel.length());
+            std::string inputFilePath = inputPathTmp + "input";
+
+            std::ifstream inputFile(inputFilePath, std::ios::in);
+            double tempValue;
+            if (inputFile)
+            {
+                inputFile >> tempValue;
+
+                open_power::occ::dbus::OccDBusSensors::getOccDBus().setValue(
+                    sensorPath, tempValue * std::pow(10, -3));
+
+                inputFile.close();
+            }
+            else
+            {
+                // If not able to read, OCC may be offline
+                log<level::DEBUG>(
+                    fmt::format("readProcDimmTemp: open failed(errno = {}) ",
+                                open_errno)
+                        .c_str());
+            }
+        }
+    }
+    return;
+}
+
+void Manager::getProcDimmTemp()
+{
+    const int open_errno = errno;
+
+    for (auto id = 0; id < MAX_CPUS; ++id)
+    {
+        auto occ = std::string("occ-hwmon.") + std::to_string(id + 1);
+        std::string occActivePath = OCC_HWMON_PATH + occ + "/occ_active";
+        std::ifstream occActiveFile(occActivePath, std::ios::in);
+        unsigned int occActiveValue;
+        if (occActiveFile)
+        {
+            occActiveFile >> occActiveValue;
+
+            occActiveFile.close();
+
+            if (occActiveValue != 1)
+            {
+                // Occ not activated
+                continue;
+            }
+        }
+        else
+        {
+            // If not able to read, OCC may be offline
+            log<level::DEBUG>(
+                fmt::format("getProcDimmTemp: open failed(errno = {}) ",
+                            open_errno)
+                    .c_str());
+            continue;
+        }
+
+        std::unique_ptr<fs::path> fileName =
+            std::make_unique<fs::path>(OCC_HWMON_PATH);
+
+        *fileName /= occ;
+
+        *fileName /= "/hwmon/";
+
+        // Need to get the hwmonXX directory name, there better only be 1 dir
+        assert(std::distance(fs::directory_iterator(*fileName),
+                             fs::directory_iterator{}) == 1);
+        // Now set our path to this full path, including this hwmonXX directory
+        fileName =
+            std::make_unique<fs::path>(*fs::directory_iterator(*fileName));
+
+        log<level::INFO>(
+            fmt::format("Reading OCC{} temp from {}", id, fileName->c_str())
+                .c_str());
+
+        readProcDimmTemp(*fileName, id);
+    }
+
+    return;
 }
 
 } // namespace occ

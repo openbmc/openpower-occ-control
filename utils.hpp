@@ -64,7 +64,6 @@ const PropertyValue getProperty(const std::string& objectPath,
  */
 std::optional<LABELVALUE> checkLabelValue(const std::string& value);
 
-
 } // namespace utils
 } // namespace occ
 } // namespace open_power

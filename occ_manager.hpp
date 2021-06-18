@@ -170,6 +170,9 @@ struct Manager
      * OCC. The poll timer will then be restarted.
      * */
     void pollerTimerExpired();
+
+    void getProcDimmTemp();
+    void readProcDimmTemp(const fs::path& path, const unsigned int& id);
 };
 
 } // namespace occ
