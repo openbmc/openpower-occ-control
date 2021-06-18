@@ -22,7 +22,7 @@ namespace occ
 {
 
 /** @brief Default time, in seconds, between OCC poll commands */
-constexpr unsigned int defaultPollingInterval = 10;
+constexpr unsigned int defaultPollingInterval = 1;
 
 /** @class Manager
  *  @brief Builds and manages OCC objects
@@ -139,6 +139,15 @@ struct Manager
         sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>
         _pollTimer;
 
+    /**
+     * @brief The temperature poll timer to be used once the OCC goes active.
+     * When it expires, the dimm and processor temperatures will be got and then
+     * timer restarted.
+     */
+    std::unique_ptr<
+        sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>
+        _tempPollTimer;
+
 #ifdef I2C_OCC
     /** @brief Init Status objects for I2C OCC devices
      *
@@ -170,6 +179,29 @@ struct Manager
      * OCC. The poll timer will then be restarted.
      * */
     void pollerTimerExpired();
+
+#ifdef READ_OCC_TEMP
+    /**
+     * @brief Gets the temperatures of the processor and dimm.
+     * */
+    void getProcDimmTemp(uint32_t id);
+
+    /**
+     * @brief Trigger OCC driver to read the temperatures of processor and dimm.
+     * @param[in] path - path of the OCC sensors.
+     * @param[in] id - Id of the OCC.
+     * */
+    void readProcDimmTemp(const fs::path& path, uint32_t id);
+
+    /**
+     * @brief Set all the temperatures of this OCC to NaN.
+     * @param[in] id - Id of the OCC.
+     * */
+    void setTempToNaN(uint32_t id);
+
+    /** @brief Store the existing OCC sensors on D-BUS */
+    std::map<std::string, uint32_t> existingSensors;
+#endif
 };
 
 } // namespace occ
