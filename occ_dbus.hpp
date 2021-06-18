@@ -12,9 +12,11 @@ namespace dbus
 
 using ObjectPath = std::string;
 
-using SensorIntf = sdbusplus::xyz::openbmc_project::Sensor::server::Value;
-using OperationalStatusIntf = sdbusplus::xyz::openbmc_project::State::
-    Decorator::server::OperationalStatus;
+using SensorIntf = sdbusplus::server::object::object<
+    sdbusplus::xyz::openbmc_project::Sensor::server::Value>;
+using OperationalStatusIntf =
+    sdbusplus::server::object::object<sdbusplus::xyz::openbmc_project::State::
+                                          Decorator::server::OperationalStatus>;
 
 /** @class OccDBusSensors
  *  @brief This is a custom D-Bus object, used to add D-Bus interface and update

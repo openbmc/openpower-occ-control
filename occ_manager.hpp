@@ -25,7 +25,7 @@ namespace occ
 {
 
 /** @brief Default time, in seconds, between OCC poll commands */
-constexpr unsigned int defaultPollingInterval = 10;
+constexpr unsigned int defaultPollingInterval = 1;
 
 /** @class Manager
  *  @brief Builds and manages OCC objects
@@ -178,6 +178,57 @@ struct Manager
      * OCC. The poll timer will then be restarted.
      * */
     void pollerTimerExpired();
+
+#ifdef READ_OCC_SENSORS
+    /**
+     * @brief Gets the occ sensor values.
+     * @param[in] id - Id of the OCC.
+     * @param[in] masterOcc - Is this OCC the master OCC.
+     * */
+    void getSensorValues(uint32_t id, bool masterOcc);
+
+    /**
+     * @brief Trigger OCC driver to read the temperatures of processor and dimm.
+     * @param[in] path - path of the OCC sensors.
+     * @param[in] id - Id of the OCC.
+     * */
+    void readProcDimmTemp(const fs::path& path, uint32_t id);
+
+    /**
+     * @brief Trigger OCC driver to read the power sensors.
+     * @param[in] path - path of the OCC sensors.
+     * @param[in] id - Id of the OCC.
+     * */
+    void readPowerSensors(const fs::path& path, uint32_t id);
+
+    /**
+     * @brief Set all sensor values of this OCC to NaN.
+     * @param[in] id - Id of the OCC.
+     * */
+    void setSensorValueToNaN(uint32_t id);
+
+    /** @brief Store the existing OCC sensors on D-BUS */
+    std::map<std::string, uint32_t> existingSensors;
+
+    /** @brief Label value analysis of power sensor */
+    std::optional<std::string>
+        analysisPowerLabelValue(const std::string& value);
+
+    /** @brief The sensor names map */
+    std::map<std::string, std::string> powerSensorName = {
+        {"system", "total_power"}, {"1", "p0_mem_power"},
+        {"2", "p1_mem_power"},     {"3", "p2_mem_power"},
+        {"4", "p3_mem_power"},     {"5", "p0_power"},
+        {"6", "p1_power"},         {"7", "p2_power"},
+        {"8", "p3_power"},         {"9", "p0_cache_power"},
+        {"10", "p1_cache_power"},  {"11", "p2_cache_power"},
+        {"12", "p3_cache_power"},  {"13", "io_a_power"},
+        {"14", "io_b_power"},      {"15", "io_c_power"},
+        {"16", "fans_a_power"},    {"17", "fans_b_power"},
+        {"18", "storage_a_power"}, {"19", "storage_b_power"},
+        {"23", "mem_cache_power"}, {"25", "p0_mem_0_power"},
+        {"26", "p0_mem_1_power"},  {"27", "p0_mem_2_power"}};
+#endif
 };
 
 } // namespace occ
