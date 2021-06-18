@@ -149,6 +149,12 @@ class Status : public Interface
     /** @brief Read OCC state (will trigger kernel to poll the OCC) */
     void readOccState();
 
+    /** @brief Gets the occ instance number */
+    unsigned int getOccInstanceID()
+    {
+        return instance;
+    }
+
   private:
     /** @brief OCC dbus object path */
     std::string path;
