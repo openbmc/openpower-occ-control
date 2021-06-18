@@ -35,6 +35,7 @@ int main(int argc, char* argv[])
     bus.attach_event(eventP.get(), SD_EVENT_PRIORITY_NORMAL);
 
     sdbusplus::server::manager::manager objManager(bus, OCC_CONTROL_ROOT);
+    sdbusplus::server::manager::manager objManagerXyz(bus, OCC_SENSORS_ROOT);
     open_power::occ::Manager mgr(eventP);
 
     // Claim the bus since all the house keeping is done now
