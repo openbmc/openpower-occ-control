@@ -74,6 +74,17 @@ AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
         AC_SUBST([CPPFLAGS], [$cpp_flags])
     )
 
+    AC_ARG_ENABLE([read-occ-sensors],
+        AS_HELP_STRING([--enable-read-occ-sensors], [Enable read occ sensors support])
+    )
+    AS_IF([test "x$enable_read_occ_sensors" == "xyes"],
+        AC_MSG_NOTICE([Enabling read occ sensors])
+        [
+            cpp_flags="$CPPFLAGS -DREAD_OCC_SENSORS"
+        ]
+        AC_SUBST([CPPFLAGS], [$cpp_flags])
+    )
+
     AC_ARG_WITH([host-communication-protocol],
         AS_HELP_STRING([--with-host-communication-protocol], [To specify the host communication protocol])
     )
@@ -108,6 +119,10 @@ AC_ARG_VAR(OCC_CONTROL_ROOT, [The Dbus root])
 AS_IF([test "x$OCC_CONTROL_ROOT" == "x"], [OCC_CONTROL_ROOT="/org/open_power/control"])
 AC_DEFINE_UNQUOTED([OCC_CONTROL_ROOT], ["$OCC_CONTROL_ROOT"], [The Dbus root])
 
+AC_ARG_VAR(OCC_SENSORS_ROOT, [The sensors Dbus root])
+AS_IF([test "x$OCC_SENSORS_ROOT" == "x"], [OCC_SENSORS_ROOT="/xyz/openbmc_project/sensors"])
+AC_DEFINE_UNQUOTED([OCC_SENSORS_ROOT], ["$OCC_SENSORS_ROOT"], [The sensors Dbus root])
+
 AC_ARG_VAR(MAX_CPUS, [The max number of CPUs])
 AS_IF([test "x$MAX_CPUS" == "x"], [MAX_CPUS=2])
 AC_DEFINE_UNQUOTED([MAX_CPUS], [$MAX_CPUS], [The max number of CPUs])
@@ -123,6 +138,14 @@ AC_DEFINE_UNQUOTED([OCC_NAME], ["$OCC_NAME"], [The OCC object name])
 AC_ARG_VAR(OCC_MASTER_NAME, [The OCC master object name])
 AS_IF([test "x$OCC_MASTER_NAME" == "x"], [OCC_MASTER_NAME="occ-hwmon.1"])
 AC_DEFINE_UNQUOTED([OCC_MASTER_NAME], ["$OCC_MASTER_NAME"], [The OCC master object name])
+
+AC_ARG_VAR(OCC_CPU_TEMP_SENSOR_TYPE, [The CPU temp sensor type])
+AS_IF([test "x$OCC_CPU_TEMP_SENSOR_TYPE" == "x"], [OCC_CPU_TEMP_SENSOR_TYPE="C0"])
+AC_DEFINE_UNQUOTED([OCC_CPU_TEMP_SENSOR_TYPE], ["$OCC_CPU_TEMP_SENSOR_TYPE"], [The CPU temp sensor type])
+
+AC_ARG_VAR(OCC_DIMM_TEMP_SENSOR_TYPE, [The dimm temp sensor type])
+AS_IF([test "x$OCC_DIMM_TEMP_SENSOR_TYPE" == "x"], [OCC_DIMM_TEMP_SENSOR_TYPE="D0"])
+AC_DEFINE_UNQUOTED([OCC_DIMM_TEMP_SENSOR_TYPE], ["$OCC_DIMM_TEMP_SENSOR_TYPE"], [The dimm temp sensor type])
 
 AC_ARG_VAR(OCC_HWMON_PATH, [The OCC hwmon path])
 AC_ARG_VAR(DEV_PATH, [The device path])
