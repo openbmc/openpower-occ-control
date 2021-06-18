@@ -74,6 +74,18 @@ AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
         AC_SUBST([CPPFLAGS], [$cpp_flags])
     )
 
+    AC_ARG_ENABLE([read-occ-temp],
+    	AS_HELP_STRING([--enable-read-occ-temp], [Enable read occ temp support])
+    )
+    AM_CONDITIONAL([ENABLE_READ_OCC_TEMP], [test "x$enable-read-occ-temp" != "xno"])
+    AS_IF([test "x$enable-read-occ-temp" != "xno"],
+        AC_MSG_NOTICE([Enabling read occ temp])
+        [
+            cpp_flags="$CPPFLAGS -DREAD_OCC_TEMP"
+        ]
+        AC_SUBST([CPPFLAGS], [$cpp_flags])
+    )
+
     AC_ARG_WITH([host-communication-protocol],
         AS_HELP_STRING([--with-host-communication-protocol], [To specify the host communication protocol])
     )
@@ -123,6 +135,18 @@ AC_DEFINE_UNQUOTED([OCC_NAME], ["$OCC_NAME"], [The OCC object name])
 AC_ARG_VAR(OCC_MASTER_NAME, [The OCC master object name])
 AS_IF([test "x$OCC_MASTER_NAME" == "x"], [OCC_MASTER_NAME="occ-hwmon.1"])
 AC_DEFINE_UNQUOTED([OCC_MASTER_NAME], ["$OCC_MASTER_NAME"], [The OCC master object name])
+
+AC_ARG_VAR(OCC_CPU_TEMP_SENSOR_TYPE, [The CPU temp sensor type])
+AS_IF([test "x$OCC_CPU_TEMP_SENSOR_TYPE" == "x"], [OCC_CPU_TEMP_SENSOR_TYPE="C0"])
+AC_DEFINE_UNQUOTED([OCC_CPU_TEMP_SENSOR_TYPE], ["$OCC_CPU_TEMP_SENSOR_TYPE"], [The CPU temp sensor type])
+
+AC_ARG_VAR(OCC_DIMM_TEMP_SENSOR_TYPE, [The dimm temp sensor type])
+AS_IF([test "x$OCC_DIMM_TEMP_SENSOR_TYPE" == "x"], [OCC_DIMM_TEMP_SENSOR_TYPE="D0"])
+AC_DEFINE_UNQUOTED([OCC_DIMM_TEMP_SENSOR_TYPE], ["$OCC_DIMM_TEMP_SENSOR_TYPE"], [The dimm temp sensor type])
+
+AC_ARG_VAR(OCC_SENSOR_PATH_ROOT, [The occ sensor path])
+AS_IF([test "x$OCC_SENSOR_PATH_ROOT" == "x"], [OCC_SENSOR_PATH_ROOT="/xyz/openbmc_project/sensors/temperature/"])
+AC_DEFINE_UNQUOTED([OCC_SENSOR_PATH_ROOT], ["$OCC_SENSOR_PATH_ROOT"], [The occ sensor path])
 
 AC_ARG_VAR(OCC_HWMON_PATH, [The OCC hwmon path])
 AC_ARG_VAR(DEV_PATH, [The device path])
