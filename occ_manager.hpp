@@ -170,6 +170,27 @@ struct Manager
      * OCC. The poll timer will then be restarted.
      * */
     void pollerTimerExpired();
+
+    /**
+     * @brief Gets the temperature of the processor and dimm.
+     * */
+    void getProcDimmTemp();
+
+    /**
+     * @brief Trigger OCC driver to read the temperature of processor and dimm.
+     * @param[in] path - path of the OCC sensors.
+     * @param[in] id - Id of the OCC.
+     * */
+    void readProcDimmTemp(const fs::path& path, const unsigned int& id);
+
+    /**
+     * @brief Set all the temperature of this OCC to NaN.
+     * @param[in] id - Id of the OCC.
+     * */
+    void setTempToNaN(const unsigned int& id);
+
+    /** @brief Store the existing OCC sensors on D-BUS */
+    std::map<std::string, unsigned int> existingSensors;
 };
 
 } // namespace occ
