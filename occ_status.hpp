@@ -146,6 +146,18 @@ class Status : public Interface
         return device.addPresenceWatchMaster();
     }
 
+    /** @brief Gets the occ instance number */
+    unsigned int getOccInstanceID()
+    {
+        return instance;
+    }
+
+    /** @brief Is this OCC the master OCC */
+    bool isMasterOcc()
+    {
+        return device.master();
+    }
+
     /** @brief Read OCC state (will trigger kernel to poll the OCC) */
     void readOccState();
 
