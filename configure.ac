@@ -112,6 +112,18 @@ AC_ARG_VAR(OCC_MASTER_NAME, [The OCC master object name])
 AS_IF([test "x$OCC_MASTER_NAME" == "x"], [OCC_MASTER_NAME="occ-hwmon.1"])
 AC_DEFINE_UNQUOTED([OCC_MASTER_NAME], ["$OCC_MASTER_NAME"], [The OCC master object name])
 
+AC_ARG_VAR(OCC_CPU_TEMP_SENSOR_TYPE, [The CPU temp sensor type])
+AS_IF([test "x$OCC_CPU_TEMP_SENSOR_TYPE" == "x"], [OCC_CPU_TEMP_SENSOR_TYPE="C0"])
+AC_DEFINE_UNQUOTED([OCC_CPU_TEMP_SENSOR_TYPE], ["$OCC_CPU_TEMP_SENSOR_TYPE"], [The CPU temp sensor type])
+
+AC_ARG_VAR(OCC_DIMM_TEMP_SENSOR_TYPE, [The dimm temp sensor type])
+AS_IF([test "x$OCC_DIMM_TEMP_SENSOR_TYPE" == "x"], [OCC_DIMM_TEMP_SENSOR_TYPE="D0"])
+AC_DEFINE_UNQUOTED([OCC_DIMM_TEMP_SENSOR_TYPE], ["$OCC_DIMM_TEMP_SENSOR_TYPE"], [The dimm temp sensor type])
+
+AC_ARG_VAR(OCC_SENSOR_PATH_ROOT, [The occ sensor path])
+AS_IF([test "x$OCC_SENSOR_PATH_ROOT" == "x"], [OCC_SENSOR_PATH_ROOT="/xyz/openbmc_project/sensors/temperature/"])
+AC_DEFINE_UNQUOTED([OCC_SENSOR_PATH_ROOT], ["$OCC_SENSOR_PATH_ROOT"], [The occ sensor path])
+
 AC_ARG_VAR(OCC_HWMON_PATH, [The OCC hwmon path])
 AC_ARG_VAR(DEV_PATH, [The device path])
 AC_ARG_VAR(I2C_OCC_DEVICE_NAME, [The device name of i2c occ hwmon])
