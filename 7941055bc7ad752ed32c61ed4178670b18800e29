@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b040b6d2_3cfe7b11",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-06-22T14:11:10Z",
+      "side": 1,
+      "message": "I think we\u0027ll need the temps updated every second as opposed to 10.  Can probably just change the poll interval.",
+      "revId": "7941055bc7ad752ed32c61ed4178670b18800e29",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "099f23aa_0920e977",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 337,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-06-22T14:11:10Z",
+      "side": 1,
+      "message": "We have an unfortunate case where code in the same flash image has to support different numbers of CPUs:\n2 and 4 for Rainier, 8 for Everest\n\nThis MAX_CPUS is used other places in the repo too.  I guess we should figure out a way to get the actual number of processors to use in these cases.",
+      "revId": "7941055bc7ad752ed32c61ed4178670b18800e29",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    }
+  ]
+}
