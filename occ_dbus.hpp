@@ -44,10 +44,11 @@ class OccDBusSensors
     /** @brief Set the max value of the Sensor
      *
      *  @param[in] path  - The object path
-     *
      *  @param[in] value - The value of the MaxValue property
+     *
+     *  @return true or false
      */
-    void setMaxValue(const std::string& path, double value);
+    bool setMaxValue(const std::string& path, double value);
 
     /** @brief Get the max value of the Sensor
      *
@@ -60,10 +61,11 @@ class OccDBusSensors
     /** @brief Set the min value of the Sensor
      *
      *  @param[in] path  - The object path
-     *
      *  @param[in] value - The value of the MinValue property
+     *
+     *  @return true or false
      */
-    void setMinValue(const std::string& path, double value);
+    bool setMinValue(const std::string& path, double value);
 
     /** @brief Get the min value of the Sensor
      *
@@ -76,10 +78,11 @@ class OccDBusSensors
     /** @brief Set the value of the Sensor
      *
      *  @param[in] path  - The object path
-     *
      *  @param[in] value - The value of the Value property
+     *
+     *  @return true or false
      */
-    void setValue(const std::string& path, double value);
+    bool setValue(const std::string& path, double value);
 
     /** @brief Get the value of the Sensor
      *
@@ -92,10 +95,11 @@ class OccDBusSensors
     /** @brief Set the unit of the Sensor
      *
      *  @param[in] path  - The object path
-     *
      *  @param[in] value - The value of the Unit property
+     *
+     *  @return true or false
      */
-    void setUnit(const std::string& path, const std::string& value);
+    bool setUnit(const std::string& path, const std::string& value);
 
     /** @brief Get the unit of the Sensor
      *
@@ -108,10 +112,11 @@ class OccDBusSensors
     /** @brief Set the Functional property
      *
      *  @param[in] path   - The object path
-     *
      *  @param[in] value  - PLDM operational fault status
+     *
+     *  @return true or false
      */
-    void setOperationalStatus(const std::string& path, bool value);
+    bool setOperationalStatus(const std::string& path, bool value);
 
     /** @brief Get the Functional property
      *
