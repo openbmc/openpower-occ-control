@@ -15,6 +15,11 @@ namespace dbus
 using namespace phosphor::logging;
 void OccDBusSensors::setMaxValue(const std::string& path, double value)
 {
+    if (path.empty())
+    {
+        return;
+    }
+
     if (sensors.find(path) == sensors.end())
     {
         sensors.emplace(
@@ -36,6 +41,11 @@ double OccDBusSensors::getMaxValue(const std::string& path) const
 
 void OccDBusSensors::setMinValue(const std::string& path, double value)
 {
+    if (path.empty())
+    {
+        return;
+    }
+
     if (sensors.find(path) == sensors.end())
     {
         sensors.emplace(
@@ -57,6 +67,11 @@ double OccDBusSensors::getMinValue(const std::string& path) const
 
 void OccDBusSensors::setValue(const std::string& path, double value)
 {
+    if (path.empty())
+    {
+        return;
+    }
+
     if (sensors.find(path) == sensors.end())
     {
         sensors.emplace(
@@ -78,6 +93,11 @@ double OccDBusSensors::getValue(const std::string& path) const
 
 void OccDBusSensors::setUnit(const std::string& path, const std::string& value)
 {
+    if (path.empty())
+    {
+        return;
+    }
+
     if (sensors.find(path) == sensors.end())
     {
         sensors.emplace(
@@ -114,6 +134,11 @@ std::string OccDBusSensors::getUnit(const std::string& path) const
 
 void OccDBusSensors::setOperationalStatus(const std::string& path, bool value)
 {
+    if (path.empty())
+    {
+        return;
+    }
+
     if (operationalStatus.find(path) == operationalStatus.end())
     {
         operationalStatus.emplace(path, std::make_unique<OperationalStatusIntf>(
