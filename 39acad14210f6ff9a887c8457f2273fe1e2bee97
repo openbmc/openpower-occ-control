@@ -22,6 +22,30 @@
       "revId": "39acad14210f6ff9a887c8457f2273fe1e2bee97",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1f87ab14_92517ce9",
+        "filename": "occ_dbus.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-06-22T09:51:37Z",
+      "side": 1,
+      "message": "Done\nAdded bool as a return value",
+      "parentUuid": "d7677d98_7770b5bb",
+      "range": {
+        "startLine": 20,
+        "startChar": 7,
+        "endLine": 20,
+        "endChar": 15
+      },
+      "revId": "39acad14210f6ff9a887c8457f2273fe1e2bee97",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
     }
   ]
 }
