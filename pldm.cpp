@@ -73,7 +73,7 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
     {
         PdrList pdrs{};
 
-        auto& bus = utils::getBus();
+        auto& bus = open_power::occ::utils::getBus();
         try
         {
             auto method = bus.new_method_call(
@@ -245,7 +245,7 @@ void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
     {
         PdrList pdrs{};
 
-        auto& bus = utils::getBus();
+        auto& bus = open_power::occ::utils::getBus();
         try
         {
             auto method = bus.new_method_call(
@@ -286,7 +286,7 @@ void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
 
     uint8_t instanceId{};
 
-    auto bus& = utils::getBus();
+    auto& bus = open_power::occ::utils::getBus();
     try
     {
         auto method = bus.new_method_call(

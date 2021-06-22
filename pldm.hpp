@@ -56,7 +56,7 @@ class Interface
         std::function<bool(open_power::occ::instanceID, bool)> callBack) :
         callBack(callBack),
         pldmEventSignal(
-            utils::getBus(),
+            open_power::occ::utils::getBus(),
             MatchRules::type::signal() +
                 MatchRules::member("StateSensorEvent") +
                 MatchRules::path("/xyz/openbmc_project/pldm") +
@@ -64,7 +64,7 @@ class Interface
             std::bind(std::mem_fn(&Interface::sensorEvent), this,
                       std::placeholders::_1)),
         hostStateSignal(
-            utils::getBus(),
+            open_power::occ::utils::getBus(),
             MatchRules::propertiesChanged("/xyz/openbmc_project/state/host0",
                                           "xyz.openbmc_project.State.Host"),
             std::bind(std::mem_fn(&Interface::hostStateEvent), this,
