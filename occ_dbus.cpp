@@ -13,8 +13,13 @@ namespace dbus
 {
 
 using namespace phosphor::logging;
-void OccDBusSensors::setMaxValue(const std::string& path, double value)
+bool OccDBusSensors::setMaxValue(const std::string& path, double value)
 {
+    if (path.empty())
+    {
+        return false;
+    }
+
     if (sensors.find(path) == sensors.end())
     {
         sensors.emplace(
@@ -22,6 +27,7 @@ void OccDBusSensors::setMaxValue(const std::string& path, double value)
     }
 
     sensors.at(path)->maxValue(value);
+    return true;
 }
 
 double OccDBusSensors::getMaxValue(const std::string& path) const
@@ -34,8 +40,13 @@ double OccDBusSensors::getMaxValue(const std::string& path) const
     throw std::invalid_argument("Failed to get MaxValue property.");
 }
 
-void OccDBusSensors::setMinValue(const std::string& path, double value)
+bool OccDBusSensors::setMinValue(const std::string& path, double value)
 {
+    if (path.empty())
+    {
+        return false;
+    }
+
     if (sensors.find(path) == sensors.end())
     {
         sensors.emplace(
@@ -43,6 +54,7 @@ void OccDBusSensors::setMinValue(const std::string& path, double value)
     }
 
     sensors.at(path)->minValue(value);
+    return true;
 }
 
 double OccDBusSensors::getMinValue(const std::string& path) const
@@ -55,8 +67,13 @@ double OccDBusSensors::getMinValue(const std::string& path) const
     throw std::invalid_argument("Failed to get MinValue property.");
 }
 
-void OccDBusSensors::setValue(const std::string& path, double value)
+bool OccDBusSensors::setValue(const std::string& path, double value)
 {
+    if (path.empty())
+    {
+        return false;
+    }
+
     if (sensors.find(path) == sensors.end())
     {
         sensors.emplace(
@@ -64,6 +81,7 @@ void OccDBusSensors::setValue(const std::string& path, double value)
     }
 
     sensors.at(path)->value(value);
+    return true;
 }
 
 double OccDBusSensors::getValue(const std::string& path) const
@@ -76,8 +94,13 @@ double OccDBusSensors::getValue(const std::string& path) const
     throw std::invalid_argument("Failed to get Value property.");
 }
 
-void OccDBusSensors::setUnit(const std::string& path, const std::string& value)
+bool OccDBusSensors::setUnit(const std::string& path, const std::string& value)
 {
+    if (path.empty())
+    {
+        return false;
+    }
+
     if (sensors.find(path) == sensors.end())
     {
         sensors.emplace(
@@ -91,7 +114,10 @@ void OccDBusSensors::setUnit(const std::string& path, const std::string& value)
     catch (const std::exception& e)
     {
         log<level::ERR>("set Unit propety failed", entry("ERROR=%s", e.what()));
+        return false;
     }
+
+    return true;
 }
 
 std::string OccDBusSensors::getUnit(const std::string& path) const
@@ -112,8 +138,13 @@ std::string OccDBusSensors::getUnit(const std::string& path) const
     throw std::invalid_argument("Failed to get Unit property.");
 }
 
-void OccDBusSensors::setOperationalStatus(const std::string& path, bool value)
+bool OccDBusSensors::setOperationalStatus(const std::string& path, bool value)
 {
+    if (path.empty())
+    {
+        return false;
+    }
+
     if (operationalStatus.find(path) == operationalStatus.end())
     {
         operationalStatus.emplace(path, std::make_unique<OperationalStatusIntf>(
@@ -121,6 +152,7 @@ void OccDBusSensors::setOperationalStatus(const std::string& path, bool value)
     }
 
     operationalStatus.at(path)->functional(value);
+    return true;
 }
 
 bool OccDBusSensors::getOperationalStatus(const std::string& path) const
