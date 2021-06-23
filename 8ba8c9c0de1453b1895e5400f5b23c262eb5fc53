@@ -42,6 +42,23 @@
     },
     {
       "key": {
+        "uuid": "b52464da_2be46140",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 314,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-06-23T15:39:30Z",
+      "side": 1,
+      "message": "https://github.com/ibm-openbmc/dev/issues/2150  mentions other fru types that would require different sensor names.  I guess if you would rather not put these in due to a good way to test them, I could probably put them in later.",
+      "revId": "8ba8c9c0de1453b1895e5400f5b23c262eb5fc53",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "7b246f3b_2acf1844",
         "filename": "occ_manager.cpp",
         "patchSetId": 8
