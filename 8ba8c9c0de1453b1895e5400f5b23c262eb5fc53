@@ -1,0 +1,61 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "54d92c46_01eeaded",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-06-23T14:39:47Z",
+      "side": 1,
+      "message": "we\u0027ll probably need some compile feature around this, so that we don\u0027t mess with existing systems.",
+      "revId": "8ba8c9c0de1453b1895e5400f5b23c262eb5fc53",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5a1b3267_518bb400",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 196,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-06-23T14:39:47Z",
+      "side": 1,
+      "message": "Chris, now that the OCC will be polled every second, are any changes required here?  Maybe just have this also be called every second before the temps are read and then we can go back to one timer?",
+      "range": {
+        "startLine": 196,
+        "startChar": 5,
+        "endLine": 196,
+        "endChar": 28
+      },
+      "revId": "8ba8c9c0de1453b1895e5400f5b23c262eb5fc53",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7b246f3b_2acf1844",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 378,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-06-23T14:39:47Z",
+      "side": 1,
+      "message": "There will be one OCCStatus object per OCC, so maybe you can just count those instead?  Ideally it would also know if the OCCs were active, so you wouldn\u0027t have to check it yourself here.\n\nThis would at least solve the immediate problem of how this code would know how many OCCs are in the system.  We still need to solve it for the OCCStatus objects, but maybe Chris can take a crack at that.",
+      "revId": "8ba8c9c0de1453b1895e5400f5b23c262eb5fc53",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    }
+  ]
+}
