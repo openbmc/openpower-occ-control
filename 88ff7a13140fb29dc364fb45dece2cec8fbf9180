@@ -2,6 +2,75 @@
   "comments": [
     {
       "key": {
+        "uuid": "a17cdcbf_f5e912c8",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 366,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-06-24T14:20:55Z",
+      "side": 1,
+      "message": "you can use: std::numeric_limits\u003cdouble\u003e::quiet_NaN()",
+      "range": {
+        "startLine": 366,
+        "startChar": 25,
+        "endLine": 366,
+        "endChar": 59
+      },
+      "revId": "88ff7a13140fb29dc364fb45dece2cec8fbf9180",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "04207d33_be5476a4",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 374,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-06-24T14:20:55Z",
+      "side": 1,
+      "message": "if you break here, won\u0027t this skip setting the other temp sensors on that same OCC?",
+      "range": {
+        "startLine": 374,
+        "startChar": 12,
+        "endLine": 374,
+        "endChar": 18
+      },
+      "revId": "88ff7a13140fb29dc364fb45dece2cec8fbf9180",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ed8a2490_d5aa9888",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 395,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-06-24T14:20:55Z",
+      "side": 1,
+      "message": "I\u0027m not seeing a reason this needs to be a unique pointer?",
+      "range": {
+        "startLine": 395,
+        "startChar": 12,
+        "endLine": 395,
+        "endChar": 28
+      },
+      "revId": "88ff7a13140fb29dc364fb45dece2cec8fbf9180",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "fb501f34_8e3a8294",
         "filename": "occ_manager.hpp",
         "patchSetId": 9
