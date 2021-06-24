@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "aa270d27_3731133b",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1000400
+      },
+      "writtenOn": "2021-06-24T11:49:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "54d92c46_01eeaded",
+      "revId": "8ba8c9c0de1453b1895e5400f5b23c262eb5fc53",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5a1b3267_518bb400",
         "filename": "occ_manager.cpp",
         "patchSetId": 8
@@ -59,6 +77,24 @@
     },
     {
       "key": {
+        "uuid": "6a99908e_909ec80f",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 314,
+      "author": {
+        "id": 1000400
+      },
+      "writtenOn": "2021-06-24T11:49:08Z",
+      "side": 1,
+      "message": "Sorry, I don\u0027t understand what you mean. I know there are some different fru types：\n0 \u003d processor core\n1 \u003d internal mem ctlr\n2 \u003d DIMM\n3 \u003d mem ctlr + DIMM\n7 \u003d PMIC\n8 \u003d mem ctlr external sensor\n\nDo you want to do this：\n        \n        if (type \u003d\u003d OCC_DIMM_TEMP_SENSOR_TYPE)\n        {\n            if (fruTypeValue \u003d\u003d internalMemCtlrFruType)\n            {\n                sensorPath.append(\"dimm\" + std::to_string(instanceID) +\n                              \"_intmb_temp\");\n            }\n            else if (fruTypeValue \u003d\u003d dimmFruType)\n            {\n                sensorPath.append(\"dimm\" + std::to_string(instanceID) +\n                              \"_dram_temp\");\n             }\n            else if (fruTypeValue \u003d\u003d memCtrlAndDimmFruType)\n            {\n                sensorPath.append(\"dimm\" + std::to_string(instanceID) +\n                              \"_dram_extmb_temp\");\n             }\n            else if (fruTypeValue \u003d\u003d PMICFruType)\n            {\n                sensorPath.append(\"dimm\" + std::to_string(instanceID) +\n                              \"_pmic_temp\");\n             }\n            else if (fruTypeValue \u003d\u003d memCtlrExSensorFruType)\n            {\n                sensorPath.append(\"dimm\" + std::to_string(instanceID) +\n                              \"_extmb_temp\");\n             }\n            else\n            {\n                continue;\n             }\n\n            \n        }",
+      "parentUuid": "b52464da_2be46140",
+      "revId": "8ba8c9c0de1453b1895e5400f5b23c262eb5fc53",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "7b246f3b_2acf1844",
         "filename": "occ_manager.cpp",
         "patchSetId": 8
@@ -73,6 +109,24 @@
       "revId": "8ba8c9c0de1453b1895e5400f5b23c262eb5fc53",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "44706d8d_3fcaa2d2",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 378,
+      "author": {
+        "id": 1000400
+      },
+      "writtenOn": "2021-06-24T11:49:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7b246f3b_2acf1844",
+      "revId": "8ba8c9c0de1453b1895e5400f5b23c262eb5fc53",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     }
   ]
 }
