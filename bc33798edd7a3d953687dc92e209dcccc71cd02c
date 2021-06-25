@@ -1,0 +1,107 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "516d9407_8246060f",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-06-25T17:56:35Z",
+      "side": 1,
+      "message": "substr() doesn\u0027t return a reference",
+      "range": {
+        "startLine": 233,
+        "startChar": 25,
+        "endLine": 233,
+        "endChar": 26
+      },
+      "revId": "bc33798edd7a3d953687dc92e209dcccc71cd02c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "264037f2_950ed3ed",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 281,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-06-25T17:56:35Z",
+      "side": 1,
+      "message": "Maybe INFO or ERR since this is probably a bug.",
+      "range": {
+        "startLine": 281,
+        "startChar": 27,
+        "endLine": 281,
+        "endChar": 32
+      },
+      "revId": "bc33798edd7a3d953687dc92e209dcccc71cd02c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f75d1cdd_1399c79f",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 293,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-06-25T17:56:35Z",
+      "side": 1,
+      "message": "INFO or ERR here too",
+      "range": {
+        "startLine": 293,
+        "startChar": 27,
+        "endLine": 293,
+        "endChar": 32
+      },
+      "revId": "bc33798edd7a3d953687dc92e209dcccc71cd02c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9908d5f3_487e2fd3",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 302,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-06-25T17:56:35Z",
+      "side": 1,
+      "message": "We still have the big vs small core dilemma here.  The OCC only knows about smaller cores, but the system is most likely configured in big core mode (2 small cores per big core).\n\nWhat do you think Chris, just do (instanceID / 2) here?",
+      "revId": "bc33798edd7a3d953687dc92e209dcccc71cd02c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0d7221f8_ee03e2e6",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 353,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-06-25T17:56:35Z",
+      "side": 1,
+      "message": "could also just do:  for (const auto\u0026 [sensorPath, id] : existingSensors)",
+      "revId": "bc33798edd7a3d953687dc92e209dcccc71cd02c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    }
+  ]
+}
