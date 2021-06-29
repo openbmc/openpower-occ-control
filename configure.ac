@@ -88,11 +88,11 @@ AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
     )
 
     AC_ARG_ENABLE([power10-support],
-        AS_HELP_STRING([--with-power10-support], [To specify if system has power10 support])
+        AS_HELP_STRING([--enable-power10-support], [Enable Power10 support])
     )
-    AM_CONDITIONAL([POWER10_SUPPORT], [test "$with_power10_support" == "yes"])
-    AS_IF([test "x$with_power10_support" == "xyes"],
-        AC_MSG_NOTICE([Enabling POWER10])
+    AM_CONDITIONAL([POWER10_SUPPORT], [test "$enable_power10_support" == "yes"])
+    AS_IF([test "x$enable_power10_support" == "xyes"],
+        AC_MSG_NOTICE([Enabling POWER10 Support])
         [
             cpp_flags="$CPPFLAGS -DPOWER10"
         ]
