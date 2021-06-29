@@ -418,7 +418,7 @@ CmdStatus Status::sendIpsData()
     // Data:
     cmd.push_back(0x11); // Config Format: IPS Settings
     cmd.push_back(0x00); // Version
-    cmd.push_back(0x01); // IPS Enable: enabled
+    cmd.push_back(0x00); // IPS Enable: disabled
     cmd.push_back(0x00); // Enter Delay Time (240s)
     cmd.push_back(0xF0); //
     cmd.push_back(0x08); // Enter Utilization (8%)
