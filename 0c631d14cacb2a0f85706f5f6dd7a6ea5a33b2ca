@@ -22,6 +22,30 @@
       "revId": "0c631d14cacb2a0f85706f5f6dd7a6ea5a33b2ca",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "391c3699_425811ab",
+        "filename": "occ_manager.hpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 1000400
+      },
+      "writtenOn": "2021-07-02T09:25:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "99001ae4_d2afb508",
+      "range": {
+        "startLine": 150,
+        "startChar": 0,
+        "endLine": 157,
+        "endChar": 23
+      },
+      "revId": "0c631d14cacb2a0f85706f5f6dd7a6ea5a33b2ca",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     }
   ]
 }
