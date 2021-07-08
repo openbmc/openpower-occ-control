@@ -16,6 +16,24 @@
       "revId": "ea8e369dce65aea79b112e5645cf195d1ad309dd",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "266ee886_3becb81d",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 496,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-07-08T18:26:03Z",
+      "side": 1,
+      "message": "What the dbus-sensors and phosphor-regulators sensor apps do to show the temperature isn\u0027t available is use the Availability interface: https://github.com/openbmc/phosphor-dbus-interfaces/blob/master/yaml/xyz/openbmc_project/State/Decorator/Availability.interface.yaml and also set the value to NaN.  I think that would work here too.",
+      "parentUuid": "09328ffb_b1b7f6bd",
+      "revId": "ea8e369dce65aea79b112e5645cf195d1ad309dd",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
     }
   ]
 }
