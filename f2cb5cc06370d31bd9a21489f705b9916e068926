@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "664a46f1_7bdf7bc9",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 321,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-07-14T16:19:05Z",
+      "side": 1,
+      "message": "there is one of these per processor, so I think you\u0027ll also need the id in the name, like you did for cores.  Also, looks like all the other sensors are lower case so this probably should be too.",
+      "range": {
+        "startLine": 321,
+        "startChar": 35,
+        "endLine": 321,
+        "endChar": 47
+      },
+      "revId": "f2cb5cc06370d31bd9a21489f705b9916e068926",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    }
+  ]
+}
