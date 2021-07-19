@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d79f3290_4f7d002c",
+        "filename": "app.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-07-19T16:01:53Z",
+      "side": 1,
+      "message": "only need to do this if reading temps is enabled?",
+      "revId": "33f9323c65668536b1a8b1c2ad45031ad565b430",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0bdd9fa7_8383cdb2",
+        "filename": "configure.ac",
+        "patchSetId": 26
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-07-19T16:01:53Z",
+      "side": 1,
+      "message": "I can\u0027t tell, does this default to off if --enable/disable-read-occ-temp isn\u0027t passed in? I think we will want it to.",
+      "revId": "33f9323c65668536b1a8b1c2ad45031ad565b430",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    }
+  ]
+}
