@@ -34,6 +34,24 @@
       "revId": "cc28233dddf4d60f7874aa335b7c2e96f023405a",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b220b995_7f4b33e4",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2021-08-18T15:36:23Z",
+      "side": 1,
+      "message": "Possibly? I think it would be hard to guarantee though since the app doesn\u0027t know when the driver will hit it\u0027s 1 second timer. Plus, the error from the bad poll will be returned on every file access until a new poll is attempted.",
+      "parentUuid": "c8e31b86_932bca02",
+      "revId": "cc28233dddf4d60f7874aa335b7c2e96f023405a",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
     }
   ]
 }
