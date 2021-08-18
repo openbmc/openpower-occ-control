@@ -52,6 +52,24 @@
       "revId": "cc28233dddf4d60f7874aa335b7c2e96f023405a",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "189cc1f5_bfd33903",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-08-18T16:37:27Z",
+      "side": 1,
+      "message": "OK.\n\nI don\u0027t think an ifstream will throw unless you tell it to, but yea then tempValue won\u0027t have a valid valid in it so it would need to check for inputFile.fail() or something along those lines",
+      "parentUuid": "b220b995_7f4b33e4",
+      "revId": "cc28233dddf4d60f7874aa335b7c2e96f023405a",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
     }
   ]
 }
