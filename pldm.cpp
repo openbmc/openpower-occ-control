@@ -79,7 +79,7 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
             auto method = bus.new_method_call(
                 "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
                 "xyz.openbmc_project.PLDM.PDR", "FindStateSensorPDR");
-            method.append(tid, (uint16_t)PLDM_ENTITY_PROC_MODULE,
+            method.append(tid, (uint16_t)PLDM_ENTITY_PROC,
                           (uint16_t)PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS);
 
             auto responseMsg = bus.call(method);
