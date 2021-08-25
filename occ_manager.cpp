@@ -18,6 +18,8 @@ namespace open_power
 namespace occ
 {
 
+constexpr uint32_t fruTypeNotAvailable = 0xFF;
+
 using namespace phosphor::logging;
 
 void Manager::findAndCreateObjects()
@@ -258,6 +260,12 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
 
             if (type == OCC_DIMM_TEMP_SENSOR_TYPE)
             {
+                if (fruTypeValue == fruTypeNotAvailable)
+                {
+                    // Not all DIMM related temps are available to read
+                    // (no _input file in this case)
+                    continue;
+                }
                 auto iter = dimmTempSensorName.find(fruTypeValue);
                 if (iter == dimmTempSensorName.end())
                 {
