@@ -12,8 +12,6 @@ namespace occ
 namespace utils
 {
 
-using LABELVALUE = std::tuple<std::string, uint16_t>;
-
 constexpr auto MAPPER_BUSNAME = "xyz.openbmc_project.ObjectMapper";
 constexpr auto MAPPER_OBJ_PATH = "/xyz/openbmc_project/object_mapper";
 constexpr auto MAPPER_IFACE = "xyz.openbmc_project.ObjectMapper";
@@ -54,15 +52,6 @@ const std::string getService(const std::string& path,
 const PropertyValue getProperty(const std::string& objectPath,
                                 const std::string& interface,
                                 const std::string& propertyName);
-
-/**
- * @brief Check the value of the `tempX_label` file
- *
- * @param[in] value  -  the value of the `tempX_label` file
- *
- * @return              Sensors type and Sensors ID
- */
-std::optional<LABELVALUE> checkLabelValue(const std::string& value);
 
 } // namespace utils
 } // namespace occ
