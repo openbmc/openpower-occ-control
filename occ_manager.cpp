@@ -283,10 +283,7 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
             {
                 if (fruTypeValue != processorCore)
                 {
-                    log<level::ERR>(fmt::format("readTempSensors: Fru type "
-                                                "error! fruTypeValue = {}) ",
-                                                fruTypeValue)
-                                        .c_str());
+                    // TODO: support IO ring temp
                     continue;
                 }
 
