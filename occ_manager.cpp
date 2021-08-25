@@ -19,8 +19,34 @@ namespace occ
 {
 
 constexpr uint32_t fruTypeNotAvailable = 0xFF;
+constexpr auto fruTypeSuffix = "fru_type";
+constexpr auto faultSuffix = "fault";
+constexpr auto inputSuffix = "input";
 
 using namespace phosphor::logging;
+
+template <typename T>
+T readFile(const std::string& path)
+{
+    std::ifstream ifs;
+    ifs.exceptions(std::ifstream::failbit | std::ifstream::badbit |
+                   std::ifstream::eofbit);
+    T data;
+
+    try
+    {
+        ifs.open(path);
+        ifs >> data;
+        ifs.close();
+    }
+    catch (const std::exception& e)
+    {
+        auto err = errno;
+        throw std::system_error(err, std::generic_category());
+    }
+
+    return data;
+}
 
 void Manager::findAndCreateObjects()
 {
@@ -208,7 +234,6 @@ void Manager::pollerTimerExpired()
 #ifdef READ_OCC_SENSORS
 void Manager::readTempSensors(const fs::path& path, uint32_t id)
 {
-    const int open_errno = errno;
     std::regex expr{"temp\\d+_label$"}; // Example: temp5_label
     for (auto& file : fs::directory_iterator(path))
     {
@@ -216,37 +241,39 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
         {
             continue;
         }
-        std::ifstream fileOpen(file.path(), std::ios::in);
-        if (!fileOpen)
-        {
-            // If not able to read, OCC may be offline
-            log<level::DEBUG>(
-                fmt::format("readTempSensors: open failed(errno = {}) ",
-                            open_errno)
-                    .c_str());
 
+        uint32_t labelValue{0};
+
+        try
+        {
+            labelValue = readFile<uint32_t>(file.path());
+        }
+        catch (const std::system_error& e)
+        {
+            log<level::DEBUG>(
+                fmt::format("readTempSensors: Failed reading {}, errno = {}",
+                            file.path().string(), e.code().value())
+                    .c_str());
             continue;
         }
-        uint32_t labelValue{0};
-        fileOpen >> labelValue;
-        fileOpen.close();
 
         const std::string& tempLabel = "label";
         const std::string filePathString = file.path().string().substr(
             0, file.path().string().length() - tempLabel.length());
-        std::ifstream fruTypeFile(filePathString + "fru_type", std::ios::in);
-        if (!fruTypeFile)
+
+        uint32_t fruTypeValue{0};
+        try
         {
-            // If not able to read, OCC may be offline
+            fruTypeValue = readFile<uint32_t>(filePathString + fruTypeSuffix);
+        }
+        catch (const std::system_error& e)
+        {
             log<level::DEBUG>(
-                fmt::format("readTempSensors: open failed(errno = {}) ",
-                            open_errno)
+                fmt::format("readTempSensors: Failed reading {}, errno = {}",
+                            filePathString + fruTypeSuffix, e.code().value())
                     .c_str());
             continue;
         }
-        uint32_t fruTypeValue{0};
-        fruTypeFile >> fruTypeValue;
-        fruTypeFile.close();
 
         std::string sensorPath =
             OCC_SENSORS_ROOT + std::string("/temperature/");
@@ -298,49 +325,53 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
             }
         }
 
-        std::ifstream faultPathFile(filePathString + "fault", std::ios::in);
-        if (faultPathFile)
+        uint32_t faultValue{0};
+        try
         {
-            uint32_t faultValue;
-            faultPathFile >> faultValue;
-            faultPathFile.close();
-
-            if (faultValue != 0)
-            {
-                open_power::occ::dbus::OccDBusSensors::getOccDBus().setValue(
-                    sensorPath, std::numeric_limits<double>::quiet_NaN());
-
-                open_power::occ::dbus::OccDBusSensors::getOccDBus()
-                    .setOperationalStatus(sensorPath, false);
-
-                continue;
-            }
+            faultValue = readFile<uint32_t>(filePathString + faultSuffix);
+        }
+        catch (const std::system_error& e)
+        {
+            log<level::DEBUG>(
+                fmt::format("readTempSensors: Failed reading {}, errno = {}",
+                            filePathString + faultSuffix, e.code().value())
+                    .c_str());
+            continue;
         }
 
-        std::ifstream inputFile(filePathString + "input", std::ios::in);
-        if (inputFile)
+        if (faultValue != 0)
         {
-            double tempValue;
-            inputFile >> tempValue;
-
-            inputFile.close();
-
             open_power::occ::dbus::OccDBusSensors::getOccDBus().setValue(
-                sensorPath, tempValue * std::pow(10, -3));
+                sensorPath, std::numeric_limits<double>::quiet_NaN());
 
             open_power::occ::dbus::OccDBusSensors::getOccDBus()
-                .setOperationalStatus(sensorPath, true);
+                .setOperationalStatus(sensorPath, false);
 
-            existingSensors[sensorPath] = id;
+            continue;
         }
-        else
+
+        double tempValue{0};
+
+        try
         {
-            // If not able to read, OCC may be offline
-            log<level::DEBUG>(
-                fmt::format("readTempSensors: open failed(errno = {}) ",
-                            open_errno)
-                    .c_str());
+            tempValue = readFile<double>(filePathString + inputSuffix);
         }
+        catch (const std::system_error& e)
+        {
+            log<level::DEBUG>(
+                fmt::format("readTempSensors: Failed reading {}, errno = {}",
+                            filePathString + inputSuffix, e.code().value())
+                    .c_str());
+            continue;
+        }
+
+        open_power::occ::dbus::OccDBusSensors::getOccDBus().setValue(
+            sensorPath, tempValue * std::pow(10, -3));
+
+        open_power::occ::dbus::OccDBusSensors::getOccDBus()
+            .setOperationalStatus(sensorPath, true);
+
+        existingSensors[sensorPath] = id;
     }
     return;
 }
@@ -375,7 +406,6 @@ std::optional<std::string>
 
 void Manager::readPowerSensors(const fs::path& path, uint32_t id)
 {
-    const int open_errno = errno;
     std::regex expr{"power\\d+_label$"}; // Example: power5_label
     for (auto& file : fs::directory_iterator(path))
     {
@@ -383,20 +413,20 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
         {
             continue;
         }
-        std::ifstream fileOpen(file.path(), std::ios::in);
-        if (!fileOpen)
-        {
-            // If not able to read, OCC may be offline
-            log<level::DEBUG>(
-                fmt::format("readPowerSensors: open failed(errno = {}) ",
-                            open_errno)
-                    .c_str());
 
+        std::string labelValue;
+        try
+        {
+            labelValue = readFile<std::string>(file.path());
+        }
+        catch (const std::system_error& e)
+        {
+            log<level::DEBUG>(
+                fmt::format("readPowerSensors: Failed reading {}, errno = {}",
+                            file.path().string(), e.code().value())
+                    .c_str());
             continue;
         }
-        std::string labelValue;
-        fileOpen >> labelValue;
-        fileOpen.close();
 
         auto functionID = getPowerLabelFunctionID(labelValue);
         if (functionID == std::nullopt)
@@ -417,48 +447,28 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
         }
         sensorPath.append(iter->second);
 
-        std::ifstream faultPathFile(filePathString + "fault", std::ios::in);
-        if (faultPathFile)
+        double tempValue{0};
+
+        try
         {
-            uint32_t faultValue{0};
-            faultPathFile >> faultValue;
-            faultPathFile.close();
-
-            if (faultValue != 0)
-            {
-                open_power::occ::dbus::OccDBusSensors::getOccDBus().setValue(
-                    sensorPath, std::numeric_limits<double>::quiet_NaN());
-
-                open_power::occ::dbus::OccDBusSensors::getOccDBus()
-                    .setOperationalStatus(sensorPath, false);
-
-                continue;
-            }
+            tempValue = readFile<double>(filePathString + inputSuffix);
         }
-
-        std::ifstream inputFile(filePathString + "input", std::ios::in);
-        if (inputFile)
+        catch (const std::system_error& e)
         {
-            double tempValue;
-            inputFile >> tempValue;
-            inputFile.close();
-
-            open_power::occ::dbus::OccDBusSensors::getOccDBus().setValue(
-                sensorPath, tempValue * std::pow(10, -3) * std::pow(10, -3));
-
-            open_power::occ::dbus::OccDBusSensors::getOccDBus()
-                .setOperationalStatus(sensorPath, true);
-
-            existingSensors[sensorPath] = id;
-        }
-        else
-        {
-            // If not able to read, OCC may be offline
             log<level::DEBUG>(
-                fmt::format("readPowerSensors: open failed(errno = {}) ",
-                            open_errno)
+                fmt::format("readTempSensors: Failed reading {}, errno = {}",
+                            filePathString + inputSuffix, e.code().value())
                     .c_str());
+            continue;
         }
+
+        open_power::occ::dbus::OccDBusSensors::getOccDBus().setValue(
+            sensorPath, tempValue * std::pow(10, -3) * std::pow(10, -3));
+
+        open_power::occ::dbus::OccDBusSensors::getOccDBus()
+            .setOperationalStatus(sensorPath, true);
+
+        existingSensors[sensorPath] = id;
     }
     return;
 }
