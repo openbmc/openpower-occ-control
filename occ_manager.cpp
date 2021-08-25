@@ -220,7 +220,7 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
 
             continue;
         }
-        std::string labelValue;
+        uint32_t labelValue{0};
         fileOpen >> labelValue;
         fileOpen.close();
 
@@ -250,13 +250,8 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
         }
         else
         {
-            auto sensorTypeID =
-                open_power::occ::utils::checkLabelValue(labelValue);
-            if (sensorTypeID == std::nullopt)
-            {
-                continue;
-            }
-            auto& [type, instanceID] = *sensorTypeID;
+            uint16_t type = (labelValue & 0xFF000000) >> 24;
+            uint16_t instanceID = labelValue & 0x0000FFFF;
 
             if (type == OCC_DIMM_TEMP_SENSOR_TYPE)
             {
