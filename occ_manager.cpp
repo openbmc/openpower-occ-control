@@ -124,6 +124,13 @@ void Manager::statusCallBack(bool status)
         log<level::INFO>("Manager::statusCallBack(): OCCs are not running, "
                          "stopping poll timer");
         _pollTimer->setEnabled(false);
+
+#ifdef READ_OCC_SENSORS
+        for (auto& obj : statusObjects)
+        {
+            setSensorValueToNaN(obj->getOccInstanceID());
+        }
+#endif
     }
 }
 
