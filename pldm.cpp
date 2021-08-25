@@ -48,15 +48,17 @@ void Interface::fetchOCCSensorInfo(const PdrList& pdrs,
         return;
     }
 
-    // To order SensorID based on the EntityInstance
-    std::map<EntityInstance, SensorID> entityInstMap{};
+    // To order SensorID based on the EntityInstance.
+    // Note that when a proc is on a DCM, the PDRs for these sensors
+    // could have the same instance IDs but different container IDs.
+    std::map<uint32_t, SensorID> entityInstMap{};
     for (auto& pdr : pdrs)
     {
         auto pdrPtr =
             reinterpret_cast<const pldm_state_sensor_pdr*>(pdr.data());
-        entityInstMap.emplace(
-            static_cast<EntityInstance>(pdrPtr->entity_instance),
-            static_cast<SensorID>(pdrPtr->sensor_id));
+        uint32_t key = (static_cast<uint32_t>(pdrPtr->container_id) << 16) |
+                       static_cast<uint32_t>(pdrPtr->entity_instance);
+        entityInstMap.emplace(key, static_cast<SensorID>(pdrPtr->sensor_id));
     }
 
     open_power::occ::instanceID count = start;
@@ -190,9 +192,9 @@ void Interface::fetchOCCEffecterInfo(
     {
         auto pdrPtr =
             reinterpret_cast<const pldm_state_effecter_pdr*>(pdr.data());
-        entityInstMap.emplace(
-            static_cast<EntityInstance>(pdrPtr->entity_instance),
-            static_cast<SensorID>(pdrPtr->effecter_id));
+        uint32_t key = (static_cast<uint32_t>(pdrPtr->container_id) << 16) |
+                       static_cast<uint32_t>(pdrPtr->entity_instance);
+        entityInstMap.emplace(key, static_cast<SensorID>(pdrPtr->effecter_id));
     }
 
     open_power::occ::instanceID position = start;
