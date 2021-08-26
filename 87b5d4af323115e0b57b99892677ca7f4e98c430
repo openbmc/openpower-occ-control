@@ -2,6 +2,29 @@
   "comments": [
     {
       "key": {
+        "uuid": "484c378b_f645d4a2",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 253,
+      "author": {
+        "id": 1000400
+      },
+      "writtenOn": "2021-08-26T03:26:33Z",
+      "side": 1,
+      "message": "labelValue is a string type and can\u0027t be operated\u0026 with 0xFF000000?",
+      "range": {
+        "startLine": 253,
+        "startChar": 29,
+        "endLine": 253,
+        "endChar": 39
+      },
+      "revId": "87b5d4af323115e0b57b99892677ca7f4e98c430",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "e794c4c7_f0fdd74c",
         "filename": "occ_manager.cpp",
         "patchSetId": 2
