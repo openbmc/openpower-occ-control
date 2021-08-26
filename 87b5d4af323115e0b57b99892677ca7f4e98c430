@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "e8a56c2d_7a729c67",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 253,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-08-26T13:19:39Z",
+      "side": 1,
+      "message": "Yea, you\u0027re right, when I tested it I tested all these commits together, specifically https://gerrit.openbmc-project.xyz/c/openbmc/openpower-occ-control/+/46190/ which adds the readFile\u003cuint32_t\u003e(), and in breaking up the commits I forgot to change it up above.",
+      "parentUuid": "484c378b_f645d4a2",
+      "range": {
+        "startLine": 253,
+        "startChar": 29,
+        "endLine": 253,
+        "endChar": 39
+      },
+      "revId": "87b5d4af323115e0b57b99892677ca7f4e98c430",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "e794c4c7_f0fdd74c",
         "filename": "occ_manager.cpp",
         "patchSetId": 2
@@ -36,6 +60,30 @@
       "writtenOn": "2021-08-26T03:20:51Z",
       "side": 1,
       "message": "This is incorrect, because the lableValue type is `std::string`, not `uint32_t`.\nIt will build fail when we enabled READ_OCC_SENSORS.\n\nYes, I saw you update it in this patch: https://gerrit.openbmc-project.xyz/c/openbmc/openpower-occ-control/+/46190/2/occ_manager.cpp#242\nBut could you move that code here?",
+      "range": {
+        "startLine": 253,
+        "startChar": 11,
+        "endLine": 254,
+        "endChar": 58
+      },
+      "revId": "87b5d4af323115e0b57b99892677ca7f4e98c430",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d03dd8f8_eeb79e32",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 254,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-08-26T13:19:39Z",
+      "side": 1,
+      "message": "will fix.",
+      "parentUuid": "e794c4c7_f0fdd74c",
       "range": {
         "startLine": 253,
         "startChar": 11,
