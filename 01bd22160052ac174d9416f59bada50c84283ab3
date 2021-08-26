@@ -1,0 +1,107 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "459628b6_0a2b7d9d",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-08-26T03:35:52Z",
+      "side": 1,
+      "message": "Can you add Unit Test?",
+      "range": {
+        "startLine": 26,
+        "startChar": 2,
+        "endLine": 26,
+        "endChar": 10
+      },
+      "revId": "01bd22160052ac174d9416f59bada50c84283ab3",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5d3edd67_4d47a5b7",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-08-26T03:35:52Z",
+      "side": 1,
+      "message": "Nit: remove blank line",
+      "revId": "01bd22160052ac174d9416f59bada50c84283ab3",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2a7a5a5d_656eca65",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-08-26T03:35:52Z",
+      "side": 1,
+      "message": "Nit: ifs.close();",
+      "revId": "01bd22160052ac174d9416f59bada50c84283ab3",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "64a28e6b_ec34334b",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-08-26T03:35:52Z",
+      "side": 1,
+      "message": "uint32_t labelValue{0};",
+      "range": {
+        "startLine": 242,
+        "startChar": 8,
+        "endLine": 242,
+        "endChar": 28
+      },
+      "revId": "01bd22160052ac174d9416f59bada50c84283ab3",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9ba28e5a_c9676c7a",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 264,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-08-26T03:35:52Z",
+      "side": 1,
+      "message": "Can we define these(`fru_type`, `fault`, `intput`) as constants?",
+      "range": {
+        "startLine": 264,
+        "startChar": 64,
+        "endLine": 264,
+        "endChar": 72
+      },
+      "revId": "01bd22160052ac174d9416f59bada50c84283ab3",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    }
+  ]
+}
