@@ -192,6 +192,13 @@ struct Manager
      * */
     void pollerTimerExpired();
 
+    /**
+     * @brief Finds the OCC devices in /dev
+     *
+     * @return The IDs of the OCCs - 0, 1, etc.
+     */
+    std::vector<int> findOCCsInDev();
+
 #ifdef READ_OCC_SENSORS
     /**
      * @brief Gets the occ sensor values.
