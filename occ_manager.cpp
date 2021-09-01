@@ -11,6 +11,7 @@
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/log.hpp>
 #include <regex>
+#include <thread>
 #include <xyz/openbmc_project/Common/error.hpp>
 
 namespace open_power
@@ -50,12 +51,65 @@ T readFile(const std::string& path)
 
 void Manager::findAndCreateObjects()
 {
+#ifndef POWER10
     for (auto id = 0; id < MAX_CPUS; ++id)
     {
         // Create one occ per cpu
         auto occ = std::string(OCC_NAME) + std::to_string(id);
         createObjects(occ);
     }
+#else
+
+    // Find the OCCs by looking in /dev.  Keep looking until 10
+    // seconds have gone by without any new ones showing up.
+    auto newOCCs = findOCCsInDev();
+    decltype(newOCCs) prevOCCs;
+
+    do
+    {
+        prevOCCs = newOCCs;
+
+        using namespace std::literals::chrono_literals;
+        std::this_thread::sleep_for(10s);
+
+        newOCCs = findOCCsInDev();
+
+    } while (newOCCs.empty() || (prevOCCs.size() != newOCCs.size()));
+
+    // Trace so we can tell the code is done searching.
+    log<level::INFO>(
+        fmt::format("Found {} OCCs in /dev", newOCCs.size()).c_str());
+
+    // createObjects requires OCC0 first.
+    std::sort(newOCCs.begin(), newOCCs.end());
+
+    for (auto id : newOCCs)
+    {
+        createObjects(std::string(OCC_NAME) + id);
+    }
+
+#endif
+}
+
+std::vector<std::string> Manager::findOCCsInDev()
+{
+    std::vector<std::string> occs;
+    std::regex expr{R"(occ(\d+)$)"};
+
+    for (auto& file : fs::directory_iterator("/dev"))
+    {
+        std::smatch match;
+        std::string path{file.path().string()};
+        if (std::regex_search(path, match, expr))
+        {
+            auto num = std::stoi(match[1].str());
+
+            // /dev numbering starts at 1, ours starts at 0.
+            occs.push_back(std::to_string(num - 1));
+        }
+    }
+
+    return occs;
 }
 
 int Manager::cpuCreated(sdbusplus::message::message& msg)
