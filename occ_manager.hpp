@@ -71,7 +71,13 @@ struct Manager
             std::bind(std::mem_fn(&Manager::updateOCCActive), this,
                       std::placeholders::_1, std::placeholders::_2)))
 #endif
-
+#ifdef POWER10
+        ,
+        discoverTimer(
+            std::make_unique<
+                sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
+                sdpEvent, std::bind(&Manager::findAndCreateObjects, this)))
+#endif
     {
 #ifdef I2C_OCC
         // I2C OCC status objects are initialized directly
@@ -88,9 +94,7 @@ struct Manager
     }
 
   private:
-    /** @brief Checks if the CPU inventory is present and if so, creates
-     *         the occ D-Bus objects. Else, registers a handler to be
-     *         called when inventory is created.
+    /** @brief Creates the OCC D-Bus objects.
      */
     void findAndCreateObjects();
 
@@ -186,11 +190,33 @@ struct Manager
     std::unique_ptr<pldm::Interface> pldmHandle = nullptr;
 #endif
 
+#ifdef POWER10
+    /**
+     * @brief Timer used when discovering OCCs in /dev.
+     */
+    std::unique_ptr<
+        sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>
+        discoverTimer;
+
+    /**
+     * @brief Used when discovering /dev/occ objects to know if
+     *        any were added since the last check.
+     */
+    std::vector<int> prevOCCSearch;
+#endif
+
     /**
      * @brief Called when poll timer expires and forces a POLL command to the
      * OCC. The poll timer will then be restarted.
      * */
     void pollerTimerExpired();
+
+    /**
+     * @brief Finds the OCC devices in /dev
+     *
+     * @return The IDs of the OCCs - 0, 1, etc.
+     */
+    std::vector<int> findOCCsInDev();
 
 #ifdef READ_OCC_SENSORS
     /**

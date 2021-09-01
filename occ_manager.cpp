@@ -11,6 +11,7 @@
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/log.hpp>
 #include <regex>
+#include <thread>
 #include <xyz/openbmc_project/Common/error.hpp>
 
 namespace open_power
@@ -50,12 +51,62 @@ T readFile(const std::string& path)
 
 void Manager::findAndCreateObjects()
 {
+#ifndef POWER10
     for (auto id = 0; id < MAX_CPUS; ++id)
     {
         // Create one occ per cpu
         auto occ = std::string(OCC_NAME) + std::to_string(id);
         createObjects(occ);
     }
+#else
+    // Create the OCCs based on on the /dev/occX devices
+    auto occs = findOCCsInDev();
+
+    if (occs.empty() || (prevOCCSearch.size() != occs.size()))
+    {
+        // Something changed or no OCCs yet, try again in 10s.
+        // Note on the first pass prevOCCSearch will be empty,
+        // so there will be at least one delay to give things
+        // a chance to settle.
+        prevOCCSearch = occs;
+
+        using namespace std::literals::chrono_literals;
+        discoverTimer->restartOnce(10s);
+    }
+    else
+    {
+        discoverTimer.reset();
+
+        // createObjects requires OCC0 first.
+        std::sort(occs.begin(), occs.end());
+
+        for (auto id : occs)
+        {
+            createObjects(std::string(OCC_NAME) + std::to_string(id));
+        }
+    }
+#endif
+}
+
+std::vector<int> Manager::findOCCsInDev()
+{
+    std::vector<int> occs;
+    std::regex expr{R"(occ(\d+)$)"};
+
+    for (auto& file : fs::directory_iterator("/dev"))
+    {
+        std::smatch match;
+        std::string path{file.path().string()};
+        if (std::regex_search(path, match, expr))
+        {
+            auto num = std::stoi(match[1].str());
+
+            // /dev numbering starts at 1, ours starts at 0.
+            occs.push_back(num - 1);
+        }
+    }
+
+    return occs;
 }
 
 int Manager::cpuCreated(sdbusplus::message::message& msg)
