@@ -12,7 +12,6 @@
 namespace pldm
 {
 
-using sdbusplus::exception::SdBusError;
 using namespace phosphor::logging;
 
 void Interface::fetchOCCSensorInfo(const PdrList& pdrs,
@@ -87,7 +86,7 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
             auto responseMsg = bus.call(method);
             responseMsg.read(pdrs);
         }
-        catch (const SdBusError& e)
+        catch (const sdbusplus::exception::exception& e)
         {
             log<level::ERR>("pldm: Failed to fetch the OCC state sensor PDRs",
                             entry("ERROR=%s", e.what()));
@@ -259,7 +258,7 @@ void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
             auto responseMsg = bus.call(method);
             responseMsg.read(pdrs);
         }
-        catch (const SdBusError& e)
+        catch (const sdbusplus::exception::exception& e)
         {
             log<level::ERR>("pldm: Failed to fetch the OCC state effecter PDRs",
                             entry("ERROR=%s", e.what()));
@@ -298,7 +297,7 @@ void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
         auto reply = bus.call(method);
         reply.read(instanceId);
     }
-    catch (const SdBusError& e)
+    catch (const sdbusplus::exception::exception& e)
     {
         log<level::ERR>("pldm: GetInstanceId returned error",
                         entry("ERROR=%s", e.what()));

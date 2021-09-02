@@ -47,7 +47,7 @@ const std::string getService(const std::string& path,
  *
  *  @return The value of the property(type: variant)
  *
- *  @throw sdbusplus::exception::SdBusError when it fails
+ *  @throw sdbusplus::exception::exception when it fails
  */
 const PropertyValue getProperty(const std::string& objectPath,
                                 const std::string& interface,

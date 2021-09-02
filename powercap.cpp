@@ -45,7 +45,7 @@ uint32_t PowerCap::getPcap()
 
         return std::get<uint32_t>(pcap);
     }
-    catch (const sdbusplus::exception::SdBusError& e)
+    catch (const sdbusplus::exception::exception& e)
     {
         log<level::ERR>("Failed to get PowerCap property",
                         entry("ERROR=%s", e.what()),
@@ -65,7 +65,7 @@ bool PowerCap::getPcapEnabled()
 
         return std::get<bool>(pcapEnabled);
     }
-    catch (const sdbusplus::exception::SdBusError& e)
+    catch (const sdbusplus::exception::exception& e)
     {
         log<level::ERR>("Failed to get PowerCapEnable property",
                         entry("ERROR=%s", e.what()),
