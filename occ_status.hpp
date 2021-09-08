@@ -1,4 +1,5 @@
 #pragma once
+#include "config.h"
 
 #include "i2c_occ.hpp"
 #include "occ_command.hpp"

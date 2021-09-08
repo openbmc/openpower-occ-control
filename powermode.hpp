@@ -1,8 +1,8 @@
 #pragma once
 
-#ifdef POWER10
 #include "config.h"
 
+#ifdef POWER10
 #include "occ_status.hpp"
 
 #include <sdbusplus/bus.hpp>
