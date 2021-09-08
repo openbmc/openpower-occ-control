@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "occ_status.hpp"
 
 #include "occ_sensor.hpp"
