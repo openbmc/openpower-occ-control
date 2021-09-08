@@ -1,5 +1,3 @@
-#include "config.h"
-
 #include "occ_manager.hpp"
 
 #include "i2c_occ.hpp"
@@ -7,7 +5,7 @@
 #include "utils.hpp"
 
 #include <cmath>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/log.hpp>
 #include <regex>
@@ -60,7 +58,7 @@ void Manager::findAndCreateObjects()
 
 int Manager::cpuCreated(sdbusplus::message::message& msg)
 {
-    namespace fs = std::experimental::filesystem;
+    namespace fs = std::filesystem;
 
     sdbusplus::message::object_path o;
     msg.read(o);

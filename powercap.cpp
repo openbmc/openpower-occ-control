@@ -21,7 +21,7 @@ constexpr auto POWER_CAP_PROP = "PowerCap";
 constexpr auto POWER_CAP_ENABLE_PROP = "PowerCapEnable";
 
 using namespace phosphor::logging;
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 uint32_t PowerCap::getOccInput(uint32_t pcap, bool pcapEnabled)
 {

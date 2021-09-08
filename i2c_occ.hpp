@@ -1,6 +1,6 @@
 #pragma once
 
-#include <experimental/filesystem>
+#include <filesystem>
 #include <vector>
 
 #ifdef I2C_OCC
@@ -8,7 +8,7 @@
 namespace i2c_occ
 {
 
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 /** @brief Get file content
  *

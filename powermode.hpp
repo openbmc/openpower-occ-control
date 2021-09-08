@@ -1,11 +1,10 @@
 #pragma once
 
-#ifdef POWER10
 #include "config.h"
 
 #include "occ_status.hpp"
 
-#include <experimental/filesystem>
+#include <filesystem>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/bus/match.hpp>
 
@@ -76,4 +75,3 @@ class PowerMode
 } // namespace occ
 
 } // namespace open_power
-#endif
