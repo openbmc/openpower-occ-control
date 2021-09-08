@@ -100,8 +100,8 @@ void Error::removeWatch()
 }
 
 // Callback handler when there is an activity on the FD
-int Error::processEvents(sd_event_source* es, int fd, uint32_t revents,
-                         void* userData)
+int Error::processEvents(sd_event_source* /*es*/, int /*fd*/,
+                         uint32_t /*revents*/, void* userData)
 {
     auto error = static_cast<Error*>(userData);
 

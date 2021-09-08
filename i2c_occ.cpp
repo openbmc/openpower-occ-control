@@ -11,7 +11,7 @@
 namespace i2c_occ
 {
 
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 // The occ_master sysfs file
 constexpr auto OCC_MASTER_FILE = "occ_master";
@@ -26,7 +26,7 @@ static_assert(sizeof(OCC_NAME) - 1 == OCC_NAME_LENGTH);
 
 static bool isMasterOcc(const fs::directory_entry& p)
 {
-    auto f = p / OCC_MASTER_FILE;
+    auto f = p / fs::path{OCC_MASTER_FILE};
     auto str = getFileContent(f);
     return (!str.empty()) && (str[0] == '1');
 }
@@ -52,7 +52,7 @@ std::vector<std::string> getOccHwmonDevices(const char* path)
         for (auto& p : fs::directory_iterator(path))
         {
             // Check if a device's name is "p8-occ-hwmon"
-            auto f = p / "name";
+            auto f = p / fs::path{"name"};
             auto str = getFileContent(f);
             if (str == I2C_OCC_DEVICE_NAME)
             {

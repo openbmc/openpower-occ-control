@@ -156,8 +156,8 @@ void Interface::hostStateEvent(sdbusplus::message::message& msg)
 }
 
 void Interface::fetchOCCEffecterInfo(
-    const PdrList& pdrs, OccInstanceToEffecter& instanceToEffecterMap,
-    CompositeEffecterCount& count, uint8_t& bootRestartPos)
+    const PdrList& pdrs, OccInstanceToEffecter& /*instanceToEffecterMap*/,
+    CompositeEffecterCount& /*count*/, uint8_t& bootRestartPos)
 {
     bool offsetFound = false;
     auto pdr =

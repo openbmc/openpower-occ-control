@@ -16,7 +16,7 @@ using namespace sdbusplus::org::open_power::OCC::Device::Error;
 using InternalFailure =
     sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure;
 
-int main(int argc, char* argv[])
+int main()
 {
     auto& bus = open_power::occ::utils::getBus();
 
