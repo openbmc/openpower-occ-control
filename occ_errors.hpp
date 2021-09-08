@@ -41,7 +41,7 @@ class Error
         // Nothing to do here.
     }
 
-    ~Error()
+    virtual ~Error()
     {
         if (fd >= 0)
         {
