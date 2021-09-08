@@ -1,0 +1,53 @@
+option(
+    'tests',
+    type : 'feature',
+    description : 'Build tests'
+)
+
+option(
+    'install-error-yaml',
+    type : 'feature',
+    description : 'Enable installing error yaml file',
+    value: 'disabled'
+)
+
+option(
+    'i2c-occ',
+    type : 'feature',
+    description : 'Enable I2C OCC support',
+    value: 'disabled'
+)
+
+option(
+    'read-occ-sensors',
+    type : 'feature',
+    description : 'Enable read occ sensors support',
+    value: 'disabled'
+)
+
+option(
+    'max-cpus',
+    type : 'integer',
+    min:0, max:255,
+    description : 'Maximum number of CPUs',
+    value: 2
+)
+
+option(
+    'with-host-communication-protocol',
+    type : 'string',
+    description : 'To specify the host communication protocol'
+)
+
+option(
+    'power10-support',
+    type : 'feature',
+    description : 'Enable Power10 support',
+    value: 'disabled'
+)
+
+option(
+    'yamldir',
+    type : 'string',
+    description : 'The path to the yaml config files'
+)
