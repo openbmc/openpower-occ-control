@@ -1,9 +1,8 @@
-#include "occ_manager.hpp"
-
 #include <stdlib.h>
 
 #include <filesystem>
 #include <fstream>
+#include <occ_manager.hpp>
 
 #include <gtest/gtest.h>
 

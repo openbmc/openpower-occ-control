@@ -2,9 +2,6 @@
 
 #include <phosphor-logging/log.hpp>
 #include <powermode.hpp>
-#include <xyz/openbmc_project/Control/Power/Mode/server.hpp>
-
-#include <cassert>
 #include <regex>
 
 namespace open_power

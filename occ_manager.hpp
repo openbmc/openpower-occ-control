@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config.h"
+
 #include "occ_pass_through.hpp"
 #include "occ_status.hpp"
 #ifdef PLDM
