@@ -8,7 +8,7 @@
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/bus/match.hpp>
 
-#include <experimental/filesystem>
+#include <filesystem>
 
 namespace open_power
 {
@@ -99,8 +99,7 @@ class PowerCap
      *
      * @return std::string - The filename, or empty string if not found.
      */
-    std::string
-        getPcapFilename(const std::experimental::filesystem::path& path);
+    std::string getPcapFilename(const std::filesystem::path& path);
 
     /** @brief The master occ name */
     std::string occMasterName;

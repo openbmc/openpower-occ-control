@@ -12,7 +12,7 @@
 
 #include <chrono>
 #include <cmath>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <regex>
 
 namespace open_power
@@ -112,7 +112,7 @@ std::vector<int> Manager::findOCCsInDev()
 
 int Manager::cpuCreated(sdbusplus::message::message& msg)
 {
-    namespace fs = std::experimental::filesystem;
+    namespace fs = std::filesystem;
 
     sdbusplus::message::object_path o;
     msg.read(o);
