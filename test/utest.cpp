@@ -1,9 +1,10 @@
 #include "powercap.hpp"
 #include "utils.hpp"
 
-#include <experimental/filesystem>
 #include <occ_events.hpp>
 #include <occ_manager.hpp>
+
+#include <experimental/filesystem>
 
 #include <gtest/gtest.h>
 
@@ -21,8 +22,7 @@ class VerifyOccInput : public ::testing::Test
         event = nullptr;
     }
     ~VerifyOccInput()
-    {
-    }
+    {}
 
     sd_event* event;
     int rc;

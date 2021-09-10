@@ -69,8 +69,7 @@ class Interface
                                           "xyz.openbmc_project.State.Host"),
             std::bind(std::mem_fn(&Interface::hostStateEvent), this,
                       std::placeholders::_1))
-    {
-    }
+    {}
 
     /** @brief Fetch the OCC state sensor PDRs and populate the cache with
      *         sensorId to OCC instance mapping information and the sensor

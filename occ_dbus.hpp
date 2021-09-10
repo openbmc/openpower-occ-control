@@ -26,8 +26,7 @@ class OccDBusSensors
 {
   private:
     OccDBusSensors()
-    {
-    }
+    {}
 
   public:
     OccDBusSensors(const OccDBusSensors&) = delete;

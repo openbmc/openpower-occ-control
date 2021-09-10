@@ -2,8 +2,9 @@
 
 #include <phosphor-logging/elog-errors.hpp>
 #include <sdbusplus/bus.hpp>
-#include <string>
 #include <xyz/openbmc_project/Common/error.hpp>
+
+#include <string>
 namespace open_power
 {
 namespace occ

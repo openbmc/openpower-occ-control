@@ -6,6 +6,7 @@
 #include <org/open_power/OCC/PassThrough/server.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
+
 #include <string>
 
 namespace open_power

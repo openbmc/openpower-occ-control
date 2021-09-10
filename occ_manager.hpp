@@ -11,11 +11,12 @@
 #include "powermode.hpp"
 #endif
 
-#include <cstring>
-#include <functional>
 #include <sdbusplus/bus.hpp>
 #include <sdeventplus/event.hpp>
 #include <sdeventplus/utility/timer.hpp>
+
+#include <cstring>
+#include <functional>
 #include <vector>
 
 namespace sdbusRule = sdbusplus::bus::match::rules;

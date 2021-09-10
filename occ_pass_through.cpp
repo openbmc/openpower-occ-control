@@ -9,11 +9,12 @@
 #include <fmt/core.h>
 #include <unistd.h>
 
-#include <algorithm>
-#include <memory>
 #include <org/open_power/OCC/Device/error.hpp>
 #include <phosphor-logging/elog.hpp>
 #include <phosphor-logging/log.hpp>
+
+#include <algorithm>
+#include <memory>
 #include <string>
 
 namespace open_power
@@ -73,10 +74,10 @@ std::vector<uint8_t> PassThrough::send(std::vector<uint8_t> command)
     {
         if (response.size() >= 5)
         {
-            log<level::DEBUG>(fmt::format("PassThrough::send() "
-                                          "response had {} bytes",
-                                          response.size())
-                                  .c_str());
+            log<level::DEBUG>(
+                fmt::format("PassThrough::send() response had {} bytes",
+                            response.size())
+                    .c_str());
         }
         else
         {

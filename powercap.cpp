@@ -1,6 +1,7 @@
-#include <cassert>
 #include <phosphor-logging/log.hpp>
 #include <powercap.hpp>
+
+#include <cassert>
 #include <regex>
 
 namespace open_power
