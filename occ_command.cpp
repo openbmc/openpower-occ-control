@@ -9,11 +9,12 @@
 #include <fmt/core.h>
 #include <unistd.h>
 
-#include <algorithm>
-#include <memory>
 #include <org/open_power/OCC/Device/error.hpp>
 #include <phosphor-logging/elog.hpp>
 #include <phosphor-logging/log.hpp>
+
+#include <algorithm>
+#include <memory>
 #include <string>
 
 //#define TRACE_PACKETS

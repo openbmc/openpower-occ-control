@@ -280,10 +280,11 @@ void Status::occsWentActive()
     status = sendModeChange();
     if (status != CmdStatus::SUCCESS)
     {
-        log<level::ERR>(fmt::format("Status::occsWentActive: OCC mode "
-                                    "change failed with status {}",
-                                    status)
-                            .c_str());
+        log<level::ERR>(
+            fmt::format(
+                "Status::occsWentActive: OCC mode change failed with status {}",
+                status)
+                .c_str());
     }
 
     status = sendIpsData();
@@ -291,8 +292,7 @@ void Status::occsWentActive()
     {
         log<level::ERR>(
             fmt::format(
-                "Status::occsWentActive: Sending Idle Power Save Config data"
-                " failed with status {}",
+                "Status::occsWentActive: Sending Idle Power Save Config data failed with status {}",
                 status)
                 .c_str());
     }
@@ -306,17 +306,17 @@ CmdStatus Status::sendModeChange()
     if (!device.master())
     {
         log<level::ERR>(
-            fmt::format("Status::sendModeChange: MODE CHANGE does not "
-                        "get sent to slave OCC{}",
-                        instance)
+            fmt::format(
+                "Status::sendModeChange: MODE CHANGE does not get sent to slave OCC{}",
+                instance)
                 .c_str());
         return status;
     }
     if (!isPowerVM())
     {
         // Mode change is only supported on PowerVM systems
-        log<level::DEBUG>("Status::sendModeChange: MODE CHANGE does not "
-                          "get sent on non-PowerVM systems");
+        log<level::DEBUG>(
+            "Status::sendModeChange: MODE CHANGE does not get sent on non-PowerVM systems");
         return CmdStatus::SUCCESS;
     }
 
@@ -334,10 +334,11 @@ CmdStatus Status::sendModeChange()
         cmd.push_back(0x00); // Mode Data (Freq Point)
         cmd.push_back(0x00); //
         cmd.push_back(0x00); // reserved
-        log<level::INFO>(fmt::format("Status::sendModeChange: SET_MODE({}) "
-                                     "command to OCC{} ({} bytes)",
-                                     newMode, instance, cmd.size())
-                             .c_str());
+        log<level::INFO>(
+            fmt::format(
+                "Status::sendModeChange: SET_MODE({}) command to OCC{} ({} bytes)",
+                newMode, instance, cmd.size())
+                .c_str());
         status = occCmd.send(cmd, rsp);
         if (status == CmdStatus::SUCCESS)
         {
@@ -345,15 +346,15 @@ CmdStatus Status::sendModeChange()
             {
                 if (RspStatus::SUCCESS == RspStatus(rsp[2]))
                 {
-                    log<level::DEBUG>("Status::sendModeChange: - Mode change "
-                                      "completed successfully");
+                    log<level::DEBUG>(
+                        "Status::sendModeChange: - Mode change completed successfully");
                 }
                 else
                 {
                     log<level::ERR>(
-                        fmt::format("Status::sendModeChange: SET MODE "
-                                    "failed with status 0x{:02X}",
-                                    rsp[2])
+                        fmt::format(
+                            "Status::sendModeChange: SET MODE failed with status 0x{:02X}",
+                            rsp[2])
                             .c_str());
                 }
             }
@@ -397,17 +398,17 @@ CmdStatus Status::sendIpsData()
     if (!device.master())
     {
         log<level::ERR>(
-            fmt::format("Status::sendIpsData: SET_CFG_DATA[IPS] does not "
-                        "get sent to slave OCC{}",
-                        instance)
+            fmt::format(
+                "Status::sendIpsData: SET_CFG_DATA[IPS] does not get sent to slave OCC{}",
+                instance)
                 .c_str());
         return status;
     }
     if (!isPowerVM())
     {
         // Idle Power Saver data is only supported on PowerVM systems
-        log<level::DEBUG>("Status::sendIpsData: SET_CFG_DATA[IPS] does not "
-                          "get sent on non-PowerVM systems");
+        log<level::DEBUG>(
+            "Status::sendIpsData: SET_CFG_DATA[IPS] does not get sent on non-PowerVM systems");
         return CmdStatus::SUCCESS;
     }
 
@@ -425,10 +426,11 @@ CmdStatus Status::sendIpsData()
     cmd.push_back(0x00); // Exit Delay Time (10s)
     cmd.push_back(0x0A); //
     cmd.push_back(0x0C); // Exit Utilization (12%)
-    log<level::INFO>(fmt::format("Status::sendIpsData: SET_CFG_DATA[IPS] "
-                                 "command to OCC{} ({} bytes)",
-                                 instance, cmd.size())
-                         .c_str());
+    log<level::INFO>(
+        fmt::format(
+            "Status::sendIpsData: SET_CFG_DATA[IPS] command to OCC{} ({} bytes)",
+            instance, cmd.size())
+            .c_str());
     status = occCmd.send(cmd, rsp);
     if (status == CmdStatus::SUCCESS)
     {
@@ -436,15 +438,15 @@ CmdStatus Status::sendIpsData()
         {
             if (RspStatus::SUCCESS == RspStatus(rsp[2]))
             {
-                log<level::DEBUG>("Status::sendIpsData: - SET_CFG_DATA[IPS] "
-                                  "completed successfully");
+                log<level::DEBUG>(
+                    "Status::sendIpsData: - SET_CFG_DATA[IPS] completed successfully");
             }
             else
             {
                 log<level::ERR>(
-                    fmt::format("Status::sendIpsData: SET_CFG_DATA[IPS] "
-                                "failed with status 0x{:02X}",
-                                rsp[2])
+                    fmt::format(
+                        "Status::sendIpsData: SET_CFG_DATA[IPS] failed with status 0x{:02X}",
+                        rsp[2])
                         .c_str());
             }
         }

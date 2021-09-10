@@ -42,8 +42,8 @@ void Interface::fetchOCCSensorInfo(const PdrList& pdrs,
 
     if (!offsetFound)
     {
-        log<level::ERR>("pldm: OCC state sensor PDR with StateSetId "
-                        "PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS not found");
+        log<level::ERR>(
+            "pldm: OCC state sensor PDR with StateSetId PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS not found");
         return;
     }
 

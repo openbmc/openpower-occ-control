@@ -1,7 +1,8 @@
 #pragma once
 
-#include <optional>
 #include <sdbusplus/bus.hpp>
+
+#include <optional>
 #include <string>
 #include <tuple>
 

@@ -2,8 +2,9 @@
 
 #include "utils.hpp"
 
-#include <iostream>
 #include <phosphor-logging/log.hpp>
+
+#include <iostream>
 
 namespace open_power
 {
