@@ -11,7 +11,7 @@
 #include <xyz/openbmc_project/Common/error.hpp>
 
 #include <cmath>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <regex>
 
 namespace open_power
@@ -61,7 +61,7 @@ void Manager::findAndCreateObjects()
 
 int Manager::cpuCreated(sdbusplus::message::message& msg)
 {
-    namespace fs = std::experimental::filesystem;
+    namespace fs = std::filesystem;
 
     sdbusplus::message::object_path o;
     msg.read(o);
