@@ -17,7 +17,7 @@ constexpr auto legacyDevice = "occ-hwmon.2";
 constexpr auto legacyErrorTemp = "occ_dvfs_ot";
 constexpr auto noError = "0";
 
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 using namespace open_power::occ;
 
 class ErrorFiles : public ::testing::Test
