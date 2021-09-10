@@ -5,6 +5,7 @@
 #include <phosphor-logging/elog.hpp>
 #include <phosphor-logging/log.hpp>
 #include <sdbusplus/exception.hpp>
+
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -375,9 +376,7 @@ namespace Control
 namespace Host
 {
 namespace _CommandNotSupported
-{
-
-} // namespace _CommandNotSupported
+{} // namespace _CommandNotSupported
 
 struct CommandNotSupported
 {
@@ -452,9 +451,7 @@ namespace openbmc_project
 namespace Common
 {
 namespace _InternalFailure
-{
-
-} // namespace _InternalFailure
+{} // namespace _InternalFailure
 
 struct InternalFailure
 {
@@ -1122,9 +1119,7 @@ namespace State
 namespace Host
 {
 namespace _SoftOffTimeout
-{
-
-} // namespace _SoftOffTimeout
+{} // namespace _SoftOffTimeout
 
 struct SoftOffTimeout
 {
@@ -1160,9 +1155,7 @@ namespace Control
 namespace Device
 {
 namespace _WriteFailure
-{
-
-} // namespace _WriteFailure
+{} // namespace _WriteFailure
 
 struct WriteFailure
 {
@@ -1200,9 +1193,7 @@ namespace OCC
 namespace Device
 {
 namespace _OpenFailure
-{
-
-} // namespace _OpenFailure
+{} // namespace _OpenFailure
 
 struct OpenFailure
 {
@@ -1240,9 +1231,7 @@ namespace OCC
 namespace Device
 {
 namespace _ReadFailure
-{
-
-} // namespace _ReadFailure
+{} // namespace _ReadFailure
 
 struct ReadFailure
 {
@@ -1280,9 +1269,7 @@ namespace OCC
 namespace Device
 {
 namespace _WriteFailure
-{
-
-} // namespace _WriteFailure
+{} // namespace _WriteFailure
 
 struct WriteFailure
 {
@@ -1320,9 +1307,7 @@ namespace OCC
 namespace Device
 {
 namespace _ConfigFailure
-{
-
-} // namespace _ConfigFailure
+{} // namespace _ConfigFailure
 
 struct ConfigFailure
 {
@@ -1360,9 +1345,7 @@ namespace Sensor
 namespace Device
 {
 namespace _ReadFailure
-{
-
-} // namespace _ReadFailure
+{} // namespace _ReadFailure
 
 struct ReadFailure
 {

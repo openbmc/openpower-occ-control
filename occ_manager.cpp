@@ -6,12 +6,13 @@
 #include "occ_dbus.hpp"
 #include "utils.hpp"
 
-#include <cmath>
-#include <experimental/filesystem>
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/log.hpp>
-#include <regex>
 #include <xyz/openbmc_project/Common/error.hpp>
+
+#include <cmath>
+#include <experimental/filesystem>
+#include <regex>
 
 namespace open_power
 {
@@ -136,10 +137,11 @@ void Manager::statusCallBack(bool status)
 
     if ((!_pollTimer->isEnabled()) && (activeCount > 0))
     {
-        log<level::INFO>(fmt::format("Manager::statusCallBack(): {} OCCs will "
-                                     "be polled every {} seconds",
-                                     activeCount, pollInterval)
-                             .c_str());
+        log<level::INFO>(
+            fmt::format(
+                "Manager::statusCallBack(): {} OCCs will be polled every {} seconds",
+                activeCount, pollInterval)
+                .c_str());
 
         // Send poll and start OCC poll timer
         pollerTimerExpired();
@@ -147,8 +149,8 @@ void Manager::statusCallBack(bool status)
     else if ((_pollTimer->isEnabled()) && (activeCount == 0))
     {
         // Stop OCC poll timer
-        log<level::INFO>("Manager::statusCallBack(): OCCs are not running, "
-                         "stopping poll timer");
+        log<level::INFO>(
+            "Manager::statusCallBack(): OCCs are not running, stopping poll timer");
         _pollTimer->setEnabled(false);
 
 #ifdef READ_OCC_SENSORS
@@ -198,8 +200,8 @@ void Manager::pollerTimerExpired()
     if (activeCount == 0)
     {
         // No OCCs running, so poll timer will not be restarted
-        log<level::INFO>("Manager::pollerTimerExpire(): No OCCs running, poll "
-                         "timer not restarted");
+        log<level::INFO>(
+            "Manager::pollerTimerExpire(): No OCCs running, poll timer not restarted");
     }
 
     if (!_pollTimer)
@@ -298,10 +300,11 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
                 auto iter = dimmTempSensorName.find(fruTypeValue);
                 if (iter == dimmTempSensorName.end())
                 {
-                    log<level::ERR>(fmt::format("readTempSensors: Fru type "
-                                                "error! fruTypeValue = {}) ",
-                                                fruTypeValue)
-                                        .c_str());
+                    log<level::ERR>(
+                        fmt::format(
+                            "readTempSensors: Fru type error! fruTypeValue = {}) ",
+                            fruTypeValue)
+                            .c_str());
                     continue;
                 }
 

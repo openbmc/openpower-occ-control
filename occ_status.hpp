@@ -6,11 +6,12 @@
 #include "occ_events.hpp"
 #include "utils.hpp"
 
-#include <functional>
 #include <org/open_power/Control/Host/server.hpp>
 #include <org/open_power/OCC/Status/server.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
+
+#include <functional>
 
 namespace open_power
 {

@@ -6,9 +6,10 @@
 #include "occ_events.hpp"
 #include "occ_presence.hpp"
 
+#include <org/open_power/OCC/Device/error.hpp>
+
 #include <experimental/filesystem>
 #include <fstream>
-#include <org/open_power/OCC/Device/error.hpp>
 
 namespace open_power
 {
