@@ -370,8 +370,14 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
                     continue;
                 }
 
+                // The OCC reports small core temps, of which there are
+                // two per big core.  All current P10 systems are in big
+                // core mode, so use a big core name.
+                uint16_t coreNum = instanceID / 2;
+                uint16_t tempNum = instanceID % 2;
                 sensorPath.append("proc" + std::to_string(id) + "_core" +
-                                  std::to_string(instanceID) + "_temp");
+                                  std::to_string(coreNum) + "_" +
+                                  std::to_string(tempNum) + "_temp");
             }
             else
             {
