@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7193c547_f807b37a",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 378,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-09-20T13:59:08Z",
+      "side": 1,
+      "message": "Isn\u0027t this change just ignoring one of the cores?  Seems like we should be using the hotter of the two temperatures (read both and use highest).  Does it need to correlate the big core with specific little cores?  (not sure how to map them)",
+      "revId": "dd546699e59011ffef40539bd2ffeca525363c2c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    }
+  ]
+}
