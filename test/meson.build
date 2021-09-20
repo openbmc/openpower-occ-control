@@ -26,6 +26,7 @@ test_sources = [
   '../occ_status.cpp',
   '../occ_device.cpp',
   '../occ_errors.cpp',
+  '../occ_ffdc.cpp',
   '../occ_presence.cpp',
   '../occ_command.cpp',
   '../occ_dbus.cpp',

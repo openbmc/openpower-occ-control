@@ -86,7 +86,7 @@ class Status : public Interface
                fs::path(DEV_PATH) /
                    fs::path(sysfsName + "." + std::to_string(instance + 1)),
 #endif
-               manager, *this,
+               manager, *this, instance,
                std::bind(std::mem_fn(&Status::deviceErrorHandler), this,
                          std::placeholders::_1)),
         hostControlSignal(
