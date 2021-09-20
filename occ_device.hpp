@@ -4,6 +4,7 @@
 
 #include "occ_errors.hpp"
 #include "occ_events.hpp"
+#include "occ_ffdc.hpp"
 #include "occ_presence.hpp"
 
 #include <org/open_power/OCC/Device/error.hpp>
@@ -39,13 +40,17 @@ class Device
      *  @param[in] event    - Unique ptr reference to sd_event
      *  @param[in] path     - Path to the OCC instance
      *  @param[in] manager  - OCC manager instance
+     *  @param[in] status   - Status instance
+     *  @param[in] instance - OCC instance number
      *  @param[in] callback - Optional callback on errors
      */
     Device(EventPtr& event, const fs::path& path, const Manager& manager,
-           Status& status, std::function<void(bool)> callBack = nullptr) :
+           Status& status, unsigned int instance = 0,
+           std::function<void(bool)> callBack = nullptr) :
         config(getPathBack(path)),
         devPath(path), statusObject(status),
         error(event, path / "occ_error", callBack),
+        ffdc(event, path / "ffdc", instance),
         presence(event, path / "occs_present", manager, callBack),
         throttleProcTemp(
             event, path / "occ_dvfs_overtemp",
@@ -111,6 +116,16 @@ class Device
 
         throttleProcPower.addWatch(poll);
         throttleMemTemp.addWatch(poll);
+
+        try
+        {
+            ffdc.addWatch(poll);
+        }
+        catch (const OpenFailure& e)
+        {
+            // nothing to do if there is no FFDC file
+        }
+
         error.addWatch(poll);
     }
 
@@ -119,6 +134,7 @@ class Device
     {
         // we can always safely remove watch even if we don't add it
         presence.removeWatch();
+        ffdc.removeWatch();
         error.removeWatch();
         throttleMemTemp.removeWatch();
         throttleProcPower.removeWatch();
@@ -167,6 +183,9 @@ class Device
 
     /** Abstraction of error monitoring */
     Error error;
+
+    /** SBE FFDC monitoring */
+    FFDC ffdc;
 
     /** Abstraction of OCC presence monitoring */
     Presence presence;
