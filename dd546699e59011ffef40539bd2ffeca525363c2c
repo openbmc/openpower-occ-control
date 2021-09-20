@@ -16,6 +16,24 @@
       "revId": "dd546699e59011ffef40539bd2ffeca525363c2c",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d51dc85b_f95607e9",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 378,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-09-20T14:20:44Z",
+      "side": 1,
+      "message": "It still does both.  Say the instance ID is 5, then we get\ncoreNum \u003d 5 / 2 \u003d 2\ntempNum \u003d 5 % 2 \u003d 1\n\nso that would give proc_0_core_2_1_temp.  I\u0027m pretty sure that is the correct mapping, though I guess I should confirm.\n\nThe commit message shows more examples.\n\nI guess if we do just want the  max it might simplify users, I can ask around.",
+      "parentUuid": "7193c547_f807b37a",
+      "revId": "dd546699e59011ffef40539bd2ffeca525363c2c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
     }
   ]
 }
