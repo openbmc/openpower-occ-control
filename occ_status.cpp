@@ -172,11 +172,6 @@ void Status::readOccState()
         fs::path(DEV_PATH) /
         fs::path(sysfsName + "." + std::to_string(instance + 1)) / "occ_state";
 
-    log<level::DEBUG>(
-        fmt::format("Status::readOccState: reading OCC{} state from {}",
-                    instance, filename.c_str())
-            .c_str());
-
     std::ifstream file(filename, std::ios::in);
     const int open_errno = errno;
     if (file)
@@ -270,6 +265,110 @@ SysPwrMode Status::getMode()
         fmt::format("Status::getMode returning {}", pmode).c_str());
 
     return pmode;
+}
+
+// Get the requested power mode
+bool Status::getIPSParms(uint8_t& enterUtil, uint16_t& enterTime,
+                         uint8_t& exitUtil, uint16_t& exitTime)
+{
+    using namespace open_power::occ::powermode;
+    bool ipsEnabled = false; // Default Disabled
+
+    // Get all IPS properties from DBus
+    auto& bus = utils::getBus();
+    auto service = utils::getService(PIPS_PATH, PIPS_INTERFACE);
+    auto method =
+        bus.new_method_call(service.c_str(), PIPS_PATH,
+                            "org.freedesktop.DBus.Properties", "GetAll");
+    method.append(PIPS_INTERFACE);
+    auto reply = bus.call(method);
+    std::map<std::string, std::variant<bool, uint8_t, uint64_t>>
+        ipsProperties{};
+    reply.read(ipsProperties);
+
+    auto ipsEntry = ipsProperties.find(IPS_ENABLED_PROP);
+    if (ipsEntry != ipsProperties.end())
+    {
+        ipsEnabled = std::get<bool>(ipsEntry->second);
+    }
+    else
+    {
+        log<level::ERR>(
+            fmt::format("Status::getIPSParms could not find property: {}",
+                        IPS_ENABLED_PROP)
+                .c_str());
+    }
+
+    ipsEntry = ipsProperties.find(IPS_ENTER_UTIL);
+    if (ipsEntry != ipsProperties.end())
+    {
+        enterUtil = std::get<uint8_t>(ipsEntry->second);
+    }
+    else
+    {
+        log<level::ERR>(
+            fmt::format("Status::getIPSParms could not find property: {}",
+                        IPS_ENTER_UTIL)
+                .c_str());
+        enterUtil = 8; // Default Enter Utilization (8%)
+    }
+
+    ipsEntry = ipsProperties.find("abc123"); // IPS_ENTER_TIME);
+    if (ipsEntry != ipsProperties.end())
+    {
+        std::chrono::milliseconds ms(std::get<uint64_t>(ipsEntry->second));
+        enterTime =
+            std::chrono::duration_cast<std::chrono::seconds>(ms).count();
+    }
+    else
+    {
+        log<level::ERR>(
+            fmt::format("Status::getIPSParms could not find property: {}",
+                        IPS_ENTER_TIME)
+                .c_str());
+        enterTime = 240; // Default Enter Delay Time (240s)
+    }
+
+    ipsEntry = ipsProperties.find(IPS_EXIT_UTIL);
+    if (ipsEntry != ipsProperties.end())
+    {
+        exitUtil = std::get<uint8_t>(ipsEntry->second);
+    }
+    else
+    {
+        log<level::ERR>(
+            fmt::format("Status::getIPSParms could not find property: {}",
+                        IPS_EXIT_UTIL)
+                .c_str());
+        exitUtil = 12; // Default Exit Utilization (12%)
+    }
+
+    ipsEntry = ipsProperties.find(IPS_EXIT_TIME);
+    if (ipsEntry != ipsProperties.end())
+    {
+        std::chrono::milliseconds ms(std::get<uint64_t>(ipsEntry->second));
+        exitTime = std::chrono::duration_cast<std::chrono::seconds>(ms).count();
+    }
+    else
+    {
+        log<level::ERR>(
+            fmt::format("Status::getIPSParms could not find property: {}",
+                        IPS_EXIT_TIME)
+                .c_str());
+        exitTime = 10; // Default Exit Delay Time (10s)
+    }
+
+    if (enterUtil > exitUtil)
+    {
+        log<level::ERR>(
+            fmt::format(
+                "ERROR: Idle Power Saver Enter Utilization ({}%) is > Exit Utilization ({}%) - using Exit for both",
+                enterUtil, exitUtil)
+                .c_str());
+        enterUtil = exitUtil;
+    }
+
+    return ipsEnabled;
 }
 
 // Special processing that needs to happen once the OCCs change to ACTIVE state
@@ -412,25 +511,35 @@ CmdStatus Status::sendIpsData()
         return CmdStatus::SUCCESS;
     }
 
+    uint8_t enterUtil, exitUtil;
+    uint16_t enterTime, exitTime;
+    const bool ipsEnabled =
+        getIPSParms(enterUtil, enterTime, exitUtil, exitTime);
+
+    log<level::INFO>(
+        fmt::format(
+            "Status::sendIpsData: enabled={}, enter {}%/{}s, exit {}%/{}s",
+            ipsEnabled, enterUtil, enterTime, exitUtil, exitTime)
+            .c_str());
+
     std::vector<std::uint8_t> cmd, rsp;
     cmd.push_back(uint8_t(CmdType::SET_CONFIG_DATA));
     cmd.push_back(0x00); // Data Length (2 bytes)
     cmd.push_back(0x09);
     // Data:
-    cmd.push_back(0x11); // Config Format: IPS Settings
-    cmd.push_back(0x00); // Version
-    cmd.push_back(0x00); // IPS Enable: disabled
-    cmd.push_back(0x00); // Enter Delay Time (240s)
-    cmd.push_back(0xF0); //
-    cmd.push_back(0x08); // Enter Utilization (8%)
-    cmd.push_back(0x00); // Exit Delay Time (10s)
-    cmd.push_back(0x0A); //
-    cmd.push_back(0x0C); // Exit Utilization (12%)
-    log<level::INFO>(
-        fmt::format(
-            "Status::sendIpsData: SET_CFG_DATA[IPS] command to OCC{} ({} bytes)",
-            instance, cmd.size())
-            .c_str());
+    cmd.push_back(0x11);               // Config Format: IPS Settings
+    cmd.push_back(0x00);               // Version
+    cmd.push_back(ipsEnabled ? 1 : 0); // IPS Enable
+    cmd.push_back(enterTime >> 8);     // Enter Delay Time (240s)
+    cmd.push_back(enterTime & 0xFF);   //
+    cmd.push_back(enterUtil);          // Enter Utilization (8%)
+    cmd.push_back(exitTime >> 8);      // Exit Delay Time (10s)
+    cmd.push_back(exitTime & 0xFF);
+    cmd.push_back(exitUtil); // Exit Utilization (12%)
+    log<level::INFO>(fmt::format("Status::sendIpsData: SET_CFG_DATA[IPS] "
+                                 "command to OCC{} ({} bytes)",
+                                 instance, cmd.size())
+                         .c_str());
     status = occCmd.send(cmd, rsp);
     if (status == CmdStatus::SUCCESS)
     {
@@ -438,7 +547,7 @@ CmdStatus Status::sendIpsData()
         {
             if (RspStatus::SUCCESS == RspStatus(rsp[2]))
             {
-                log<level::DEBUG>(
+                log<level::INFO>(
                     "Status::sendIpsData: - SET_CFG_DATA[IPS] completed successfully");
             }
             else

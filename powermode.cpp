@@ -81,6 +81,80 @@ SysPwrMode convertStringToMode(const std::string& i_modeString)
     return pmode;
 }
 
+void PowerIPS::ipsChanged(sdbusplus::message::message& msg)
+{
+    if (!occStatus.occActive())
+    {
+        // Nothing to  do
+        log<level::INFO>("ipsChanged (nothing to do)");
+        return;
+    }
+
+    bool parmsChanged = false;
+    std::string interface;
+    std::map<std::string, std::variant<bool, uint8_t, uint64_t>>
+        ipsProperties{};
+    msg.read(interface, ipsProperties);
+
+    auto ipsEntry = ipsProperties.find(IPS_ENABLED_PROP);
+    if (ipsEntry != ipsProperties.end())
+    {
+        const auto ipsEnabled = std::get<bool>(ipsEntry->second);
+        log<level::INFO>(fmt::format("Idle Power Saver change: {}, {}",
+                                     ipsEnabled ? "Enabled" : "Disabled")
+                             .c_str());
+        parmsChanged = true;
+    }
+    ipsEntry = ipsProperties.find(IPS_ENTER_UTIL);
+    if (ipsEntry != ipsProperties.end())
+    {
+        const auto enterUtil = std::get<uint8_t>(ipsEntry->second);
+        log<level::INFO>(
+            fmt::format("Idle Power Saver change: Enter Util={}%", enterUtil)
+                .c_str());
+        parmsChanged = true;
+    }
+    ipsEntry = ipsProperties.find(IPS_ENTER_TIME);
+    if (ipsEntry != ipsProperties.end())
+    {
+        std::chrono::milliseconds ms(std::get<uint64_t>(ipsEntry->second));
+        const auto enterTime =
+            std::chrono::duration_cast<std::chrono::seconds>(ms).count();
+        log<level::INFO>(
+            fmt::format("Idle Power Saver change: Enter Time={}sec", enterTime)
+                .c_str());
+        parmsChanged = true;
+    }
+    ipsEntry = ipsProperties.find(IPS_EXIT_UTIL);
+    if (ipsEntry != ipsProperties.end())
+    {
+        const auto exitUtil = std::get<uint8_t>(ipsEntry->second);
+        log<level::INFO>(
+            fmt::format("Idle Power Saver change: Exit Util={}%", exitUtil)
+                .c_str());
+        parmsChanged = true;
+    }
+    ipsEntry = ipsProperties.find(IPS_EXIT_TIME);
+    if (ipsEntry != ipsProperties.end())
+    {
+        std::chrono::milliseconds ms(std::get<uint64_t>(ipsEntry->second));
+        const auto exitTime =
+            std::chrono::duration_cast<std::chrono::seconds>(ms).count();
+        log<level::INFO>(
+            fmt::format("Idle Power Saver change: Exit Time={}sec", exitTime)
+                .c_str());
+        parmsChanged = true;
+    }
+
+    if (parmsChanged)
+    {
+        // Trigger mode change to OCC
+        occStatus.sendIpsData();
+    }
+
+    return;
+}
+
 } // namespace powermode
 
 } // namespace occ
