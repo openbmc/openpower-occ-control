@@ -272,6 +272,36 @@ SysPwrMode Status::getMode()
     return pmode;
 }
 
+// Get the requested power mode
+bool Status::getIPSParms(uint8_t& enterUtil, uint16_t& enterTime,
+                         uint8_t& exitUtil, uint16_t& exitTime)
+{
+    using namespace open_power::occ::powermode;
+
+    // Defaults:
+    bool ipsEnabled = false; // Disabled
+    enterTime = 240;         // Enter Delay Time (240s)
+    exitTime = 10;           // Exit Delay Time (10s)
+    enterUtil = 8;           // Enter Utilization (8%)
+    exitUtil = 12;           // Exit Utilization (12%)
+
+    // This will throw exception on failure
+    auto& bus = utils::getBus();
+    auto service = utils::getService(PIPS_PATH, PIPS_INTERFACE);
+    auto method = bus.new_method_call(service.c_str(), PIPS_PATH,
+                                      "org.freedesktop.DBus.Properties", "Get");
+    method.append(PIPS_INTERFACE, IPS_ENABLED_PROP);
+    auto reply = bus.call(method);
+    reply.read(ipsEnabled);
+
+    // TODO: read remaining parameters
+
+    log<level::DEBUG>(
+        fmt::format("Status::getIPSParms returning {}", ipsEnabled).c_str());
+
+    return ipsEnabled;
+}
+
 // Special processing that needs to happen once the OCCs change to ACTIVE state
 void Status::occsWentActive()
 {
@@ -411,20 +441,25 @@ CmdStatus Status::sendIpsData()
         return CmdStatus::SUCCESS;
     }
 
+    uint8_t enterUtil, exitUtil;
+    uint16_t enterTime, exitTime;
+    const bool ipsEnabled =
+        getIPSParms(enterUtil, enterTime, exitUtil, exitTime);
+
     std::vector<std::uint8_t> cmd, rsp;
     cmd.push_back(uint8_t(CmdType::SET_CONFIG_DATA));
     cmd.push_back(0x00); // Data Length (2 bytes)
     cmd.push_back(0x09);
     // Data:
-    cmd.push_back(0x11); // Config Format: IPS Settings
-    cmd.push_back(0x00); // Version
-    cmd.push_back(0x00); // IPS Enable: disabled
-    cmd.push_back(0x00); // Enter Delay Time (240s)
-    cmd.push_back(0xF0); //
-    cmd.push_back(0x08); // Enter Utilization (8%)
-    cmd.push_back(0x00); // Exit Delay Time (10s)
-    cmd.push_back(0x0A); //
-    cmd.push_back(0x0C); // Exit Utilization (12%)
+    cmd.push_back(0x11);               // Config Format: IPS Settings
+    cmd.push_back(0x00);               // Version
+    cmd.push_back(ipsEnabled ? 1 : 0); // IPS Enable
+    cmd.push_back(enterTime >> 8);     // Enter Delay Time (240s)
+    cmd.push_back(enterTime & 0xFF);   //
+    cmd.push_back(enterUtil);          // Enter Utilization (8%)
+    cmd.push_back(exitTime >> 8);      // Exit Delay Time (10s)
+    cmd.push_back(exitTime & 0xFF);
+    cmd.push_back(exitUtil); // Exit Utilization (12%)
     log<level::INFO>(fmt::format("Status::sendIpsData: SET_CFG_DATA[IPS] "
                                  "command to OCC{} ({} bytes)",
                                  instance, cmd.size())

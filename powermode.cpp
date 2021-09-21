@@ -80,6 +80,36 @@ SysPwrMode convertStringToMode(const std::string& i_modeString)
     return pmode;
 }
 
+void PowerIPS::ipsChanged(sdbusplus::message::message& msg)
+{
+    if (!occStatus.occActive())
+    {
+        // Nothing to  do
+        log<level::INFO>("ipsChanged (nothing to do)");
+        return;
+    }
+
+    std::map<std::string, bool> properties{};
+    std::string interface;
+    bool propVal;
+    msg.read(interface, properties);
+    const auto enabledEntry = properties.find(IPS_ENABLED_PROP);
+    if (enabledEntry != properties.end())
+    {
+        auto enabledEntryValue = enabledEntry->second;
+        propVal = enabledEntryValue;
+
+        log<level::INFO>(fmt::format("Idle Power Saver change Requested: {}, {}",
+                                     propVal ? "Enabled" : "Disabled", enabledEntryValue)
+                             .c_str());
+
+        // Trigger mode change to OCC
+        //occStatus.sendIpsData();
+    }
+
+    return;
+}
+
 } // namespace powermode
 
 } // namespace occ

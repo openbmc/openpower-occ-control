@@ -239,6 +239,12 @@ class Status : public Interface
      */
     SysPwrMode getMode();
 
+    /** @brief Get the Idle Power Saver properties
+     * @return true if IPS is enabled
+     */
+    bool getIPSParms(uint8_t& enterUtil, uint16_t& enterTime,
+                     uint8_t& exitUtil, uint16_t& exitTime);
+
     /** @brief Send Idle Power Saver config data to the master OCC
      *  @return SUCCESS on success
      */

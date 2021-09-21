@@ -20,6 +20,14 @@ constexpr auto PMODE_PATH = "/xyz/openbmc_project/control/host0/power_mode";
 constexpr auto PMODE_INTERFACE = "xyz.openbmc_project.Control.Power.Mode";
 constexpr auto POWER_MODE_PROP = "PowerMode";
 
+constexpr auto PIPS_PATH = "/xyz/openbmc_project/control/host0/power_ips";
+constexpr auto PIPS_INTERFACE = "xyz.openbmc_project.Control.Power.IdlePowerSaver";
+constexpr auto IPS_ENABLED_PROP = "Enabled";
+constexpr auto IPS_ENTER_UTIL = "EnterUtilizationPercent";
+constexpr auto IPS_ENTER_TIME = "EnterDwellTimeSeconds";
+constexpr auto IPS_EXIT_UTIL = "ExitUtilizationPercent";
+constexpr auto IPS_EXIT_TIME = "ExitDwellTimeSeconds";
+
 /** @brief Convert power mode string to OCC SysPwrMode value
  *
  * @param[in] i_modeString - power mode string
@@ -69,6 +77,41 @@ class PowerMode
 
     /** @brief Used to subscribe to dbus pmode property changes **/
     sdbusplus::bus::match_t pmodeMatch;
+};
+
+class PowerIPS
+{
+  public:
+    /** @brief PowerIPS object to inform occ of changes to IdlePowerSaver parms
+     *
+     * This object will monitor for changes to the Idle Power Saver settings.
+     * If a change is detected, and the occ is active, then this object will
+     * notify the OCC of the change.
+     *
+     * @param[in] occStatus - The occ status object
+     */
+    PowerIPS(Status& occStatus) :
+        occStatus(occStatus),
+        ipsMatch(utils::getBus(),
+                 sdbusplus::bus::match::rules::propertiesChanged(
+                     PMODE_PATH, PMODE_INTERFACE),
+                 [this](auto& msg) { this->ipsChanged(msg); }){};
+
+  private:
+    /** @brief Callback for pmode setting changes
+     *
+     * Process change and inform OCC
+     *
+     * @param[in]  msg       - Data associated with pmode change signal
+     *
+     */
+    void ipsChanged(sdbusplus::message::message& msg);
+
+    /* @brief OCC Status object */
+    Status& occStatus;
+
+    /** @brief Used to subscribe to dbus pmode property changes **/
+    sdbusplus::bus::match_t ipsMatch;
 };
 
 } // namespace powermode
