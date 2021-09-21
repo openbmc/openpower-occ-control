@@ -159,6 +159,12 @@ void Manager::createObjects(const std::string& occ)
         pmode = std::make_unique<open_power::occ::powermode::PowerMode>(
             *statusObjects.front());
     }
+    // Create the idle power saver monitor object for master occ (0)
+    if (!pips)
+    {
+        pips = std::make_unique<open_power::occ::powermode::PowerIPS>(
+            *statusObjects.front());
+    }
 #endif
 }
 
@@ -234,6 +240,8 @@ void Manager::initStatusObjects()
         *statusObjects.front(), occMasterName);
 #ifdef POWER10
     pmode = std::make_unique<open_power::occ::powermode::PowerMode>(
+        *statusObjects.front());
+    pips = std::make_unique<open_power::occ::powermode::PowerIPS>(
         *statusObjects.front());
 #endif
 }

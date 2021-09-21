@@ -171,6 +171,11 @@ class Status : public Interface
      *  @return SUCCESS on success
      */
     CmdStatus sendModeChange();
+
+    /** @brief Send Idle Power Saver config data to the master OCC
+     *  @return SUCCESS on success
+     */
+    CmdStatus sendIpsData();
 #endif // POWER10
 
   private:
@@ -241,10 +246,11 @@ class Status : public Interface
      */
     SysPwrMode getMode();
 
-    /** @brief Send Idle Power Saver config data to the master OCC
-     *  @return SUCCESS on success
+    /** @brief Get the Idle Power Saver properties
+     * @return true if IPS is enabled
      */
-    CmdStatus sendIpsData();
+    bool getIPSParms(uint8_t& enterUtil, uint16_t& enterTime, uint8_t& exitUtil,
+                     uint16_t& exitTime);
 #endif // POWER10
 
     /** @brief Override the sensor name with name from the definition.
