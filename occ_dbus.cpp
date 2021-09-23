@@ -2,6 +2,8 @@
 
 #include "utils.hpp"
 
+#include <fmt/core.h>
+
 #include <phosphor-logging/log.hpp>
 
 #include <iostream>
@@ -12,6 +14,12 @@ namespace occ
 {
 namespace dbus
 {
+
+using namespace phosphor::logging;
+using namespace std::string_literals;
+const auto defaultChassisPath =
+    "/xyz/openbmc_project/inventory/system/chassis"s;
+const auto chassisInterface = "xyz.openbmc_project.Inventory.Item.Chassis"s;
 
 using namespace phosphor::logging;
 bool OccDBusSensors::setMaxValue(const std::string& path, double value)
@@ -164,6 +172,72 @@ bool OccDBusSensors::getOperationalStatus(const std::string& path) const
     }
 
     throw std::invalid_argument("Failed to get OperationalStatus property.");
+}
+
+void OccDBusSensors::setChassisAssociation(const std::string& path)
+{
+    using AssociationsEntry = std::tuple<std::string, std::string, std::string>;
+    using AssociationsProperty = std::vector<AssociationsEntry>;
+    using PropVariant = sdbusplus::xyz::openbmc_project::Association::server::
+        Definitions::PropertiesVariant;
+
+    if (chassisAssociations.find(path) == chassisAssociations.end())
+    {
+        if (chassisPath.empty())
+        {
+            chassisPath = getChassisPath();
+        }
+        AssociationsProperty associations{
+            AssociationsEntry{"chassis", "all_sensors", chassisPath}};
+        PropVariant value{std::move(associations)};
+
+        std::map<std::string, PropVariant> properties;
+        properties.emplace("Associations", std::move(value));
+
+        chassisAssociations.emplace(
+            path, std::make_unique<AssociationIntf>(utils::getBus(),
+                                                    path.c_str(), properties));
+    }
+}
+
+std::string OccDBusSensors::getChassisPath()
+{
+    std::string chassisPath = defaultChassisPath;
+
+    try
+    {
+        auto paths = utils::getPaths(std::vector{chassisInterface});
+
+        // For now, support either 1 chassis, or multiple as long as one
+        // of them has the standard name, which we will use.  If this ever
+        // fails, then someone would have to figure out how to identify the
+        // chassis the OCCs are on.
+        if (paths.size() == 1)
+        {
+            chassisPath = paths[0];
+        }
+        else if (std::find(paths.begin(), paths.end(), defaultChassisPath) ==
+                 paths.end())
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "Could not find a chassis out of {} chassis objects",
+                    paths.size())
+                    .c_str());
+            // Can't throw an exception here, the sdeventplus timer
+            // just catches it.
+            abort();
+        }
+    }
+    catch (const std::exception& e)
+    {
+        log<level::ERR>(
+            fmt::format("Error looking up chassis objects: {}", e.what())
+                .c_str());
+        abort();
+    }
+
+    return chassisPath;
 }
 
 } // namespace dbus

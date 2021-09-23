@@ -399,6 +399,10 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
             continue;
         }
 
+        // At this point, the sensor will be created for sure.
+        open_power::occ::dbus::OccDBusSensors::getOccDBus()
+            .setChassisAssociation(sensorPath);
+
         if (faultValue != 0)
         {
             open_power::occ::dbus::OccDBusSensors::getOccDBus().setValue(
@@ -527,6 +531,9 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
 
         open_power::occ::dbus::OccDBusSensors::getOccDBus()
             .setOperationalStatus(sensorPath, true);
+
+        open_power::occ::dbus::OccDBusSensors::getOccDBus()
+            .setChassisAssociation(sensorPath);
 
         existingSensors[sensorPath] = id;
     }

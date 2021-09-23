@@ -54,6 +54,16 @@ const PropertyValue getProperty(const std::string& objectPath,
                                 const std::string& interface,
                                 const std::string& propertyName);
 
+/** @brief Get subtree paths
+ *
+ *  @param[in] interfaces       -   D-Bus interfaces
+ *
+ *  @return The D-Bus paths from the GetSubTree method
+ *
+ *  @throw sdbusplus::exception::exception when it fails
+ */
+std::vector<std::string> getPaths(const std::vector<std::string>& interfaces);
+
 } // namespace utils
 } // namespace occ
 } // namespace open_power
