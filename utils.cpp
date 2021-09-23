@@ -76,6 +76,20 @@ const PropertyValue getProperty(const std::string& objectPath,
     return value;
 }
 
+std::vector<std::string> getPaths(const std::vector<std::string>& interfaces)
+{
+    std::vector<std::string> paths;
+
+    auto& bus = getBus();
+    auto method = bus.new_method_call(MAPPER_BUSNAME, MAPPER_OBJ_PATH,
+                                      MAPPER_IFACE, "GetSubTreePaths");
+    method.append(std::string{"/"}, 0, interfaces);
+
+    auto reply = bus.call(method);
+    reply.read(paths);
+
+    return paths;
+}
 } // namespace utils
 } // namespace occ
 } // namespace open_power

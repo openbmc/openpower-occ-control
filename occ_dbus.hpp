@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xyz/openbmc_project/Association/Definitions/server.hpp>
 #include <xyz/openbmc_project/Sensor/Value/server.hpp>
 #include <xyz/openbmc_project/State/Decorator/OperationalStatus/server.hpp>
 
@@ -17,6 +18,10 @@ using SensorIntf = sdbusplus::server::object::object<
 using OperationalStatusIntf =
     sdbusplus::server::object::object<sdbusplus::xyz::openbmc_project::State::
                                           Decorator::server::OperationalStatus>;
+
+// Note: Not using object<> so the PropertiesVariant ctor is available.
+using AssociationIntf =
+    sdbusplus::xyz::openbmc_project::Association::server::Definitions;
 
 /** @class OccDBusSensors
  *  @brief This is a custom D-Bus object, used to add D-Bus interface and update
@@ -127,11 +132,27 @@ class OccDBusSensors
      */
     bool getOperationalStatus(const std::string& path) const;
 
+    /** @brief Returns the Chassis inventory path
+     *
+     * @return path       - The chassis D-Bus path
+     */
+    std::string getChassisPath();
+
+    /** @brief Set the association to the chassis
+     *
+     *  @param[in] path   - The object path
+     */
+    void setChassisAssociation(const std::string& path);
+
   private:
     std::map<ObjectPath, std::unique_ptr<SensorIntf>> sensors;
 
     std::map<ObjectPath, std::unique_ptr<OperationalStatusIntf>>
         operationalStatus;
+
+    std::map<ObjectPath, std::unique_ptr<AssociationIntf>> chassisAssociations;
+
+    std::string chassisPath;
 };
 
 } // namespace dbus
