@@ -39,7 +39,11 @@ enum occFruType
 #endif
 
 /** @brief Default time, in seconds, between OCC poll commands */
+#ifndef POWER10
 constexpr unsigned int defaultPollingInterval = 1;
+#else
+constexpr unsigned int defaultPollingInterval = 5;
+#endif
 
 /** @class Manager
  *  @brief Builds and manages OCC objects
