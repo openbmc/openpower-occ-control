@@ -30,15 +30,6 @@ const std::string getService(const std::string& path,
     mapper.append(path, InterfaceList({interface}));
 
     auto mapperResponseMsg = bus.call(mapper);
-    if (mapperResponseMsg.is_method_error())
-    {
-        log<level::ERR>("ERROR in getting service",
-                        entry("PATH=%s", path.c_str()),
-                        entry("INTERFACE=%s", interface.c_str()));
-
-        elog<InternalFailure>();
-    }
-
     mapperResponseMsg.read(mapperResponse);
     if (mapperResponse.empty())
     {
