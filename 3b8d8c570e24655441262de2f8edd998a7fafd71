@@ -69,6 +69,52 @@
       "revId": "3b8d8c570e24655441262de2f8edd998a7fafd71",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "62d94b8c_4d76da51",
+        "filename": "meson.build",
+        "patchSetId": 10
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1000206
+      },
+      "writtenOn": "2021-09-27T03:30:19Z",
+      "side": 1,
+      "message": "think , this is needed only when with-host-communication-protocol is enabled. why are we checking for this dependency irrespective of features being enabled ?",
+      "range": {
+        "startLine": 52,
+        "startChar": 0,
+        "endLine": 52,
+        "endChar": 31
+      },
+      "revId": "3b8d8c570e24655441262de2f8edd998a7fafd71",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c19ca178_00c4c262",
+        "filename": "meson.build",
+        "patchSetId": 10
+      },
+      "lineNbr": 167,
+      "author": {
+        "id": 1000206
+      },
+      "writtenOn": "2021-09-27T03:30:19Z",
+      "side": 1,
+      "message": "duplicate var ?",
+      "range": {
+        "startLine": 167,
+        "startChar": 0,
+        "endLine": 167,
+        "endChar": 11
+      },
+      "revId": "3b8d8c570e24655441262de2f8edd998a7fafd71",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
     }
   ]
 }
