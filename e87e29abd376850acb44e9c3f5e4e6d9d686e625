@@ -16,6 +16,24 @@
       "revId": "e87e29abd376850acb44e9c3f5e4e6d9d686e625",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9efbf448_a7fbf26f",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 403,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-09-28T20:14:53Z",
+      "side": 1,
+      "message": "I figured we just needed to check for the existing object once, so I did it within the setChassisAssociation function.\n\nAlternatively, I could have done\nif (existingSensors.find(sensorPath) \u003d\u003d existingSensors.end())\n    call setChassisAssociation()\n\nI just kinda picked one, so I can change it if you\u0027d like.",
+      "parentUuid": "cfb03969_15bab54c",
+      "revId": "e87e29abd376850acb44e9c3f5e4e6d9d686e625",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
     }
   ]
 }
