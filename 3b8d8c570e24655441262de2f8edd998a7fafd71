@@ -37,6 +37,24 @@
     },
     {
       "key": {
+        "uuid": "69bb9a18_ca89cc42",
+        "filename": "meson.build",
+        "patchSetId": 10
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-09-29T22:07:41Z",
+      "side": 1,
+      "message": "we set it here as an option: https://github.com/ibm-openbmc/openbmc/blob/ibm-1020-30.0-public/meta-ibm/recipes-phosphor/occ/openpower-occ-control_%25.bbappend#L1\n\n(In P10 I added code to detect how many OCCs there are, but there could still be people out there doing the bbappend thing)",
+      "parentUuid": "876627bd_aa9a7c10",
+      "revId": "3b8d8c570e24655441262de2f8edd998a7fafd71",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "469aca06_5a4e115b",
         "filename": "meson.build",
         "patchSetId": 10
