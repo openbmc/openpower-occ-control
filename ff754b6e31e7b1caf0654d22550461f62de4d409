@@ -16,6 +16,24 @@
       "revId": "ff754b6e31e7b1caf0654d22550461f62de4d409",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bdbc60f7_1ee88d3a",
+        "filename": "occ_status.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 524,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-10-07T19:52:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f83bf041_8a69fe10",
+      "revId": "ff754b6e31e7b1caf0654d22550461f62de4d409",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     }
   ]
 }
