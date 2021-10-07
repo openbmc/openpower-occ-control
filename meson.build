@@ -10,6 +10,8 @@ project(
     ]
 )
 
+cxx = meson.get_compiler('cpp')
+
 conf_data = configuration_data()
 conf_data.set_quoted('OCC_CONTROL_BUSNAME', 'org.open_power.OCC.Control')
 conf_data.set_quoted('OCC_CONTROL_ROOT', '/org/open_power/control')
@@ -155,6 +157,8 @@ if get_option('install-error-yaml').disabled()
         )
         deps += [
             libpldm_dep,
+            cxx.find_library('pdbg'),
+            cxx.find_library('phal'),
         ]
         sources += [
             'pldm.cpp',

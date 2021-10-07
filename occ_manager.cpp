@@ -248,9 +248,162 @@ void Manager::initStatusObjects()
 #endif
 
 #ifdef PLDM
+void Manager::sbeTimeout(unsigned int instance)
+{
+    log<level::INFO>("SBE timeout, requesting HRESET",
+                     entry("SBE=%d", instance));
+
+    setSBEState(instance, SBE_STATE_NOT_USABLE);
+
+    pldmHandle->sendHRESET(instance);
+}
+
 bool Manager::updateOCCActive(instanceID instance, bool status)
 {
     return (statusObjects[instance])->occActive(status);
+}
+
+void Manager::sbeHRESETResult(instanceID instance, bool success)
+{
+    if (success)
+    {
+        log<level::INFO>("HRESET succeeded", entry("SBE=%d", instance));
+
+        setSBEState(instance, SBE_STATE_BOOTED);
+
+        return;
+    }
+
+    setSBEState(instance, SBE_STATE_FAILED);
+
+    if (sbeCanDump(instance))
+    {
+        constexpr auto path = "/org/openpower/dump";
+        constexpr auto interface = "xyz.openbmc_project.Dump.Create";
+        constexpr auto function = "CreateDump";
+
+        log<level::INFO>("HRESET failed, triggering SBE dump",
+                         entry("SBE=%d", instance));
+
+        auto& bus = utils::getBus();
+        uint32_t src6 = instance << 16;
+        uint32_t logId =
+            FFDC::createPEL("org.open_power.Processor.Error.SbeChipOpTimeout",
+                            src6, "SBE command timeout");
+
+        try
+        {
+            std::string service = utils::getService(path, interface);
+            auto method =
+                bus.new_method_call(service.c_str(), path, interface, function);
+
+            std::map<std::string, std::variant<std::string, uint64_t>>
+                createParams{
+                    {"com.ibm.Dump.Create.CreateParameters.ErrorLogId",
+                     uint64_t(logId)},
+                    {"com.ibm.Dump.Create.CreateParameters.DumpType",
+                     "com.ibm.Dump.Create.DumpType.SBE"},
+                    {"com.ibm.Dump.Create.CreateParameters.FailingUnitId",
+                     uint64_t(instance)},
+                };
+
+            method.append(createParams);
+
+            auto response = bus.call(method);
+        }
+        catch (const sdbusplus::exception::exception& e)
+        {
+            constexpr auto ERROR_DUMP_DISABLED =
+                "xyz.openbmc_project.Dump.Create.Error.Disabled";
+            if (e.name() == ERROR_DUMP_DISABLED)
+            {
+                log<level::INFO>("Dump is disabled, skipping");
+            }
+            else
+            {
+                log<level::ERR>("Dump failed");
+            }
+        }
+    }
+}
+
+bool Manager::sbeCanDump(unsigned int instance)
+{
+    struct pdbg_target* proc = getPdbgTarget(instance);
+
+    if (!proc)
+    {
+        // allow the dump in the error case
+        return true;
+    }
+
+    try
+    {
+        if (!openpower::phal::sbe::isDumpAllowed(proc))
+        {
+            return false;
+        }
+
+        if (openpower::phal::pdbg::isSbeVitalAttnActive(proc))
+        {
+            return false;
+        }
+    }
+    catch (openpower::phal::exception::SbeError& e)
+    {
+        log<level::INFO>("Failed to query SBE state");
+    }
+
+    // allow the dump in the error case
+    return true;
+}
+
+void Manager::setSBEState(unsigned int instance, enum sbe_state state)
+{
+    struct pdbg_target* proc = getPdbgTarget(instance);
+
+    if (!proc)
+    {
+        return;
+    }
+
+    try
+    {
+        openpower::phal::sbe::setState(proc, state);
+    }
+    catch (const openpower::phal::exception::SbeError& e)
+    {
+        log<level::ERR>("Failed to set SBE state");
+    }
+}
+
+struct pdbg_target* Manager::getPdbgTarget(unsigned int instance)
+{
+    if (!pdbgInitialized)
+    {
+        try
+        {
+            openpower::phal::pdbg::init();
+            pdbgInitialized = true;
+        }
+        catch (const openpower::phal::exception::PdbgError& e)
+        {
+            log<level::ERR>("pdbg initialization failed");
+            return nullptr;
+        }
+    }
+
+    struct pdbg_target* proc = nullptr;
+    pdbg_for_each_class_target("proc", proc)
+    {
+        if (pdbg_target_index(proc) == instance)
+        {
+            return proc;
+        }
+    }
+
+    log<level::ERR>("Failed to get pdbg target");
+    return nullptr;
 }
 #endif
 
@@ -591,6 +744,5 @@ void Manager::getSensorValues(uint32_t id, bool masterOcc)
     return;
 }
 #endif
-
 } // namespace occ
 } // namespace open_power

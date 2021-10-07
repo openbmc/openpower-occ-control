@@ -69,7 +69,7 @@ class Status : public Interface
      *                             OCC if PLDM is the host communication
      *                             protocol
      */
-    Status(EventPtr& event, const char* path, const Manager& manager,
+    Status(EventPtr& event, const char* path, Manager& manager,
            std::function<void(bool)> callBack = nullptr
 #ifdef PLDM
            ,
@@ -86,9 +86,7 @@ class Status : public Interface
                fs::path(DEV_PATH) /
                    fs::path(sysfsName + "." + std::to_string(instance + 1)),
 #endif
-               manager, *this, instance,
-               std::bind(std::mem_fn(&Status::deviceErrorHandler), this,
-                         std::placeholders::_1)),
+               manager, *this, instance),
         hostControlSignal(
             utils::getBus(),
             sdbusRule::type::signal() + sdbusRule::member("CommandComplete") +
@@ -163,6 +161,9 @@ class Status : public Interface
     /** @brief Read OCC state (will trigger kernel to poll the OCC) */
     void readOccState();
 
+    /** @brief Called when device errors are detected */
+    void deviceError();
+
 #ifdef POWER10
     /** @brief Handle additional tasks when the OCCs reach active state */
     void occsWentActive();
@@ -209,12 +210,6 @@ class Status : public Interface
 
     /** @brief Command object to send commands to the OCC */
     OccCommand occCmd;
-
-    /** @brief Callback handler when device errors are detected
-     *
-     *  @param[in]  error - True if an error is reported, false otherwise
-     */
-    void deviceErrorHandler(bool error);
 
     /** @brief Callback function on host control signals
      *
