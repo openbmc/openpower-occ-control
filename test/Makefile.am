@@ -12,6 +12,13 @@ utest_LDADD = \
 	$(SDEVENTPLUS_LIBS) \
 	$(FMT_LIBS)
 
+if ENABLE_PLDM
+    utest_LDADD += \
+    $(LIBPLDM_LIBS) \
+    $(PDBG_LIBS) \
+    -lphal
+endif
+
 utest_SOURCES = error_files_tests.cpp \
                 utest.cpp \
                 TestI2cOcc.cpp \
@@ -21,6 +28,12 @@ utest_CPPFLAGS = $(GTEST_CPPFLAGS) \
                  $(AM_CPPFLAGS)
 
 utest_CXXFLAGS = $(PTHREAD_CFLAGS)
+
+if ENABLE_PLDM
+utest_CXXFLAGS += \
+    $(LIBPLDM_CFLAGS) \
+    $(PDBG_CFLAGS)
+endif
 
 utest_LDFLAGS = -lgtest -lgmock -lgmock_main \
                 $(PTHREAD_LIBS) \

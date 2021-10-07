@@ -4,6 +4,8 @@
 #include "occ_status.hpp"
 #ifdef PLDM
 #include "pldm.hpp"
+
+#include <libphal.H>
 #endif
 #include "powercap.hpp"
 #include "utils.hpp"
@@ -70,6 +72,8 @@ struct Manager
         ,
         pldmHandle(std::make_unique<pldm::Interface>(
             std::bind(std::mem_fn(&Manager::updateOCCActive), this,
+                      std::placeholders::_1, std::placeholders::_2),
+            std::bind(std::mem_fn(&Manager::sbeHRESETResult), this,
                       std::placeholders::_1, std::placeholders::_2)))
 #endif
 #ifdef POWER10
@@ -93,6 +97,15 @@ struct Manager
     {
         return activeCount;
     }
+
+#ifdef PLDM
+    /** @brief Called by a Device to report that the SBE timed out
+     *         and appropriate action should be taken
+     *
+     * @param[in] instance - the OCC instance id
+     */
+    void sbeTimeout(unsigned int instance);
+#endif
 
   private:
     /** @brief Creates the OCC D-Bus objects.
@@ -187,6 +200,25 @@ struct Manager
      *          fails.
      */
     bool updateOCCActive(instanceID instance, bool status);
+
+    /** @brief Callback handler invoked by PLDM sensor change when
+     *         the HRESET succeeds or fails.
+     *
+     *  @param[in] instance - the SBE instance id
+     *  @param[in] success - true if the HRESET succeeded, otherwise false
+     */
+    void sbeHRESETResult(instanceID instance, bool success);
+
+    /** @brief Helper function to set the SBE state through PDBG/PHAL
+     *
+     * @param[in] instance - instance of the SBE
+     * @param[in] state - the state to which the SBE should be set
+     *
+     */
+    void setSBEState(unsigned int instance, enum sbe_state state);
+
+    /** @brief Whether pdbg_targets_init has been called */
+    bool pdbgInitialized = false;
 
     std::unique_ptr<pldm::Interface> pldmHandle = nullptr;
 #endif

@@ -240,9 +240,111 @@ void Manager::initStatusObjects()
 #endif
 
 #ifdef PLDM
+void Manager::sbeTimeout(unsigned int instance)
+{
+    log<level::INFO>("SBE timeout, requesting HRESET",
+                     entry("SBE=%d", instance));
+
+    setSBEState(instance, SBE_STATE_NOT_USABLE);
+
+    pldmHandle->sendHRESET(instance);
+}
+
 bool Manager::updateOCCActive(instanceID instance, bool status)
 {
     return (statusObjects[instance])->occActive(status);
+}
+
+void Manager::sbeHRESETResult(instanceID instance, bool success)
+{
+    if (success)
+    {
+        log<level::INFO>("HRESET succeeded", entry("SBE=%d", instance));
+
+        setSBEState(instance, SBE_STATE_BOOTED);
+    }
+    else
+    {
+        constexpr auto path = "/org/openpower/dump";
+        constexpr auto interface = "xyz.openbmc_project.Dump.Create";
+        constexpr auto function = "CreateDump";
+
+        log<level::INFO>("HRESET failed, triggering SBE dump",
+                         entry("SBE=%d", instance));
+
+        auto& bus = utils::getBus();
+        uint32_t src6 = instance << 16;
+        uint32_t logId =
+            FFDC::createPEL("org.open_power.Processor.Error.SbeChipOpTimeout",
+                            src6, "SBE command timeout");
+
+        try
+        {
+            std::string service = utils::getService(path, interface);
+            auto method =
+                bus.new_method_call(service.c_str(), path, interface, function);
+
+            std::map<std::string, std::variant<std::string, uint64_t>>
+                createParams{
+                    {"com.ibm.Dump.Create.CreateParameters.ErrorLogId",
+                     uint64_t(logId)},
+                    {"com.ibm.Dump.Create.CreateParameters.DumpType",
+                     "com.ibm.Dump.Create.DumpType.SBE"},
+                    {"com.ibm.Dump.Create.CreateParameters.FailingUnitId",
+                     uint64_t(instance)},
+                };
+
+            method.append(createParams);
+
+            auto response = bus.call(method);
+        }
+        catch (const sdbusplus::exception::exception& e)
+        {
+            constexpr auto ERROR_DUMP_DISABLED =
+                "xyz.openbmc_project.Dump.Create.Error.Disabled";
+            if (e.name() == ERROR_DUMP_DISABLED)
+            {
+                log<level::INFO>("Dump is disabled, skipping");
+            }
+            else
+            {
+                log<level::ERR>("Dump failed");
+            }
+        }
+
+        setSBEState(instance, SBE_STATE_FAILED);
+    }
+}
+
+void Manager::setSBEState(unsigned int instance, enum sbe_state state)
+{
+    using InternalFailure =
+        sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure;
+
+    if (!pdbgInitialized)
+    {
+        openpower::phal::pdbg::init();
+        pdbgInitialized = true;
+    }
+
+    struct pdbg_target* proc = nullptr;
+    pdbg_for_each_class_target("proc", proc)
+    {
+        if (pdbg_target_index(proc) == instance)
+        {
+            break;
+        }
+
+        proc = nullptr;
+    }
+
+    if (!proc)
+    {
+        log<level::ERR>("Failed to get pdbg target");
+        elog<InternalFailure>();
+    }
+
+    openpower::phal::sbe::setState(proc, state);
 }
 #endif
 
@@ -570,6 +672,5 @@ void Manager::getSensorValues(uint32_t id, bool masterOcc)
     return;
 }
 #endif
-
 } // namespace occ
 } // namespace open_power

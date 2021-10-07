@@ -42,16 +42,30 @@ class Device
      *  @param[in] manager  - OCC manager instance
      *  @param[in] status   - Status instance
      *  @param[in] instance - OCC instance number
-     *  @param[in] callback - Optional callback on errors
      */
-    Device(EventPtr& event, const fs::path& path, const Manager& manager,
-           Status& status, unsigned int instance = 0,
-           std::function<void(bool)> callBack = nullptr) :
+    Device(EventPtr& event, const fs::path& path, Manager& manager,
+           Status& status, unsigned int instance = 0) :
         config(getPathBack(path)),
-        devPath(path), statusObject(status),
-        error(event, path / "occ_error", callBack),
+        devPath(path), instance(instance), statusObject(status),
+        managerObject(manager),
+        error(event, path / "occ_error",
+              std::bind(std::mem_fn(&Device::errorCallback), this,
+                        std::placeholders::_1)),
+        timeout(event,
+                path /
+                    fs::path("../../sbefifo" + std::to_string(instance + 1)) /
+                    "timeout",
+#ifdef PLDM
+                std::bind(std::mem_fn(&Device::timeoutCallback), this,
+                          std::placeholders::_1)
+#else
+                nullptr
+#endif
+                    ),
         ffdc(event, path / "ffdc", instance),
-        presence(event, path / "occs_present", manager, callBack),
+        presence(event, path / "occs_present", manager,
+                 std::bind(std::mem_fn(&Device::errorCallback), this,
+                           std::placeholders::_1)),
         throttleProcTemp(
             event, path / "occ_dvfs_overtemp",
             std::bind(std::mem_fn(&Device::throttleProcTempCallback), this,
@@ -126,6 +140,15 @@ class Device
             // nothing to do if there is no FFDC file
         }
 
+        try
+        {
+            timeout.addWatch(poll);
+        }
+        catch (const std::exception& e)
+        {
+            // nothing to do if there is no SBE timeout file
+        }
+
         error.addWatch(poll);
     }
 
@@ -136,6 +159,7 @@ class Device
         presence.removeWatch();
         ffdc.removeWatch();
         error.removeWatch();
+        timeout.removeWatch();
         throttleMemTemp.removeWatch();
         throttleProcPower.removeWatch();
         throttleProcTemp.removeWatch();
@@ -167,6 +191,9 @@ class Device
     /** @brief This directory contains the error files */
     const fs::path devPath;
 
+    /** @brief OCC instance ID */
+    const unsigned int instance;
+
     /**  @brief To bind the device to the OCC driver, do:
      *
      *    Write occ<#>-dev0 to: /sys/bus/platform/drivers/occ-hwmon/bind
@@ -181,8 +208,14 @@ class Device
     /**  Store the associated Status instance */
     Status& statusObject;
 
+    /** Store the parent Manager instance */
+    Manager& managerObject;
+
     /** Abstraction of error monitoring */
     Error error;
+
+    /** Abstraction of SBE timeout monitoring */
+    Error timeout;
 
     /** SBE FFDC monitoring */
     FFDC ffdc;
@@ -209,6 +242,20 @@ class Device
         file.close();
         return;
     }
+
+    /** @brief callback for OCC error and presence monitoring
+     *
+     * @param[in] error - True if an error is reported, false otherwise
+     */
+    void errorCallback(bool error);
+
+#ifdef PLDM
+    /** @brief callback for SBE timeout monitoring
+     *
+     * @param[in] error - True if an error is reported, false otherwise
+     */
+    void timeoutCallback(bool error);
+#endif
 
     /** @brief callback for the proc temp throttle event
      *
