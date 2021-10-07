@@ -5,8 +5,8 @@ noinst_HEADERS += \
 libocc_control_la_SOURCES += \
 	pldm.cpp
 openpower_occ_control_LDADD += \
-	$(LIBPLDM_LIBS)
+	$(LIBPLDM_LIBS) $(PDBG_LIBS) -lphal
 openpower_occ_control_CXXFLAGS += \
-	$(LIBPLDM_CFLAGS)
+	$(LIBPLDM_CFLAGS) $(PDBG_CFLAGS)
 
 endif

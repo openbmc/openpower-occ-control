@@ -94,6 +94,7 @@ AS_IF([test "x$enable_install_error_yaml" != "xyes"], [
         [
             cpp_flags="$CPPFLAGS -DPLDM"
             AX_PKG_CHECK_MODULES([LIBPLDM], [libpldm])
+            AX_PKG_CHECK_MODULES([PDBG], [pdbg])
         ]
         AC_SUBST([CPPFLAGS], [$cpp_flags])
     )
