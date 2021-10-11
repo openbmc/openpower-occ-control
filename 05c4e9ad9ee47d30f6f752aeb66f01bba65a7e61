@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "69db5ca3_8467490e",
+        "filename": "occ_ffdc.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2021-10-11T18:32:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "e8017372_a5f23d58",
+      "revId": "05c4e9ad9ee47d30f6f752aeb66f01bba65a7e61",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "6875e04f_b56b3005",
         "filename": "occ_ffdc.cpp",
         "patchSetId": 4
@@ -36,6 +54,24 @@
     },
     {
       "key": {
+        "uuid": "1a1dbc63_e29e02b3",
+        "filename": "occ_ffdc.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2021-10-11T18:32:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "6875e04f_b56b3005",
+      "revId": "05c4e9ad9ee47d30f6f752aeb66f01bba65a7e61",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "f9b44c0d_b4b27f49",
         "filename": "occ_ffdc.cpp",
         "patchSetId": 4
@@ -47,6 +83,24 @@
       "writtenOn": "2021-10-11T17:44:38Z",
       "side": 1,
       "message": "is this ever expected? If not, would an INFO trace be useful?",
+      "revId": "05c4e9ad9ee47d30f6f752aeb66f01bba65a7e61",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cf4bf142_c57671de",
+        "filename": "occ_ffdc.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2021-10-11T18:32:47Z",
+      "side": 1,
+      "message": "Yes, I hit this in my testing. But good idea to add INFO trace I think.",
+      "parentUuid": "f9b44c0d_b4b27f49",
       "revId": "05c4e9ad9ee47d30f6f752aeb66f01bba65a7e61",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
@@ -70,6 +124,24 @@
     },
     {
       "key": {
+        "uuid": "23a322db_99c3a934",
+        "filename": "occ_ffdc.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2021-10-11T18:32:47Z",
+      "side": 1,
+      "message": "Yes, it\u0027s already there: https://github.com/openbmc/phosphor-logging/blob/master/extensions/openpower-pels/registry/message_registry.json#L527",
+      "parentUuid": "2b9e8a5f_56669baf",
+      "revId": "05c4e9ad9ee47d30f6f752aeb66f01bba65a7e61",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "18516541_efa43b7a",
         "filename": "occ_ffdc.hpp",
         "patchSetId": 4
@@ -84,6 +156,24 @@
       "revId": "05c4e9ad9ee47d30f6f752aeb66f01bba65a7e61",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c1c76e7a_d57a19c1",
+        "filename": "occ_ffdc.hpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2021-10-11T18:32:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "18516541_efa43b7a",
+      "revId": "05c4e9ad9ee47d30f6f752aeb66f01bba65a7e61",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     }
   ]
 }
