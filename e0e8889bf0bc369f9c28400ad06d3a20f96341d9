@@ -1,0 +1,169 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "cc15c6e4_18bbbb8c",
+        "filename": "gen/meson.build",
+        "patchSetId": 12
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1000000
+      },
+      "writtenOn": "2021-10-13T16:20:42Z",
+      "side": 1,
+      "message": "You might want to check in a small script, like the one in phosphor-dbus-interfaces, to help point people to how to regenerate this.",
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0eb89dcd_ca3f53ba",
+        "filename": "meson.build",
+        "patchSetId": 12
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 1000000
+      },
+      "writtenOn": "2021-10-13T16:20:42Z",
+      "side": 1,
+      "message": "Overall we\u0027re moving away from putting these concepts in the build config.  We find that nobody ever needs to change them anyhow (nor would you want to).",
+      "range": {
+        "startLine": 14,
+        "startChar": 0,
+        "endLine": 16,
+        "endChar": 72
+      },
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "eb7adfc6_1768e30e",
+        "filename": "meson.build",
+        "patchSetId": 12
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1000000
+      },
+      "writtenOn": "2021-10-13T16:20:42Z",
+      "side": 1,
+      "message": "These won\u0027t work for wrap-style builds, but it is fine to start with this and add wraps later on.",
+      "range": {
+        "startLine": 48,
+        "startChar": 0,
+        "endLine": 49,
+        "endChar": 58
+      },
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "eac851e9_70a2ad6e",
+        "filename": "meson.build",
+        "patchSetId": 12
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1000000
+      },
+      "writtenOn": "2021-10-13T16:20:42Z",
+      "side": 1,
+      "message": "Can you keep this one in the same order as the others (python_prog)?",
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5d63104d_fe48d22f",
+        "filename": "meson.build",
+        "patchSetId": 12
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 1000000
+      },
+      "writtenOn": "2021-10-13T16:20:42Z",
+      "side": 1,
+      "message": "It would be good if we could work to do away with this complexity.  I was able to get rid of it with the phosphor-logging, so we should be able to do it here also.",
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "47901347_27f5fd53",
+        "filename": "meson.build",
+        "patchSetId": 12
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 1000000
+      },
+      "writtenOn": "2021-10-13T16:20:42Z",
+      "side": 1,
+      "message": "Generally the convention in meson is to name this \u0027sdbusplus_dep\u0027.",
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "59d5ad60_03ce3e38",
+        "filename": "meson.build",
+        "patchSetId": 12
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1000000
+      },
+      "writtenOn": "2021-10-13T16:20:42Z",
+      "side": 1,
+      "message": "Can you consolidate this and line 104?",
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0882a60c_8f616151",
+        "filename": "meson_options.txt",
+        "patchSetId": 12
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1000000
+      },
+      "writtenOn": "2021-10-13T16:20:42Z",
+      "side": 1,
+      "message": "Should we improve the line wrapping on these?",
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fc206ec1_3ff86503",
+        "filename": "test/meson.build",
+        "patchSetId": 12
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1000000
+      },
+      "writtenOn": "2021-10-13T16:20:42Z",
+      "side": 1,
+      "message": "I don\u0027t know if this is intentional or not but you\u0027ve modified the root-level variable as well so the main executable will now get pthread as a dependency.  I suspect that wasn\u0027t what you expected.",
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    }
+  ]
+}
