@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "91ea3f45_59d01c81",
+        "filename": "gen/meson.build",
+        "patchSetId": 12
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-10-14T11:44:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cc15c6e4_18bbbb8c",
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0eb89dcd_ca3f53ba",
         "filename": "meson.build",
         "patchSetId": 12
@@ -30,6 +48,30 @@
       "writtenOn": "2021-10-13T16:20:42Z",
       "side": 1,
       "message": "Overall we\u0027re moving away from putting these concepts in the build config.  We find that nobody ever needs to change them anyhow (nor would you want to).",
+      "range": {
+        "startLine": 14,
+        "startChar": 0,
+        "endLine": 16,
+        "endChar": 72
+      },
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0781b0f6_bf580a12",
+        "filename": "meson.build",
+        "patchSetId": 12
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-10-14T11:44:26Z",
+      "side": 1,
+      "message": "Yes.\nI just switched from autotools to meson build, Let me update it in the next commit.",
+      "parentUuid": "0eb89dcd_ca3f53ba",
       "range": {
         "startLine": 14,
         "startChar": 0,
@@ -65,6 +107,30 @@
     },
     {
       "key": {
+        "uuid": "13fd18e6_88ed72f7",
+        "filename": "meson.build",
+        "patchSetId": 12
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-10-14T11:44:26Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "eb7adfc6_1768e30e",
+      "range": {
+        "startLine": 48,
+        "startChar": 0,
+        "endLine": 49,
+        "endChar": 58
+      },
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "eac851e9_70a2ad6e",
         "filename": "meson.build",
         "patchSetId": 12
@@ -82,6 +148,24 @@
     },
     {
       "key": {
+        "uuid": "5d5e11f4_8a2c184c",
+        "filename": "meson.build",
+        "patchSetId": 12
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-10-14T11:44:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "eac851e9_70a2ad6e",
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5d63104d_fe48d22f",
         "filename": "meson.build",
         "patchSetId": 12
@@ -93,6 +177,24 @@
       "writtenOn": "2021-10-13T16:20:42Z",
       "side": 1,
       "message": "It would be good if we could work to do away with this complexity.  I was able to get rid of it with the phosphor-logging, so we should be able to do it here also.",
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "74932451_949dfd1f",
+        "filename": "meson.build",
+        "patchSetId": 12
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-10-14T11:44:26Z",
+      "side": 1,
+      "message": "Thanks, I want update it in another patch.",
+      "parentUuid": "5d63104d_fe48d22f",
       "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
@@ -116,6 +218,24 @@
     },
     {
       "key": {
+        "uuid": "8ff21238_c11cefee",
+        "filename": "meson.build",
+        "patchSetId": 12
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-10-14T11:44:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "47901347_27f5fd53",
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "59d5ad60_03ce3e38",
         "filename": "meson.build",
         "patchSetId": 12
@@ -130,6 +250,24 @@
       "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cd841ec3_b2abed90",
+        "filename": "meson.build",
+        "patchSetId": 12
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-10-14T11:44:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "59d5ad60_03ce3e38",
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     },
     {
       "key": {
@@ -150,6 +288,24 @@
     },
     {
       "key": {
+        "uuid": "3a89f37a_90db80cc",
+        "filename": "meson_options.txt",
+        "patchSetId": 12
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-10-14T11:44:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0882a60c_8f616151",
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "fc206ec1_3ff86503",
         "filename": "test/meson.build",
         "patchSetId": 12
@@ -164,6 +320,24 @@
       "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bc0e558c_ee7670a7",
+        "filename": "test/meson.build",
+        "patchSetId": 12
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1000397
+      },
+      "writtenOn": "2021-10-14T11:44:26Z",
+      "side": 1,
+      "message": "Done\n\nRemoved it from deps and use `pthread_dep`",
+      "parentUuid": "fc206ec1_3ff86503",
+      "revId": "e0e8889bf0bc369f9c28400ad06d3a20f96341d9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     }
   ]
 }
