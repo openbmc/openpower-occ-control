@@ -36,7 +36,8 @@ enum occFruType
     memCtrlAndDimm = 3,
     VRMVdd = 6,
     PMIC = 7,
-    memCtlrExSensor = 8
+    memCtlrExSensor = 8,
+    processorIoRing = 9
 };
 #endif
 

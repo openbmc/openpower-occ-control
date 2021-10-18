@@ -235,6 +235,18 @@ std::string OccDBusSensors::getChassisPath()
     return defaultChassisPath;
 }
 
+bool OccDBusSensors::hasDvfsTemp(const std::string& path) const
+{
+    return dvfsTemps.find(path) != dvfsTemps.end();
+}
+
+void OccDBusSensors::setDvfsTemp(const std::string& path, double value)
+{
+    dvfsTemps[path] =
+        std::make_unique<SensorIntf>(utils::getBus(), path.c_str());
+    dvfsTemps[path]->value(value);
+}
+
 } // namespace dbus
 } // namespace occ
 } // namespace open_power

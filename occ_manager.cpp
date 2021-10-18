@@ -24,6 +24,7 @@ constexpr uint32_t fruTypeNotAvailable = 0xFF;
 constexpr auto fruTypeSuffix = "fru_type";
 constexpr auto faultSuffix = "fault";
 constexpr auto inputSuffix = "input";
+constexpr auto maxSuffix = "max";
 
 using namespace phosphor::logging;
 
@@ -492,9 +493,17 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
         std::string sensorPath =
             OCC_SENSORS_ROOT + std::string("/temperature/");
 
+        std::string dvfsTempPath;
+
         if (fruTypeValue == VRMVdd)
         {
             sensorPath.append("vrm_vdd" + std::to_string(id) + "_temp");
+        }
+        else if (fruTypeValue == processorIoRing)
+        {
+            sensorPath.append("proc" + std::to_string(id) + "_ioring_temp");
+            dvfsTempPath = std::string{OCC_SENSORS_ROOT} + "/temperature/proc" +
+                           std::to_string(id) + "_ioring_dvfs_temp";
         }
         else
         {
@@ -525,24 +534,50 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
             }
             else if (type == OCC_CPU_TEMP_SENSOR_TYPE)
             {
-                if (fruTypeValue != processorCore)
+                if (fruTypeValue == processorCore)
                 {
-                    // TODO: support IO ring temp
+                    // The OCC reports small core temps, of which there are
+                    // two per big core.  All current P10 systems are in big
+                    // core mode, so use a big core name.
+                    uint16_t coreNum = instanceID / 2;
+                    uint16_t tempNum = instanceID % 2;
+                    sensorPath.append("proc" + std::to_string(id) + "_core" +
+                                      std::to_string(coreNum) + "_" +
+                                      std::to_string(tempNum) + "_temp");
+
+                    dvfsTempPath = std::string{OCC_SENSORS_ROOT} +
+                                   "/temperature/proc" + std::to_string(id) +
+                                   "_core_dvfs_temp";
+                }
+                else
+                {
                     continue;
                 }
-
-                // The OCC reports small core temps, of which there are
-                // two per big core.  All current P10 systems are in big
-                // core mode, so use a big core name.
-                uint16_t coreNum = instanceID / 2;
-                uint16_t tempNum = instanceID % 2;
-                sensorPath.append("proc" + std::to_string(id) + "_core" +
-                                  std::to_string(coreNum) + "_" +
-                                  std::to_string(tempNum) + "_temp");
             }
             else
             {
                 continue;
+            }
+        }
+
+        // The dvfs temp file only needs to be read once per chip per type.
+        if (!dvfsTempPath.empty() &&
+            !dbus::OccDBusSensors::getOccDBus().hasDvfsTemp(dvfsTempPath))
+        {
+            try
+            {
+                auto dvfsValue = readFile<double>(filePathString + maxSuffix);
+
+                dbus::OccDBusSensors::getOccDBus().setDvfsTemp(
+                    dvfsTempPath, dvfsValue * std::pow(10, -3));
+            }
+            catch (const std::system_error& e)
+            {
+                log<level::DEBUG>(
+                    fmt::format(
+                        "readTempSensors: Failed reading {}, errno = {}",
+                        filePathString + maxSuffix, e.code().value())
+                        .c_str());
             }
         }
 
