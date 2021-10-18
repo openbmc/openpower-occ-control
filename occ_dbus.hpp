@@ -144,6 +144,20 @@ class OccDBusSensors
      */
     void setChassisAssociation(const std::string& path);
 
+    /** @brief Set the value of the DVFS temp sensor
+     *
+     *  @param[in] path  - The object path
+     *  @param[in] value - The value of the Value property
+     */
+    void setDvfsTemp(const std::string& path, double value);
+
+    /** @brief Says if the DVFS temp sensor is already present
+     *
+     *  @param[in] value - The value of the Value property
+     *  @return bool - If the sensor is already present
+     */
+    bool hasDvfsTemp(const std::string& path) const;
+
   private:
     std::map<ObjectPath, std::unique_ptr<SensorIntf>> sensors;
 
@@ -153,6 +167,13 @@ class OccDBusSensors
     std::map<ObjectPath, std::unique_ptr<AssociationIntf>> chassisAssociations;
 
     std::string chassisPath;
+
+    /** @brief Map of DVFS (Dynamic Voltage and Frequency Slewing) temps
+     *
+     * These do not have associations and do not get set to NaN when the OCC
+     * isn't active.
+     */
+    std::map<std::string, std::unique_ptr<SensorIntf>> dvfsTemps;
 };
 
 } // namespace dbus
