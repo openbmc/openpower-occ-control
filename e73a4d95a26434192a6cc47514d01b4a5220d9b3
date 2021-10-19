@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "0caf20ea_7f189479",
+        "filename": "configure.ac",
+        "patchSetId": 2
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2021-10-19T21:23:25Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "ae99cf35_0678c162",
+      "revId": "e73a4d95a26434192a6cc47514d01b4a5220d9b3",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "513e0917_e0d2f918",
         "filename": "occ_manager.cpp",
         "patchSetId": 2
@@ -30,6 +48,24 @@
       "writtenOn": "2021-10-19T15:24:33Z",
       "side": 1,
       "message": "Need to check another dump collection is in progress or any SVE vital attn is active  before trieggering dump. need skip dump collection in both cases.\n\nbool isDumpAllowed(struct pdbg_target *proc);\nbool isSbeVitalAttnActive(struct pdbg_target *proc);",
+      "revId": "e73a4d95a26434192a6cc47514d01b4a5220d9b3",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bb584cd1_60937d50",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 267,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2021-10-19T21:23:25Z",
+      "side": 1,
+      "message": "OK, will do. Do I need to check for SBE vital attn before triggering HRESET too?",
+      "parentUuid": "513e0917_e0d2f918",
       "revId": "e73a4d95a26434192a6cc47514d01b4a5220d9b3",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
@@ -50,6 +86,24 @@
       "revId": "e73a4d95a26434192a6cc47514d01b4a5220d9b3",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ad87a3c9_9fdc9033",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 347,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2021-10-19T21:23:25Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "e39f1972_9d9b7d4a",
+      "revId": "e73a4d95a26434192a6cc47514d01b4a5220d9b3",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     }
   ]
 }
