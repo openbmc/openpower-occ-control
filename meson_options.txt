@@ -34,6 +34,14 @@ option(
 )
 
 option(
+    'ps-derating-factor',
+    type : 'integer',
+    min:0, max:100,
+    description : 'Power supply derating factor',
+    value: 90
+)
+
+option(
     'with-host-communication-protocol',
     type : 'string',
     description : 'To specify the host communication protocol'
