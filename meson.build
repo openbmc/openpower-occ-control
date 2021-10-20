@@ -23,7 +23,7 @@ conf_data.set_quoted('CPU_SUBPATH', '/xyz/openbmc_project/inventory/system/chass
 conf_data.set('MAX_CPUS', get_option('max-cpus'))
 conf_data.set('OCC_CPU_TEMP_SENSOR_TYPE', 0xC0)
 conf_data.set('OCC_DIMM_TEMP_SENSOR_TYPE', 0xD0)
-conf_data.set('PS_DERATING_FACTOR', 90)
+conf_data.set('PS_DERATING_FACTOR', get_option('ps-derating-factor'))
 
 if get_option('i2c-occ').enabled()
     conf_data.set_quoted('OCC_HWMON_PATH', '/sys/bus/i2c/drivers/occ-hwmon/')
