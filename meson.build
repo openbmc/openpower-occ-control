@@ -168,7 +168,7 @@ if get_option('install-error-yaml').disabled()
 
     yamldir = get_option('yamldir')
     if yamldir == ''
-        yamldir = meson.project_source_root() / 'example/occ_sensor.yaml'
+        yamldir = meson.project_source_root() / 'example'
     endif
 
     # Generate occ-sensor.hpp.
@@ -177,8 +177,7 @@ if get_option('install-error-yaml').disabled()
         command : [
             python_prog,
             meson.project_source_root() + '/sensor_gen.py',
-            '-f', meson.project_source_root() / yamldir,
-            '-i', meson.current_build_dir(),
+            '-i', yamldir,
         ],
         output : 'occ-sensor.hpp')
     sources += [occ_sensor_hpp]
