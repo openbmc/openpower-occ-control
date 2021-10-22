@@ -188,6 +188,18 @@ void Status::readOccState()
                 // Kernel detected that the master OCC went to active state
                 occsWentActive();
             }
+            if (OccState(state) == OccState::ACTIVE)
+            {
+                CmdStatus status = sendAmbient();
+                if (status != CmdStatus::SUCCESS)
+                {
+                    log<level::ERR>(
+                        fmt::format(
+                            "readOccState: Sending Ambient failed with status {}",
+                            status)
+                            .c_str());
+                }
+            }
 #endif
         }
         file.close();
@@ -379,6 +391,110 @@ bool Status::getIPSParms(uint8_t& enterUtil, uint16_t& enterTime,
     }
 
     return ipsEnabled;
+}
+
+// Get the Ambient and Altitude readings from DBus
+void Status::getAmbientData(bool& ambientValid, uint8_t& ambientTemp,
+                            uint16_t& altitude)
+{
+    ambientValid = false;
+    ambientTemp = 0x00;
+    altitude = 0xFFFF; // Not Available
+    static bool traceAmbientErr = true;
+    static bool traceAltitudeErr = true;
+
+    // Read ambient
+    try
+    {
+        auto& bus = utils::getBus();
+        auto service = utils::getService(AMBIENT_PATH, AMBIENT_INTERFACE);
+        auto method =
+            bus.new_method_call(service.c_str(), AMBIENT_PATH,
+                                "org.freedesktop.DBus.Properties", "Get");
+        method.append(AMBIENT_INTERFACE, AMBIENT_PROP);
+        auto reply = bus.call(method);
+
+        std::variant<double> sensor;
+        reply.read(sensor);
+        auto sensorVal = std::get<double>(sensor);
+        if (sensorVal < 255.5)
+        {
+            ambientValid = true;
+            ambientTemp = uint8_t(sensorVal + 0.5);
+            log<level::DEBUG>(
+                fmt::format("getAmbientData: ambient sensor={} (using {}C)",
+                            sensorVal, ambientTemp)
+                    .c_str());
+
+            traceAmbientErr = true;
+        }
+        else
+        {
+            if (traceAmbientErr)
+            {
+                traceAmbientErr = false;
+                log<level::ERR>(
+                    fmt::format("Invalid ambient temperature value: {}C",
+                                sensorVal)
+                        .c_str());
+            }
+        }
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        if (traceAmbientErr)
+        {
+            traceAmbientErr = false;
+            log<level::ERR>(
+                fmt::format("Unable to read Ambient temperature: {}", e.what())
+                    .c_str());
+        }
+    }
+
+    // Read altitude
+    try
+    {
+        auto& bus = utils::getBus();
+        auto service = utils::getService(ALTITUDE_PATH, ALTITUDE_INTERFACE);
+        auto method =
+            bus.new_method_call(service.c_str(), ALTITUDE_PATH,
+                                "org.freedesktop.DBus.Properties", "Get");
+        method.append(ALTITUDE_INTERFACE, ALTITUDE_PROP);
+        auto reply = bus.call(method);
+
+        std::variant<double> sensor;
+        reply.read(sensor);
+        auto sensorVal = std::get<double>(sensor);
+        if (sensorVal <= 0xFFFF)
+        {
+            altitude = int(sensorVal + 0.5);
+            log<level::DEBUG>(
+                fmt::format("getAmbientData: altutude sensor={} (using {}m)",
+                            sensorVal, altitude)
+                    .c_str());
+
+            traceAltitudeErr = true;
+        }
+        else
+        {
+            if (traceAltitudeErr)
+            {
+                traceAltitudeErr = false;
+                log<level::ERR>(
+                    fmt::format("Invalid altitude value: {}m", sensorVal)
+                        .c_str());
+            }
+        }
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        if (traceAltitudeErr)
+        {
+            traceAltitudeErr = false;
+            log<level::ERR>(
+                fmt::format("Unable to read Altitude: {}", e.what()).c_str());
+        }
+    }
 }
 
 // Special processing that needs to happen once the OCCs change to ACTIVE state
@@ -586,6 +702,93 @@ CmdStatus Status::sendIpsData()
             log<level::ERR>("Status::sendIpsData: SET_CFG_DATA[IPS] FAILED!");
         }
     }
+
+    return status;
+}
+
+// Send Ambient and Altitude to the OCC
+CmdStatus Status::sendAmbient(const uint8_t inTemp, const uint16_t inAltitude)
+{
+#ifdef POWER10
+    CmdStatus status = CmdStatus::FAILURE;
+    bool ambientValid = true;
+    uint8_t ambientTemp = inTemp;
+    uint16_t altitude = inAltitude;
+
+    if (!isPowerVM())
+    {
+        // Idle Power Saver data is only supported on PowerVM systems
+        log<level::DEBUG>(
+            "sendAmbient: SET_CFG_DATA[IPS] does not get sent on non-PowerVM systems");
+        return CmdStatus::SUCCESS;
+    }
+
+    if (ambientTemp == 0xFF)
+    {
+        // Read the data from DBus
+        getAmbientData(ambientValid, ambientTemp, altitude);
+    }
+
+    log<level::DEBUG>(
+        fmt::format("Ambient valid: {}, temp: {}C, altitude: {}m to OCC{}",
+                    ambientValid, ambientTemp, altitude, instance)
+            .c_str());
+
+    std::vector<std::uint8_t> cmd, rsp;
+    cmd.reserve(11);
+    cmd.push_back(uint8_t(CmdType::SEND_AMBIENT));
+    cmd.push_back(0x00);                    // Data Length (2 bytes)
+    cmd.push_back(0x08);                    //
+    cmd.push_back(0x00);                    // Version
+    cmd.push_back(ambientValid ? 0 : 0xFF); // Ambient Status
+    cmd.push_back(ambientTemp);             // Ambient Temperature
+    cmd.push_back(altitude >> 8);           // Altitude in meters (2 bytes)
+    cmd.push_back(altitude & 0xFF);         //
+    cmd.push_back(0x00);                    // Reserved (3 bytes)
+    cmd.push_back(0x00);
+    cmd.push_back(0x00);
+    log<level::DEBUG>(fmt::format("sendAmbient: SEND_AMBIENT "
+                                  "command to OCC{} ({} bytes)",
+                                  instance, cmd.size())
+                          .c_str());
+    status = occCmd.send(cmd, rsp);
+    if (status == CmdStatus::SUCCESS)
+    {
+        if (rsp.size() == 5)
+        {
+            if (RspStatus::SUCCESS != RspStatus(rsp[2]))
+            {
+                log<level::ERR>(
+                    fmt::format(
+                        "sendAmbient: SEND_AMBIENT failed with status 0x{:02X}",
+                        rsp[2])
+                        .c_str());
+                dump_hex(rsp);
+                status = CmdStatus::FAILURE;
+            }
+        }
+        else
+        {
+            log<level::ERR>("sendAmbient: INVALID SEND_AMBIENT response");
+            dump_hex(rsp);
+            status = CmdStatus::FAILURE;
+        }
+    }
+    else
+    {
+        if (status == CmdStatus::OPEN_FAILURE)
+        {
+            // OCC not active yet
+            status = CmdStatus::SUCCESS;
+        }
+        else
+        {
+            log<level::ERR>("Status::sendAmbient: SEND_AMBIENT FAILED!");
+        }
+    }
+#else
+    CmdStatus status = CmdStatus::SUCCESS;
+#endif
 
     return status;
 }
