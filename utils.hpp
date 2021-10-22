@@ -19,7 +19,7 @@ constexpr auto MAPPER_IFACE = "xyz.openbmc_project.ObjectMapper";
 constexpr auto DBUS_PROPERTY_IFACE = "org.freedesktop.DBus.Properties";
 
 // The value of the property(type: variant, contains some basic types)
-using PropertyValue = std::variant<uint32_t, bool>;
+using PropertyValue = std::variant<uint32_t, bool, double>;
 
 /** @brief Get the bus connection. */
 static auto& getBus()

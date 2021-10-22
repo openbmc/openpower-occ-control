@@ -48,6 +48,22 @@ constexpr unsigned int defaultPollingInterval = 1;
 constexpr unsigned int defaultPollingInterval = 5;
 #endif
 
+constexpr auto AMBIENT_PATH =
+    "/xyz/openbmc_project/sensors/temperature/Ambient_Virtual_Temp";
+constexpr auto AMBIENT_INTERFACE = "xyz.openbmc_project.Sensor.Value";
+constexpr auto AMBIENT_PROP = "Value";
+constexpr auto ALTITUDE_PATH = "/xyz/openbmc_project/sensors/altitude/Altitude";
+constexpr auto ALTITUDE_INTERFACE = "xyz.openbmc_project.Sensor.Value";
+constexpr auto ALTITUDE_PROP = "Value";
+
+constexpr auto AMBIENT_PATH =
+    "/xyz/openbmc_project/sensors/temperature/Ambient_Virtual_Temp";
+constexpr auto AMBIENT_INTERFACE = "xyz.openbmc_project.Sensor.Value";
+constexpr auto AMBIENT_PROP = "Value";
+constexpr auto ALTITUDE_PATH = "/xyz/openbmc_project/sensors/altitude/Altitude";
+constexpr auto ALTITUDE_INTERFACE = "xyz.openbmc_project.Sensor.Value";
+constexpr auto ALTITUDE_PROP = "Value";
+
 /** @class Manager
  *  @brief Builds and manages OCC objects
  */
@@ -72,7 +88,14 @@ struct Manager
         _pollTimer(
             std::make_unique<
                 sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
-                sdpEvent, std::bind(&Manager::pollerTimerExpired, this)))
+                sdpEvent, std::bind(&Manager::pollerTimerExpired, this))),
+        ambientPropChanged(
+            utils::getBus(),
+            sdbusRule::member("PropertiesChanged") +
+                sdbusRule::path(AMBIENT_PATH) +
+                sdbusRule::argN(0, AMBIENT_INTERFACE) +
+                sdbusRule::interface("org.freedesktop.DBus.Properties"),
+            std::bind(&Manager::ambientCallback, this, std::placeholders::_1))
 #ifdef PLDM
         ,
         pldmHandle(std::make_unique<pldm::Interface>(
@@ -95,6 +118,7 @@ struct Manager
 #else
         findAndCreateObjects();
 #endif
+        readAltitude();
     }
 
     /** @brief Return the number of bound OCCs */
@@ -111,6 +135,15 @@ struct Manager
      */
     void sbeTimeout(unsigned int instance);
 #endif
+
+    /** @brief Return the latest ambient and altitude readings
+     *
+     *  @param[out] ambientValid - true if ambientTemp is valid
+     *  @param[out] ambient - ambient temperature in degrees C
+     *  @param[out] altitude - altitude in meters
+     */
+    void getAmbientData(bool& ambientValid, uint8_t& ambientTemp,
+                        uint16_t& altitude) const;
 
   private:
     /** @brief Creates the OCC D-Bus objects.
@@ -175,6 +208,12 @@ struct Manager
     /** @brief Number of seconds between poll commands */
     uint8_t pollInterval;
 
+    /** @brief Ambient temperature of the system in degrees C */
+    uint8_t ambient = 0xFF; // default: not available
+
+    /** @brief Altitude of the system in meters */
+    uint16_t altitude = 0xFFFF; // default: not available
+
     /** @brief Poll timer event */
     sdeventplus::Event sdpEvent;
 
@@ -185,6 +224,9 @@ struct Manager
     std::unique_ptr<
         sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>
         _pollTimer;
+
+    /** @brief Subscribe to ambient temperature changed events */
+    sdbusplus::bus::match_t ambientPropChanged;
 
 #ifdef I2C_OCC
     /** @brief Init Status objects for I2C OCC devices
@@ -337,6 +379,15 @@ struct Manager
         {PMIC, "_pmic_temp"},
         {memCtlrExSensor, "_extmb_temp"}};
 #endif
+
+    /** @brief Read the altitude from DBus */
+    void readAltitude();
+
+    /** @brief Callback function when ambient temperature changes
+     *
+     *  @param[in]  msg - Data associated with subscribed signal
+     */
+    void ambientCallback(sdbusplus::message::message& msg);
 };
 
 } // namespace occ
