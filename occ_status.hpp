@@ -14,6 +14,14 @@
 
 #include <functional>
 
+constexpr auto AMBIENT_PATH =
+    "/xyz/openbmc_project/sensors/temperature/Ambient_Virtual_Temp";
+constexpr auto AMBIENT_INTERFACE = "xyz.openbmc_project.Sensor.Value";
+constexpr auto AMBIENT_PROP = "Value";
+constexpr auto ALTITUDE_PATH = "/xyz/openbmc_project/sensors/altitude/Altitude";
+constexpr auto ALTITUDE_INTERFACE = "xyz.openbmc_project.Sensor.Value";
+constexpr auto ALTITUDE_PROP = "Value";
+
 namespace open_power
 {
 namespace occ
@@ -179,6 +187,17 @@ class Status : public Interface
     CmdStatus sendIpsData();
 #endif // POWER10
 
+    /** @brief Send Ambient & Altitude data to OCC
+     *
+     *  @param[in] ambient - temperature to send (0xFF will force read
+     *                       of current temperature and altitude)
+     *  @param[in] altitude - altitude to send (0xFFFF = unavailable)
+     *
+     *  @return SUCCESS on success
+     */
+    CmdStatus sendAmbient(const uint8_t ambient = 0xFF,
+                          const uint16_t altitude = 0xFFFF);
+
   private:
     /** @brief OCC dbus object path */
     std::string path;
@@ -246,6 +265,15 @@ class Status : public Interface
      */
     bool getIPSParms(uint8_t& enterUtil, uint16_t& enterTime, uint8_t& exitUtil,
                      uint16_t& exitTime);
+
+    /** @brief Get the Ambient and altitude data
+     *
+     *  @param[out] ambientValid - true if ambientTemp is valid
+     *  @param[out] ambient - ambient temperature in degrees C
+     *  @param[out] altitude - altitude in meters
+     */
+    void getAmbientData(bool& ambientValid, uint8_t& ambientTemp,
+                        uint16_t& altitude);
 #endif // POWER10
 
     /** @brief Override the sensor name with name from the definition.
