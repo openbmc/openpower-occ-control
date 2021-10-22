@@ -779,5 +779,135 @@ void Manager::getSensorValues(uint32_t id, bool masterOcc)
     return;
 }
 #endif
+
+// Read the altitude from DBus
+void Manager::readAltitude()
+{
+    static bool traceAltitudeErr = true;
+
+    utils::PropertyValue altitudeProperty{};
+    try
+    {
+        altitudeProperty = utils::getProperty(ALTITUDE_PATH, ALTITUDE_INTERFACE,
+                                              ALTITUDE_PROP);
+        auto sensorVal = std::get<double>(altitudeProperty);
+        if (sensorVal < 0xFFFF)
+        {
+            if (sensorVal < 0)
+            {
+                altitude = 0;
+            }
+            else
+            {
+                // Round to nearest meter
+                altitude = uint16_t(sensorVal + 0.5);
+            }
+            log<level::DEBUG>(fmt::format("readAltitude: sensor={} ({}m)",
+                                          sensorVal, altitude)
+                                  .c_str());
+            traceAltitudeErr = true;
+        }
+        else
+        {
+            if (traceAltitudeErr)
+            {
+                traceAltitudeErr = false;
+                log<level::DEBUG>(
+                    fmt::format("Invalid altitude value: {}", sensorVal)
+                        .c_str());
+            }
+        }
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        if (traceAltitudeErr)
+        {
+            traceAltitudeErr = false;
+            log<level::INFO>(
+                fmt::format("Unable to read Altitude: {}", e.what()).c_str());
+        }
+        altitude = 0xFFFF; // not available
+    }
+}
+
+// Callback function when ambient temperature changes
+void Manager::ambientCallback(sdbusplus::message::message& msg)
+{
+    double currentTemp = 0;
+    uint8_t truncatedTemp = 0xFF;
+    std::string msgSensor;
+    std::map<std::string, std::variant<double>> msgData;
+    msg.read(msgSensor, msgData);
+
+    auto valPropMap = msgData.find(AMBIENT_PROP);
+    if (valPropMap == msgData.end())
+    {
+        log<level::DEBUG>("ambientCallback: Unknown ambient property changed");
+        return;
+    }
+    currentTemp = std::get<double>(valPropMap->second);
+    if (std::isnan(currentTemp))
+    {
+        truncatedTemp = 0xFF;
+    }
+    else
+    {
+        if (currentTemp < 0)
+        {
+            truncatedTemp = 0;
+        }
+        else
+        {
+            // Round to nearest degree C
+            truncatedTemp = uint8_t(currentTemp + 0.5);
+        }
+    }
+
+    // If ambient changes, notify OCCs
+    if (truncatedTemp != ambient)
+    {
+        log<level::DEBUG>(
+            fmt::format("ambientCallback: Ambient change from {} to {}C",
+                        ambient, currentTemp)
+                .c_str());
+
+        ambient = truncatedTemp;
+        if (altitude == 0xFFFF)
+        {
+            // No altitude yet, try reading again
+            readAltitude();
+        }
+
+        log<level::DEBUG>(
+            fmt::format("ambientCallback: Ambient: {}C, altitude: {}m", ambient,
+                        altitude)
+                .c_str());
+#ifdef POWER10
+        // Send ambient and altitude to all OCCs
+        for (auto& obj : statusObjects)
+        {
+            if (obj->occActive())
+            {
+                obj->sendAmbient(ambient, altitude);
+            }
+        }
+#endif // POWER10
+    }
+}
+
+// return the current ambient and altitude readings
+void Manager::getAmbientData(bool& ambientValid, uint8_t& ambientTemp,
+                             uint16_t& altitudeValue) const
+{
+    ambientValid = true;
+    ambientTemp = ambient;
+    altitudeValue = altitude;
+
+    if (ambient == 0xFF)
+    {
+        ambientValid = false;
+    }
+}
+
 } // namespace occ
 } // namespace open_power
