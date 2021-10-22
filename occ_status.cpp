@@ -1,5 +1,6 @@
 #include "occ_status.hpp"
 
+#include "occ_manager.hpp"
 #include "occ_sensor.hpp"
 #include "powermode.hpp"
 #include "utils.hpp"
@@ -187,6 +188,18 @@ void Status::readOccState()
             {
                 // Kernel detected that the master OCC went to active state
                 occsWentActive();
+            }
+            if (OccState(state) == OccState::ACTIVE)
+            {
+                CmdStatus status = sendAmbient();
+                if (status != CmdStatus::SUCCESS)
+                {
+                    log<level::ERR>(
+                        fmt::format(
+                            "readOccState: Sending Ambient failed with status {}",
+                            status)
+                            .c_str());
+                }
             }
 #endif
         }
@@ -590,6 +603,79 @@ CmdStatus Status::sendIpsData()
     return status;
 }
 
+// Send Ambient and Altitude to the OCC
+CmdStatus Status::sendAmbient(const uint8_t inTemp, const uint16_t inAltitude)
+{
+    CmdStatus status = CmdStatus::FAILURE;
+    bool ambientValid = true;
+    uint8_t ambientTemp = inTemp;
+    uint16_t altitude = inAltitude;
+
+    if (ambientTemp == 0xFF)
+    {
+        // Get latest readings from manager
+        manager.getAmbientData(ambientValid, ambientTemp, altitude);
+        log<level::DEBUG>(
+            fmt::format("sendAmbient: valid: {}, Ambient: {}C, altitude: {}m",
+                        ambientValid, ambientTemp, altitude)
+                .c_str());
+    }
+
+    std::vector<std::uint8_t> cmd, rsp;
+    cmd.reserve(11);
+    cmd.push_back(uint8_t(CmdType::SEND_AMBIENT));
+    cmd.push_back(0x00);                    // Data Length (2 bytes)
+    cmd.push_back(0x08);                    //
+    cmd.push_back(0x00);                    // Version
+    cmd.push_back(ambientValid ? 0 : 0xFF); // Ambient Status
+    cmd.push_back(ambientTemp);             // Ambient Temperature
+    cmd.push_back(altitude >> 8);           // Altitude in meters (2 bytes)
+    cmd.push_back(altitude & 0xFF);         //
+    cmd.push_back(0x00);                    // Reserved (3 bytes)
+    cmd.push_back(0x00);
+    cmd.push_back(0x00);
+    log<level::DEBUG>(fmt::format("sendAmbient: SEND_AMBIENT "
+                                  "command to OCC{} ({} bytes)",
+                                  instance, cmd.size())
+                          .c_str());
+    status = occCmd.send(cmd, rsp);
+    if (status == CmdStatus::SUCCESS)
+    {
+        if (rsp.size() == 5)
+        {
+            if (RspStatus::SUCCESS != RspStatus(rsp[2]))
+            {
+                log<level::ERR>(
+                    fmt::format(
+                        "sendAmbient: SEND_AMBIENT failed with status 0x{:02X}",
+                        rsp[2])
+                        .c_str());
+                dump_hex(rsp);
+                status = CmdStatus::FAILURE;
+            }
+        }
+        else
+        {
+            log<level::ERR>("sendAmbient: INVALID SEND_AMBIENT response");
+            dump_hex(rsp);
+            status = CmdStatus::FAILURE;
+        }
+    }
+    else
+    {
+        if (status == CmdStatus::OPEN_FAILURE)
+        {
+            // OCC not active yet
+            status = CmdStatus::SUCCESS;
+        }
+        else
+        {
+            log<level::ERR>("sendAmbient: SEND_AMBIENT FAILED!");
+        }
+    }
+
+    return status;
+}
 #endif // POWER10
 
 } // namespace occ
