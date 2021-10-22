@@ -85,7 +85,14 @@ struct Manager
         discoverTimer(
             std::make_unique<
                 sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
-                sdpEvent, std::bind(&Manager::findAndCreateObjects, this)))
+                sdpEvent, std::bind(&Manager::findAndCreateObjects, this))),
+        ambientPropChanged(
+            utils::getBus(),
+            sdbusRule::member("PropertiesChanged") +
+                sdbusRule::path(AMBIENT_PATH) +
+                sdbusRule::argN(0, AMBIENT_INTERFACE) +
+                sdbusRule::interface("org.freedesktop.DBus.Properties"),
+            std::bind(&Manager::ambientCallback, this, std::placeholders::_1))
 #endif
     {
 #ifdef I2C_OCC
@@ -94,6 +101,7 @@ struct Manager
 #else
         findAndCreateObjects();
 #endif
+        readAltitude();
     }
 
     /** @brief Return the number of bound OCCs */
@@ -173,6 +181,12 @@ struct Manager
 
     /** @brief Number of seconds between poll commands */
     uint8_t pollInterval;
+
+    /** @brief Ambient temperature of the system in degrees C */
+    uint16_t ambient = 0xFF; // default: not available
+
+    /** @brief Altitude of the system in meters */
+    uint16_t altitude = 0xFFFF; // default: not available
 
     /** @brief Poll timer event */
     sdeventplus::Event sdpEvent;
@@ -255,6 +269,9 @@ struct Manager
         sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>
         discoverTimer;
 
+    /** @brief Subscribe to ambient temperature changed events */
+    sdbusplus::bus::match_t ambientPropChanged;
+
     /**
      * @brief Used when discovering /dev/occ objects to know if
      *        any were added since the last check.
@@ -336,6 +353,15 @@ struct Manager
         {PMIC, "_pmic_temp"},
         {memCtlrExSensor, "_extmb_temp"}};
 #endif
+
+    /** @brief Read the altitude from DBus */
+    void readAltitude();
+
+    /** @brief Callback function when ambient temperature changes
+     *
+     *  @param[in]  msg - Data associated with subscribed signal
+     */
+    void ambientCallback(sdbusplus::message::message& msg);
 };
 
 } // namespace occ
