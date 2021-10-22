@@ -69,7 +69,7 @@ class Status : public Interface
      *                             OCC if PLDM is the host communication
      *                             protocol
      */
-    Status(EventPtr& event, const char* path, Manager& manager,
+    Status(EventPtr& event, const char* path, Manager& managerRef,
            std::function<void(bool)> callBack = nullptr
 #ifdef PLDM
            ,
@@ -79,6 +79,7 @@ class Status : public Interface
 
         Interface(utils::getBus(), getDbusPath(path).c_str(), true),
         path(path), callBack(callBack), instance(getInstance(path)),
+        manager(managerRef),
         device(event,
 #ifdef I2C_OCC
                fs::path(DEV_PATH) / i2c_occ::getI2cDeviceName(path),
@@ -86,7 +87,7 @@ class Status : public Interface
                fs::path(DEV_PATH) /
                    fs::path(sysfsName + "." + std::to_string(instance + 1)),
 #endif
-               manager, *this, instance),
+               managerRef, *this, instance),
         hostControlSignal(
             utils::getBus(),
             sdbusRule::type::signal() + sdbusRule::member("CommandComplete") +
@@ -179,6 +180,17 @@ class Status : public Interface
     CmdStatus sendIpsData();
 #endif // POWER10
 
+    /** @brief Send Ambient & Altitude data to OCC
+     *
+     *  @param[in] ambient - temperature to send (0xFF will force read
+     *                       of current temperature and altitude)
+     *  @param[in] altitude - altitude to send (0xFFFF = unavailable)
+     *
+     *  @return SUCCESS on success
+     */
+    CmdStatus sendAmbient(const uint8_t ambient = 0xFF,
+                          const uint16_t altitude = 0xFFFF);
+
   private:
     /** @brief OCC dbus object path */
     std::string path;
@@ -196,6 +208,9 @@ class Status : public Interface
 
     /** @brief OCC instance to Sensor definitions mapping */
     static const std::map<instanceID, sensorDefs> sensorMap;
+
+    /** @brief OCC manager object */
+    const Manager& manager;
 
     /** @brief OCC device object to do bind and unbind */
     Device device;
