@@ -34,6 +34,24 @@
       "revId": "20d41a56993c21a7f8a0481d764267fae60f86a2",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "aa2e6096_a323ffab",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 403,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-10-26T14:54:14Z",
+      "side": 1,
+      "message": "The VPD limits shouldn\u0027t change, but there are deltas in the MRW for these thresholds.\nFor the test team, they can force a occ-control reset if limits are chagned for specific tests.\nMatt mentioned that a code update will trigger BMC reset, which will restart occ-control and therefore read new limits (if deltas changed in MRW)",
+      "parentUuid": "2f1e04bc_bd701ae2",
+      "revId": "20d41a56993c21a7f8a0481d764267fae60f86a2",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": false
     }
   ]
 }
