@@ -16,6 +16,24 @@
       "revId": "20d41a56993c21a7f8a0481d764267fae60f86a2",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2f1e04bc_bd701ae2",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 403,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-10-26T13:24:44Z",
+      "side": 1,
+      "message": "On a reset for sure, but not currently on a reboot.\n\nIt only cares about the io ring and core values, which are the only ones that come from VPD as I understand it.  Since they come from VPD, do you think they can change across boots?",
+      "parentUuid": "8b0bf192_99b07855",
+      "revId": "20d41a56993c21a7f8a0481d764267fae60f86a2",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
     }
   ]
 }
