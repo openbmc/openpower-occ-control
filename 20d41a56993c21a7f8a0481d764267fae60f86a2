@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8b0bf192_99b07855",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 403,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2021-10-26T12:59:29Z",
+      "side": 1,
+      "message": "Is this going to get re-read when the OCCs are reset or system re-ipled?  The values could change on code update.\nI know the test team modifies these (via hostboot attributes).  Not sure if attributes can get modified at runtime or requires system reboot.",
+      "revId": "20d41a56993c21a7f8a0481d764267fae60f86a2",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    }
+  ]
+}
