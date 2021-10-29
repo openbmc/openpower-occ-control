@@ -55,12 +55,12 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
     additionalData.emplace("_PID", std::to_string(getpid()));
     additionalData.emplace("SBE_ERR_MSG", msg);
 
-    std::string service =
-        utils::getService(loggingObjectPath, loggingInterface);
     auto& bus = utils::getBus();
 
     try
     {
+        std::string service =
+            utils::getService(loggingObjectPath, loggingInterface);
         auto method =
             bus.new_method_call(service.c_str(), loggingObjectPath,
                                 loggingInterface, "CreatePELWithFFDCFiles");
@@ -109,6 +109,12 @@ void FFDC::analyzeEvent()
     }
 
     lseek(fd, 0, SEEK_SET);
+
+    if (!total)
+    {
+        // no error
+        return;
+    }
 
     uint32_t src6 = instance << 16;
     src6 |= *(data.get() + 2) << 8;
