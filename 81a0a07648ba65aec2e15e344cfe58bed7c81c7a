@@ -1,0 +1,176 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "07bdc07d_b07b1eba",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 761,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-11-01T14:50:20Z",
+      "side": 1,
+      "message": "there\u0027s a utils::getProperty you can use here",
+      "range": {
+        "startLine": 757,
+        "startChar": 0,
+        "endLine": 761,
+        "endChar": 38
+      },
+      "revId": "81a0a07648ba65aec2e15e344cfe58bed7c81c7a",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e7b8705c_6496551d",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 768,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-11-01T14:50:20Z",
+      "side": 1,
+      "message": "what\u0027s this for?",
+      "range": {
+        "startLine": 768,
+        "startChar": 41,
+        "endLine": 768,
+        "endChar": 47
+      },
+      "revId": "81a0a07648ba65aec2e15e344cfe58bed7c81c7a",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "225d34f8_a412810f",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 792,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-11-01T14:50:20Z",
+      "side": 1,
+      "message": "Did you try running this code after a BMC reboot?  I wonder if the altitude sensor is on D-Bus by the time this runs.  If it isn\u0027t, may want to change this to INFO.",
+      "revId": "81a0a07648ba65aec2e15e344cfe58bed7c81c7a",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0c265ab5_f268d137",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 817,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-11-01T14:50:20Z",
+      "side": 1,
+      "message": "same question as before, why do this?",
+      "range": {
+        "startLine": 817,
+        "startChar": 54,
+        "endLine": 817,
+        "endChar": 59
+      },
+      "revId": "81a0a07648ba65aec2e15e344cfe58bed7c81c7a",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4b45bbfd_3999731f",
+        "filename": "occ_status.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 415,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-11-01T14:50:20Z",
+      "side": 1,
+      "message": "utils::getProperty",
+      "range": {
+        "startLine": 411,
+        "startChar": 0,
+        "endLine": 415,
+        "endChar": 38
+      },
+      "revId": "81a0a07648ba65aec2e15e344cfe58bed7c81c7a",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "355c05c9_66492fcc",
+        "filename": "occ_status.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 463,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-11-01T14:50:20Z",
+      "side": 1,
+      "message": "getProperty",
+      "range": {
+        "startLine": 459,
+        "startChar": 0,
+        "endLine": 463,
+        "endChar": 38
+      },
+      "revId": "81a0a07648ba65aec2e15e344cfe58bed7c81c7a",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f55f2ed8_5e04091b",
+        "filename": "occ_status.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 472,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-11-01T14:50:20Z",
+      "side": 1,
+      "message": "spelling",
+      "range": {
+        "startLine": 472,
+        "startChar": 45,
+        "endLine": 472,
+        "endChar": 54
+      },
+      "revId": "81a0a07648ba65aec2e15e344cfe58bed7c81c7a",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "459750bd_abde9b6c",
+        "filename": "occ_status.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 720,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-11-01T14:50:20Z",
+      "side": 1,
+      "message": "this class takes a Manager reference in its constructor.  If you saved that reference on the class, would it work if you added a manager::getAmbientData() that you could just call here, since it would already have the values?",
+      "revId": "81a0a07648ba65aec2e15e344cfe58bed7c81c7a",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    }
+  ]
+}
