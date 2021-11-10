@@ -27,6 +27,7 @@ constexpr auto inputSuffix = "input";
 constexpr auto maxSuffix = "max";
 
 using namespace phosphor::logging;
+using namespace std::literals::chrono_literals;
 
 template <typename T>
 T readFile(const std::string& path)
@@ -72,7 +73,6 @@ void Manager::findAndCreateObjects()
         // a chance to settle.
         prevOCCSearch = occs;
 
-        using namespace std::literals::chrono_literals;
         discoverTimer->restartOnce(10s);
     }
     else
@@ -182,41 +182,80 @@ void Manager::statusCallBack(bool status)
         elog<InternalFailure>();
     }
 
-    activeCount += status ? 1 : -1;
-
-    // Only start presence detection if all the OCCs are bound
-    if (activeCount == statusObjects.size())
+    if (status == true)
     {
-        for (auto& obj : statusObjects)
+        // OCC went active
+        ++activeCount;
+
+#ifdef POWER10
+        if (activeCount == 1)
         {
-            obj->addPresenceWatchMaster();
-        }
-    }
-
-    if ((!_pollTimer->isEnabled()) && (activeCount > 0))
-    {
-        log<level::INFO>(
-            fmt::format(
-                "Manager::statusCallBack(): {} OCCs will be polled every {} seconds",
-                activeCount, pollInterval)
-                .c_str());
-
-        // Send poll and start OCC poll timer
-        pollerTimerExpired();
-    }
-    else if ((_pollTimer->isEnabled()) && (activeCount == 0))
-    {
-        // Stop OCC poll timer
-        log<level::INFO>(
-            "Manager::statusCallBack(): OCCs are not running, stopping poll timer");
-        _pollTimer->setEnabled(false);
-
-#ifdef READ_OCC_SENSORS
-        for (auto& obj : statusObjects)
-        {
-            setSensorValueToNaN(obj->getOccInstanceID());
+            // First OCC went active (allow some time for all OCCs to go active)
+            waitForAllOccsTimer->restartOnce(30s);
         }
 #endif
+
+        if (activeCount == statusObjects.size())
+        {
+#ifdef POWER10
+            // All OCCs are now running
+            if (waitForAllOccsTimer->isEnabled())
+            {
+                // stop occ wait timer
+                waitForAllOccsTimer->setEnabled(false);
+            }
+#endif
+
+            // Verify master OCC and start presence monitor
+            validateOccMaster();
+        }
+
+        // Start poll timer if not already started
+        if (!_pollTimer->isEnabled())
+        {
+            log<level::INFO>(
+                fmt::format(
+                    "Manager::statusCallBack(): {} OCCs will be polled every {} seconds",
+                    activeCount, pollInterval)
+                    .c_str());
+
+            // Send poll and start OCC poll timer
+            pollerTimerExpired();
+        }
+    }
+    else
+    {
+        // OCC went away
+        --activeCount;
+
+        if (activeCount == 0)
+        {
+            // No OCCs are running
+
+            // Stop OCC poll timer
+            if (_pollTimer->isEnabled())
+            {
+                log<level::INFO>(
+                    "Manager::statusCallBack(): OCCs are not running, stopping poll timer");
+                _pollTimer->setEnabled(false);
+            }
+
+#ifdef POWER10
+            // stop wait timer
+            if (waitForAllOccsTimer->isEnabled())
+            {
+                waitForAllOccsTimer->setEnabled(false);
+            }
+#endif
+
+#ifdef READ_OCC_SENSORS
+            // Clear OCC sensors
+            for (auto& obj : statusObjects)
+            {
+                setSensorValueToNaN(obj->getOccInstanceID());
+            }
+#endif
+        }
     }
 }
 
@@ -410,13 +449,6 @@ struct pdbg_target* Manager::getPdbgTarget(unsigned int instance)
 
 void Manager::pollerTimerExpired()
 {
-    if (activeCount == 0)
-    {
-        // No OCCs running, so poll timer will not be restarted
-        log<level::INFO>(
-            "Manager::pollerTimerExpire(): No OCCs running, poll timer not restarted");
-    }
-
     if (!_pollTimer)
     {
         log<level::ERR>(
@@ -426,24 +458,40 @@ void Manager::pollerTimerExpired()
 
     for (auto& obj : statusObjects)
     {
+#ifdef READ_OCC_SENSORS
+        auto id = obj->getOccInstanceID();
+#endif
+        if (!obj->occActive())
+        {
+            // OCC is not running yet
+#ifdef READ_OCC_SENSORS
+            setSensorValueToNaN(id);
+#endif
+            continue;
+        }
+
         // Read sysfs to force kernel to poll OCC
         obj->readOccState();
 
 #ifdef READ_OCC_SENSORS
         // Read occ sensor values
-        auto id = obj->getOccInstanceID();
-        if (!obj->occActive())
-        {
-            // Occ not activated
-            setSensorValueToNaN(id);
-            continue;
-        }
         getSensorValues(id, obj->isMasterOcc());
 #endif
     }
 
-    // Restart OCC poll timer
-    _pollTimer->restartOnce(std::chrono::seconds(pollInterval));
+    if (activeCount > 0)
+    {
+        // Restart OCC poll timer
+        _pollTimer->restartOnce(std::chrono::seconds(pollInterval));
+    }
+    else
+    {
+        // No OCCs running, so poll timer will not be restarted
+        log<level::INFO>(
+            fmt::format(
+                "Manager::pollerTimerExpired: poll timer will not be restarted")
+                .c_str());
+    }
 }
 
 #ifdef READ_OCC_SENSORS
@@ -906,6 +954,71 @@ void Manager::getAmbientData(bool& ambientValid, uint8_t& ambientTemp,
     if (ambient == 0xFF)
     {
         ambientValid = false;
+    }
+}
+
+#ifdef POWER10
+void Manager::occsNotAllRunning()
+{
+    if (activeCount != statusObjects.size())
+    {
+        // Not all OCCs went active
+        log<level::ERR>(
+            fmt::format(
+                "occsNotAllRunning: Active OCC count ({}) does not match expected count ({})",
+                activeCount, statusObjects.size())
+                .c_str());
+        // request reset
+        if (activeCount > 0)
+        {
+            statusObjects.front()->deviceError();
+        }
+    }
+    else
+    {
+        // Happens when app is restarted (occ active sensors do not change, so
+        // the Status object does not call Manager back for all OCCs)
+        validateOccMaster();
+    }
+}
+#endif // POWER10
+
+// Verify single master OCC and start presence monitor
+void Manager::validateOccMaster()
+{
+    int masterInstance = -1;
+    for (auto& obj : statusObjects)
+    {
+        obj->addPresenceWatchMaster();
+        if (obj->isMasterOcc())
+        {
+            if (masterInstance == -1)
+            {
+                masterInstance = obj->getOccInstanceID();
+            }
+            else
+            {
+                log<level::ERR>(
+                    fmt::format(
+                        "validateOccMaster: Multiple OCC masters! ({} and {})",
+                        masterInstance, obj->getOccInstanceID())
+                        .c_str());
+                // request reset
+                obj->deviceError();
+            }
+        }
+    }
+    if (masterInstance < 0)
+    {
+        log<level::ERR>("validateOccMaster: Master OCC not found!");
+        // request reset
+        statusObjects.front()->deviceError();
+    }
+    else
+    {
+        log<level::INFO>(
+            fmt::format("validateOccMaster: OCC{} is master", masterInstance)
+                .c_str());
     }
 }
 
