@@ -52,6 +52,14 @@ bool Status::occActive(bool value)
                 this->callBack(value);
             }
 
+#ifdef POWER10
+            if (safeStateDelayTimer.isEnabled())
+            {
+                // stop safe delay timer
+                safeStateDelayTimer.setEnabled(false);
+            }
+#endif
+
             // Stop watching for errors
             removeErrorWatch();
 
@@ -184,13 +192,14 @@ void Status::readOccState()
             lastState = state;
 
 #ifdef POWER10
-            if ((OccState(state) == OccState::ACTIVE) && (device.master()))
-            {
-                // Kernel detected that the master OCC went to active state
-                occsWentActive();
-            }
             if (OccState(state) == OccState::ACTIVE)
             {
+                if (device.master())
+                {
+                    // Special processing by master OCC when it goes active
+                    occsWentActive();
+                }
+
                 CmdStatus status = sendAmbient();
                 if (status != CmdStatus::SUCCESS)
                 {
@@ -200,6 +209,18 @@ void Status::readOccState()
                             status)
                             .c_str());
                 }
+            }
+
+            if (OccState(state) == OccState::SAFE)
+            {
+                // start safe delay timer (before requesting reset)
+                using namespace std::literals::chrono_literals;
+                safeStateDelayTimer.restartOnce(60s);
+            }
+            else if (safeStateDelayTimer.isEnabled())
+            {
+                // stop safe delay timer (no longer in SAFE state)
+                safeStateDelayTimer.setEnabled(false);
             }
 #endif
         }
@@ -675,6 +696,21 @@ CmdStatus Status::sendAmbient(const uint8_t inTemp, const uint16_t inAltitude)
     }
 
     return status;
+}
+
+// Called when safe timer expires to determine if OCCs need to be reset
+void Status::safeStateDelayExpired()
+{
+    if (this->occActive())
+    {
+        log<level::INFO>(
+            fmt::format(
+                "safeStateDelayExpired: OCC{} is in SAFE state, requesting reset",
+                instance)
+                .c_str());
+        // Disable and reset to try recovering
+        deviceError();
+    }
 }
 #endif // POWER10
 
