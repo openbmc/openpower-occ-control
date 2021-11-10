@@ -11,6 +11,10 @@
 #include <org/open_power/OCC/Status/server.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
+#ifdef POWER10
+#include <sdeventplus/event.hpp>
+#include <sdeventplus/utility/timer.hpp>
+#endif
 
 #include <functional>
 
@@ -100,6 +104,14 @@ class Status : public Interface
         occCmd(instance, (fs::path(OCC_CONTROL_ROOT) /
                           (std::string(OCC_NAME) + std::to_string(instance)))
                              .c_str())
+#ifdef POWER10
+        ,
+        sdpEvent(sdeventplus::Event::get_default()),
+        safeStateDelayTimer(
+            std::make_unique<
+                sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
+                sdpEvent, std::bind(&Status::safeStateDelayExpired, this)))
+#endif
 #ifdef PLDM
         ,
         resetCallBack(resetCallBack)
@@ -226,6 +238,11 @@ class Status : public Interface
     /** @brief Command object to send commands to the OCC */
     OccCommand occCmd;
 
+#ifdef POWER10
+    /** @brief timer event */
+    sdeventplus::Event sdpEvent;
+#endif
+
     /** @brief Callback function on host control signals
      *
      *  @param[in]  msg - Data associated with subscribed signal
@@ -261,6 +278,18 @@ class Status : public Interface
      */
     bool getIPSParms(uint8_t& enterUtil, uint16_t& enterTime, uint8_t& exitUtil,
                      uint16_t& exitTime);
+
+    /**
+     * @brief Timer that is started when OCC is detected to be in safe mode
+     */
+    std::unique_ptr<
+        sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>
+        safeStateDelayTimer;
+
+    /** @brief Callback for timer that is started when OCC was detected to be in
+     * safe mode. Called to verify and then disable and reset the OCCs.
+     */
+    void safeStateDelayExpired();
 #endif // POWER10
 
     /** @brief Override the sensor name with name from the definition.

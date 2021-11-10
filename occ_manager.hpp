@@ -101,7 +101,11 @@ struct Manager
         discoverTimer(
             std::make_unique<
                 sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
-                sdpEvent, std::bind(&Manager::findAndCreateObjects, this)))
+                sdpEvent, std::bind(&Manager::findAndCreateObjects, this))),
+        waitForAllOccsTimer(
+            std::make_unique<
+                sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
+                sdpEvent, std::bind(&Manager::occsDidntGoActive, this)))
 #endif
     {
 #ifdef I2C_OCC
@@ -295,6 +299,19 @@ struct Manager
      *        any were added since the last check.
      */
     std::vector<int> prevOCCSearch;
+
+    /**
+     * @brief Timer used when waiting for OCCs to go active.
+     */
+    std::unique_ptr<
+        sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>
+        waitForAllOccsTimer;
+
+    /** @brief Called when code times out waiting for all OCCs to be running or
+     *         after the app is restarted (Status does not callback into
+     * Manager).
+     */
+    void occsDidntGoActive();
 #endif
 
     /**
@@ -380,6 +397,11 @@ struct Manager
      *  @param[in]  msg - Data associated with subscribed signal
      */
     void ambientCallback(sdbusplus::message::message& msg);
+
+    /** @brief Confirm that a single OCC master was found and start presence
+     * monitoring
+     */
+    void validateOccMaster();
 };
 
 } // namespace occ
