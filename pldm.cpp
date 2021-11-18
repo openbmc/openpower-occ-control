@@ -6,16 +6,9 @@
 #include <libpldm/entity.h>
 #include <libpldm/platform.h>
 #include <libpldm/state_set.h>
+#include <libpldm/state_set_oem_ibm.h>
 
 #include <phosphor-logging/log.hpp>
-
-#define PLDM_OEM_IBM_SBE_MAINTENANCE_STATE 32772
-#define SBE_RETRY_REQUIRED 0x2
-
-#define PLDM_OEM_IBM_SBE_HRESET_STATE 32775
-#define SBE_HRESET_NOT_READY 0x1
-#define SBE_HRESET_READY 0x2
-#define SBE_HRESET_FAILED 0x3
 
 namespace pldm
 {
