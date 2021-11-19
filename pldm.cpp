@@ -118,51 +118,50 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
     {
         auto sensorEntry = sensorToOCCInstance.find(sensorId);
 
-        if (sensorEntry == sensorToOCCInstance.end())
+        if (sensorEntry != sensorToOCCInstance.end())
         {
+            if (eventState ==
+                static_cast<EventState>(
+                    PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_IN_SERVICE))
+            {
+                log<level::INFO>(
+                    fmt::format("PLDM: OCC{} is RUNNING", sensorEntry->second)
+                        .c_str());
+                callBack(sensorEntry->second, true);
+            }
+            else if (eventState ==
+                     static_cast<EventState>(
+                         PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_STOPPED))
+            {
+                log<level::INFO>(fmt::format("PLDM: OCC{} has now STOPPED",
+                                             sensorEntry->second)
+                                     .c_str());
+                callBack(sensorEntry->second, false);
+            }
+
             return;
         }
-
-        if (eventState ==
-            static_cast<EventState>(
-                PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_IN_SERVICE))
-        {
-            log<level::INFO>(
-                fmt::format("PLDM: OCC{} is RUNNING", sensorEntry->second)
-                    .c_str());
-            callBack(sensorEntry->second, true);
-        }
-        else if (eventState ==
-                 static_cast<EventState>(
-                     PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_STOPPED))
-        {
-            log<level::INFO>(
-                fmt::format("PLDM: OCC{} has now STOPPED", sensorEntry->second)
-                    .c_str());
-            callBack(sensorEntry->second, false);
-        }
     }
-    else if (msgSensorOffset == SBESensorOffset)
+
+    if (msgSensorOffset == SBESensorOffset)
     {
         auto sensorEntry = sensorToSBEInstance.find(sensorId);
 
-        if (sensorEntry == sensorToSBEInstance.end())
+        if (sensorEntry != sensorToSBEInstance.end())
         {
-            return;
-        }
-
-        if (eventState == static_cast<EventState>(SBE_HRESET_NOT_READY))
-        {
-            log<level::INFO>("pldm: HRESET is NOT READY",
-                             entry("SBE=%d", sensorEntry->second));
-        }
-        else if (eventState == static_cast<EventState>(SBE_HRESET_READY))
-        {
-            sbeCallBack(sensorEntry->second, true);
-        }
-        else if (eventState == static_cast<EventState>(SBE_HRESET_FAILED))
-        {
-            sbeCallBack(sensorEntry->second, false);
+            if (eventState == static_cast<EventState>(SBE_HRESET_NOT_READY))
+            {
+                log<level::INFO>("pldm: HRESET is NOT READY",
+                                 entry("SBE=%d", sensorEntry->second));
+            }
+            else if (eventState == static_cast<EventState>(SBE_HRESET_READY))
+            {
+                sbeCallBack(sensorEntry->second, true);
+            }
+            else if (eventState == static_cast<EventState>(SBE_HRESET_FAILED))
+            {
+                sbeCallBack(sensorEntry->second, false);
+            }
         }
     }
 }
@@ -188,7 +187,7 @@ void Interface::hostStateEvent(sdbusplus::message::message& msg)
     }
 }
 
-void Interface::fetchEffecterInfo(uint16_t entityId, uint16_t stateSetId,
+void Interface::fetchEffecterInfo(uint16_t stateSetId,
                                   InstanceToEffecter& instanceToEffecterMap,
                                   CompositeEffecterCount& effecterCount,
                                   uint8_t& stateIdPos)
@@ -201,7 +200,7 @@ void Interface::fetchEffecterInfo(uint16_t entityId, uint16_t stateSetId,
         auto method = bus.new_method_call(
             "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
             "xyz.openbmc_project.PLDM.PDR", "FindStateEffecterPDR");
-        method.append(tid, entityId, stateSetId);
+        method.append(tid, (uint16_t)PLDM_ENTITY_PROC, stateSetId);
 
         auto responseMsg = bus.call(method);
         responseMsg.read(pdrs);
@@ -302,9 +301,9 @@ void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
 {
     if (!isPDREffecterCacheValid())
     {
-        fetchEffecterInfo(
-            PLDM_ENTITY_PROC_MODULE, PLDM_STATE_SET_BOOT_RESTART_CAUSE,
-            occInstanceToEffecter, OCCEffecterCount, bootRestartPosition);
+        fetchEffecterInfo(PLDM_STATE_SET_BOOT_RESTART_CAUSE,
+                          occInstanceToEffecter, OCCEffecterCount,
+                          bootRestartPosition);
     }
 
     // Find the matching effecter for the OCC instance
@@ -342,7 +341,7 @@ void Interface::sendHRESET(open_power::occ::instanceID sbeInstanceId)
 {
     if (sbeInstanceToEffecter.empty())
     {
-        fetchEffecterInfo(PLDM_ENTITY_PROC, PLDM_OEM_IBM_SBE_MAINTENANCE_STATE,
+        fetchEffecterInfo(PLDM_OEM_IBM_SBE_MAINTENANCE_STATE,
                           sbeInstanceToEffecter, SBEEffecterCount,
                           sbeMaintenanceStatePosition);
     }

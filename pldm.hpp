@@ -88,13 +88,12 @@ class Interface
     /** @brief Fetch the OCC/SBE state effecter PDRs and populate the cache
      *         with OCC/SBE instance to EffecterID information.
      *
-     *  @param[in] entityId - the entity ID to query
      *  @param[in] stateSetId - the state set ID to look for
      *  @param[out] instanceToEffecterMap - map of instance to effecterID
      *  @param[out] count - sensor offset of interested state set ID
      *  @param[out] stateIdPos - position of the stateSetID
      */
-    void fetchEffecterInfo(uint16_t entityId, uint16_t stateSetId,
+    void fetchEffecterInfo(uint16_t stateSetId,
                            InstanceToEffecter& instanceToEffecterMap,
                            CompositeEffecterCount& count, uint8_t& stateIdPos);
 
