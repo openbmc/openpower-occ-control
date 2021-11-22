@@ -22,8 +22,21 @@ namespace open_power
 namespace occ
 {
 
-PassThrough::PassThrough(const char* path) :
-    Iface(utils::getBus(), path), path(path),
+using namespace phosphor::logging;
+using namespace sdbusplus::org::open_power::OCC::Device::Error;
+
+PassThrough::PassThrough(
+    const char* path
+#ifdef POWER10
+    ,
+    std::unique_ptr<open_power::occ::powermode::PowerMode>& powerModeRef
+#endif
+    ) :
+    Iface(utils::getBus(), path),
+    path(path),
+#ifdef POWER10
+    pmode(powerModeRef),
+#endif
     devicePath(OCC_DEV_PATH + std::to_string((this->path.back() - '0') + 1)),
     occInstance(this->path.back() - '0'),
     activeStatusSignal(
@@ -60,9 +73,6 @@ std::vector<int32_t> PassThrough::send(std::vector<int32_t> command)
 
 std::vector<uint8_t> PassThrough::send(std::vector<uint8_t> command)
 {
-    using namespace phosphor::logging;
-    using namespace sdbusplus::org::open_power::OCC::Device::Error;
-
     std::vector<uint8_t> response{};
 
     log<level::DEBUG>(
@@ -98,6 +108,48 @@ std::vector<uint8_t> PassThrough::send(std::vector<uint8_t> command)
     }
 
     return response;
+}
+
+bool PassThrough::setMode(const uint8_t mode, const uint16_t modeData)
+{
+#ifdef POWER10
+    SysPwrMode newMode = SysPwrMode(mode);
+
+    if ((!VALID_POWER_MODE_SETTING(newMode)) &&
+        (!VALID_OEM_POWER_MODE_SETTING(newMode)))
+    {
+        log<level::ERR>(
+            fmt::format(
+                "PassThrough::setMode() Unsupported mode {} requested (0x{:04X})",
+                newMode, modeData)
+                .c_str());
+        return false;
+    }
+
+    if (((newMode == SysPwrMode::FFO) || (newMode == SysPwrMode::SFP)) &&
+        (modeData == 0))
+    {
+        log<level::ERR>(
+            fmt::format(
+                "PassThrough::setMode() Mode {} requires non-zero frequency point.",
+                newMode)
+                .c_str());
+        return false;
+    }
+
+    log<level::INFO>(
+        fmt::format("PassThrough::setMode() Setting Power Mode {} (data: {})",
+                    newMode, modeData)
+            .c_str());
+    return pmode->setMode(newMode, modeData);
+#else
+    log<level::DEBUG>(
+        fmt::format(
+            "PassThrough::setMode() No support to setting Power Mode {} (data: {})",
+            mode, modeData)
+            .c_str());
+    return false;
+#endif
 }
 
 // Called at OCC Status change signal

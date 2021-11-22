@@ -20,6 +20,8 @@ conf_data.set_quoted('CPU_NAME', 'cpu')
 conf_data.set_quoted('OCC_NAME', 'occ')
 conf_data.set_quoted('OCC_MASTER_NAME', 'occ-hwmon.1')
 conf_data.set_quoted('OCC_DEV_PATH', '/dev/occ')
+conf_data.set_quoted('CPU_SUBPATH', '/xyz/openbmc_project/inventory/system/chassis/motherboard')
+conf_data.set_quoted('OCC_CONTROL_PERSIST_PATH', '/var/lib/openpower-occ-control')
 
 conf_data.set('MAX_CPUS', get_option('max-cpus'))
 conf_data.set('OCC_CPU_TEMP_SENSOR_TYPE', 0xC0)
