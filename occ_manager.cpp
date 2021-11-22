@@ -13,6 +13,7 @@
 #include <chrono>
 #include <cmath>
 #include <filesystem>
+#include <fstream>
 #include <regex>
 
 namespace open_power
@@ -132,11 +133,11 @@ void Manager::createObjects(const std::string& occ)
 {
     auto path = fs::path(OCC_CONTROL_ROOT) / occ;
 
-    passThroughObjects.emplace_back(
-        std::make_unique<PassThrough>(path.c_str()));
-
     statusObjects.emplace_back(std::make_unique<Status>(
         event, path.c_str(), *this,
+#ifdef POWER10
+        pmode,
+#endif
         std::bind(std::mem_fn(&Manager::statusCallBack), this,
                   std::placeholders::_1)
 #ifdef PLDM
@@ -146,27 +147,37 @@ void Manager::createObjects(const std::string& occ)
 #endif
             ));
 
-    // Create the power cap monitor object for master occ (0)
-    if (!pcap)
+    if (statusObjects.back()->isMasterOcc())
     {
-        pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
-            *statusObjects.front());
-    }
+        log<level::INFO>(
+            fmt::format("Manager::createObjects(): OCC{} is the master",
+                        statusObjects.back()->getOccInstanceID())
+                .c_str());
+        _pollTimer->setEnabled(false);
+
+        // Create the power cap monitor object for master OCC
+        if (!pcap)
+        {
+            pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
+                *statusObjects.front());
+        }
 
 #ifdef POWER10
-    // Create the power mode monitor object for master occ (0)
-    if (!pmode)
-    {
-        pmode = std::make_unique<open_power::occ::powermode::PowerMode>(
-            *statusObjects.front());
-    }
-    // Create the idle power saver monitor object for master occ (0)
-    if (!pips)
-    {
-        pips = std::make_unique<open_power::occ::powermode::PowerIPS>(
-            *statusObjects.front());
-    }
+        // Create the power mode object for master OCC
+        if (!pmode)
+        {
+            pmode = std::make_unique<open_power::occ::powermode::PowerMode>(
+                *this, path.c_str());
+        }
 #endif
+    }
+
+    passThroughObjects.emplace_back(std::make_unique<PassThrough>(path.c_str()
+#ifdef POWER10
+                                                                      ,
+                                                                  pmode
+#endif
+                                                                  ));
 }
 
 void Manager::statusCallBack(bool status)
@@ -214,9 +225,8 @@ void Manager::statusCallBack(bool status)
         if (!_pollTimer->isEnabled())
         {
             log<level::INFO>(
-                fmt::format(
-                    "Manager::statusCallBack(): {} OCCs will be polled every {} seconds",
-                    activeCount, pollInterval)
+                fmt::format("Manager: OCCs will be polled every {} seconds",
+                            pollInterval)
                     .c_str());
 
             // Send poll and start OCC poll timer
@@ -280,9 +290,7 @@ void Manager::initStatusObjects()
         *statusObjects.front(), occMasterName);
 #ifdef POWER10
     pmode = std::make_unique<open_power::occ::powermode::PowerMode>(
-        *statusObjects.front());
-    pips = std::make_unique<open_power::occ::powermode::PowerIPS>(
-        *statusObjects.front());
+        *this, path.c_str());
 #endif
 }
 #endif
@@ -1013,7 +1021,8 @@ void Manager::validateOccMaster()
     else
     {
         log<level::INFO>(
-            fmt::format("validateOccMaster: OCC{} is master", masterInstance)
+            fmt::format("validateOccMaster: OCC{} is master of {} OCCs",
+                        masterInstance, activeCount)
                 .c_str());
     }
 }

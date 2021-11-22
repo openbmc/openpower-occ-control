@@ -1,5 +1,7 @@
 #include "utils.hpp"
 
+#include <fmt/core.h>
+
 #include <phosphor-logging/elog-errors.hpp>
 #include <sdbusplus/bus.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
@@ -65,6 +67,41 @@ const PropertyValue getProperty(const std::string& objectPath,
     reply.read(value);
 
     return value;
+}
+
+/**
+ * @brief Sets a given object's property value
+ *
+ * @param[in] object - Name of the object containing the property
+ * @param[in] interface - Interface name containing the property
+ * @param[in] property - Property name
+ * @param[in] value - Property value
+ */
+void setProperty(const std::string& objectPath, const std::string& interface,
+                 const std::string& propertyName, std::string&& value)
+{
+    using namespace std::literals::string_literals;
+    std::variant<std::string> varValue(std::forward<std::string>(value));
+
+    auto& bus = getBus();
+    auto service = getService(objectPath, interface);
+    if (service.empty())
+    {
+        return;
+    }
+
+    auto method = bus.new_method_call(service.c_str(), objectPath.c_str(),
+                                      DBUS_PROPERTY_IFACE, "Set");
+    method.append(interface, propertyName, varValue);
+
+    auto reply = bus.call(method);
+    if (reply.is_method_error())
+    {
+        log<level::ERR>(
+            fmt::format("util::setProperty: Failed to set property {}",
+                        propertyName)
+                .c_str());
+    }
 }
 
 std::vector<std::string>
