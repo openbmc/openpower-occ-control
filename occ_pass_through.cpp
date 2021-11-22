@@ -22,8 +22,15 @@ namespace open_power
 namespace occ
 {
 
-PassThrough::PassThrough(const char* path) :
-    Iface(utils::getBus(), path), path(path),
+PassThrough::PassThrough(
+    const char* path
+#ifdef POWER10
+    ,
+    std::unique_ptr<open_power::occ::powermode::PowerMode>& powerModeRef
+#endif
+    ) :
+    Iface(utils::getBus(), path),
+    path(path), pmode(powerModeRef),
     devicePath(OCC_DEV_PATH + std::to_string((this->path.back() - '0') + 1)),
     occInstance(this->path.back() - '0'),
     activeStatusSignal(
@@ -99,6 +106,44 @@ std::vector<uint8_t> PassThrough::send(std::vector<uint8_t> command)
 
     return response;
 }
+
+#ifdef POWER10
+bool PassThrough::setMode(uint8_t mode, uint16_t modeData)
+{
+    using namespace phosphor::logging;
+    using namespace sdbusplus::org::open_power::OCC::Device::Error;
+
+    SysPwrMode newMode = SysPwrMode(mode);
+
+    if ((!VALID_POWER_MODE_SETTING(newMode)) &&
+        (!VALID_OEM_POWER_MODE_SETTING(newMode)))
+    {
+        log<level::ERR>(
+            fmt::format(
+                "PassThrough::setMode() Unsupported mode {} requested (0x{:04X})",
+                newMode, modeData)
+                .c_str());
+        return false;
+    }
+
+    if (((newMode == SysPwrMode::FFO) || (newMode == SysPwrMode::SFP)) &&
+        (modeData == 0))
+    {
+        log<level::ERR>(
+            fmt::format(
+                "PassThrough::setMode() Mode {} requires non-zero frequency point.",
+                newMode)
+                .c_str());
+        return false;
+    }
+
+    log<level::INFO>(
+        fmt::format("PassThrough::setMode() Setting Power Mode {} (data: {})",
+                    newMode, modeData)
+            .c_str());
+    return pmode->setMode(newMode, modeData);
+}
+#endif
 
 // Called at OCC Status change signal
 void PassThrough::activeStatusEvent(sdbusplus::message::message& msg)

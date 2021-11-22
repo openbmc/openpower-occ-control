@@ -5,6 +5,7 @@
 #include "occ_command.hpp"
 #include "occ_device.hpp"
 #include "occ_events.hpp"
+#include "powermode.hpp"
 #include "utils.hpp"
 
 #include <org/open_power/Control/Host/server.hpp>
@@ -74,6 +75,7 @@ class Status : public Interface
      *                             protocol
      */
     Status(EventPtr& event, const char* path, Manager& managerRef,
+           std::unique_ptr<open_power::occ::powermode::PowerMode>& powerModeRef,
            std::function<void(bool)> callBack = nullptr
 #ifdef PLDM
            ,
@@ -84,6 +86,9 @@ class Status : public Interface
         Interface(utils::getBus(), getDbusPath(path).c_str(), true),
         path(path), callBack(callBack), instance(getInstance(path)),
         manager(managerRef),
+#ifdef POWER10
+        pmode(powerModeRef),
+#endif
         device(event,
 #ifdef I2C_OCC
                fs::path(DEV_PATH) / i2c_occ::getI2cDeviceName(path),
@@ -180,16 +185,6 @@ class Status : public Interface
     /** @brief Handle additional tasks when the OCCs reach active state */
     void occsWentActive();
 
-    /** @brief Send mode change command to the master OCC
-     *  @return SUCCESS on success
-     */
-    CmdStatus sendModeChange();
-
-    /** @brief Send Idle Power Saver config data to the master OCC
-     *  @return SUCCESS on success
-     */
-    CmdStatus sendIpsData();
-
     /** @brief Send Ambient & Altitude data to OCC
      *
      *  @param[in] ambient - temperature to send (0xFF will force read
@@ -222,6 +217,11 @@ class Status : public Interface
 
     /** @brief OCC manager object */
     const Manager& manager;
+
+#ifdef POWER10
+    /** @brief OCC PowerMode object */
+    std::unique_ptr<open_power::occ::powermode::PowerMode>& pmode;
+#endif
 
     /** @brief OCC device object to do bind and unbind */
     Device device;
@@ -262,22 +262,6 @@ class Status : public Interface
     }
 
 #ifdef POWER10
-    /** @brief Query the current Hypervisor target
-     * @return true if the current Hypervisor target is PowerVM
-     */
-    bool isPowerVM();
-
-    /** @brief Get the requested power mode property
-     * @return Power mode
-     */
-    SysPwrMode getMode();
-
-    /** @brief Get the Idle Power Saver properties
-     * @return true if IPS is enabled
-     */
-    bool getIPSParms(uint8_t& enterUtil, uint16_t& enterTime, uint8_t& exitUtil,
-                     uint16_t& exitTime);
-
     /**
      * @brief Timer that is started when OCC is detected to be in safe mode
      */

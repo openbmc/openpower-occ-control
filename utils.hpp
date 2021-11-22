@@ -54,6 +54,17 @@ const PropertyValue getProperty(const std::string& objectPath,
                                 const std::string& interface,
                                 const std::string& propertyName);
 
+/**
+ * @brief Sets a given object's property value
+ *
+ * @param[in] object - Name of the object containing the property
+ * @param[in] interface - Interface name containing the property
+ * @param[in] property - Property name
+ * @param[in] value - Property value
+ */
+void setProperty(const std::string& objectPath, const std::string& interface,
+                 const std::string& propertyName, std::string&& value);
+
 /** @brief Get subtree paths
  *
  *  @param[in] interfaces -   D-Bus interfaces

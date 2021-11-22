@@ -46,19 +46,24 @@ bool Status::occActive(bool value)
         }
         else
         {
-            // Call into Manager to let know that we will unbind.
-            if (this->callBack)
-            {
-                this->callBack(value);
-            }
-
 #ifdef POWER10
+            if (device.master())
+            {
+                // Prevent mode changes
+                pmode->setMasterActive(false);
+            }
             if (safeStateDelayTimer.isEnabled())
             {
                 // stop safe delay timer
                 safeStateDelayTimer.setEnabled(false);
             }
 #endif
+
+            // Call into Manager to let know that we will unbind.
+            if (this->callBack)
+            {
+                this->callBack(value);
+            }
 
             // Stop watching for errors
             removeErrorWatch();
@@ -103,6 +108,11 @@ bool Status::occActive(bool value)
 // Callback handler when a device error is reported.
 void Status::deviceError()
 {
+#ifdef POWER10
+    // Prevent mode changes
+    pmode->setMasterActive(false);
+#endif
+
     // This would deem OCC inactive
     this->occActive(false);
 
@@ -196,6 +206,9 @@ void Status::readOccState()
             {
                 if (device.master())
                 {
+                    // Prevent mode changes
+                    pmode->setMasterActive();
+
                     // Special processing by master OCC when it goes active
                     occsWentActive();
                 }
@@ -238,189 +251,12 @@ void Status::readOccState()
 }
 
 #ifdef POWER10
-// Check if Hypervisor target is PowerVM
-bool Status::isPowerVM()
-{
-    using namespace open_power::occ::powermode;
-    namespace Hyper = sdbusplus::com::ibm::Host::server;
-    constexpr auto HYPE_PATH = "/com/ibm/host0/hypervisor";
-    constexpr auto HYPE_INTERFACE = "com.ibm.Host.Target";
-    constexpr auto HYPE_PROP = "Target";
-
-    bool powerVmTarget = false;
-
-    // This will throw exception on failure
-    auto& bus = utils::getBus();
-    auto service = utils::getService(HYPE_PATH, HYPE_INTERFACE);
-    auto method = bus.new_method_call(service.c_str(), HYPE_PATH,
-                                      "org.freedesktop.DBus.Properties", "Get");
-    method.append(HYPE_INTERFACE, HYPE_PROP);
-    auto reply = bus.call(method);
-
-    std::variant<std::string> hyperEntryValue;
-    reply.read(hyperEntryValue);
-    auto propVal = std::get<std::string>(hyperEntryValue);
-    if (Hyper::Target::convertHypervisorFromString(propVal) ==
-        Hyper::Target::Hypervisor::PowerVM)
-    {
-        powerVmTarget = true;
-    }
-
-    log<level::DEBUG>(
-        fmt::format("Status::isPowerVM returning {}", powerVmTarget).c_str());
-
-    return powerVmTarget;
-}
-
-// Get the requested power mode
-SysPwrMode Status::getMode()
-{
-    using namespace open_power::occ::powermode;
-    SysPwrMode pmode = SysPwrMode::NO_CHANGE;
-
-    // This will throw exception on failure
-    auto& bus = utils::getBus();
-    auto service = utils::getService(PMODE_PATH, PMODE_INTERFACE);
-    auto method = bus.new_method_call(service.c_str(), PMODE_PATH,
-                                      "org.freedesktop.DBus.Properties", "Get");
-    method.append(PMODE_INTERFACE, POWER_MODE_PROP);
-    auto reply = bus.call(method);
-
-    std::variant<std::string> stateEntryValue;
-    reply.read(stateEntryValue);
-    auto propVal = std::get<std::string>(stateEntryValue);
-    pmode = powermode::convertStringToMode(propVal);
-
-    log<level::DEBUG>(
-        fmt::format("Status::getMode returning {}", pmode).c_str());
-
-    return pmode;
-}
-
-// Get the requested power mode
-bool Status::getIPSParms(uint8_t& enterUtil, uint16_t& enterTime,
-                         uint8_t& exitUtil, uint16_t& exitTime)
-{
-    using namespace open_power::occ::powermode;
-    // Defaults:
-    bool ipsEnabled = false; // Disabled
-    enterUtil = 8;           // Enter Utilization (8%)
-    enterTime = 240;         // Enter Delay Time (240s)
-    exitUtil = 12;           // Exit Utilization (12%)
-    exitTime = 10;           // Exit Delay Time (10s)
-
-    std::map<std::string, std::variant<bool, uint8_t, uint64_t>>
-        ipsProperties{};
-
-    // Get all IPS properties from DBus
-    try
-    {
-        auto& bus = utils::getBus();
-        auto service = utils::getService(PIPS_PATH, PIPS_INTERFACE);
-        auto method =
-            bus.new_method_call(service.c_str(), PIPS_PATH,
-                                "org.freedesktop.DBus.Properties", "GetAll");
-        method.append(PIPS_INTERFACE);
-        auto reply = bus.call(method);
-        reply.read(ipsProperties);
-    }
-    catch (const sdbusplus::exception::exception& e)
-    {
-        log<level::ERR>(
-            fmt::format(
-                "Unable to read Idle Power Saver parameters so it will be disabled: {}",
-                e.what())
-                .c_str());
-        return ipsEnabled;
-    }
-
-    auto ipsEntry = ipsProperties.find(IPS_ENABLED_PROP);
-    if (ipsEntry != ipsProperties.end())
-    {
-        ipsEnabled = std::get<bool>(ipsEntry->second);
-    }
-    else
-    {
-        log<level::ERR>(
-            fmt::format("Status::getIPSParms could not find property: {}",
-                        IPS_ENABLED_PROP)
-                .c_str());
-    }
-
-    ipsEntry = ipsProperties.find(IPS_ENTER_UTIL);
-    if (ipsEntry != ipsProperties.end())
-    {
-        enterUtil = std::get<uint8_t>(ipsEntry->second);
-    }
-    else
-    {
-        log<level::ERR>(
-            fmt::format("Status::getIPSParms could not find property: {}",
-                        IPS_ENTER_UTIL)
-                .c_str());
-    }
-
-    ipsEntry = ipsProperties.find(IPS_ENTER_TIME);
-    if (ipsEntry != ipsProperties.end())
-    {
-        std::chrono::milliseconds ms(std::get<uint64_t>(ipsEntry->second));
-        enterTime =
-            std::chrono::duration_cast<std::chrono::seconds>(ms).count();
-    }
-    else
-    {
-        log<level::ERR>(
-            fmt::format("Status::getIPSParms could not find property: {}",
-                        IPS_ENTER_TIME)
-                .c_str());
-    }
-
-    ipsEntry = ipsProperties.find(IPS_EXIT_UTIL);
-    if (ipsEntry != ipsProperties.end())
-    {
-        exitUtil = std::get<uint8_t>(ipsEntry->second);
-    }
-    else
-    {
-        log<level::ERR>(
-            fmt::format("Status::getIPSParms could not find property: {}",
-                        IPS_EXIT_UTIL)
-                .c_str());
-    }
-
-    ipsEntry = ipsProperties.find(IPS_EXIT_TIME);
-    if (ipsEntry != ipsProperties.end())
-    {
-        std::chrono::milliseconds ms(std::get<uint64_t>(ipsEntry->second));
-        exitTime = std::chrono::duration_cast<std::chrono::seconds>(ms).count();
-    }
-    else
-    {
-        log<level::ERR>(
-            fmt::format("Status::getIPSParms could not find property: {}",
-                        IPS_EXIT_TIME)
-                .c_str());
-    }
-
-    if (enterUtil > exitUtil)
-    {
-        log<level::ERR>(
-            fmt::format(
-                "ERROR: Idle Power Saver Enter Utilization ({}%) is > Exit Utilization ({}%) - using Exit for both",
-                enterUtil, exitUtil)
-                .c_str());
-        enterUtil = exitUtil;
-    }
-
-    return ipsEnabled;
-}
-
 // Special processing that needs to happen once the OCCs change to ACTIVE state
 void Status::occsWentActive()
 {
     CmdStatus status = CmdStatus::SUCCESS;
 
-    status = sendModeChange();
+    status = pmode->sendModeChange();
     if (status != CmdStatus::SUCCESS)
     {
         log<level::ERR>(
@@ -430,7 +266,7 @@ void Status::occsWentActive()
                 .c_str());
     }
 
-    status = sendIpsData();
+    status = pmode->sendIpsData();
     if (status != CmdStatus::SUCCESS)
     {
         log<level::ERR>(
@@ -439,189 +275,6 @@ void Status::occsWentActive()
                 status)
                 .c_str());
     }
-}
-
-// Send mode change request to the master OCC
-CmdStatus Status::sendModeChange()
-{
-    CmdStatus status = CmdStatus::FAILURE;
-
-    if (!device.master())
-    {
-        log<level::ERR>(
-            fmt::format(
-                "Status::sendModeChange: MODE CHANGE does not get sent to slave OCC{}",
-                instance)
-                .c_str());
-        return status;
-    }
-    if (!isPowerVM())
-    {
-        // Mode change is only supported on PowerVM systems
-        log<level::DEBUG>(
-            "Status::sendModeChange: MODE CHANGE does not get sent on non-PowerVM systems");
-        return CmdStatus::SUCCESS;
-    }
-
-    const SysPwrMode newMode = getMode();
-
-    if (VALID_POWER_MODE_SETTING(newMode))
-    {
-        std::vector<std::uint8_t> cmd, rsp;
-        cmd.reserve(9);
-        cmd.push_back(uint8_t(CmdType::SET_MODE_AND_STATE));
-        cmd.push_back(0x00); // Data Length (2 bytes)
-        cmd.push_back(0x06);
-        cmd.push_back(0x30); // Data (Version)
-        cmd.push_back(uint8_t(OccState::NO_CHANGE));
-        cmd.push_back(uint8_t(newMode));
-        cmd.push_back(0x00); // Mode Data (Freq Point)
-        cmd.push_back(0x00); //
-        cmd.push_back(0x00); // reserved
-        log<level::INFO>(
-            fmt::format(
-                "Status::sendModeChange: SET_MODE({}) command to OCC{} ({} bytes)",
-                newMode, instance, cmd.size())
-                .c_str());
-        status = occCmd.send(cmd, rsp);
-        if (status == CmdStatus::SUCCESS)
-        {
-            if (rsp.size() == 5)
-            {
-                if (RspStatus::SUCCESS != RspStatus(rsp[2]))
-                {
-                    log<level::ERR>(
-                        fmt::format(
-                            "Status::sendModeChange: SET MODE failed with status 0x{:02X}",
-                            rsp[2])
-                            .c_str());
-                    dump_hex(rsp);
-                    status = CmdStatus::FAILURE;
-                }
-            }
-            else
-            {
-                log<level::ERR>(
-                    "Status::sendModeChange: INVALID SET MODE response");
-                dump_hex(rsp);
-                status = CmdStatus::FAILURE;
-            }
-        }
-        else
-        {
-            if (status == CmdStatus::OPEN_FAILURE)
-            {
-                log<level::INFO>("Status::sendModeChange: OCC not active yet");
-                status = CmdStatus::SUCCESS;
-            }
-            else
-            {
-                log<level::ERR>("Status::sendModeChange: SET_MODE FAILED!");
-            }
-        }
-    }
-    else
-    {
-        log<level::ERR>(
-            fmt::format(
-                "Status::sendModeChange: Unable to set power mode to {}",
-                newMode)
-                .c_str());
-        status = CmdStatus::FAILURE;
-    }
-
-    return status;
-}
-
-// Send Idle Power Saver config data to the master OCC
-CmdStatus Status::sendIpsData()
-{
-    CmdStatus status = CmdStatus::FAILURE;
-
-    if (!device.master())
-    {
-        log<level::ERR>(
-            fmt::format(
-                "Status::sendIpsData: SET_CFG_DATA[IPS] does not get sent to slave OCC{}",
-                instance)
-                .c_str());
-        return status;
-    }
-    if (!isPowerVM())
-    {
-        // Idle Power Saver data is only supported on PowerVM systems
-        log<level::DEBUG>(
-            "Status::sendIpsData: SET_CFG_DATA[IPS] does not get sent on non-PowerVM systems");
-        return CmdStatus::SUCCESS;
-    }
-
-    uint8_t enterUtil, exitUtil;
-    uint16_t enterTime, exitTime;
-    const bool ipsEnabled =
-        getIPSParms(enterUtil, enterTime, exitUtil, exitTime);
-
-    log<level::INFO>(
-        fmt::format(
-            "Idle Power Saver Parameters: enabled:{}, enter:{}%/{}s, exit:{}%/{}s",
-            ipsEnabled, enterUtil, enterTime, exitUtil, exitTime)
-            .c_str());
-
-    std::vector<std::uint8_t> cmd, rsp;
-    cmd.reserve(12);
-    cmd.push_back(uint8_t(CmdType::SET_CONFIG_DATA));
-    cmd.push_back(0x00);               // Data Length (2 bytes)
-    cmd.push_back(0x09);               //
-    cmd.push_back(0x11);               // Config Format: IPS Settings
-    cmd.push_back(0x00);               // Version
-    cmd.push_back(ipsEnabled ? 1 : 0); // IPS Enable
-    cmd.push_back(enterTime >> 8);     // Enter Delay Time
-    cmd.push_back(enterTime & 0xFF);   //
-    cmd.push_back(enterUtil);          // Enter Utilization
-    cmd.push_back(exitTime >> 8);      // Exit Delay Time
-    cmd.push_back(exitTime & 0xFF);    //
-    cmd.push_back(exitUtil);           // Exit Utilization
-    log<level::INFO>(fmt::format("Status::sendIpsData: SET_CFG_DATA[IPS] "
-                                 "command to OCC{} ({} bytes)",
-                                 instance, cmd.size())
-                         .c_str());
-    status = occCmd.send(cmd, rsp);
-    if (status == CmdStatus::SUCCESS)
-    {
-        if (rsp.size() == 5)
-        {
-            if (RspStatus::SUCCESS != RspStatus(rsp[2]))
-            {
-                log<level::ERR>(
-                    fmt::format(
-                        "Status::sendIpsData: SET_CFG_DATA[IPS] failed with status 0x{:02X}",
-                        rsp[2])
-                        .c_str());
-                dump_hex(rsp);
-                status = CmdStatus::FAILURE;
-            }
-        }
-        else
-        {
-            log<level::ERR>(
-                "Status::sendIpsData: INVALID SET_CFG_DATA[IPS] response");
-            dump_hex(rsp);
-            status = CmdStatus::FAILURE;
-        }
-    }
-    else
-    {
-        if (status == CmdStatus::OPEN_FAILURE)
-        {
-            log<level::INFO>("Status::sendIpsData: OCC not active yet");
-            status = CmdStatus::SUCCESS;
-        }
-        else
-        {
-            log<level::ERR>("Status::sendIpsData: SET_CFG_DATA[IPS] FAILED!");
-        }
-    }
-
-    return status;
 }
 
 // Send Ambient and Altitude to the OCC

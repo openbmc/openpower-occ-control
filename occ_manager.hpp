@@ -190,9 +190,6 @@ struct Manager
 #ifdef POWER10
     /** @brief Power mode monitor and notification object */
     std::unique_ptr<open_power::occ::powermode::PowerMode> pmode;
-
-    /** @brief Idle Power Saver monitor and notification object */
-    std::unique_ptr<open_power::occ::powermode::PowerIPS> pips;
 #endif
 
     /** @brief sbdbusplus match objects */
