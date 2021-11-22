@@ -45,10 +45,11 @@ enum class OccState
 enum class SysPwrMode
 {
     NO_CHANGE = 0,
-    DISABLE = 0x01,      // Disable / Static Base Frequencey
+    STATIC = 0x01,       // Static Base Frequencey
     SFP = 0x03,          // Static Frequency Point (requires freqPt)
     SAFE = 0x04,         // reported when system is in SAFE mode (not settable)
     POWER_SAVING = 0x05, // Static Power Saving
+    MAX_FREQ = 0x09,     // Maximum Frequency (per chip)
     DYNAMIC_PERF = 0x0A, // Dynamic / Balanced Performance
     FFO = 0x0B,          // Fixed Frequency Override (requires freqPt)
     MAX_PERF = 0x0C      // Maximum Performance
@@ -56,8 +57,11 @@ enum class SysPwrMode
 
 // Only some of the SysPwrModes are currently supported and allowed to be set
 #define VALID_POWER_MODE_SETTING(mode)                                         \
-    ((mode == SysPwrMode::DISABLE) || (mode == SysPwrMode::POWER_SAVING) ||    \
+    ((mode == SysPwrMode::STATIC) || (mode == SysPwrMode::POWER_SAVING) ||     \
      (mode == SysPwrMode::DYNAMIC_PERF) || (mode == SysPwrMode::MAX_PERF))
+#define VALID_OEM_POWER_MODE_SETTING(mode)                                     \
+    ((mode == SysPwrMode::SFP) || (mode == SysPwrMode::FFO) ||                 \
+     (mode == SysPwrMode::MAX_FREQ))
 
 enum class RspStatus
 {
