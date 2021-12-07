@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "64b6425f_a41e33db",
+        "filename": "powermode.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2021-12-07T15:49:01Z",
+      "side": 1,
+      "message": "A modern way to do this is to return a std::optional\u003cmode, freq\u003e  where the optional is empty if the value isn\u0027t set.",
+      "revId": "3d77fa68e77e875d0ac19ad679764e8fc82ed8b8",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4",
+      "unresolved": true
+    }
+  ]
+}
