@@ -72,9 +72,9 @@ const PropertyValue getProperty(const std::string& objectPath,
 /**
  * @brief Sets a given object's property value
  *
- * @param[in] object - Name of the object containing the property
+ * @param[in] objectPath - Name of the object containing the property
  * @param[in] interface - Interface name containing the property
- * @param[in] property - Property name
+ * @param[in] propertyName - Property name
  * @param[in] value - Property value
  */
 void setProperty(const std::string& objectPath, const std::string& interface,
@@ -83,23 +83,34 @@ void setProperty(const std::string& objectPath, const std::string& interface,
     using namespace std::literals::string_literals;
     std::variant<std::string> varValue(std::forward<std::string>(value));
 
-    auto& bus = getBus();
-    auto service = getService(objectPath, interface);
-    if (service.empty())
+    try
     {
-        return;
+        auto& bus = getBus();
+        auto service = getService(objectPath, interface);
+        if (service.empty())
+        {
+            return;
+        }
+
+        auto method = bus.new_method_call(service.c_str(), objectPath.c_str(),
+                                          DBUS_PROPERTY_IFACE, "Set");
+        method.append(interface, propertyName, varValue);
+
+        auto reply = bus.call(method);
+        if (reply.is_method_error())
+        {
+            log<level::ERR>(
+                fmt::format("util::setProperty: Failed to set property {}",
+                            propertyName)
+                    .c_str());
+        }
     }
-
-    auto method = bus.new_method_call(service.c_str(), objectPath.c_str(),
-                                      DBUS_PROPERTY_IFACE, "Set");
-    method.append(interface, propertyName, varValue);
-
-    auto reply = bus.call(method);
-    if (reply.is_method_error())
+    catch (const std::exception& e)
     {
+        auto error = errno;
         log<level::ERR>(
-            fmt::format("util::setProperty: Failed to set property {}",
-                        propertyName)
+            fmt::format("setProperty: failed to Set {}, errno={}, what={}",
+                        propertyName.c_str(), error, e.what())
                 .c_str());
     }
 }
@@ -120,6 +131,53 @@ std::vector<std::string>
 
     return paths;
 }
+
+// Get the service and object path for an interface
+std::string getServiceUsingSubTree(const std::string& interface,
+                                   std::string& path)
+{
+    using Path = std::string;
+    using Intf = std::string;
+    using Serv = std::string;
+    using Intfs = std::vector<Intf>;
+    using Objects = std::map<Path, std::map<Serv, Intfs>>;
+    Serv service;
+    Objects rspObjects;
+
+    auto& bus = getBus();
+    auto method = bus.new_method_call(MAPPER_BUSNAME, MAPPER_OBJ_PATH,
+                                      MAPPER_IFACE, "GetSubTree");
+    method.append(path, 0, std::vector{interface});
+
+    auto mapperResponseMsg = bus.call(method);
+    mapperResponseMsg.read(rspObjects);
+    if (rspObjects.empty())
+    {
+        log<level::ERR>(
+            fmt::format(
+                "util::getServiceUsingSubTree: Failed getSubTree({},0,{})",
+                path.c_str(), interface)
+                .c_str());
+    }
+    else
+    {
+        path = rspObjects.begin()->first;
+        if (!rspObjects.begin()->second.empty())
+        {
+            service = rspObjects.begin()->second.begin()->first;
+        }
+        else
+        {
+            log<level::ERR>(
+                fmt::format("util::getSubtree: service not found (path={})",
+                            path.c_str())
+                    .c_str());
+        }
+    }
+
+    return service;
+}
+
 } // namespace utils
 } // namespace occ
 } // namespace open_power

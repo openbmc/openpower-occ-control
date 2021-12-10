@@ -4,6 +4,9 @@
 #include "occ_events.hpp"
 #include "occ_manager.hpp"
 #include "utils.hpp"
+#ifdef POWER10
+#include "powermode.hpp"
+#endif
 
 #include <org/open_power/OCC/Device/error.hpp>
 #include <phosphor-logging/elog.hpp>
@@ -37,6 +40,10 @@ int main(int /*argc*/, char** /*argv[]*/)
     sdbusplus::server::manager::manager objManager(bus, OCC_CONTROL_ROOT);
 #ifdef READ_OCC_SENSORS
     sdbusplus::server::manager::manager objManagerXyz(bus, OCC_SENSORS_ROOT);
+#endif
+#ifdef POWER10
+    sdbusplus::server::manager::manager objManagerXyzControl(
+        bus, "/xyz/openbmc_project/control");
 #endif
     open_power::occ::Manager mgr(eventP);
 
