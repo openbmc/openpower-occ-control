@@ -136,7 +136,9 @@ void Manager::createObjects(const std::string& occ)
 #ifdef POWER10
     if (!pmode)
     {
-        pmode = std::make_unique<open_power::occ::powermode::PowerMode>(*this);
+        // Create the power mode object
+        pmode = std::make_unique<open_power::occ::powermode::PowerMode>(
+            *this, powermode::PMODE_PATH, powermode::PIPS_PATH);
     }
 #endif
 
@@ -166,7 +168,7 @@ void Manager::createObjects(const std::string& occ)
         if (!pcap)
         {
             pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
-                *statusObjects.front());
+                *statusObjects.back());
         }
 
 #ifdef POWER10
@@ -292,7 +294,9 @@ void Manager::initStatusObjects()
     pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
         *statusObjects.front(), occMasterName);
 #ifdef POWER10
-    pmode = std::make_unique<open_power::occ::powermode::PowerMode>(*this);
+    pmode = std::make_unique<open_power::occ::powermode::PowerMode>(
+        *this, open_power::occ::powermode::PMODE_PATH,
+        open_power::occ::powermode::PIPS_PATH);
     // Set the master OCC on the PowerMode object
     pmode->setMasterOcc(path);
 #endif

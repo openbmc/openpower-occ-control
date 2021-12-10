@@ -16,10 +16,6 @@ namespace powercap
 constexpr auto PCAP_PATH = "/xyz/openbmc_project/control/host0/power_cap";
 constexpr auto PCAP_INTERFACE = "xyz.openbmc_project.Control.Power.Cap";
 
-constexpr auto MAPPER_BUSNAME = "xyz.openbmc_project.ObjectMapper";
-constexpr auto MAPPER_PATH = "/xyz/openbmc_project/object_mapper";
-constexpr auto MAPPER_INTERFACE = "xyz.openbmc_project.ObjectMapper";
-
 constexpr auto POWER_CAP_PROP = "PowerCap";
 constexpr auto POWER_CAP_ENABLE_PROP = "PowerCapEnable";
 
