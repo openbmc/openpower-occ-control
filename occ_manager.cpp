@@ -167,7 +167,9 @@ void Manager::createObjects(const std::string& occ)
         if (!pmode)
         {
             pmode = std::make_unique<open_power::occ::powermode::PowerMode>(
-                *this, path.c_str());
+                *this, path.c_str(),
+                "/xyz/openbmc_project/control/host0/power_mode",
+                "/xyz/openbmc_project/control/host0/power_ips");
         }
 #endif
     }
@@ -290,7 +292,8 @@ void Manager::initStatusObjects()
         *statusObjects.front(), occMasterName);
 #ifdef POWER10
     pmode = std::make_unique<open_power::occ::powermode::PowerMode>(
-        *this, path.c_str());
+        *this, path.c_str(), "/xyz/openbmc_project/control/host0/power_mode",
+        "/xyz/openbmc_project/control/host0/power_ips");
 #endif
 }
 #endif
