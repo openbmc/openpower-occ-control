@@ -147,6 +147,17 @@ void Manager::createObjects(const std::string& occ)
 #endif
             ));
 
+#ifdef POWER10
+    // Create the power mode object
+    if (!pmode)
+    {
+        log<level::INFO>("Manager::createObjects: creating PowerMode object");
+        pmode = std::make_unique<open_power::occ::powermode::PowerMode>(
+            *this, "/xyz/openbmc_project/control/host0/power_mode",
+            "/xyz/openbmc_project/control/host0/power_ips");
+    }
+#endif
+
     if (statusObjects.back()->isMasterOcc())
     {
         log<level::INFO>(
@@ -163,12 +174,8 @@ void Manager::createObjects(const std::string& occ)
         }
 
 #ifdef POWER10
-        // Create the power mode object for master OCC
-        if (!pmode)
-        {
-            pmode = std::make_unique<open_power::occ::powermode::PowerMode>(
-                *this, path.c_str());
-        }
+        // Set the Master OCC for the power mode object
+        pmode->setMaster(path.c_str());
 #endif
     }
 
@@ -290,7 +297,8 @@ void Manager::initStatusObjects()
         *statusObjects.front(), occMasterName);
 #ifdef POWER10
     pmode = std::make_unique<open_power::occ::powermode::PowerMode>(
-        *this, path.c_str());
+        *this, "/xyz/openbmc_project/control/host0/power_mode",
+        "/xyz/openbmc_project/control/host0/power_ips");
 #endif
 }
 #endif

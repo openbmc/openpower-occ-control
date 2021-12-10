@@ -38,6 +38,14 @@ bool Status::occActive(bool value)
             // Reset last OCC state
             lastState = 0;
 
+#ifdef POWER10
+            // Set the Master OCC for the power mode object
+            if (pmode && device.master())
+            {
+                pmode->setMaster(path.c_str());
+            }
+#endif
+
             // Call into Manager to let know that we have bound
             if (this->callBack)
             {
@@ -47,7 +55,7 @@ bool Status::occActive(bool value)
         else
         {
 #ifdef POWER10
-            if (device.master())
+            if (pmode && device.master())
             {
                 // Prevent mode changes
                 pmode->setMasterActive(false);
@@ -109,8 +117,11 @@ bool Status::occActive(bool value)
 void Status::deviceError()
 {
 #ifdef POWER10
-    // Prevent mode changes
-    pmode->setMasterActive(false);
+    if (pmode)
+    {
+        // Prevent mode changes
+        pmode->setMasterActive(false);
+    }
 #endif
 
     // This would deem OCC inactive
@@ -204,9 +215,9 @@ void Status::readOccState()
 #ifdef POWER10
             if (OccState(state) == OccState::ACTIVE)
             {
-                if (device.master())
+                if (pmode && device.master())
                 {
-                    // Prevent mode changes
+                    // Enable mode changes
                     pmode->setMasterActive();
 
                     // Special processing by master OCC when it goes active
