@@ -38,6 +38,10 @@ int main(int /*argc*/, char** /*argv[]*/)
 #ifdef READ_OCC_SENSORS
     sdbusplus::server::manager::manager objManagerXyz(bus, OCC_SENSORS_ROOT);
 #endif
+    sdbusplus::server::manager::manager objManagerXyzMode(
+        bus, "/xyz/openbmc_project/control/host0/power_mode");
+    sdbusplus::server::manager::manager objManagerXyzIPS(
+        bus, "/xyz/openbmc_project/control/host0/power_ips");
     open_power::occ::Manager mgr(eventP);
 
     // Claim the bus since all the house keeping is done now
