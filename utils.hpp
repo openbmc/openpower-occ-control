@@ -78,6 +78,17 @@ std::vector<std::string>
     getSubtreePaths(const std::vector<std::string>& interfaces,
                     const std::string& path = "/");
 
+/**
+ * @brief Get the D-Bus service and object path for an interface
+ *
+ * @param[in] interface - D-Bus interface name
+ * @param[in,out] path  - D-Bus object path
+ *
+ * @return D-Bus service name
+ */
+std::string getServiceUsingSubTree(const std::string& interface,
+                                   std::string& path);
+
 } // namespace utils
 } // namespace occ
 } // namespace open_power
