@@ -83,23 +83,34 @@ void setProperty(const std::string& objectPath, const std::string& interface,
     using namespace std::literals::string_literals;
     std::variant<std::string> varValue(std::forward<std::string>(value));
 
-    auto& bus = getBus();
-    auto service = getService(objectPath, interface);
-    if (service.empty())
+    try
     {
-        return;
+        auto& bus = getBus();
+        auto service = getService(objectPath, interface);
+        if (service.empty())
+        {
+            return;
+        }
+
+        auto method = bus.new_method_call(service.c_str(), objectPath.c_str(),
+                                          DBUS_PROPERTY_IFACE, "Set");
+        method.append(interface, propertyName, varValue);
+
+        auto reply = bus.call(method);
+        if (reply.is_method_error())
+        {
+            log<level::ERR>(
+                fmt::format("util::setProperty: Failed to set property {}",
+                            propertyName)
+                    .c_str());
+        }
     }
-
-    auto method = bus.new_method_call(service.c_str(), objectPath.c_str(),
-                                      DBUS_PROPERTY_IFACE, "Set");
-    method.append(interface, propertyName, varValue);
-
-    auto reply = bus.call(method);
-    if (reply.is_method_error())
+    catch (const std::exception& e)
     {
+        auto error = errno;
         log<level::ERR>(
-            fmt::format("util::setProperty: Failed to set property {}",
-                        propertyName)
+            fmt::format("setProperty: failed to Set {}, errno={}, what={}",
+                        propertyName.c_str(), error, e.what())
                 .c_str());
     }
 }

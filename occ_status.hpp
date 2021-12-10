@@ -86,7 +86,7 @@ class Status : public Interface
            ) :
 
         Interface(utils::getBus(), getDbusPath(path).c_str(), true),
-        path(path), callBack(callBack), instance(getInstance(path)),
+        path(path), managerCallBack(callBack), instance(getInstance(path)),
         manager(managerRef),
 #ifdef POWER10
         pmode(powerModeRef),
@@ -206,7 +206,7 @@ class Status : public Interface
     /** @brief Callback handler to be invoked during property change.
      *         This is a handler in Manager class
      */
-    std::function<void(bool)> callBack;
+    std::function<void(bool)> managerCallBack;
 
     /** @brief OCC instance number. Ex, 0,1, etc */
     unsigned int instance;
