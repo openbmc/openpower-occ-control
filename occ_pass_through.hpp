@@ -39,7 +39,7 @@ class PassThrough : public Iface
     /** @brief Ctor to put pass-through d-bus object on the bus
      *  @param[in] path - Path to attach at
      */
-    PassThrough(const char* path);
+    explicit PassThrough(const char* path);
 
     /** @brief Pass through command to OCC from dbus
      *  @param[in] command - command to pass-through

@@ -304,9 +304,9 @@ class Status : public Interface
                 auto& name = std::get<1>(it->second);
                 if (!name.empty() && name != "None")
                 {
-                    auto path = fs::path(estimatedPath);
-                    path.replace_filename(name);
-                    return path.string();
+                    auto objectPath = fs::path(estimatedPath);
+                    objectPath.replace_filename(name);
+                    return objectPath.string();
                 }
             }
         }

@@ -25,8 +25,6 @@ void PowerMode::modeChanged(sdbusplus::message::message& msg)
         return;
     }
 
-    SysPwrMode pmode = SysPwrMode::NO_CHANGE;
-
     std::map<std::string, std::variant<std::string>> properties{};
     std::string interface;
     std::string propVal;
@@ -36,9 +34,8 @@ void PowerMode::modeChanged(sdbusplus::message::message& msg)
     {
         auto modeEntryValue = modeEntry->second;
         propVal = std::get<std::string>(modeEntryValue);
-        pmode = convertStringToMode(propVal);
 
-        if (pmode != SysPwrMode::NO_CHANGE)
+        if (convertStringToMode(propVal) != SysPwrMode::NO_CHANGE)
         {
             log<level::INFO>(
                 fmt::format("Power Mode Change Requested: {}", propVal)

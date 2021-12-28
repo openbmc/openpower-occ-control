@@ -74,7 +74,7 @@ struct Manager
      *
      *  @param[in] event - Unique ptr reference to sd_event
      */
-    Manager(EventPtr& event) :
+    explicit Manager(EventPtr& event) :
         event(event), pollInterval(defaultPollingInterval),
         sdpEvent(sdeventplus::Event::get_default()),
         _pollTimer(

@@ -28,7 +28,7 @@ bool OccDBusSensors::setMaxValue(const std::string& path, double value)
         return false;
     }
 
-    if (sensors.find(path) == sensors.end())
+    if (!sensors.contains(path))
     {
         sensors.emplace(
             path, std::make_unique<SensorIntf>(utils::getBus(), path.c_str()));
@@ -55,7 +55,7 @@ bool OccDBusSensors::setMinValue(const std::string& path, double value)
         return false;
     }
 
-    if (sensors.find(path) == sensors.end())
+    if (!sensors.contains(path))
     {
         sensors.emplace(
             path, std::make_unique<SensorIntf>(utils::getBus(), path.c_str()));
@@ -82,7 +82,7 @@ bool OccDBusSensors::setValue(const std::string& path, double value)
         return false;
     }
 
-    if (sensors.find(path) == sensors.end())
+    if (!sensors.contains(path))
     {
         sensors.emplace(
             path, std::make_unique<SensorIntf>(utils::getBus(), path.c_str()));
@@ -109,7 +109,7 @@ bool OccDBusSensors::setUnit(const std::string& path, const std::string& value)
         return false;
     }
 
-    if (sensors.find(path) == sensors.end())
+    if (!sensors.contains(path))
     {
         sensors.emplace(
             path, std::make_unique<SensorIntf>(utils::getBus(), path.c_str()));
@@ -153,7 +153,7 @@ bool OccDBusSensors::setOperationalStatus(const std::string& path, bool value)
         return false;
     }
 
-    if (operationalStatus.find(path) == operationalStatus.end())
+    if (!operationalStatus.contains(path))
     {
         operationalStatus.emplace(path, std::make_unique<OperationalStatusIntf>(
                                             utils::getBus(), path.c_str()));

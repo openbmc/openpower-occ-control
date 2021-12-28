@@ -157,12 +157,12 @@ class Interface
     /** @brief Sensor offset of OCC state set ID
      * PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS in state sensor PDR.
      */
-    SensorOffset OCCSensorOffset;
+    SensorOffset OCCSensorOffset = 0;
 
     /** @brief Sensor offset of the SBE state set ID
      * PLDM_OEM_IBM_SBE_HRESET_STATE in state sensor PDR.
      */
-    SensorOffset SBESensorOffset;
+    SensorOffset SBESensorOffset = 0;
 
     /** @brief OCC Instance mapping to PLDM Effecter ID
      */

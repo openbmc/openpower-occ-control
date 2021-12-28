@@ -57,7 +57,7 @@ class PowerMode
      *
      * @param[in] occStatus - The occ status object
      */
-    PowerMode(Status& occStatus) :
+    explicit PowerMode(Status& occStatus) :
         occStatus(occStatus),
         pmodeMatch(utils::getBus(),
                    sdbusplus::bus::match::rules::propertiesChanged(
@@ -93,7 +93,7 @@ class PowerIPS
      *
      * @param[in] occStatus - The occ status object
      */
-    PowerIPS(Status& occStatus) :
+    explicit PowerIPS(Status& occStatus) :
         occStatus(occStatus),
         ipsMatch(utils::getBus(),
                  sdbusplus::bus::match::rules::propertiesChanged(

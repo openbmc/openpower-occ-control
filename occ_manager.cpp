@@ -318,10 +318,6 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
 
     if (sbeCanDump(instance))
     {
-        constexpr auto path = "/org/openpower/dump";
-        constexpr auto interface = "xyz.openbmc_project.Dump.Create";
-        constexpr auto function = "CreateDump";
-
         log<level::INFO>("HRESET failed, triggering SBE dump",
                          entry("SBE=%d", instance));
 
@@ -333,6 +329,10 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
 
         try
         {
+            constexpr auto path = "/org/openpower/dump";
+            constexpr auto interface = "xyz.openbmc_project.Dump.Create";
+            constexpr auto function = "CreateDump";
+
             std::string service = utils::getService(path, interface);
             auto method =
                 bus.new_method_call(service.c_str(), path, interface, function);

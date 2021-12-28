@@ -38,8 +38,8 @@ class PowerCap
      *
      * @param[in] occStatus - The occ status object
      */
-    PowerCap(Status& occStatus,
-             const std::string& occMasterName = OCC_MASTER_NAME) :
+    explicit PowerCap(Status& occStatus,
+                      const std::string& occMasterName = OCC_MASTER_NAME) :
         occMasterName(occMasterName),
         occStatus(occStatus),
         pcapMatch(

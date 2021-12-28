@@ -45,10 +45,11 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
     }
 
     bool offsetFound = false;
-    auto pdr =
+    auto stateSensorPDR =
         reinterpret_cast<const pldm_state_sensor_pdr*>(pdrs.front().data());
-    auto possibleStatesPtr = pdr->possible_states;
-    for (auto offset = 0; offset < pdr->composite_sensor_count; offset++)
+    auto possibleStatesPtr = stateSensorPDR->possible_states;
+    for (auto offset = 0; offset < stateSensorPDR->composite_sensor_count;
+         offset++)
     {
         auto possibleStates =
             reinterpret_cast<const state_sensor_possible_states*>(
@@ -218,10 +219,11 @@ void Interface::fetchEffecterInfo(uint16_t stateSetId,
     }
 
     bool offsetFound = false;
-    auto pdr =
+    auto stateEffecterPDR =
         reinterpret_cast<const pldm_state_effecter_pdr*>(pdrs.front().data());
-    auto possibleStatesPtr = pdr->possible_states;
-    for (auto offset = 0; offset < pdr->composite_effecter_count; offset++)
+    auto possibleStatesPtr = stateEffecterPDR->possible_states;
+    for (auto offset = 0; offset < stateEffecterPDR->composite_effecter_count;
+         offset++)
     {
         auto possibleStates =
             reinterpret_cast<const state_effecter_possible_states*>(
@@ -230,7 +232,7 @@ void Interface::fetchEffecterInfo(uint16_t stateSetId,
         if (possibleStates->state_set_id == stateSetId)
         {
             stateIdPos = offset;
-            effecterCount = pdr->composite_effecter_count;
+            effecterCount = stateEffecterPDR->composite_effecter_count;
             offsetFound = true;
             break;
         }
