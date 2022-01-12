@@ -1,0 +1,10 @@
+Verified+1: OpenBMC CI <openbmcbump-ci@yahoo.com>
+Code-Review+1: Matt Spinler <spinler@us.ibm.com>
+Code-Review+1: Martha Broyles
+Code-Review+2: Edward A. James <eajames@us.ibm.com>
+Ok-To-Test+1: Matt Spinler <spinler@us.ibm.com>
+Submitted-by: Chris Cain <cjcain@us.ibm.com>
+Submitted-at: Wed, 12 Jan 2022 19:33:53 +0000
+Reviewed-on: https://gerrit.openbmc-project.xyz/c/openbmc/openpower-occ-control/+/49276
+Project: openbmc/openpower-occ-control
+Branch: refs/heads/master
