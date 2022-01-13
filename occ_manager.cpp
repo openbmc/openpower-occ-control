@@ -781,6 +781,9 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
             continue;
         }
 
+        open_power::occ::dbus::OccDBusSensors::getOccDBus().setUnit(
+            sensorPath, "xyz.openbmc_project.Sensor.Value.Unit.Watts");
+
         open_power::occ::dbus::OccDBusSensors::getOccDBus().setValue(
             sensorPath, tempValue * std::pow(10, -3) * std::pow(10, -3));
 
