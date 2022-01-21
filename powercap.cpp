@@ -1,3 +1,5 @@
+#include <fmt/core.h>
+
 #include <phosphor-logging/log.hpp>
 #include <powercap.hpp>
 
@@ -95,7 +97,7 @@ void PowerCap::writeOcc(uint32_t pcapValue)
     std::unique_ptr<fs::path> fileName =
         std::make_unique<fs::path>(OCC_HWMON_PATH);
     *fileName /= occMasterName;
-    *fileName /= "/hwmon/";
+    *fileName /= "hwmon";
 
     // Need to get the hwmonXX directory name, there better only be 1 dir
     assert(std::distance(fs::directory_iterator(*fileName),
@@ -107,8 +109,10 @@ void PowerCap::writeOcc(uint32_t pcapValue)
     auto baseName = getPcapFilename(*fileName);
     if (baseName.empty())
     {
-        log<level::ERR>("Could not find a power cap file to write to",
-                        entry("PATH=%s", *fileName->c_str()));
+        log<level::ERR>(
+            fmt::format("Could not find a power cap file to write to: {})",
+                        fileName->c_str())
+                .c_str());
         return;
     }
     *fileName /= baseName;
@@ -164,8 +168,10 @@ void PowerCap::pcapChanged(sdbusplus::message::message& msg)
         }
     }
 
-    log<level::INFO>("Power Cap Property Change", entry("PCAP=%u", pcap),
-                     entry("PCAP_ENABLED=%u", pcapEnabled));
+    log<level::INFO>(
+        fmt::format("Power Cap Property Change (cap={}W (input), enabled={})",
+                    pcap, pcapEnabled ? 'y' : 'n')
+            .c_str());
 
     // Determine desired action to write to occ
 
