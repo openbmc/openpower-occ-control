@@ -206,7 +206,9 @@ void Status::readOccState()
             {
                 if (device.master())
                 {
-                    // Prevent mode changes
+                    // Set the master OCC on the PowerMode object
+                    pmode->setMasterOcc(path);
+                    // Enable mode changes
                     pmode->setMasterActive();
 
                     // Special processing by master OCC when it goes active

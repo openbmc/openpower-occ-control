@@ -20,11 +20,22 @@ namespace powermode
 using namespace phosphor::logging;
 using Mode = sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
 
+// Set the Master OCC
+void PowerMode::setMasterOcc(const std::string& occPath)
+{
+    path = occPath;
+    occInstance = path.back() - '0';
+    log<level::DEBUG>(fmt::format("PowerMode::setMasterOcc(OCC{}, {})",
+                                  occInstance, path.c_str())
+                          .c_str());
+    occCmd = std::make_unique<open_power::occ::OccCommand>(occInstance,
+                                                           path.c_str());
+    masterOccSet = true;
+};
+
 // Called when DBus power mode gets changed
 void PowerMode::modeChanged(sdbusplus::message::message& msg)
 {
-    SysPwrMode newMode = SysPwrMode::NO_CHANGE;
-
     std::map<std::string, std::variant<std::string>> properties{};
     std::string interface;
     std::string propVal;
@@ -34,7 +45,7 @@ void PowerMode::modeChanged(sdbusplus::message::message& msg)
     {
         auto modeEntryValue = modeEntry->second;
         propVal = std::get<std::string>(modeEntryValue);
-        newMode = convertStringToMode(propVal);
+        SysPwrMode newMode = convertStringToMode(propVal);
         if (newMode != SysPwrMode::NO_CHANGE)
         {
             // DBus mode changed, get rid of any OEM mode if set
@@ -149,7 +160,7 @@ bool isPowerVM()
 SysPwrMode PowerMode::getDbusMode()
 {
     using namespace open_power::occ::powermode;
-    SysPwrMode currentMode = SysPwrMode::NO_CHANGE;
+    SysPwrMode currentMode;
 
     // This will throw exception on failure
     auto& bus = utils::getBus();
@@ -220,12 +231,12 @@ bool PowerMode::updateDbusMode(const SysPwrMode newMode)
 // Send mode change request to the master OCC
 CmdStatus PowerMode::sendModeChange()
 {
-    CmdStatus status = CmdStatus::FAILURE;
+    CmdStatus status;
 
-    if (!masterActive)
+    if (!masterActive || !masterOccSet)
     {
         // Nothing to do
-        log<level::DEBUG>("PowerMode::sendModeChange: MODE CHANGE not enabled");
+        log<level::DEBUG>("PowerMode::sendModeChange: OCC master not active");
         return CmdStatus::SUCCESS;
     }
 
@@ -265,7 +276,7 @@ CmdStatus PowerMode::sendModeChange()
                 "PowerMode::sendModeChange: SET_MODE({},{}) command to OCC{} ({} bytes)",
                 newMode, modeData, occInstance, cmd.size())
                 .c_str());
-        status = occCmd.send(cmd, rsp);
+        status = occCmd->send(cmd, rsp);
         if (status == CmdStatus::SUCCESS)
         {
             if (rsp.size() == 5)
@@ -317,7 +328,7 @@ CmdStatus PowerMode::sendModeChange()
 
 void PowerMode::ipsChanged(sdbusplus::message::message& msg)
 {
-    if (!masterActive)
+    if (!masterActive || !masterOccSet)
     {
         // Nothing to do
         return;
@@ -511,9 +522,9 @@ bool PowerMode::getIPSParms(uint8_t& enterUtil, uint16_t& enterTime,
 // Send Idle Power Saver config data to the master OCC
 CmdStatus PowerMode::sendIpsData()
 {
-    CmdStatus status = CmdStatus::FAILURE;
+    CmdStatus status;
 
-    if (!masterActive)
+    if (!masterActive || !masterOccSet)
     {
         // Nothing to do
         return CmdStatus::SUCCESS;
@@ -556,7 +567,7 @@ CmdStatus PowerMode::sendIpsData()
                                  "command to OCC{} ({} bytes)",
                                  occInstance, cmd.size())
                          .c_str());
-    status = occCmd.send(cmd, rsp);
+    status = occCmd->send(cmd, rsp);
     if (status == CmdStatus::SUCCESS)
     {
         if (rsp.size() == 5)
