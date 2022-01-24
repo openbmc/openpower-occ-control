@@ -133,6 +133,13 @@ void Manager::createObjects(const std::string& occ)
 {
     auto path = fs::path(OCC_CONTROL_ROOT) / occ;
 
+#ifdef POWER10
+    if (!pmode)
+    {
+        pmode = std::make_unique<open_power::occ::powermode::PowerMode>(*this);
+    }
+#endif
+
     statusObjects.emplace_back(std::make_unique<Status>(
         event, path.c_str(), *this,
 #ifdef POWER10
@@ -163,12 +170,8 @@ void Manager::createObjects(const std::string& occ)
         }
 
 #ifdef POWER10
-        // Create the power mode object for master OCC
-        if (!pmode)
-        {
-            pmode = std::make_unique<open_power::occ::powermode::PowerMode>(
-                *this, path.c_str());
-        }
+        // Set the master OCC on the PowerMode object
+        pmode->setMasterOcc(path);
 #endif
     }
 
@@ -289,8 +292,9 @@ void Manager::initStatusObjects()
     pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
         *statusObjects.front(), occMasterName);
 #ifdef POWER10
-    pmode = std::make_unique<open_power::occ::powermode::PowerMode>(
-        *this, path.c_str());
+    pmode = std::make_unique<open_power::occ::powermode::PowerMode>(*this);
+    // Set the master OCC on the PowerMode object
+    pmode->setMasterOcc(path);
 #endif
 }
 #endif
@@ -651,13 +655,6 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
             continue;
         }
 
-        // At this point, the sensor will be created for sure.
-        if (existingSensors.find(sensorPath) == existingSensors.end())
-        {
-            open_power::occ::dbus::OccDBusSensors::getOccDBus()
-                .setChassisAssociation(sensorPath);
-        }
-
         if (faultValue != 0)
         {
             open_power::occ::dbus::OccDBusSensors::getOccDBus().setValue(
@@ -689,6 +686,13 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
 
         open_power::occ::dbus::OccDBusSensors::getOccDBus()
             .setOperationalStatus(sensorPath, true);
+
+        // At this point, the sensor will be created for sure.
+        if (existingSensors.find(sensorPath) == existingSensors.end())
+        {
+            open_power::occ::dbus::OccDBusSensors::getOccDBus()
+                .setChassisAssociation(sensorPath);
+        }
 
         existingSensors[sensorPath] = id;
     }
@@ -971,8 +975,9 @@ void Manager::getAmbientData(bool& ambientValid, uint8_t& ambientTemp,
 #ifdef POWER10
 void Manager::occsNotAllRunning()
 {
-    // Function will also gets called when occ-control app gets restarted.
-    // (occ active sensors do not change, so the Status object does not
+    // Function will also gets called when occ-control app gets
+    // restarted. (occ active sensors do not change, so the Status
+    // object does not
     //  call Manager back for all OCCs)
 
     if (activeCount != statusObjects.size())
