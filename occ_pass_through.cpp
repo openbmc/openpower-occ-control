@@ -137,6 +137,12 @@ bool PassThrough::setMode(const uint8_t mode, const uint16_t modeData)
         return false;
     }
 
+    if (!pmode)
+    {
+        log<level::DEBUG>("PassThrough::setMode: PowerMode is not defined!");
+        return false;
+    }
+
     log<level::INFO>(
         fmt::format("PassThrough::setMode() Setting Power Mode {} (data: {})",
                     newMode, modeData)

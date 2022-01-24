@@ -159,9 +159,8 @@ class PowerMode
      * @param[in] managerRef -
      * @param[in] path -
      */
-    explicit PowerMode(Manager& managerRef, const char* path) :
-        manager(managerRef), path(path), occInstance(this->path.back() - '0'),
-        occCmd(occInstance, path),
+    explicit PowerMode(const Manager& managerRef) :
+        manager(managerRef), occInstance(0),
         pmodeMatch(utils::getBus(),
                    sdbusplus::bus::match::rules::propertiesChanged(
                        PMODE_PATH, PMODE_INTERFACE),
@@ -170,7 +169,7 @@ class PowerMode
                  sdbusplus::bus::match::rules::propertiesChanged(
                      PIPS_PATH, PIPS_INTERFACE),
                  [this](auto& msg) { this->ipsChanged(msg); }),
-        masterActive(false){};
+        masterOccSet(false), masterActive(false){};
 
     bool setMode(const SysPwrMode newMode, const uint16_t modedata);
 
@@ -183,6 +182,12 @@ class PowerMode
      *  @return SUCCESS on success
      */
     CmdStatus sendIpsData();
+
+    /** @brief Set the master OCC path
+     *
+     * @param[in]  occPath - hwmon path for master OCC
+     */
+    void setMasterOcc(const std::string& occPath);
 
     /** @brief Notify object of master OCC state.  If not acitve, no
      * commands will be sent to the master OCC
@@ -205,7 +210,7 @@ class PowerMode
     int occInstance;
 
     /** @brief Object to send commands to the OCC */
-    OccCommand occCmd;
+    std::unique_ptr<open_power::occ::OccCommand> occCmd;
 
     /** @brief Used to subscribe to dbus pmode property changes **/
     sdbusplus::bus::match_t pmodeMatch;
@@ -215,6 +220,10 @@ class PowerMode
 
     OccPersistData persistedData;
 
+    /** @brief True when the master OCC has been established */
+    bool masterOccSet;
+
+    /** @brief True when the master OCC is active */
     bool masterActive;
 
     /** @brief Callback for pmode setting changes
