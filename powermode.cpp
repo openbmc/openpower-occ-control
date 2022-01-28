@@ -195,28 +195,9 @@ bool PowerMode::initPersistentData()
 
     if (!persistedData.ipsAvailable())
     {
-        // Read the default IPS parameters
-        bool ipsEnabled;
-        uint8_t enterUtil, exitUtil;
-        uint16_t enterTime, exitTime;
-        if (!getDefaultIPSParms(ipsEnabled, enterUtil, enterTime, exitUtil,
-                                exitTime))
-        {
-            // Unable to read defaults
-            return false;
-        }
-        log<level::INFO>(
-            fmt::format(
-                "PowerMode::initPersistentData: Using default IPS parms: Enabled: {}, EnterUtil: {}%, EnterTime: {}s, ExitUtil: {}%, ExitTime: {}s",
-                ipsEnabled, enterUtil, enterTime, exitUtil, exitTime)
-                .c_str());
-
-        // Save IPS
-        persistedData.updateIPS(ipsEnabled, enterUtil, enterTime, exitUtil,
-                                exitTime);
-
-        // Write default IPS data to DBus
-        updateDbusIPS(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime);
+        // Read the default IPS parameters, write persistent file and update
+        // DBus
+        return useDefaultIPSParms();
     }
     return true;
 }
@@ -373,12 +354,6 @@ CmdStatus PowerMode::sendModeChange()
 
 void PowerMode::ipsChanged(sdbusplus::message::message& msg)
 {
-    if (!masterActive || !masterOccSet)
-    {
-        // Nothing to do
-        return;
-    }
-
     bool parmsChanged = false;
     std::string interface;
     std::map<std::string, std::variant<bool, uint8_t, uint64_t>>
@@ -443,9 +418,22 @@ void PowerMode::ipsChanged(sdbusplus::message::message& msg)
 
     if (parmsChanged)
     {
-        // Update persistant data with new DBus values
-        persistedData.updateIPS(ipsEnabled, enterUtil, enterTime, exitUtil,
-                                exitTime);
+        if (enterUtil == 0)
+        {
+            // Setting the enterUtil to 0 will force restoring the default IPS
+            // parmeters (0 is not valid enter utilization)
+            log<level::INFO>(
+                "Idle Power Saver Enter Utilization is 0%. Restoring default parameters");
+            // Read the default IPS parameters, write persistent file and update
+            // DBus
+            useDefaultIPSParms();
+        }
+        else
+        {
+            // Update persistant data with new DBus values
+            persistedData.updateIPS(ipsEnabled, enterUtil, enterTime, exitUtil,
+                                    exitTime);
+        }
 
         // Trigger IPS data to get sent to the OCC
         sendIpsData();
@@ -600,6 +588,7 @@ CmdStatus PowerMode::sendIpsData()
     return status;
 }
 
+// Print the current values
 void OccPersistData::print()
 {
     if (modeData.modeInitialized)
@@ -638,7 +627,7 @@ void OccPersistData::save()
             "OccPersistData::save: Writing Power Mode persisted data to {}",
             opath.c_str())
             .c_str());
-    print();
+    // print();
 
     std::ofstream stream{opath.c_str()};
     cereal::JSONOutputArchive oarchive{stream};
@@ -682,7 +671,7 @@ void OccPersistData::load()
         modeData.ipsInitialized = false;
     }
 
-    print();
+    // print();
 }
 
 // Called when PowerModeProperties defaults are available on DBus
@@ -690,7 +679,6 @@ void PowerMode::defaultsReady(sdbusplus::message::message& msg)
 {
     std::map<std::string, std::variant<std::string>> properties{};
     std::string interface;
-    std::string propVal;
     msg.read(interface, properties);
 
     // If persistent data exists, then don't need to read defaults
@@ -856,6 +844,34 @@ bool PowerMode::getDefaultIPSParms(bool& ipsEnabled, uint8_t& enterUtil,
     }
 
     return true;
+}
+
+/* Read default IPS parameters, save them to the persistent file and update
+ DBus. Return true if successful */
+bool PowerMode::useDefaultIPSParms()
+{
+    // Read the default IPS parameters
+    bool ipsEnabled;
+    uint8_t enterUtil, exitUtil;
+    uint16_t enterTime, exitTime;
+    if (!getDefaultIPSParms(ipsEnabled, enterUtil, enterTime, exitUtil,
+                            exitTime))
+    {
+        // Unable to read defaults
+        return false;
+    }
+    log<level::INFO>(
+        fmt::format(
+            "PowerMode::useDefaultIPSParms: Using default IPS parms: Enabled: {}, EnterUtil: {}%, EnterTime: {}s, ExitUtil: {}%, ExitTime: {}s",
+            ipsEnabled, enterUtil, enterTime, exitUtil, exitTime)
+            .c_str());
+
+    // Save IPS parms to the persistent file
+    persistedData.updateIPS(ipsEnabled, enterUtil, enterTime, exitUtil,
+                            exitTime);
+
+    // Write IPS parms to DBus
+    return updateDbusIPS(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime);
 }
 
 } // namespace powermode

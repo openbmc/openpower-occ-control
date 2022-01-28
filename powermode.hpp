@@ -189,7 +189,7 @@ class OccPersistData
         return (modeData.modeInitialized);
     }
 
-    /** @brief Return true if the power mode is available */
+    /** @brief Return true if the IPS data is available */
     bool ipsAvailable()
     {
         return (modeData.ipsInitialized);
@@ -428,6 +428,13 @@ class PowerMode : public ModeInterface, public IpsInterface
     bool getDefaultIPSParms(bool& enabled, uint8_t& enterUtil,
                             uint16_t& enterTime, uint8_t& exitUtil,
                             uint16_t& exitTime);
+
+    /** @brief Read the default Idle Power Saver parameters and save them to the
+     * DBUS so they will get used
+     *
+     * @return true if restore was successful
+     */
+    bool useDefaultIPSParms();
 };
 
 } // namespace powermode
