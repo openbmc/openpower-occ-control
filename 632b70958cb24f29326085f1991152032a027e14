@@ -16,6 +16,109 @@
       "message": "It would be nice to have some use case flows or a walk through on interface actions for education,,,   or something like that.",
       "revId": "632b70958cb24f29326085f1991152032a027e14",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3bfef6e3_533a794c",
+        "filename": "app.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-02-03T19:15:04Z",
+      "side": 1,
+      "message": "You don\u0027t need an object manager per path endpoint in /xyz.  You can just put it at a common parent.",
+      "revId": "632b70958cb24f29326085f1991152032a027e14",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e2e76e80_307dd621",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-02-03T19:15:04Z",
+      "side": 1,
+      "message": "you\u0027re already in this namespace, so I don\u0027t think you explicitly need to have it here if you don\u0027t want to.",
+      "range": {
+        "startLine": 141,
+        "startChar": 19,
+        "endLine": 141,
+        "endChar": 36
+      },
+      "revId": "632b70958cb24f29326085f1991152032a027e14",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6a58ce1b_cc8d1b44",
+        "filename": "powermode.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 718,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-02-03T19:15:04Z",
+      "side": 1,
+      "message": "this hardcodes the path again that only works on everest?  If you make a \u0027GetSubTree\u0027 mapper method call and pass in your interface, it will return the object path and service it is on and then it\u0027ll always work.",
+      "range": {
+        "startLine": 718,
+        "startChar": 11,
+        "endLine": 718,
+        "endChar": 75
+      },
+      "revId": "632b70958cb24f29326085f1991152032a027e14",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "28296739_c4f5505c",
+        "filename": "powermode.hpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-02-03T19:15:04Z",
+      "side": 1,
+      "message": "You can use the propertiesChangedNamespace() rule to match on a path namespace when you don\u0027t know the actual path, since as it is now what you have just works on the everest path:\n               sdbusplus::bus::match::rules::propertiesChangedNamespace(\n                   \"/xyz/openbmc_project/inventory\", \u003cinterface\u003e),",
+      "revId": "632b70958cb24f29326085f1991152032a027e14",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d67669a3_1a6ad698",
+        "filename": "powermode.hpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 332,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-02-03T19:15:04Z",
+      "side": 1,
+      "message": "maybe add \u0027Match\u0027 onto this like the others",
+      "range": {
+        "startLine": 332,
+        "startChar": 28,
+        "endLine": 332,
+        "endChar": 42
+      },
+      "revId": "632b70958cb24f29326085f1991152032a027e14",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
