@@ -246,7 +246,7 @@ void Interface::fetchEffecterInfo(uint16_t stateSetId,
         return;
     }
 
-    std::map<EntityInstance, EffecterID> entityInstMap{};
+    std::map<uint32_t, EffecterID> entityInstMap{};
     for (auto& pdr : pdrs)
     {
         auto pdrPtr =
@@ -313,8 +313,10 @@ void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
     if (effecterEntry == occInstanceToEffecter.end())
     {
         log<level::ERR>(
-            "pldm: Failed to find a matching effecter for OCC instance",
-            entry("OCC_INSTANCE_ID=%d", occInstanceId));
+            fmt::format(
+                "pldm: Failed to find a matching effecter for OCC instance {}",
+                occInstanceId)
+                .c_str());
 
         return;
     }

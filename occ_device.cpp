@@ -3,6 +3,10 @@
 #include "occ_manager.hpp"
 #include "occ_status.hpp"
 
+#include <fmt/core.h>
+
+#include <phosphor-logging/log.hpp>
+
 #include <iostream>
 
 namespace open_power
@@ -10,8 +14,72 @@ namespace open_power
 namespace occ
 {
 
+using namespace phosphor::logging;
+
 fs::path Device::bindPath = fs::path(OCC_HWMON_PATH) / "bind";
 fs::path Device::unBindPath = fs::path(OCC_HWMON_PATH) / "unbind";
+
+void Device::addErrorWatch(bool poll)
+{
+    unsigned int retriesRemaining = 15;
+    do
+    {
+        try
+        {
+            throttleProcTemp.addWatch(poll);
+            break;
+        }
+        catch (const OpenFailure& e)
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "addErrorWatch() OpenFailure - {}, using oc_dvfs_ot ({} retries)",
+                    e.what(), --retriesRemaining)
+                    .c_str());
+            // try the old kernel version
+            throttleProcTemp.setFile(devPath / "occ_dvfs_ot");
+            throttleProcTemp.addWatch(poll);
+        }
+        catch (const ReadFailure& e)
+        {
+            // keep trying
+            log<level::ERR>(
+                fmt::format("addErrorWatch() ReadFailure - {} ({} retries)",
+                            e.what(), --retriesRemaining)
+                    .c_str());
+        }
+        sleep(2);
+    } while (retriesRemaining);
+
+    if (retriesRemaining == 0)
+    {
+        log<level::ERR>("addErrorWatch() FAILED to add watch!");
+        // TODO: force assert???
+    }
+
+    throttleProcPower.addWatch(poll);
+    throttleMemTemp.addWatch(poll);
+
+    try
+    {
+        ffdc.addWatch(poll);
+    }
+    catch (const OpenFailure& e)
+    {
+        // nothing to do if there is no FFDC file
+    }
+
+    try
+    {
+        timeout.addWatch(poll);
+    }
+    catch (const std::exception& e)
+    {
+        // nothing to do if there is no SBE timeout file
+    }
+
+    error.addWatch(poll);
+}
 
 std::string Device::getPathBack(const fs::path& path)
 {

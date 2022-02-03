@@ -115,42 +115,7 @@ class Device
      *                    necessary for error files that don't support the poll
      *                    file operation.
      */
-    inline void addErrorWatch(bool poll = true)
-    {
-        try
-        {
-            throttleProcTemp.addWatch(poll);
-        }
-        catch (const OpenFailure& e)
-        {
-            // try the old kernel version
-            throttleProcTemp.setFile(devPath / "occ_dvfs_ot");
-            throttleProcTemp.addWatch(poll);
-        }
-
-        throttleProcPower.addWatch(poll);
-        throttleMemTemp.addWatch(poll);
-
-        try
-        {
-            ffdc.addWatch(poll);
-        }
-        catch (const OpenFailure& e)
-        {
-            // nothing to do if there is no FFDC file
-        }
-
-        try
-        {
-            timeout.addWatch(poll);
-        }
-        catch (const std::exception& e)
-        {
-            // nothing to do if there is no SBE timeout file
-        }
-
-        error.addWatch(poll);
-    }
+    void addErrorWatch(bool poll = true);
 
     /** @brief stops monitoring for errors */
     inline void removeErrorWatch()
