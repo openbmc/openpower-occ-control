@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8b31075e_3c02b837",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-02-03T14:34:32Z",
+      "side": 1,
+      "message": "It would be nice to have some use case flows or a walk through on interface actions for education,,,   or something like that.",
+      "revId": "632b70958cb24f29326085f1991152032a027e14",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
