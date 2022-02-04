@@ -18,6 +18,23 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "697a6f7c_80cff85a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-02-04T21:49:16Z",
+      "side": 1,
+      "message": "working on changes",
+      "revId": "632b70958cb24f29326085f1991152032a027e14",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3bfef6e3_533a794c",
@@ -37,6 +54,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b1514cde_7116ed98",
+        "filename": "app.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-02-04T21:49:16Z",
+      "side": 1,
+      "message": "Like this?\nsdbusplus::server::manager::manager objManagerXyz(bus, open_power::occ::powermode);",
+      "parentUuid": "3bfef6e3_533a794c",
+      "revId": "632b70958cb24f29326085f1991152032a027e14",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "e2e76e80_307dd621",
         "filename": "occ_manager.cpp",
         "patchSetId": 7
@@ -48,6 +83,30 @@
       "writtenOn": "2022-02-03T19:15:04Z",
       "side": 1,
       "message": "you\u0027re already in this namespace, so I don\u0027t think you explicitly need to have it here if you don\u0027t want to.",
+      "range": {
+        "startLine": 141,
+        "startChar": 19,
+        "endLine": 141,
+        "endChar": 36
+      },
+      "revId": "632b70958cb24f29326085f1991152032a027e14",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b7ff8cb2_7d50f939",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-02-04T21:49:16Z",
+      "side": 1,
+      "message": "It was not building when I didn\u0027t have the full namespace.  I will try to remove again and see if it builds.",
+      "parentUuid": "e2e76e80_307dd621",
       "range": {
         "startLine": 141,
         "startChar": 19,
@@ -111,6 +170,30 @@
       "writtenOn": "2022-02-03T19:15:04Z",
       "side": 1,
       "message": "maybe add \u0027Match\u0027 onto this like the others",
+      "range": {
+        "startLine": 332,
+        "startChar": 28,
+        "endLine": 332,
+        "endChar": 42
+      },
+      "revId": "632b70958cb24f29326085f1991152032a027e14",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "580e8032_cddef93f",
+        "filename": "powermode.hpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 332,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-02-04T21:49:16Z",
+      "side": 1,
+      "message": "I had defaultsMatch, but was thinking that sounded strange because it is called when the defaults get updated.  I can make it defaultsUpdateMatch.",
+      "parentUuid": "d67669a3_1a6ad698",
       "range": {
         "startLine": 332,
         "startChar": 28,
