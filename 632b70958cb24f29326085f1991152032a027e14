@@ -35,6 +35,23 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e56ebb92_da7f1373",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-02-07T19:22:14Z",
+      "side": 1,
+      "message": "Thanks for the review",
+      "revId": "632b70958cb24f29326085f1991152032a027e14",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3bfef6e3_533a794c",
@@ -66,6 +83,24 @@
       "side": 1,
       "message": "Like this?\nsdbusplus::server::manager::manager objManagerXyz(bus, open_power::occ::powermode);",
       "parentUuid": "3bfef6e3_533a794c",
+      "revId": "632b70958cb24f29326085f1991152032a027e14",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "660403db_32ad1910",
+        "filename": "app.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-02-07T19:22:14Z",
+      "side": 1,
+      "message": "Objects use: \n/xyz/openbmc_project/control/host0/power_mode\n/xyz/openbmc_project/control/host0/power_ips\nSo I can use \"/xyz/openbmc_project/control\" (since it is common for both).\nThis will the org.freedesktop.DBus.ObjectManager interface on dbus on that path.\n\nDone",
+      "parentUuid": "b1514cde_7116ed98",
       "revId": "632b70958cb24f29326085f1991152032a027e14",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
