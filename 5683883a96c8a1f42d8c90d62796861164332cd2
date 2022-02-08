@@ -16,6 +16,24 @@
       "message": "The normal use of GetSubTree is to find all the paths that provide a certain interface, such as all the sensors using xyz.openbmc_project.Sensor.Value.  It\u0027s pretty much the same as getSubTreePaths() (only returns object paths) above but with different return signature (returns object paths and service names/interfaces).  \n\nSo I think to be consistent and make it more useful for future callers, it would be better to just have it return \u0027Objects\u0027 and let the caller pull out what they want.",
       "revId": "5683883a96c8a1f42d8c90d62796861164332cd2",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "44dee954_cc584d7c",
+        "filename": "utils.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-02-08T16:17:26Z",
+      "side": 1,
+      "message": "Discussed more and settled on renaming function to make it clearer.",
+      "parentUuid": "9bc44dfa_6be4fd42",
+      "revId": "5683883a96c8a1f42d8c90d62796861164332cd2",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
