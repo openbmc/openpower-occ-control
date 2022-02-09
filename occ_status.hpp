@@ -5,6 +5,7 @@
 #include "occ_command.hpp"
 #include "occ_device.hpp"
 #include "occ_events.hpp"
+#include "powercap.hpp"
 #include "powermode.hpp"
 #include "utils.hpp"
 
@@ -76,7 +77,7 @@ class Status : public Interface
      */
     Status(EventPtr& event, const char* path, Manager& managerRef,
 #ifdef POWER10
-           std::unique_ptr<open_power::occ::powermode::PowerMode>& powerModeRef,
+           std::unique_ptr<powermode::PowerMode>& powerModeRef,
 #endif
            std::function<void(bool)> callBack = nullptr
 #ifdef PLDM
@@ -197,6 +198,13 @@ class Status : public Interface
      */
     CmdStatus sendAmbient(const uint8_t ambient = 0xFF,
                           const uint16_t altitude = 0xFFFF);
+
+    /** @brief Return the HWMON path for this OCC
+     *
+     *  @return path or empty path if not found
+     */
+    fs::path getHwmonPath();
+
 #endif // POWER10
 
   private:
@@ -220,9 +228,12 @@ class Status : public Interface
     /** @brief OCC manager object */
     const Manager& manager;
 
+    /** @brief Power cap monitor and occ notification object */
+    std::unique_ptr<powercap::PowerCap> pcap;
+
 #ifdef POWER10
     /** @brief OCC PowerMode object */
-    std::unique_ptr<open_power::occ::powermode::PowerMode>& pmode;
+    std::unique_ptr<powermode::PowerMode>& pmode;
 #endif
 
     /** @brief OCC device object to do bind and unbind */

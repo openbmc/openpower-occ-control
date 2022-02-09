@@ -64,6 +64,9 @@ const PropertyValue getProperty(const std::string& objectPath,
  */
 void setProperty(const std::string& objectPath, const std::string& interface,
                  const std::string& propertyName, std::string&& value);
+void setPropertyUint32(const std::string& objectPath,
+                       const std::string& interface,
+                       const std::string& propertyName, uint32_t&& value);
 
 /** @brief Get subtree paths
  *
