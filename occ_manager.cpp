@@ -150,7 +150,9 @@ void Manager::createObjects(const std::string& occ)
 #ifdef POWER10
     if (!pmode)
     {
-        pmode = std::make_unique<open_power::occ::powermode::PowerMode>(*this);
+        // Create the power mode object
+        pmode = std::make_unique<powermode::PowerMode>(
+            *this, powermode::PMODE_PATH, powermode::PIPS_PATH);
     }
 #endif
 
@@ -175,13 +177,6 @@ void Manager::createObjects(const std::string& occ)
                         statusObjects.back()->getOccInstanceID())
                 .c_str());
         _pollTimer->setEnabled(false);
-
-        // Create the power cap monitor object for master OCC
-        if (!pcap)
-        {
-            pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
-                *statusObjects.front());
-        }
 
 #ifdef POWER10
         // Set the master OCC on the PowerMode object
@@ -302,11 +297,9 @@ void Manager::initStatusObjects()
         statusObjects.emplace_back(
             std::make_unique<Status>(event, path.c_str(), *this));
     }
-    // The first device is master occ
-    pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
-        *statusObjects.front(), occMasterName);
 #ifdef POWER10
-    pmode = std::make_unique<open_power::occ::powermode::PowerMode>(*this);
+    pmode = std::make_unique<powermode::PowerMode>(*this, powermode::PMODE_PATH,
+                                                   powermode::PIPS_PATH);
     // Set the master OCC on the PowerMode object
     pmode->setMasterOcc(path);
 #endif
@@ -484,13 +477,11 @@ void Manager::pollerTimerExpired()
 
     for (auto& obj : statusObjects)
     {
-#ifdef READ_OCC_SENSORS
-        auto id = obj->getOccInstanceID();
-#endif
         if (!obj->occActive())
         {
             // OCC is not running yet
 #ifdef READ_OCC_SENSORS
+            auto id = obj->getOccInstanceID();
             setSensorValueToNaN(id);
 #endif
             continue;
@@ -501,7 +492,7 @@ void Manager::pollerTimerExpired()
 
 #ifdef READ_OCC_SENSORS
         // Read occ sensor values
-        getSensorValues(id, obj->isMasterOcc());
+        getSensorValues(obj);
 #endif
     }
 
@@ -671,11 +662,11 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
 
         if (faultValue != 0)
         {
-            open_power::occ::dbus::OccDBusSensors::getOccDBus().setValue(
+            dbus::OccDBusSensors::getOccDBus().setValue(
                 sensorPath, std::numeric_limits<double>::quiet_NaN());
 
-            open_power::occ::dbus::OccDBusSensors::getOccDBus()
-                .setOperationalStatus(sensorPath, false);
+            dbus::OccDBusSensors::getOccDBus().setOperationalStatus(sensorPath,
+                                                                    false);
 
             continue;
         }
@@ -695,17 +686,17 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
             continue;
         }
 
-        open_power::occ::dbus::OccDBusSensors::getOccDBus().setValue(
+        dbus::OccDBusSensors::getOccDBus().setValue(
             sensorPath, tempValue * std::pow(10, -3));
 
-        open_power::occ::dbus::OccDBusSensors::getOccDBus()
-            .setOperationalStatus(sensorPath, true);
+        dbus::OccDBusSensors::getOccDBus().setOperationalStatus(sensorPath,
+                                                                true);
 
         // At this point, the sensor will be created for sure.
         if (existingSensors.find(sensorPath) == existingSensors.end())
         {
-            open_power::occ::dbus::OccDBusSensors::getOccDBus()
-                .setChassisAssociation(sensorPath);
+            dbus::OccDBusSensors::getOccDBus().setChassisAssociation(
+                sensorPath);
         }
 
         existingSensors[sensorPath] = id;
@@ -793,25 +784,25 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
         catch (const std::system_error& e)
         {
             log<level::DEBUG>(
-                fmt::format("readTempSensors: Failed reading {}, errno = {}",
+                fmt::format("readPowerSensors: Failed reading {}, errno = {}",
                             filePathString + inputSuffix, e.code().value())
                     .c_str());
             continue;
         }
 
-        open_power::occ::dbus::OccDBusSensors::getOccDBus().setUnit(
+        dbus::OccDBusSensors::getOccDBus().setUnit(
             sensorPath, "xyz.openbmc_project.Sensor.Value.Unit.Watts");
 
-        open_power::occ::dbus::OccDBusSensors::getOccDBus().setValue(
+        dbus::OccDBusSensors::getOccDBus().setValue(
             sensorPath, tempValue * std::pow(10, -3) * std::pow(10, -3));
 
-        open_power::occ::dbus::OccDBusSensors::getOccDBus()
-            .setOperationalStatus(sensorPath, true);
+        dbus::OccDBusSensors::getOccDBus().setOperationalStatus(sensorPath,
+                                                                true);
 
         if (existingSensors.find(sensorPath) == existingSensors.end())
         {
-            open_power::occ::dbus::OccDBusSensors::getOccDBus()
-                .setChassisAssociation(sensorPath);
+            dbus::OccDBusSensors::getOccDBus().setChassisAssociation(
+                sensorPath);
         }
 
         existingSensors[sensorPath] = id;
@@ -825,29 +816,22 @@ void Manager::setSensorValueToNaN(uint32_t id)
     {
         if (occId == id)
         {
-            open_power::occ::dbus::OccDBusSensors::getOccDBus().setValue(
+            dbus::OccDBusSensors::getOccDBus().setValue(
                 sensorPath, std::numeric_limits<double>::quiet_NaN());
         }
     }
     return;
 }
 
-void Manager::getSensorValues(uint32_t id, bool masterOcc)
+void Manager::getSensorValues(std::unique_ptr<Status>& occ)
 {
-    const auto occ = std::string("occ-hwmon.") + std::to_string(id + 1);
-
-    fs::path fileName{OCC_HWMON_PATH + occ + "/hwmon/"};
-
-    // Need to get the hwmonXX directory name, there better only be 1 dir
-    assert(std::distance(fs::directory_iterator(fileName),
-                         fs::directory_iterator{}) == 1);
-    // Now set our path to this full path, including this hwmonXX directory
-    fileName = fs::path(*fs::directory_iterator(fileName));
+    const fs::path fileName = occ->getHwmonPath();
+    const uint32_t id = occ->getOccInstanceID();
 
     // Read temperature sensors
     readTempSensors(fileName, id);
 
-    if (masterOcc)
+    if (occ->isMasterOcc())
     {
         // Read power sensors
         readPowerSensors(fileName, id);

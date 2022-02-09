@@ -38,6 +38,17 @@ bool Status::occActive(bool value)
             // Reset last OCC state
             lastState = 0;
 
+            if (device.master())
+            {
+                if (!pcap)
+                {
+                    // Create the power cap monitor object for master OCC
+                    pcap = std::make_unique<powercap::PowerCap>(*this);
+                }
+                // Update powercap bounds from OCC
+                pcap->updatePcapBounds();
+            }
+
             // Call into Manager to let know that we have bound
             if (this->callBack)
             {
@@ -199,6 +210,13 @@ void Status::readOccState()
                 fmt::format("Status::readOccState: OCC{} state 0x{:02X}",
                             instance, state)
                     .c_str());
+            if (state & 0xFFFFFFF8)
+            {
+                log<level::ERR>(
+                    fmt::format("Status::readOccState: INVALID STATE from {}!!",
+                                filename.c_str())
+                        .c_str());
+            }
             lastState = state;
 
 #ifdef POWER10
@@ -368,6 +386,20 @@ void Status::safeStateDelayExpired()
     }
 }
 #endif // POWER10
+
+fs::path Status::getHwmonPath()
+{
+    using namespace std::literals::string_literals;
+
+    // Build the base HWMON path
+    fs::path prefixPath = fs::path{OCC_HWMON_PATH + "occ-hwmon."s +
+                                   std::to_string(instance + 1) + "/hwmon/"s};
+    // Get the hwmonXX directory name, there better only be 1 dir
+    assert(std::distance(fs::directory_iterator(prefixPath),
+                         fs::directory_iterator{}) == 1);
+
+    return *fs::directory_iterator(prefixPath);
+}
 
 } // namespace occ
 } // namespace open_power

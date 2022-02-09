@@ -104,6 +104,52 @@ void setProperty(const std::string& objectPath, const std::string& interface,
     }
 }
 
+void setPropertyUint32(const std::string& objectPath,
+                       const std::string& interface,
+                       const std::string& propertyName, uint32_t&& value)
+{
+    using namespace std::literals::string_literals;
+    std::variant<uint32_t> varValue(std::forward<uint32_t>(value));
+
+    try
+    {
+        auto& bus = getBus();
+        auto service = getService(objectPath, interface);
+        if (service.empty())
+        {
+            return;
+        }
+
+        log<level::DEBUG>(
+            fmt::format(
+                "util::setPropertyUint32: Setting {} to {} on service {}",
+                propertyName, value, service.c_str())
+                .c_str());
+        auto method = bus.new_method_call(service.c_str(), objectPath.c_str(),
+                                          DBUS_PROPERTY_IFACE, "Set");
+        method.append(interface, propertyName, varValue);
+
+        auto reply = bus.call(method);
+        if (reply.is_method_error())
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "util::setPropertyUint32: Failed to set property {}",
+                    propertyName)
+                    .c_str());
+        }
+    }
+    catch (const std::exception& e)
+    {
+        auto error = errno;
+        log<level::ERR>(
+            fmt::format(
+                "setPropertyUint32: failed to Set {}, errno={}, what={}",
+                propertyName.c_str(), error, e.what())
+                .c_str());
+    }
+}
+
 std::vector<std::string>
     getSubtreePaths(const std::vector<std::string>& interfaces,
                     const std::string& path)
