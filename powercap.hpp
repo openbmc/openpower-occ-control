@@ -2,22 +2,25 @@
 
 #include "config.h"
 
-#include "occ_status.hpp"
 #include "utils.hpp"
 
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/bus/match.hpp>
 
 #include <filesystem>
+#include <regex>
 
 namespace open_power
 {
 namespace occ
 {
+class Status;
+
 namespace powercap
 {
 
 namespace sdbusRule = sdbusplus::bus::match::rules;
+namespace fs = std::filesystem;
 
 /** @class PowerCap
  *  @brief Monitors for changes to the power cap and notifies occ
@@ -38,9 +41,7 @@ class PowerCap
      *
      * @param[in] occStatus - The occ status object
      */
-    explicit PowerCap(Status& occStatus,
-                      const std::string& occMasterName = OCC_MASTER_NAME) :
-        occMasterName(occMasterName),
+    explicit PowerCap(Status& occStatus) :
         occStatus(occStatus),
         pcapMatch(
             utils::getBus(),
@@ -60,6 +61,9 @@ class PowerCap
      * @return The value to write to the occ user pcap
      */
     uint32_t getOccInput(uint32_t pcap, bool pcapEnabled);
+
+    /** @brief Read the power cap bounds from sysfs and update DBus */
+    void updatePcapBounds();
 
   private:
     /** @brief Callback for pcap setting changes
@@ -95,20 +99,31 @@ class PowerCap
      * The file is of the form "powerX_cap_user", where X is any
      * number.
      *
-     * @param[in] path - The directory to look for the file in
+     * @param[in] expr - Regular expression of file to find
      *
-     * @return std::string - The filename, or empty string if not found.
+     * @return full path/filename, or empty path if not found.
      */
-    std::string getPcapFilename(const std::filesystem::path& path);
-
-    /** @brief The master occ name */
-    std::string occMasterName;
+    fs::path getPcapFilename(const std::regex& expr);
 
     /* @brief OCC Status object */
     Status& occStatus;
 
     /** @brief Used to subscribe to dbus pcap property changes **/
     sdbusplus::bus::match_t pcapMatch;
+
+    /** @brief Path to the sysfs files holding the cap properties **/
+    fs::path pcapBasePathname;
+
+    /** @brief Update the power cap bounds on DBus
+     *
+     * @param[in]  softMin - soft minimum power cap in Watts
+     * @param[in]  hardMin - hard minimum power cap in Watts
+     * @param[in]  pcapMax - maximum power cap in Watts
+     *
+     * @return true if all parms were written successfully
+     */
+    bool updateDbusPcap(uint32_t& softMin, uint32_t& hardMin,
+                        uint32_t& pcapMax);
 };
 
 } // namespace powercap

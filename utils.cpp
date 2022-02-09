@@ -78,10 +78,10 @@ const PropertyValue getProperty(const std::string& objectPath,
  * @param[in] value - Property value
  */
 void setProperty(const std::string& objectPath, const std::string& interface,
-                 const std::string& propertyName, std::string&& value)
+                 const std::string& propertyName, PropertyValue&& value)
 {
     using namespace std::literals::string_literals;
-    std::variant<std::string> varValue(std::forward<std::string>(value));
+    PropertyValue varValue(std::forward<PropertyValue>(value));
 
     try
     {

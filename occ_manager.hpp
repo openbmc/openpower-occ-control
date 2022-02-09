@@ -7,7 +7,6 @@
 
 #include <libphal.H>
 #endif
-#include "powercap.hpp"
 #include "utils.hpp"
 #ifdef POWER10
 #include "powermode.hpp"
@@ -184,9 +183,6 @@ struct Manager
     /** @brief OCC Status objects */
     std::vector<std::unique_ptr<Status>> statusObjects;
 
-    /** @brief Power cap monitor and occ notification object */
-    std::unique_ptr<open_power::occ::powercap::PowerCap> pcap;
-
 #ifdef POWER10
     /** @brief Power mode monitor and notification object */
     std::unique_ptr<open_power::occ::powermode::PowerMode> pmode;
@@ -327,10 +323,9 @@ struct Manager
 #ifdef READ_OCC_SENSORS
     /**
      * @brief Gets the occ sensor values.
-     * @param[in] id - Id of the OCC.
-     * @param[in] masterOcc - Is this OCC the master OCC.
+     * @param[in] occ - pointer to OCCs Status object
      * */
-    void getSensorValues(uint32_t id, bool masterOcc);
+    void getSensorValues(std::unique_ptr<Status>& occ);
 
     /**
      * @brief Trigger OCC driver to read the temperature sensors.
