@@ -11,6 +11,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <regex>
 
 namespace open_power
 {
@@ -274,6 +275,25 @@ class Device
      *  @param[in] error - True if an error is reported, false otherwise
      */
     void throttleMemTempCallback(bool error);
+
+    /** @brief Get the pathname for a file based on a regular expression
+     *
+     *  @param[in] basePath - The path where the files will be checked
+     *  @param[in] expr - Regular expression describing the target file
+     *
+     *  @return path to the file or empty path if not found
+     */
+    fs::path getFilenameByRegex(fs::path basePath, const std::regex& expr)
+    {
+        for (auto& file : fs::directory_iterator(basePath))
+        {
+            if (std::regex_search(file.path().string(), expr))
+            {
+                return file;
+            }
+        }
+        return fs::path{};
+    }
 };
 
 } // namespace occ
