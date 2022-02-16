@@ -27,6 +27,8 @@ constexpr auto faultSuffix = "fault";
 constexpr auto inputSuffix = "input";
 constexpr auto maxSuffix = "max";
 
+const auto HOST_ON_FILE = "/run/openbmc/host@0-on";
+
 using namespace phosphor::logging;
 using namespace std::literals::chrono_literals;
 
@@ -63,30 +65,42 @@ void Manager::findAndCreateObjects()
         createObjects(occ);
     }
 #else
-    // Create the OCCs based on on the /dev/occX devices
-    auto occs = findOCCsInDev();
-
-    if (occs.empty() || (prevOCCSearch.size() != occs.size()))
+    if (!fs::exists(HOST_ON_FILE))
     {
-        // Something changed or no OCCs yet, try again in 10s.
-        // Note on the first pass prevOCCSearch will be empty,
-        // so there will be at least one delay to give things
-        // a chance to settle.
-        prevOCCSearch = occs;
+        // Create the OCCs based on on the /dev/occX devices
+        auto occs = findOCCsInDev();
 
-        discoverTimer->restartOnce(10s);
+        if (occs.empty() || (prevOCCSearch.size() != occs.size()))
+        {
+            // Something changed or no OCCs yet, try again in 10s.
+            // Note on the first pass prevOCCSearch will be empty,
+            // so there will be at least one delay to give things
+            // a chance to settle.
+            prevOCCSearch = occs;
+
+            discoverTimer->restartOnce(10s);
+        }
+        else
+        {
+            discoverTimer.reset();
+
+            // createObjects requires OCC0 first.
+            std::sort(occs.begin(), occs.end());
+
+            for (auto id : occs)
+            {
+                createObjects(std::string(OCC_NAME) + std::to_string(id));
+            }
+        }
     }
     else
     {
-        discoverTimer.reset();
-
-        // createObjects requires OCC0 first.
-        std::sort(occs.begin(), occs.end());
-
-        for (auto id : occs)
-        {
-            createObjects(std::string(OCC_NAME) + std::to_string(id));
-        }
+        log<level::INFO>(
+            fmt::format(
+                "Manager::findAndCreateObjects(): Waiting for {} to complete...",
+                HOST_ON_FILE)
+                .c_str());
+        discoverTimer->restartOnce(10s);
     }
 #endif
 }
