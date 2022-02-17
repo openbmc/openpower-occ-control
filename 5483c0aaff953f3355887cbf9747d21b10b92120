@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8b507d40_f2edc133",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-02-17T15:36:30Z",
+      "side": 1,
+      "message": "This resolved the problem when I did a boot/warmBoot/ResetReload:\n\n-- Boot 7d285d6624b14e68a9f4789363d32aaa --\nFeb 17 14:26:36 ever27bmc systemd[1]: obmc-power-start@0.target: Found dependency on fsi-scan@0.service/start\nFeb 17 14:26:36 ever27bmc systemd[1]: obmc-power-start@0.target: Job fsi-scan@0.service/start deleted to break ordering cycle starting with obmc-power-start@0.target/start\nFeb 17 14:26:41 ever27bmc openpower-occ-control[650]: Manager::findAndCreateObjects(): Waiting for transition files (/run/openbmc/host@0-on) to complete...\nFeb 17 14:26:41 ever27bmc systemd[1]: Created slice Slice /system/fsi-scan.\nFeb 17 14:26:51 ever27bmc openpower-occ-control[650]: Manager::findAndCreateObjects(): Waiting for transition files (/run/openbmc/host@0-on) to complete...\nFeb 17 14:27:11 ever27bmc openpower-occ-control[650]: OccPersistData: Mode: 0x0C, OEM Mode Data: 0 (0x0000)\nFeb 17 14:27:11 ever27bmc openpower-occ-control[650]: OccPersistData: IPS enabled:true, enter:8%/240s, exit:12%/120s\nFeb 17 14:27:11 ever27bmc openpower-occ-control[650]: Status::occActive OCC0 changed to true\nFeb 17 14:27:11 ever27bmc openpower-occ-control[650]: Manager: OCCs will be polled every 5 seconds\nFeb 17 14:27:11 ever27bmc openpower-occ-control[650]: Manager::createObjects(): OCC0 is the master\nFeb 17 14:27:11 ever27bmc openpower-occ-control[650]: Status::occActive OCC1 changed to true\nFeb 17 14:27:11 ever27bmc openpower-occ-control[650]: Manager: OCCs will be polled every 5 seconds\nFeb 17 14:27:11 ever27bmc openpower-occ-control[650]: Status::readOccState: OCC0 state 0x03\nFeb 17 14:27:11 ever27bmc openpower-occ-control[650]: PowerMode::sendModeChange: SET_MODE(12,0) command to OCC0 (9 bytes)\nFeb 17 14:27:11 ever27bmc openpower-occ-control[650]: Idle Power Saver Parameters: enabled:true, enter:8%/240s, exit:12%/120s\nFeb 17 14:27:11 ever27bmc openpower-occ-control[650]: PowerMode::sendIpsData: SET_CFG_DATA[IPS] command to OCC0 (12 bytes)\nFeb 17 14:27:11 ever27bmc openpower-occ-control[650]: Status::occActive OCC2 changed to true\nFeb 17 14:27:11 ever27bmc openpower-occ-control[650]: Status::occActive OCC3 changed to true\nFeb 17 14:27:16 ever27bmc openpower-occ-control[650]: Status::readOccState: OCC1 state 0x03\nFeb 17 14:27:16 ever27bmc openpower-occ-control[650]: Status::readOccState: OCC2 state 0x03\nFeb 17 14:27:16 ever27bmc openpower-occ-control[650]: Status::readOccState: OCC3 state 0x03",
+      "revId": "5483c0aaff953f3355887cbf9747d21b10b92120",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
