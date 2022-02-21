@@ -162,7 +162,7 @@ void Manager::createObjects(const std::string& occ)
         pmode,
 #endif
         std::bind(std::mem_fn(&Manager::statusCallBack), this,
-                  std::placeholders::_1)
+                  std::placeholders::_1, std::placeholders::_2)
 #ifdef PLDM
             ,
         std::bind(std::mem_fn(&pldm::Interface::resetOCC), pldmHandle.get(),
@@ -199,7 +199,7 @@ void Manager::createObjects(const std::string& occ)
                                                                   ));
 }
 
-void Manager::statusCallBack(bool status)
+void Manager::statusCallBack(instanceID instance, bool status)
 {
     using InternalFailure =
         sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure;
@@ -208,7 +208,10 @@ void Manager::statusCallBack(bool status)
     // here just in case something changes in the future
     if ((activeCount == 0) && (!status))
     {
-        log<level::ERR>("Invalid update on OCCActive");
+        log<level::ERR>(
+            fmt::format("Invalid update on OCCActive with OCC{}", instance)
+                .c_str());
+
         elog<InternalFailure>();
     }
 
@@ -276,15 +279,11 @@ void Manager::statusCallBack(bool status)
                 waitForAllOccsTimer->setEnabled(false);
             }
 #endif
-
-#ifdef READ_OCC_SENSORS
-            // Clear OCC sensors
-            for (auto& obj : statusObjects)
-            {
-                setSensorValueToNaN(obj->getOccInstanceID());
-            }
-#endif
         }
+#ifdef READ_OCC_SENSORS
+        // Clear OCC sensors
+        setSensorValueToNonFunctional(instance);
+#endif
     }
 }
 
@@ -491,16 +490,15 @@ void Manager::pollerTimerExpired()
 #ifdef READ_OCC_SENSORS
         auto id = obj->getOccInstanceID();
 #endif
+
         if (!obj->occActive())
         {
             // OCC is not running yet
-#ifdef READ_OCC_SENSORS
-            setSensorValueToNaN(id);
-#endif
             continue;
         }
 
         // Read sysfs to force kernel to poll OCC
+        // no change
         obj->readOccState();
 
 #ifdef READ_OCC_SENSORS
@@ -831,6 +829,22 @@ void Manager::setSensorValueToNaN(uint32_t id)
         {
             open_power::occ::dbus::OccDBusSensors::getOccDBus().setValue(
                 sensorPath, std::numeric_limits<double>::quiet_NaN());
+        }
+    }
+    return;
+}
+
+void Manager::setSensorValueToNonFunctional(uint32_t id) const
+{
+    for (const auto& [sensorPath, occId] : existingSensors)
+    {
+        if (occId == id)
+        {
+            dbus::OccDBusSensors::getOccDBus().setValue(
+                sensorPath, std::numeric_limits<double>::quiet_NaN());
+
+            dbus::OccDBusSensors::getOccDBus().setOperationalStatus(sensorPath,
+                                                                    false);
         }
     }
     return;
