@@ -78,7 +78,7 @@ class Status : public Interface
 #ifdef POWER10
            std::unique_ptr<open_power::occ::powermode::PowerMode>& powerModeRef,
 #endif
-           std::function<void(bool)> callBack = nullptr
+           std::function<void(instanceID, bool)> callBack = nullptr
 #ifdef PLDM
            ,
            std::function<void(instanceID)> resetCallBack = nullptr
@@ -206,13 +206,16 @@ class Status : public Interface
     /** @brief Callback handler to be invoked during property change.
      *         This is a handler in Manager class
      */
-    std::function<void(bool)> managerCallBack;
+    std::function<void(instanceID, bool)> managerCallBack;
 
     /** @brief OCC instance number. Ex, 0,1, etc */
     unsigned int instance;
 
     /** @brief The last state read from the OCC */
     unsigned int lastState = 0;
+
+    /** @brief The Trigger to run fail only once. */
+    bool sensorsValid = false;
 
     /** @brief OCC instance to Sensor definitions mapping */
     static const std::map<instanceID, sensorDefs> sensorMap;
