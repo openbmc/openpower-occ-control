@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "357d5786_e80fd63b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2022-02-21T16:20:04Z",
+      "side": 1,
+      "message": "Looks good to me other then that we can remove the MPIPL check.",
+      "revId": "4d3d529c17bc9744a8a26f16210ea13b04602974",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7699b93c_e9b69e2e",
@@ -14,6 +31,30 @@
       "writtenOn": "2022-02-18T16:41:55Z",
       "side": 1,
       "message": "I just realized this one wouldn\u0027t be necessary since it the app isn\u0027t getting restarted here since the BMC isn\u0027t being rebooted.",
+      "range": {
+        "startLine": 31,
+        "startChar": 0,
+        "endLine": 31,
+        "endChar": 57
+      },
+      "revId": "4d3d529c17bc9744a8a26f16210ea13b04602974",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "82281114_a702ae32",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2022-02-21T16:20:04Z",
+      "side": 1,
+      "message": "correct, and we don\u0027t run a fsi-scan on mpreboots",
+      "parentUuid": "7699b93c_e9b69e2e",
       "range": {
         "startLine": 31,
         "startChar": 0,
