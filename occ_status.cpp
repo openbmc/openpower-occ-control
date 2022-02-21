@@ -41,7 +41,7 @@ bool Status::occActive(bool value)
             // Call into Manager to let know that we have bound
             if (this->managerCallBack)
             {
-                this->managerCallBack(value);
+                this->managerCallBack(instance, value);
             }
         }
         else
@@ -62,7 +62,7 @@ bool Status::occActive(bool value)
             // Call into Manager to let know that we will unbind.
             if (this->managerCallBack)
             {
-                this->managerCallBack(value);
+                this->managerCallBack(instance, value);
             }
 
             // Stop watching for errors
@@ -185,74 +185,11 @@ void Status::hostControlEvent(sdbusplus::message::message& msg)
 
 void Status::readOccState()
 {
-    unsigned int state;
-    const fs::path filename =
-        fs::path(DEV_PATH) /
-        fs::path(sysfsName + "." + std::to_string(instance + 1)) / "occ_state";
+    currentOccReadRetriesCount = occReadRetries;
 
-    std::ifstream file(filename, std::ios::in);
-    const int open_errno = errno;
-    if (file)
-    {
-        file >> state;
-        if (state != lastState)
-        {
-            // Trace OCC state changes
-            log<level::INFO>(
-                fmt::format("Status::readOccState: OCC{} state 0x{:02X}",
-                            instance, state)
-                    .c_str());
-            lastState = state;
-
-#ifdef POWER10
-            if (OccState(state) == OccState::ACTIVE)
-            {
-                if (pmode && device.master())
-                {
-                    // Set the master OCC on the PowerMode object
-                    pmode->setMasterOcc(path);
-                    // Enable mode changes
-                    pmode->setMasterActive();
-
-                    // Special processing by master OCC when it goes active
-                    occsWentActive();
-                }
-
-                CmdStatus status = sendAmbient();
-                if (status != CmdStatus::SUCCESS)
-                {
-                    log<level::ERR>(
-                        fmt::format(
-                            "readOccState: Sending Ambient failed with status {}",
-                            status)
-                            .c_str());
-                }
-            }
-
-            if (OccState(state) == OccState::SAFE)
-            {
-                // start safe delay timer (before requesting reset)
-                using namespace std::literals::chrono_literals;
-                safeStateDelayTimer.restartOnce(60s);
-            }
-            else if (safeStateDelayTimer.isEnabled())
-            {
-                // stop safe delay timer (no longer in SAFE state)
-                safeStateDelayTimer.setEnabled(false);
-            }
-#endif
-        }
-        file.close();
-    }
-    else
-    {
-        // If not able to read, OCC may be offline
-        log<level::DEBUG>(
-            fmt::format("Status::readOccState: open failed (errno={})",
-                        open_errno)
-                .c_str());
-        lastState = 0;
-    }
+    using namespace std::chrono_literals;
+    occReadStateFailTimer.restartOnce(0s);
+    // SHELDON9999 occReadStateNow();
 }
 
 #ifdef POWER10
@@ -354,6 +291,133 @@ CmdStatus Status::sendAmbient(const uint8_t inTemp, const uint16_t inAltitude)
     }
 
     return status;
+}
+
+// Called when occ read state fail timer expires to Try and read again.
+void Status::occReadStateNow()
+{
+    unsigned int state;
+    const fs::path filename =
+        fs::path(DEV_PATH) /
+        fs::path(sysfsName + "." + std::to_string(instance + 1)) / "occ_state";
+
+    std::ifstream file;
+    int open_errno = errno;
+    bool good_state = false;
+
+    // open file.
+    file.open(filename, std::ios::in);
+    open_errno = errno;
+
+    // File is open and state can be used.
+    if (file.is_open() && file.good())
+    {
+        good_state = true;
+        file >> state;
+
+        if (((OccState(state) == OccState::ACTIVE) ||
+             (OccState(state) == OccState::CHARACTERIZATION) ||
+             (OccState(state) == OccState::OBSERVATION)) &&
+            (sensorsValid == false))
+        {
+            // OCC sensors should be valid again
+            sensorsValid = true;
+        }
+
+        if (state != lastState)
+        {
+            // Trace OCC state changes
+            log<level::INFO>(
+                fmt::format("Status::readOccState: OCC{} state 0x{:02X}",
+                            instance, state)
+                    .c_str());
+            lastState = state;
+#ifdef POWER10
+            if (OccState(state) == OccState::ACTIVE)
+            {
+                if (pmode && device.master())
+                {
+                    // Set the master OCC on the PowerMode object
+                    pmode->setMasterOcc(path);
+                    // Enable mode changes
+                    pmode->setMasterActive();
+
+                    // Special processing by master OCC when it goes active
+                    occsWentActive();
+                }
+
+                CmdStatus status = sendAmbient();
+                if (status != CmdStatus::SUCCESS)
+                {
+                    log<level::ERR>(
+                        fmt::format(
+                            "readOccState: Sending Ambient failed with status {}",
+                            status)
+                            .c_str());
+                }
+            }
+
+            // If not Valid state We would be in SAFE mode.
+            // This captures both SAFE mode, and 0x00, or other invalid state
+            // values.
+            if ((OccState(state) != OccState::ACTIVE) &&
+                (OccState(state) != OccState::CHARACTERIZATION) &&
+                (OccState(state) != OccState::OBSERVATION))
+            {
+                if (!safeStateDelayTimer.isEnabled())
+                {
+                    // start safe delay timer (before requesting reset)
+                    using namespace std::literals::chrono_literals;
+                    safeStateDelayTimer.restartOnce(60s);
+                }
+                // Not valid state. if tries exhausted update sensors to Nan &
+                // not functional
+                sensorsValid = false;
+                good_state = false;
+            }
+            else if (safeStateDelayTimer.isEnabled())
+            {
+                // stop safe delay timer (no longer in SAFE state)
+                safeStateDelayTimer.setEnabled(false);
+            }
+#endif
+        }
+    }
+    file.close();
+
+    --currentOccReadRetriesCount;
+
+    // if failed to Read a state or a valid state -> Attempt retry
+    // currentOccReadRetriesCount times after 1 Sec. delay if allowed.
+    if ((!good_state) && (!sensorsValid))
+    {
+        // If not able to read, OCC may be offline
+        log<level::INFO>(
+            fmt::format("Status::readOccState: open failed (errno={})",
+                        open_errno)
+                .c_str());
+
+        if (currentOccReadRetriesCount > 0)
+        {
+            using namespace std::chrono_literals;
+            occReadStateFailTimer.restartOnce(1s);
+        }
+        else
+        {
+#ifdef READ_OCC_SENSORS
+            manager.setSensorValueToNonFunctional(instance);
+#endif
+            // State could not be determined, set it to NO State.
+            lastState = 0;
+
+            // Disable the ability to send Failed actions until OCC is Active
+            // again.
+            sensorsValid = false;
+
+            // Disable and reset to try recovering
+            deviceError();
+        }
+    }
 }
 
 // Called when safe timer expires to determine if OCCs need to be reset
