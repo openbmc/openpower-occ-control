@@ -79,7 +79,7 @@ class Status : public Interface
 #ifdef POWER10
            std::unique_ptr<powermode::PowerMode>& powerModeRef,
 #endif
-           std::function<void(bool)> callBack = nullptr
+           std::function<void(instanceID, bool)> callBack = nullptr
 #ifdef PLDM
            ,
            std::function<void(instanceID)> resetCallBack = nullptr
@@ -117,8 +117,12 @@ class Status : public Interface
         sdpEvent(sdeventplus::Event::get_default()),
         safeStateDelayTimer(
             sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>(
-                sdpEvent, std::bind(&Status::safeStateDelayExpired, this)))
+                sdpEvent, std::bind(&Status::safeStateDelayExpired, this))),
+        occReadStateFailTimer(
+            sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>(
+                sdpEvent, std::bind(&Status::occReadStateNow, this)))
 #endif
+
 #ifdef PLDM
         ,
         resetCallBack(resetCallBack)
@@ -213,13 +217,22 @@ class Status : public Interface
     /** @brief Callback handler to be invoked during property change.
      *         This is a handler in Manager class
      */
-    std::function<void(bool)> managerCallBack;
+    std::function<void(instanceID, bool)> managerCallBack;
 
     /** @brief OCC instance number. Ex, 0,1, etc */
     unsigned int instance;
 
     /** @brief The last state read from the OCC */
     unsigned int lastState = 0;
+
+    /** @brief Number of retry attempts to open file and update state. */
+    const unsigned int occReadRetries = 1;
+
+    /** @brief Current number of retries attempted towards occReadRetries. */
+    size_t currentOccReadRetriesCount = 0;
+
+    /** @brief The Trigger to indicate OCC State is valid or not. */
+    bool stateValid = false;
 
     /** @brief OCC instance to Sensor definitions mapping */
     static const std::map<instanceID, sensorDefs> sensorMap;
@@ -284,7 +297,18 @@ class Status : public Interface
      * safe mode. Called to verify and then disable and reset the OCCs.
      */
     void safeStateDelayExpired();
+
+    /**
+     * @brief Timer that is started when OCC read Valid state failed.
+     */
+    sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>
+        occReadStateFailTimer;
+
 #endif // POWER10
+    /** @brief Callback for timer that is started when OCC state
+     * was not able to be read. Called to attempt another read when needed.
+     */
+    void occReadStateNow();
 
     /** @brief Override the sensor name with name from the definition.
      *  @param[in]  estimatedPath - Estimated OCC Dbus object path
