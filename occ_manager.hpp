@@ -144,6 +144,12 @@ struct Manager
     /** @brief Notify pcap object to update bounds */
     void updatePcapBounds() const;
 
+    /** @brief Set all sensor values of this OCC to NaN and non functional.
+     *
+     *  @param[in] id - Id of the OCC.
+     */
+    void setSensorValueToNonFunctional(uint32_t id) const;
+
   private:
     /** @brief Creates the OCC D-Bus objects.
      */
@@ -173,7 +179,7 @@ struct Manager
      *
      *  @param[in] status - OccActive status
      */
-    void statusCallBack(bool status);
+    void statusCallBack(instanceID instance, bool status);
 
     /** @brief Sends a Heartbeat command to host control command handler */
     void sendHeartBeat();
