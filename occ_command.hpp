@@ -39,7 +39,7 @@ enum class OccState
     OBSERVATION = 0x02,
     ACTIVE = 0x03,
     SAFE = 0x04,
-    CHARACTERIZATION = 0x05,
+    CHARACTERIZATION = 0x05
 };
 
 enum class SysPwrMode
