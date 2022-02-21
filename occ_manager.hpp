@@ -141,6 +141,13 @@ struct Manager
     void getAmbientData(bool& ambientValid, uint8_t& ambientTemp,
                         uint16_t& altitude) const;
 
+    /**
+     * @brief Set all sensor values of this OCC to NaN and non functional.
+     * @param[in] id - Id of the OCC.
+     * */
+    void setSensorValueToNonFunctional(uint32_t id) const;
+
+
   private:
     /** @brief Creates the OCC D-Bus objects.
      */

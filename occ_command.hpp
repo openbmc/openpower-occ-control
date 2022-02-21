@@ -40,6 +40,7 @@ enum class OccState
     ACTIVE = 0x03,
     SAFE = 0x04,
     CHARACTERIZATION = 0x05,
+    LAST_VALID_STATE = CHARACTERIZATION,
 };
 
 enum class SysPwrMode
