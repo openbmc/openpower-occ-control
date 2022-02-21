@@ -214,6 +214,9 @@ class Status : public Interface
     /** @brief The last state read from the OCC */
     unsigned int lastState = 0;
 
+    /** @brief The Trigger to run fail only once. */
+    bool failedActionsRun = false;
+
     /** @brief OCC instance to Sensor definitions mapping */
     static const std::map<instanceID, sensorDefs> sensorMap;
 

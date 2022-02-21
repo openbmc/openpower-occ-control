@@ -267,7 +267,7 @@ void Manager::statusCallBack(bool status)
             // Clear OCC sensors
             for (auto& obj : statusObjects)
             {
-                setSensorValueToNaN(obj->getOccInstanceID());
+                setSensorValueToNonFunctional(obj->getOccInstanceID());
             }
 #endif
         }
@@ -477,17 +477,15 @@ void Manager::pollerTimerExpired()
 #ifdef READ_OCC_SENSORS
         auto id = obj->getOccInstanceID();
 #endif
-        if (!obj->occActive())
-        {
-            // OCC is not running yet
-#ifdef READ_OCC_SENSORS
-            setSensorValueToNaN(id);
-#endif
-            continue;
-        }
 
         // Read sysfs to force kernel to poll OCC
         obj->readOccState();
+
+        if (!obj->occActive())
+        {
+            // OCC is not running yet
+            continue;
+        }
 
 #ifdef READ_OCC_SENSORS
         // Read occ sensor values
@@ -817,6 +815,21 @@ void Manager::setSensorValueToNaN(uint32_t id)
         {
             open_power::occ::dbus::OccDBusSensors::getOccDBus().setValue(
                 sensorPath, std::numeric_limits<double>::quiet_NaN());
+        }
+    }
+    return;
+}
+
+void Manager::setSensorValueToNonFunctional(uint32_t id) const
+{
+    for (const auto& [sensorPath, occId] : existingSensors)
+    {
+        if (occId == id)
+        {
+            dbus::OccDBusSensors::getOccDBus().setValue(sensorPath,
+                std::numeric_limits<double>::quiet_NaN());
+
+            dbus::OccDBusSensors::getOccDBus().setOperationalStatus(sensorPath, false);
         }
     }
     return;
