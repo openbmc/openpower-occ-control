@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "88fcba7f_d8c326f8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-02-22T23:13:03Z",
+      "side": 1,
+      "message": "CI failure due to CLANG formatting required.  Need to run scripts/format-code.sh from the openbmc-build-scripts repo.",
+      "revId": "c415545cba1cf190323da78b424261189a20f00c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b40c8127_23677804",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 829,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-02-22T23:13:03Z",
+      "side": 1,
+      "message": "You are already in this namespace so these can be removed",
+      "range": {
+        "startLine": 829,
+        "startChar": 12,
+        "endLine": 829,
+        "endChar": 29
+      },
+      "revId": "c415545cba1cf190323da78b424261189a20f00c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f66621a_71f41d44",
+        "filename": "occ_status.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 232,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-02-22T23:13:03Z",
+      "side": 1,
+      "message": "remove",
+      "range": {
+        "startLine": 232,
+        "startChar": 2,
+        "endLine": 232,
+        "endChar": 13
+      },
+      "revId": "c415545cba1cf190323da78b424261189a20f00c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
