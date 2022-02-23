@@ -1,0 +1,61 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c9a11b08_6a23ec90",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 266,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-02-23T20:36:41Z",
+      "side": 1,
+      "message": "Wondering if we need to clear the OCC sensors for each OCC instead of waiting for all of them to go away.",
+      "revId": "b7bd8d73802b6ad4d6c8ef8d3e0bc1a9038b7dbc",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "718bb42f_6b5ea2eb",
+        "filename": "occ_status.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 218,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-02-23T20:36:41Z",
+      "side": 1,
+      "message": "I think you should limit this to only ACTIVE, OBS, CHARACTERIZATION states as those are the only states were the sensors are valid.",
+      "revId": "b7bd8d73802b6ad4d6c8ef8d3e0bc1a9038b7dbc",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eedd555d_0b996221",
+        "filename": "occ_status.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-02-23T20:36:41Z",
+      "side": 1,
+      "message": "This variable is confusing to me.  You are trying to prevent setting the sensors to non functional.  I would prefer to see something like sensorsNonFunctional with same logic.\n\nif (valid state AND sensorsNonFunctional) then \n    // sensors should now be valid\n    sensorsNonFunctional \u003d false",
+      "range": {
+        "startLine": 222,
+        "startChar": 16,
+        "endLine": 223,
+        "endChar": 41
+      },
+      "revId": "b7bd8d73802b6ad4d6c8ef8d3e0bc1a9038b7dbc",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
