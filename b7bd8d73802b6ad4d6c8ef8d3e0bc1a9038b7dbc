@@ -36,6 +36,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "759f10ca_f39f067a",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 266,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-02-23T21:08:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c9a11b08_6a23ec90",
+      "revId": "b7bd8d73802b6ad4d6c8ef8d3e0bc1a9038b7dbc",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "718bb42f_6b5ea2eb",
@@ -71,6 +89,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8ea04dfa_68b4869f",
+        "filename": "occ_status.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 218,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-02-23T21:08:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "718bb42f_6b5ea2eb",
+      "revId": "b7bd8d73802b6ad4d6c8ef8d3e0bc1a9038b7dbc",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "eedd555d_0b996221",
@@ -84,6 +120,30 @@
       "writtenOn": "2022-02-23T20:36:41Z",
       "side": 1,
       "message": "This variable is confusing to me.  You are trying to prevent setting the sensors to non functional.  I would prefer to see something like sensorsNonFunctional with same logic.\n\nif (valid state AND sensorsNonFunctional) then \n    // sensors should now be valid\n    sensorsNonFunctional \u003d false",
+      "range": {
+        "startLine": 222,
+        "startChar": 16,
+        "endLine": 223,
+        "endChar": 41
+      },
+      "revId": "b7bd8d73802b6ad4d6c8ef8d3e0bc1a9038b7dbc",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0988b3b8_bf01cc4f",
+        "filename": "occ_status.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-02-23T21:08:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "eedd555d_0b996221",
       "range": {
         "startLine": 222,
         "startChar": 16,
