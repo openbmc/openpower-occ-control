@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "c819b924_a866ee4f",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 266,
+      "author": {
+        "id": 1000933
+      },
+      "writtenOn": "2022-02-23T20:52:23Z",
+      "side": 1,
+      "message": "I agree you should clear sensors as each OCC goes away and not wait until they are all gone so we can support if we ever need to just knock out one OCC.",
+      "parentUuid": "c9a11b08_6a23ec90",
+      "revId": "b7bd8d73802b6ad4d6c8ef8d3e0bc1a9038b7dbc",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "718bb42f_6b5ea2eb",
         "filename": "occ_status.cpp",
         "patchSetId": 6
@@ -31,6 +49,24 @@
       "writtenOn": "2022-02-23T20:36:41Z",
       "side": 1,
       "message": "I think you should limit this to only ACTIVE, OBS, CHARACTERIZATION states as those are the only states were the sensors are valid.",
+      "revId": "b7bd8d73802b6ad4d6c8ef8d3e0bc1a9038b7dbc",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "48c799cf_9068f4fa",
+        "filename": "occ_status.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 218,
+      "author": {
+        "id": 1000933
+      },
+      "writtenOn": "2022-02-23T20:52:23Z",
+      "side": 1,
+      "message": "agreed",
+      "parentUuid": "718bb42f_6b5ea2eb",
       "revId": "b7bd8d73802b6ad4d6c8ef8d3e0bc1a9038b7dbc",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
