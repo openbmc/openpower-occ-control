@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3e23112c_6ef49f4a",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 268,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-02-24T18:26:34Z",
+      "side": 1,
+      "message": "You can\u0027t clear all OCC sensors here.  This function is called by the Status object for one specific OCC. You would need to know which OCC and only clear sensors for that OCC.",
+      "revId": "f3b26558e827479a95caadd32d5fbeef6919e3c4",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
