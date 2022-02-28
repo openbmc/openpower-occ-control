@@ -338,7 +338,8 @@ void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
         return;
     }
 
-    sendPldm(request);
+    // Make asynchronous call to reset the OCCs/PM Complex
+    sendPldm(request, true);
 }
 
 void Interface::sendHRESET(open_power::occ::instanceID sbeInstanceId)
@@ -401,40 +402,66 @@ bool Interface::getMctpInstanceId(uint8_t& instanceId)
     return true;
 }
 
-void Interface::sendPldm(const std::vector<uint8_t>& request)
+void Interface::sendPldm(const std::vector<uint8_t>& request, const bool async)
 {
     // Connect to MCTP scoket
     int fd = pldm_open();
     if (fd == -1)
     {
-        log<level::ERR>("pldm: Failed to connect to MCTP socket");
+        log<level::ERR>(
+            fmt::format("sendPldm: Failed to connect to MCTP socket, errno={}",
+                        errno)
+                .c_str());
         return;
     }
 
     open_power::occ::FileDescriptor fileFd(fd);
 
     // Send the PLDM request message to HBRT
-    uint8_t* response = nullptr;
-    size_t responseSize{};
-    auto rc = pldm_send_recv(mctpEid, fileFd(), request.data(), request.size(),
-                             &response, &responseSize);
-    std::unique_ptr<uint8_t, decltype(std::free)*> responsePtr{response,
-                                                               std::free};
-    if (rc)
+    if (async == false)
     {
-        log<level::ERR>("pldm: pldm_send_recv failed", entry("RC=%d", rc));
-    }
+        uint8_t* response = nullptr;
+        size_t responseSize{};
+        auto rc = pldm_send_recv(mctpEid, fileFd(), request.data(),
+                                 request.size(), &response, &responseSize);
+        std::unique_ptr<uint8_t, decltype(std::free)*> responsePtr{response,
+                                                                   std::free};
+        if (rc)
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "sendPldm: pldm_send_recv({},{},req,{},...) failed with rc={} and errno={}",
+                    mctpEid, fileFd(), request.size(), rc, errno)
+                    .c_str());
+        }
 
-    uint8_t completionCode{};
-    auto responseMsg = reinterpret_cast<const pldm_msg*>(responsePtr.get());
-    auto rcDecode = decode_set_state_effecter_states_resp(
-        responseMsg, responseSize - sizeof(pldm_msg_hdr), &completionCode);
-    if (rcDecode || completionCode)
+        uint8_t completionCode{};
+        auto responseMsg = reinterpret_cast<const pldm_msg*>(responsePtr.get());
+        auto rcDecode = decode_set_state_effecter_states_resp(
+            responseMsg, responseSize - sizeof(pldm_msg_hdr), &completionCode);
+        if (rcDecode || completionCode)
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "sendPldm: decode_set_state_effecter_states_resp failed with rc={} and compCode={}",
+                    rcDecode, completionCode)
+                    .c_str());
+        }
+    }
+    else
     {
-        log<level::ERR>(
-            "pldm: decode_set_state_effecter_states_resp returned error",
-            entry("RC=%d", rcDecode),
-            entry("COMPLETION_CODE=%d", completionCode));
+        log<level::INFO>(fmt::format("sendPldm: calling pldm_send({}, {})",
+                                     mctpEid, fileFd())
+                             .c_str());
+        auto rc = pldm_send(mctpEid, fileFd(), request.data(), request.size());
+        if (rc)
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "sendPldm: pldm_send({},{},req,{}) failed with rc={} and errno={}",
+                    mctpEid, fileFd(), request.size(), rc, errno)
+                    .c_str());
+        }
     }
 }
 
