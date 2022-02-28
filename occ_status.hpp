@@ -84,60 +84,7 @@ class Status : public Interface
            ,
            std::function<void(instanceID)> resetCallBack = nullptr
 #endif
-           ) :
-
-        Interface(utils::getBus(), getDbusPath(path).c_str(),
-                  Interface::action::defer_emit),
-        path(path), managerCallBack(callBack), instance(getInstance(path)),
-        manager(managerRef),
-#ifdef POWER10
-        pmode(powerModeRef),
-#endif
-        device(event,
-#ifdef I2C_OCC
-               fs::path(DEV_PATH) / i2c_occ::getI2cDeviceName(path),
-#else
-               fs::path(DEV_PATH) /
-                   fs::path(sysfsName + "." + std::to_string(instance + 1)),
-#endif
-               managerRef, *this, instance),
-        hostControlSignal(
-            utils::getBus(),
-            sdbusRule::type::signal() + sdbusRule::member("CommandComplete") +
-                sdbusRule::path("/org/open_power/control/host0") +
-                sdbusRule::interface("org.open_power.Control.Host") +
-                sdbusRule::argN(0, Control::convertForMessage(
-                                       Control::Host::Command::OCCReset)),
-            std::bind(std::mem_fn(&Status::hostControlEvent), this,
-                      std::placeholders::_1)),
-        occCmd(instance, (fs::path(OCC_CONTROL_ROOT) /
-                          (std::string(OCC_NAME) + std::to_string(instance)))
-                             .c_str())
-#ifdef POWER10
-        ,
-        sdpEvent(sdeventplus::Event::get_default()),
-        safeStateDelayTimer(
-            sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>(
-                sdpEvent, std::bind(&Status::safeStateDelayExpired, this))),
-        occReadStateFailTimer(
-            sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>(
-                sdpEvent, std::bind(&Status::occReadStateNow, this)))
-#endif
-
-#ifdef PLDM
-        ,
-        resetCallBack(resetCallBack)
-#endif
-    {
-        // Check to see if we have OCC already bound.  If so, just set it
-        if (device.bound())
-        {
-            this->occActive(true);
-        }
-
-        // Announce that we are ready
-        this->emit_object_added();
-    }
+    );
 
     /** @brief Since we are overriding the setter-occActive but not the
      *         getter-occActive, we need to have this using in order to
