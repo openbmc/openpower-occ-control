@@ -20,6 +20,7 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
                                 SensorOffset& sensorOffset)
 {
     PdrList pdrs{};
+    static bool tracedError = false;
 
     auto& bus = open_power::occ::utils::getBus();
     try
@@ -27,21 +28,44 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
         auto method = bus.new_method_call(
             "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
             "xyz.openbmc_project.PLDM.PDR", "FindStateSensorPDR");
-        method.append(tid, (uint16_t)PLDM_ENTITY_PROC, stateSetId);
+        method.append(tid, static_cast<uint16_t>(PLDM_ENTITY_PROC), stateSetId);
 
         auto responseMsg = bus.call(method);
         responseMsg.read(pdrs);
     }
     catch (const sdbusplus::exception::exception& e)
     {
-        log<level::ERR>("pldm: Failed to fetch the state sensor PDRs",
-                        entry("ERROR=%s", e.what()));
+        if (!tracedError)
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "fetchSensorInfo: Failed to find stateSetID:{} PDR: {}",
+                    stateSetId, e.what())
+                    .c_str());
+            tracedError = true;
+        }
     }
 
     if (pdrs.empty())
     {
-        log<level::ERR>("pldm: state sensor PDRs not present");
+        if (!tracedError)
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "fetchSensorInfo: state sensor PDRs ({}) not present",
+                    stateSetId)
+                    .c_str());
+            tracedError = true;
+        }
         return;
+    }
+
+    // Found PDR
+    if (tracedError)
+    {
+        log<level::INFO>(
+            fmt::format("fetchSensorInfo: found {} PDRs", pdrs.size()).c_str());
+        tracedError = false;
     }
 
     bool offsetFound = false;
@@ -139,6 +163,24 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
                                      .c_str());
                 callBack(sensorEntry->second, false);
             }
+            else if (eventState ==
+                     static_cast<EventState>(
+                         PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_DORMANT))
+            {
+                log<level::INFO>(
+                    fmt::format(
+                        "PLDM: OCC{} has now STOPPED and system is in SAFE MODE",
+                        sensorEntry->second)
+                        .c_str());
+                callBack(sensorEntry->second, false);
+            }
+            else
+            {
+                log<level::INFO>(
+                    fmt::format("PLDM: Unexpected PLDM state {} for OCC{}",
+                                eventState, sensorEntry->second)
+                        .c_str());
+            }
 
             return;
         }
@@ -201,7 +243,7 @@ void Interface::fetchEffecterInfo(uint16_t stateSetId,
         auto method = bus.new_method_call(
             "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
             "xyz.openbmc_project.PLDM.PDR", "FindStateEffecterPDR");
-        method.append(tid, (uint16_t)PLDM_ENTITY_PROC, stateSetId);
+        method.append(tid, static_cast<uint16_t>(PLDM_ENTITY_PROC), stateSetId);
 
         auto responseMsg = bus.call(method);
         responseMsg.read(pdrs);
@@ -464,6 +506,159 @@ void Interface::sendPldm(const std::vector<uint8_t>& request, const bool async)
                     .c_str());
         }
     }
+}
+
+// Determine if the Active Sensor is available and OCC Active sensor state
+bool Interface::checkActiveSensor(uint8_t instance, bool& isActive)
+{
+    isActive = false;
+
+    if (!isOCCSensorCacheValid())
+    {
+        fetchSensorInfo(PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS,
+                        sensorToOCCInstance, OCCSensorOffset);
+    }
+
+    // look up sensor id (key) based on instance
+    auto entry = std::find_if(
+        sensorToOCCInstance.begin(), sensorToOCCInstance.end(),
+        [instance](const auto& entry) { return instance == entry.second; });
+    if (entry != sensorToOCCInstance.end())
+    {
+        // Query the OCC Active Sensor state for this instance
+        SensorID sID = entry->first;
+
+        // Encode GetStateSensorReadings PLDM message
+        const uint8_t sInstance = 0;
+        bitfield8_t sRearm = {0};
+        const size_t msgSize =
+            sizeof(pldm_msg_hdr) + PLDM_GET_STATE_SENSOR_READINGS_REQ_BYTES;
+        std::vector<uint8_t> requestMsg(msgSize);
+        auto msg = reinterpret_cast<pldm_msg*>(requestMsg.data());
+        static int lastMsgRc = 0;
+        auto msgRc = encode_get_state_sensor_readings_req(sInstance, sID,
+                                                          sRearm, 0, msg);
+        if (msgRc != PLDM_SUCCESS)
+        {
+            if (msgRc != lastMsgRc)
+            {
+                log<level::ERR>(
+                    fmt::format(
+                        "checkActiveSensor: Failed to encode sensorId:0x{:08X} for OCC{} (rc={})",
+                        sID, instance, msgRc)
+                        .c_str());
+                lastMsgRc = msgRc;
+            }
+            return false;
+        }
+
+        // Connect to MCTP scoket
+        int fd = pldm_open();
+        if (fd == -1)
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "checkActiveSensor: Failed to connect to MCTP socket, errno={}",
+                    errno)
+                    .c_str());
+            return false;
+        }
+        open_power::occ::FileDescriptor fileFd(fd);
+
+        // Send PLDM msg to get state sensor readings
+        log<level::INFO>(
+            fmt::format(
+                "checkActiveSensor: calling pldm_send(GetStateSensorReadings, OCC{})",
+                instance)
+                .c_str());
+        static auto lastPldmRc = PLDM_REQUESTER_SUCCESS;
+        auto pldmRc = pldm_send(mctpEid, fileFd(), requestMsg.data(), msgSize);
+        if (pldmRc != PLDM_REQUESTER_SUCCESS)
+        {
+            if (pldmRc != lastPldmRc)
+            {
+                log<level::ERR>(
+                    fmt::format(
+                        "checkActiveSensor: pldm_send(GetStateSenorReadings) failed with rc={} and errno={}",
+                        pldmRc, errno)
+                        .c_str());
+                lastPldmRc = pldmRc;
+            }
+            return false;
+        }
+
+        // Read the PLDM response
+        uint8_t* rspPtr = nullptr;
+        size_t rspLen = 0;
+        log<level::INFO>("checkActiveSensor: calling pldm_recv()");
+        pldmRc = pldm_recv(mctpEid, fileFd(), msg->hdr.instance_id, &rspPtr,
+                           &rspLen);
+        if (pldmRc == PLDM_REQUESTER_SUCCESS)
+        {
+            // Decode the response
+            auto msgRspPtr = reinterpret_cast<const struct pldm_msg*>(rspPtr);
+            uint8_t compCode = 0, sensorCount = 1;
+            get_sensor_state_field field[6];
+            rspLen -= sizeof(pldm_msg_hdr);
+            msgRc = decode_get_state_sensor_readings_resp(
+                msgRspPtr, rspLen, &compCode, &sensorCount, field);
+
+            if ((msgRc != PLDM_SUCCESS) || (compCode != PLDM_SUCCESS))
+            {
+                if (msgRc != lastMsgRc)
+                {
+                    log<level::ERR>(
+                        fmt::format(
+                            "checkActiveSensor: decode_get_state_sensor_readings failed with rc={} and compCode={}",
+                            msgRc, compCode)
+                            .c_str());
+                    lastMsgRc = msgRc;
+                }
+
+                free(rspPtr);
+                rspPtr = nullptr;
+                return false;
+            }
+
+            if (field[0].present_state ==
+                PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_IN_SERVICE)
+            {
+                isActive = true;
+                log<level::INFO>(
+                    fmt::format("checkActiveSensor: OCC{} is RUNNING", instance,
+                                field[0].present_state)
+                        .c_str());
+            }
+            else
+            {
+                log<level::WARNING>(
+                    fmt::format(
+                        "checkActiveSensor: OCC{} is not running (state:{})",
+                        instance, field[0].present_state)
+                        .c_str());
+            }
+
+            free(rspPtr);
+            rspPtr = nullptr;
+            lastMsgRc = 0;
+            lastPldmRc = PLDM_REQUESTER_SUCCESS;
+            return true;
+        }
+        else
+        {
+            if (pldmRc != lastPldmRc)
+            {
+                log<level::ERR>(
+                    fmt::format(
+                        "checkActiveSensor: pldm_recv(GetStateSenorReadings) failed with rc={} and errno={}",
+                        pldmRc, errno)
+                        .c_str());
+                lastPldmRc = pldmRc;
+            }
+        }
+    }
+
+    return false;
 }
 
 } // namespace pldm
