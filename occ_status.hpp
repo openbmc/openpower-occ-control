@@ -129,12 +129,6 @@ class Status : public Interface
         resetCallBack(resetCallBack)
 #endif
     {
-        // Check to see if we have OCC already bound.  If so, just set it
-        if (device.bound())
-        {
-            this->occActive(true);
-        }
-
         // Announce that we are ready
         this->emit_object_added();
     }
