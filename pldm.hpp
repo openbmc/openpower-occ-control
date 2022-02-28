@@ -235,9 +235,11 @@ class Interface
 
     /** @brief Send the PLDM request
      *
-     * @param[in] - the request data
+     * @param[in] request - the request data
+     * @param[in] async - false: wait for response, true: return immediately
      */
-    void sendPldm(const std::vector<uint8_t>& request);
+    void sendPldm(const std::vector<uint8_t>& request,
+                  const bool async = false);
 };
 
 } // namespace pldm
