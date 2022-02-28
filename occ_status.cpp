@@ -46,6 +46,9 @@ bool Status::occActive(bool value)
                 manager.updatePcapBounds();
             }
 
+            // Update the OCC active sensor before notifying Manager
+            Base::Status::occActive(value);
+
             // Call into Manager to let know that we have bound
             if (this->managerCallBack)
             {
@@ -66,7 +69,6 @@ bool Status::occActive(bool value)
                 safeStateDelayTimer.setEnabled(false);
             }
 #endif
-
             // Call into Manager to let know that we will unbind.
             if (this->managerCallBack)
             {
@@ -520,6 +522,19 @@ void Status::occReadStateNow()
         }
         else
         {
+#ifdef POWER10
+            if (!stateValid && occActive())
+            {
+                if (!safeStateDelayTimer.isEnabled())
+                {
+                    log<level::ERR>(
+                        "Starting 60 sec delay timer before requesting a reset");
+                    // start safe delay timer (before requesting reset)
+                    using namespace std::literals::chrono_literals;
+                    safeStateDelayTimer.restartOnce(60s);
+                }
+            }
+#else
             // State could not be determined, set it to NO State.
             lastState = 0;
 
@@ -529,6 +544,7 @@ void Status::occReadStateNow()
 
             // Disable and reset to try recovering
             deviceError();
+#endif
         }
     }
 }

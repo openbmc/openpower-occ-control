@@ -1,16 +1,19 @@
 #pragma once
-
+#include "occ_events.hpp"
 #include "occ_status.hpp"
 #include "utils.hpp"
 
 #include <libpldm/pldm.h>
 
 #include <sdbusplus/bus/match.hpp>
+#include <sdeventplus/event.hpp>
+#include <sdeventplus/utility/timer.hpp>
 
 namespace pldm
 {
 
 namespace MatchRules = sdbusplus::bus::match::rules;
+using namespace open_power::occ;
 
 using CompositeEffecterCount = uint8_t;
 using EffecterID = uint16_t;
@@ -54,9 +57,10 @@ class Interface
      */
     explicit Interface(
         std::function<bool(open_power::occ::instanceID, bool)> callBack,
-        std::function<void(open_power::occ::instanceID, bool)> sbeCallBack) :
+        std::function<void(open_power::occ::instanceID, bool)> sbeCallBack,
+        EventPtr& event) :
         callBack(callBack),
-        sbeCallBack(sbeCallBack),
+        sbeCallBack(sbeCallBack), event(event),
         pldmEventSignal(
             open_power::occ::utils::getBus(),
             MatchRules::type::signal() +
@@ -70,7 +74,11 @@ class Interface
             MatchRules::propertiesChanged("/xyz/openbmc_project/state/host0",
                                           "xyz.openbmc_project.State.Host"),
             std::bind(std::mem_fn(&Interface::hostStateEvent), this,
-                      std::placeholders::_1))
+                      std::placeholders::_1)),
+        sdpEvent(sdeventplus::Event::get_default()),
+        pldmRspTimer(
+            sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>(
+                sdpEvent, std::bind(&Interface::pldmRspExpired, this)))
     {}
 
     /** @brief Fetch the state sensor PDRs and populate the cache with
@@ -126,6 +134,14 @@ class Interface
      */
     void sendHRESET(open_power::occ::instanceID sbeInstanceId);
 
+    /** @brief Check if the OCC active sensor is available
+     *         On successful read, the Manager callback will be called to update
+     *         the status
+     *
+     *  @param[in] instance  - OCC instance to check
+     */
+    void checkActiveSensor(uint8_t instance);
+
   private:
     /** @brief Callback handler to be invoked when the state of the OCC
      *         changes
@@ -137,6 +153,12 @@ class Interface
      */
     std::function<void(open_power::occ::instanceID, bool)> sbeCallBack =
         nullptr;
+
+    /** @brief reference to sd_event wrapped in unique_ptr */
+    EventPtr& event;
+
+    /** @brief event source wrapped in unique_ptr */
+    EventSourcePtr eventSource;
 
     /** @brief Used to subscribe to D-Bus PLDM StateSensorEvent signal and
      *         processes if the event corresponds to OCC state change.
@@ -188,6 +210,39 @@ class Interface
      */
     uint8_t sbeMaintenanceStatePosition = 0;
 
+    /** @brief OCC instance number for the PLDM message */
+    uint8_t pldmResponseOcc = 0;
+
+    /** @brief File descriptor for PLDM messages */
+    int pldmFd = -1;
+
+    /** @brief MCTP instance number used in PLDM requests
+     */
+    uint8_t mctpInstance{};
+
+    /** @brief The response for the PLDM request msg is received flag.
+     */
+    bool pldmResponseReceived = false;
+
+    /** @brief The response for the PLDM request has timed out.
+     */
+    bool pldmResponseTimeout = false;
+
+    /** @brief timer event */
+    sdeventplus::Event sdpEvent;
+
+    /** @brief Timer that is started when PLDM command is sent
+     */
+    sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic> pldmRspTimer;
+
+    /** @brief Callback when PLDM response has not been received within the
+     * timeout period.
+     */
+    void pldmRspExpired();
+
+    /** @brief Close the MCTP file */
+    void pldmClose();
+
     /** @brief When the OCC state changes host sends PlatformEventMessage
      *         StateSensorEvent, this function processes the D-Bus signal
      *         with the sensor event information and invokes the callback
@@ -204,6 +259,11 @@ class Interface
      *  @param[in] msg - data associated with the subscribed signal
      */
     void hostStateEvent(sdbusplus::message::message& msg);
+
+    /** @brief Called when it is determined that the Host is not running.
+     *         The cache of OCC sensors and effecters mapping is cleared.
+     */
+    void clearData();
 
     /** @brief Check if the PDR cache for PLDM OCC sensors is valid
      *
@@ -233,13 +293,38 @@ class Interface
      */
     bool getMctpInstanceId(uint8_t& instanceId);
 
+    /** @brief Encode a GetStateSensor command into a PLDM request
+     *  @param[in] instance - OCC instance number
+     *  @param[in] sensorId - OCC Active sensor ID number
+     *
+     *  @return request - The encoded PLDM messsage to be sent
+     */
+    std::vector<uint8_t> encodeGetStateSensorRequest(uint8_t instance,
+                                                     uint16_t sensorId);
     /** @brief Send the PLDM request
      *
      * @param[in] request - the request data
-     * @param[in] async - false: wait for response, true: return immediately
+     * @param[in] rspExpected - false: no need to wait for the response
+     *                          true: will need to process response in callback
      */
-    void sendPldm(const std::vector<uint8_t>& request,
-                  const bool async = false);
+    void sendPldm(const std::vector<uint8_t>& request, const uint8_t instance,
+                  const bool rspExpected = false);
+
+    /** @brief Register a callback function to handle the PLDM response */
+    void registerPldmRspCallback();
+
+    /** @brief callback for the PLDM response event
+     *
+     *  @param[in] es       - Populated event source
+     *  @param[in] fd       - Associated File descriptor
+     *  @param[in] revents  - Type of event
+     *  @param[in] userData - User data that was passed during registration
+     *
+     *  @return             - 0 or positive number on success and negative
+     *                        errno otherwise
+     */
+    static int pldmRspCallback(sd_event_source* es, int fd, uint32_t revents,
+                               void* userData);
 };
 
 } // namespace pldm
