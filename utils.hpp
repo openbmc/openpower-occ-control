@@ -89,6 +89,13 @@ std::vector<std::string>
 std::string getServiceUsingSubTree(const std::string& interface,
                                    std::string& path);
 
+/**
+ * @brief Get status of the host
+ *
+ * @return true is the host is running, else false
+ */
+bool isHostRunning();
+
 } // namespace utils
 } // namespace occ
 } // namespace open_power

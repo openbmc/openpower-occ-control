@@ -94,7 +94,7 @@ struct Manager
             std::bind(std::mem_fn(&Manager::updateOCCActive), this,
                       std::placeholders::_1, std::placeholders::_2),
             std::bind(std::mem_fn(&Manager::sbeHRESETResult), this,
-                      std::placeholders::_1, std::placeholders::_2)))
+                      std::placeholders::_1, std::placeholders::_2), event))
 #endif
 #ifdef POWER10
         ,
@@ -318,6 +318,11 @@ struct Manager
      * Manager).
      */
     void occsNotAllRunning();
+
+    /** @brief Check if all of the OCC Active sensors are available and if not
+     * restart the discoverTimer
+     */
+    void checkAllActiveSensors();
 #endif
 
     /**

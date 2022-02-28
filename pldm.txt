@@ -1,0 +1,30 @@
+# busctl introspect xyz.openbmc_project.PLDM /xyz/openbmc_project/pldm
+NAME                                       TYPE      SIGNATURE RESULT/VALUE                             FLAGS
+org.freedesktop.DBus.Introspectable        interface -         -                                        -
+.Introspect                                method    -         s                                        -
+org.freedesktop.DBus.Peer                  interface -         -                                        -
+.GetMachineId                              method    -         s                                        -
+.Ping                                      method    -         -                                        -
+org.freedesktop.DBus.Properties            interface -         -                                        -
+.Get                                       method    ss        v                                        -
+.GetAll                                    method    s         a{sv}                                    -
+.Set                                       method    ssv       -                                        -
+.PropertiesChanged                         signal    sa{sv}as  -                                        -
+xyz.openbmc_project.Condition.HostFirmware interface -         -                                        -
+.CurrentFirmwareCondition                  property  s         "xyz.openbmc_project.Condition.HostFirm… emits-change writable
+xyz.openbmc_project.PLDM.Event             interface -         -                                        -
+.StateSensorEvent                          signal    yqyyy     -                                        -
+xyz.openbmc_project.PLDM.PDR               interface -         -                                        -
+.FindStateEffecterPDR                      method    yqq       aay                                      -
+.FindStateSensorPDR                        method    yqq       aay                                      -
+xyz.openbmc_project.PLDM.Requester         interface -         -                                        -
+.GetInstanceId                             method    y         y                                        -
+
+
+# /usr/local/oecore-x86_64/sysroots/armv7ahf-vfpv4d16-openbmc-linux-gnueabi/usr/include/libpldm/entity.h
+# /usr/local/oecore-x86_64/sysroots/armv7ahf-vfpv4d16-openbmc-linux-gnueabi/usr/include/libpldm/state_set.h
+# PLDM_ENTITY_PROC = 135
+# PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS = 11
+#
+root@perfrain86bmc:/home/service# busctl call xyz.openbmc_project.PLDM /xyz/openbmc_project/pldm xyz.openbmc_project.PLDM.PDR FindStateSensorPDR yqq 0 135 11
+Call failed: The resource is not found.
