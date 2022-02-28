@@ -20,6 +20,7 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
                                 SensorOffset& sensorOffset)
 {
     PdrList pdrs{};
+    static bool tracedError = false;
 
     auto& bus = open_power::occ::utils::getBus();
     try
@@ -27,22 +28,35 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
         auto method = bus.new_method_call(
             "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
             "xyz.openbmc_project.PLDM.PDR", "FindStateSensorPDR");
-        method.append(tid, (uint16_t)PLDM_ENTITY_PROC, stateSetId);
+        method.append(tid, static_cast<uint16_t>(PLDM_ENTITY_PROC), stateSetId);
 
         auto responseMsg = bus.call(method);
         responseMsg.read(pdrs);
     }
     catch (const sdbusplus::exception::exception& e)
     {
-        log<level::ERR>("pldm: Failed to fetch the state sensor PDRs",
-                        entry("ERROR=%s", e.what()));
+        if (!tracedError)
+        {
+            log<level::ERR>(
+                fmt::format("fetchSensorInfo: Failed to find stateSetID:{} PDR: {}",
+                            stateSetId, e.what())
+                    .c_str());
+            tracedError = true;
+        }
     }
 
     if (pdrs.empty())
     {
-        log<level::ERR>("pldm: state sensor PDRs not present");
+        log<level::ERR>(
+            fmt::format("pldm: state sensor PDRs ({}) not present", stateSetId)
+                .c_str());
         return;
     }
+
+    // Found PDR
+    tracedError = false;
+    log<level::INFO>(
+        fmt::format("fetchSensorInfo: found {} PDRs", pdrs.size()).c_str());
 
     bool offsetFound = false;
     auto stateSensorPDR =
@@ -88,6 +102,10 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
     open_power::occ::instanceID count = start;
     for (auto const& pair : entityInstMap)
     {
+        log<level::INFO>(
+            fmt::format("fetchSensorInfo: Found SensorID:0x{:08X} for OCC{}",
+                        pair.second, count)
+                .c_str());
         sensorInstanceMap.emplace(pair.second, count);
         count++;
     }
@@ -138,6 +156,24 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
                                              sensorEntry->second)
                                      .c_str());
                 callBack(sensorEntry->second, false);
+            }
+            else if (eventState ==
+                     static_cast<EventState>(
+                         PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_DORMANT))
+            {
+                log<level::INFO>(
+                    fmt::format(
+                        "PLDM: OCC{} has now STOPPED and system is in SAFE MODE",
+                        sensorEntry->second)
+                        .c_str());
+                callBack(sensorEntry->second, false);
+            }
+            else
+            {
+                log<level::INFO>(
+                    fmt::format("PLDM: Unexpected PLDM state {} for OCC{}",
+                                eventState, sensorEntry->second)
+                        .c_str());
             }
 
             return;
@@ -201,7 +237,7 @@ void Interface::fetchEffecterInfo(uint16_t stateSetId,
         auto method = bus.new_method_call(
             "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
             "xyz.openbmc_project.PLDM.PDR", "FindStateEffecterPDR");
-        method.append(tid, (uint16_t)PLDM_ENTITY_PROC, stateSetId);
+        method.append(tid, static_cast<uint16_t>(PLDM_ENTITY_PROC), stateSetId);
 
         auto responseMsg = bus.call(method);
         responseMsg.read(pdrs);
@@ -464,6 +500,52 @@ void Interface::sendPldm(const std::vector<uint8_t>& request, const bool async)
                     .c_str());
         }
     }
+}
+
+// Determine if the Active Sensor is available and OCC Active sensor state
+bool Interface::checkActiveSensor(uint8_t instance, bool& isActive)
+{
+    isActive = false;
+
+    if (!isOCCSensorCacheValid())
+    {
+        fetchSensorInfo(PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS,
+                        sensorToOCCInstance, OCCSensorOffset);
+    }
+
+    // look up sensor id (key) based on instance
+    for (auto entry = sensorToOCCInstance.begin();
+         entry != sensorToOCCInstance.end(); ++entry)
+    {
+        if (entry->second == instance)
+        {
+            SensorID sID = entry->first;
+            log<level::INFO>(
+                fmt::format(
+                    "checkActiveSensor: Found sensorId:0x{:08X} for OCC{}", sID,
+                    instance)
+                    .c_str());
+
+            // TODO: figure out how to read the state for sID
+            // if (state == PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_IN_SERVICE)
+            // {
+            //     isActive = true;
+            // }
+            return true;
+        }
+    }
+
+    /* @brief List of states for the Operational Running Status state set (ID
+       11). enum pldm_state_set_operational_running_status_values {
+       PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_STARTING = 1,
+       PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_STOPPING = 2,
+       PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_STOPPED = 3,
+       PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_IN_SERVICE = 4,
+       PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_ABORTED = 5,
+       PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_DORMANT = 6
+       };*/
+
+    return false;
 }
 
 } // namespace pldm
