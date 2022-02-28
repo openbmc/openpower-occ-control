@@ -126,6 +126,15 @@ class Interface
      */
     void sendHRESET(open_power::occ::instanceID sbeInstanceId);
 
+    /** @brief Check if the OCC active sensor is available
+     *
+     *  @param[in] instance  - OCC instance to check
+     *  @param[out] isActive - true if OCC Active sensor is enabled
+     *
+     *  @return true if sensor was available, else false
+     */
+    bool checkActiveSensor(uint8_t instance, bool& isActive);
+
   private:
     /** @brief Callback handler to be invoked when the state of the OCC
      *         changes
@@ -188,6 +197,18 @@ class Interface
      */
     uint8_t sbeMaintenanceStatePosition = 0;
 
+    /** @brief The response for the PLDM request msg is received flag.
+     */
+    bool pldmResponseReceived = false;
+
+    /** @brief The response for the PLDM request has timed out.
+     */
+    bool pldmResponseTimeout = false;
+
+    /** @brief The response for the PLDM request has timed out.
+     */
+    uint8_t pldmResponseState = 0;
+
     /** @brief When the OCC state changes host sends PlatformEventMessage
      *         StateSensorEvent, this function processes the D-Bus signal
      *         with the sensor event information and invokes the callback
@@ -204,6 +225,11 @@ class Interface
      *  @param[in] msg - data associated with the subscribed signal
      */
     void hostStateEvent(sdbusplus::message::message& msg);
+
+    /** @brief Called when it is determined that the Host is not running.
+     *         The cache of OCC sensors and effecters mapping is cleared.
+     */
+    void clearData();
 
     /** @brief Check if the PDR cache for PLDM OCC sensors is valid
      *

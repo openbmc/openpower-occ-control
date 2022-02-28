@@ -318,6 +318,11 @@ struct Manager
      * Manager).
      */
     void occsNotAllRunning();
+
+    /** @brief Check if all of the OCC Active sensors are available and if not
+     * restart the discoverTimer
+     */
+    void checkAllActiveSensors();
 #endif
 
     /**
