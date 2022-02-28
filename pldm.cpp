@@ -40,7 +40,9 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
 
     if (pdrs.empty())
     {
-        log<level::ERR>("pldm: state sensor PDRs not present");
+        log<level::ERR>(
+            fmt::format("pldm: state sensor PDRs ({}) not present", stateSetId)
+                .c_str());
         return;
     }
 
@@ -138,6 +140,24 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
                                              sensorEntry->second)
                                      .c_str());
                 callBack(sensorEntry->second, false);
+            }
+            else if (eventState ==
+                     static_cast<EventState>(
+                         PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_DORMANT))
+            {
+                log<level::INFO>(
+                    fmt::format(
+                        "PLDM: OCC{} has now STOPPED and system is in SAFE MODE",
+                        sensorEntry->second)
+                        .c_str());
+                callBack(sensorEntry->second, false);
+            }
+            else
+            {
+                log<level::INFO>(
+                    fmt::format("PLDM: Unexpected PLDM state {} for OCC{}",
+                                eventState, sensorEntry->second)
+                        .c_str());
             }
 
             return;
@@ -464,6 +484,48 @@ void Interface::sendPldm(const std::vector<uint8_t>& request, const bool async)
                     .c_str());
         }
     }
+}
+
+// Determine if the Active Sensor is available
+bool Interface::checkActiveSensor()
+{
+    static bool tracedError = false;
+    PdrList pdrs{};
+
+    auto& bus = open_power::occ::utils::getBus();
+    try
+    {
+        TerminusID tid{};
+        auto method = bus.new_method_call(
+            "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
+            "xyz.openbmc_project.PLDM.PDR", "FindStateSensorPDR");
+        method.append(tid, (uint16_t)PLDM_ENTITY_PROC,
+                      (uint16_t)PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS);
+
+        auto responseMsg = bus.call(method);
+        responseMsg.read(pdrs);
+
+        if (!pdrs.empty())
+        {
+            // Found PDR
+            tracedError = false;
+            return true;
+        }
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        if (!tracedError)
+        {
+            log<level::WARNING>(
+                fmt::format(
+                    "checkActiveSensor: Failed to find STATE_SET_OPERATIONAL_RUNNING_STATUS PDR: {}",
+                    e.what())
+                    .c_str());
+            tracedError = true;
+        }
+    }
+
+    return false;
 }
 
 } // namespace pldm

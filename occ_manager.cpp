@@ -67,30 +67,59 @@ void Manager::findAndCreateObjects()
 #else
     if (!fs::exists(HOST_ON_FILE))
     {
-        // Create the OCCs based on on the /dev/occX devices
-        auto occs = findOCCsInDev();
-
-        if (occs.empty() || (prevOCCSearch.size() != occs.size()))
+        static bool activeSensorAvailable = false;
+        static bool tracedSensorWait = false;
+        // Wait for occActive sensor to become available
+        if (!activeSensorAvailable)
         {
-            // Something changed or no OCCs yet, try again in 10s.
-            // Note on the first pass prevOCCSearch will be empty,
-            // so there will be at least one delay to give things
-            // a chance to settle.
-            prevOCCSearch = occs;
+            activeSensorAvailable = pldmHandle->checkActiveSensor();
+        }
+        if (activeSensorAvailable)
+        {
+            if (tracedSensorWait)
+            {
+                log<level::INFO>(
+                    "Manager::findAndCreateObjects(): OCC Active sensor is available");
+                tracedSensorWait = false;
+            }
 
-            discoverTimer->restartOnce(10s);
+            // Create the OCCs based on on the /dev/occX devices
+            auto occs = findOCCsInDev();
+
+            if (occs.empty() || (prevOCCSearch.size() != occs.size()))
+            {
+                // Something changed or no OCCs yet, try again in 10s.
+                // Note on the first pass prevOCCSearch will be empty,
+                // so there will be at least one delay to give things
+                // a chance to settle.
+                prevOCCSearch = occs;
+
+                discoverTimer->restartOnce(10s);
+            }
+            else
+            {
+                discoverTimer.reset();
+
+                // createObjects requires OCC0 first.
+                std::sort(occs.begin(), occs.end());
+
+                for (auto id : occs)
+                {
+                    createObjects(std::string(OCC_NAME) + std::to_string(id));
+                }
+            }
         }
         else
         {
-            discoverTimer.reset();
-
-            // createObjects requires OCC0 first.
-            std::sort(occs.begin(), occs.end());
-
-            for (auto id : occs)
+            if (!tracedSensorWait)
             {
-                createObjects(std::string(OCC_NAME) + std::to_string(id));
+                log<level::INFO>(
+                    fmt::format(
+                        "Manager::findAndCreateObjects(): Waiting for OCC Active sensor to become available")
+                        .c_str());
+                tracedSensorWait = true;
             }
+            discoverTimer->restartOnce(10s);
         }
     }
     else

@@ -126,6 +126,12 @@ class Interface
      */
     void sendHRESET(open_power::occ::instanceID sbeInstanceId);
 
+    /** @brief Check if the OCC active sensor is available
+     *
+     *  @return true if available, else false
+     */
+    bool checkActiveSensor();
+
   private:
     /** @brief Callback handler to be invoked when the state of the OCC
      *         changes
