@@ -10,6 +10,8 @@
 
 #include <phosphor-logging/log.hpp>
 
+#include <algorithm>
+
 namespace pldm
 {
 
@@ -20,6 +22,7 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
                                 SensorOffset& sensorOffset)
 {
     PdrList pdrs{};
+    static bool tracedError = false;
 
     auto& bus = open_power::occ::utils::getBus();
     try
@@ -27,21 +30,44 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
         auto method = bus.new_method_call(
             "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
             "xyz.openbmc_project.PLDM.PDR", "FindStateSensorPDR");
-        method.append(tid, (uint16_t)PLDM_ENTITY_PROC, stateSetId);
+        method.append(tid, static_cast<uint16_t>(PLDM_ENTITY_PROC), stateSetId);
 
         auto responseMsg = bus.call(method);
         responseMsg.read(pdrs);
     }
     catch (const sdbusplus::exception::exception& e)
     {
-        log<level::ERR>("pldm: Failed to fetch the state sensor PDRs",
-                        entry("ERROR=%s", e.what()));
+        if (!tracedError)
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "fetchSensorInfo: Failed to find stateSetID:{} PDR: {}",
+                    stateSetId, e.what())
+                    .c_str());
+            tracedError = true;
+        }
     }
 
     if (pdrs.empty())
     {
-        log<level::ERR>("pldm: state sensor PDRs not present");
+        if (!tracedError)
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "fetchSensorInfo: state sensor PDRs ({}) not present",
+                    stateSetId)
+                    .c_str());
+            tracedError = true;
+        }
         return;
+    }
+
+    // Found PDR
+    if (tracedError)
+    {
+        log<level::INFO>(
+            fmt::format("fetchSensorInfo: found {} PDRs", pdrs.size()).c_str());
+        tracedError = false;
     }
 
     bool offsetFound = false;
@@ -139,6 +165,24 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
                                      .c_str());
                 callBack(sensorEntry->second, false);
             }
+            else if (eventState ==
+                     static_cast<EventState>(
+                         PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_DORMANT))
+            {
+                log<level::INFO>(
+                    fmt::format(
+                        "PLDM: OCC{} has now STOPPED and system is in SAFE MODE",
+                        sensorEntry->second)
+                        .c_str());
+                callBack(sensorEntry->second, false);
+            }
+            else
+            {
+                log<level::INFO>(
+                    fmt::format("PLDM: Unexpected PLDM state {} for OCC{}",
+                                eventState, sensorEntry->second)
+                        .c_str());
+            }
 
             return;
         }
@@ -152,8 +196,10 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
         {
             if (eventState == static_cast<EventState>(SBE_HRESET_NOT_READY))
             {
-                log<level::INFO>("pldm: HRESET is NOT READY",
-                                 entry("SBE=%d", sensorEntry->second));
+                log<level::INFO>(
+                    fmt::format("pldm: HRESET is NOT READY (OCC{})",
+                                sensorEntry->second)
+                        .c_str());
             }
             else if (eventState == static_cast<EventState>(SBE_HRESET_READY))
             {
@@ -179,13 +225,18 @@ void Interface::hostStateEvent(sdbusplus::message::message& msg)
         auto propVal = std::get<std::string>(stateEntryValue);
         if (propVal == "xyz.openbmc_project.State.Host.HostState.Off")
         {
-            sensorToOCCInstance.clear();
-            occInstanceToEffecter.clear();
-
-            sensorToSBEInstance.clear();
-            sbeInstanceToEffecter.clear();
+            clearData();
         }
     }
+}
+
+void Interface::clearData()
+{
+    sensorToOCCInstance.clear();
+    occInstanceToEffecter.clear();
+
+    sensorToSBEInstance.clear();
+    sbeInstanceToEffecter.clear();
 }
 
 void Interface::fetchEffecterInfo(uint16_t stateSetId,
@@ -201,7 +252,7 @@ void Interface::fetchEffecterInfo(uint16_t stateSetId,
         auto method = bus.new_method_call(
             "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
             "xyz.openbmc_project.PLDM.PDR", "FindStateEffecterPDR");
-        method.append(tid, (uint16_t)PLDM_ENTITY_PROC, stateSetId);
+        method.append(tid, static_cast<uint16_t>(PLDM_ENTITY_PROC), stateSetId);
 
         auto responseMsg = bus.call(method);
         responseMsg.read(pdrs);
@@ -301,84 +352,106 @@ std::vector<uint8_t>
 
 void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
 {
-    if (!isPDREffecterCacheValid())
+    if (open_power::occ::utils::isHostRunning())
     {
-        fetchEffecterInfo(PLDM_STATE_SET_BOOT_RESTART_CAUSE,
-                          occInstanceToEffecter, OCCEffecterCount,
-                          bootRestartPosition);
-    }
+        if (!isPDREffecterCacheValid())
+        {
+            fetchEffecterInfo(PLDM_STATE_SET_BOOT_RESTART_CAUSE,
+                              occInstanceToEffecter, OCCEffecterCount,
+                              bootRestartPosition);
+        }
 
-    // Find the matching effecter for the OCC instance
-    auto effecterEntry = occInstanceToEffecter.find(occInstanceId);
-    if (effecterEntry == occInstanceToEffecter.end())
+        // Find the matching effecter for the OCC instance
+        auto effecterEntry = occInstanceToEffecter.find(occInstanceId);
+        if (effecterEntry == occInstanceToEffecter.end())
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "pldm: Failed to find a matching effecter for OCC instance {}",
+                    occInstanceId)
+                    .c_str());
+
+            return;
+        }
+
+        uint8_t instanceId{};
+        if (!getMctpInstanceId(instanceId))
+        {
+            return;
+        }
+
+        // Prepare the SetStateEffecterStates request to reset the OCC
+        auto request = prepareSetEffecterReq(
+            instanceId, effecterEntry->second, OCCEffecterCount,
+            bootRestartPosition, PLDM_STATE_SET_BOOT_RESTART_CAUSE_WARM_RESET);
+
+        if (request.empty())
+        {
+            log<level::ERR>(
+                "pldm: SetStateEffecterStates OCC reset request empty");
+            return;
+        }
+
+        // Make asynchronous call to reset the OCCs/PM Complex
+        sendPldm(request, true);
+    }
+    else
     {
         log<level::ERR>(
-            fmt::format(
-                "pldm: Failed to find a matching effecter for OCC instance {}",
-                occInstanceId)
+            fmt::format("resetOCC: HOST is not running (OCC{})", occInstanceId)
                 .c_str());
-
-        return;
+        clearData();
     }
-
-    uint8_t instanceId{};
-    if (!getMctpInstanceId(instanceId))
-    {
-        return;
-    }
-
-    // Prepare the SetStateEffecterStates request to reset the OCC
-    auto request = prepareSetEffecterReq(
-        instanceId, effecterEntry->second, OCCEffecterCount,
-        bootRestartPosition, PLDM_STATE_SET_BOOT_RESTART_CAUSE_WARM_RESET);
-
-    if (request.empty())
-    {
-        log<level::ERR>("pldm: SetStateEffecterStates OCC reset request empty");
-        return;
-    }
-
-    // Make asynchronous call to reset the OCCs/PM Complex
-    sendPldm(request, true);
 }
 
 void Interface::sendHRESET(open_power::occ::instanceID sbeInstanceId)
 {
-    if (sbeInstanceToEffecter.empty())
+    if (open_power::occ::utils::isHostRunning())
     {
-        fetchEffecterInfo(PLDM_OEM_IBM_SBE_MAINTENANCE_STATE,
-                          sbeInstanceToEffecter, SBEEffecterCount,
-                          sbeMaintenanceStatePosition);
-    }
+        if (sbeInstanceToEffecter.empty())
+        {
+            fetchEffecterInfo(PLDM_OEM_IBM_SBE_MAINTENANCE_STATE,
+                              sbeInstanceToEffecter, SBEEffecterCount,
+                              sbeMaintenanceStatePosition);
+        }
 
-    auto effecterEntry = sbeInstanceToEffecter.find(sbeInstanceId);
-    if (effecterEntry == sbeInstanceToEffecter.end())
+        auto effecterEntry = sbeInstanceToEffecter.find(sbeInstanceId);
+        if (effecterEntry == sbeInstanceToEffecter.end())
+        {
+            log<level::ERR>(
+                "pldm: Failed to find a matching effecter for SBE instance",
+                entry("SBE=%d", sbeInstanceId));
+            return;
+        }
+
+        uint8_t instanceId{};
+        if (!getMctpInstanceId(instanceId))
+        {
+            return;
+        }
+
+        // Prepare the SetStateEffecterStates request to HRESET the SBE
+        auto request = prepareSetEffecterReq(
+            instanceId, effecterEntry->second, SBEEffecterCount,
+            sbeMaintenanceStatePosition, SBE_RETRY_REQUIRED);
+
+        if (request.empty())
+        {
+            log<level::ERR>(
+                "pldm: SetStateEffecterStates HRESET request empty");
+            return;
+        }
+
+        // Make asynchronous call to do the reset
+        sendPldm(request, true);
+    }
+    else
     {
-        log<level::ERR>(
-            "pldm: Failed to find a matching effecter for SBE instance",
-            entry("SBE=%d", sbeInstanceId));
-        return;
+        log<level::ERR>(fmt::format("sendHRESET: HOST is not running (OCC{})",
+                                    sbeInstanceId)
+                            .c_str());
+        clearData();
     }
-
-    uint8_t instanceId{};
-    if (!getMctpInstanceId(instanceId))
-    {
-        return;
-    }
-
-    // Prepare the SetStateEffecterStates request to HRESET the SBE
-    auto request = prepareSetEffecterReq(
-        instanceId, effecterEntry->second, SBEEffecterCount,
-        sbeMaintenanceStatePosition, SBE_RETRY_REQUIRED);
-
-    if (request.empty())
-    {
-        log<level::ERR>("pldm: SetStateEffecterStates HRESET request empty");
-        return;
-    }
-
-    // Make asynchronous call to do the reset
-    sendPldm(request, true);
 }
 
 bool Interface::getMctpInstanceId(uint8_t& instanceId)
@@ -464,6 +537,176 @@ void Interface::sendPldm(const std::vector<uint8_t>& request, const bool async)
                     .c_str());
         }
     }
+}
+
+// Determine if the Active Sensor is available and OCC Active sensor state
+bool Interface::checkActiveSensor(uint8_t instance, bool& isActive)
+{
+    isActive = false;
+
+    if (!isOCCSensorCacheValid())
+    {
+        fetchSensorInfo(PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS,
+                        sensorToOCCInstance, OCCSensorOffset);
+    }
+
+    // look up sensor id (key) based on instance
+    auto entry = std::find_if(
+        sensorToOCCInstance.begin(), sensorToOCCInstance.end(),
+        [instance](const auto& entry) { return instance == entry.second; });
+    if (entry != sensorToOCCInstance.end())
+    {
+        // Query the OCC Active Sensor state for this instance
+        SensorID sID = entry->first;
+        log<level::INFO>(
+            fmt::format("checkActiveSensor: OCC{} / sensorID: 0x{:04X}",
+                        instance, sID)
+                .c_str());
+
+        // Encode GetStateSensorReadings PLDM message
+        uint8_t mctpInstance{};
+        if (!getMctpInstanceId(mctpInstance))
+        {
+            return false;
+        }
+        bitfield8_t sRearm = {0};
+        const size_t msgSize =
+            sizeof(pldm_msg_hdr) + PLDM_GET_STATE_SENSOR_READINGS_REQ_BYTES;
+        std::vector<uint8_t> requestMsg(msgSize);
+        auto msg = reinterpret_cast<pldm_msg*>(requestMsg.data());
+        static int lastMsgRc = 0;
+        auto msgRc = encode_get_state_sensor_readings_req(mctpInstance, sID,
+                                                          sRearm, 0, msg);
+        if (msgRc != PLDM_SUCCESS)
+        {
+            if (msgRc != lastMsgRc)
+            {
+                log<level::ERR>(
+                    fmt::format(
+                        "checkActiveSensor: Failed to encode sensorId:0x{:08X} for OCC{} (rc={})",
+                        sID, instance, msgRc)
+                        .c_str());
+                lastMsgRc = msgRc;
+            }
+            return false;
+        }
+
+        // Connect to MCTP scoket
+        int lastErrno = 0;
+        int fd = pldm_open();
+        lastErrno = errno;
+        if (fd == -1)
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "checkActiveSensor: Failed to connect to MCTP socket, errno={}",
+                    lastErrno)
+                    .c_str());
+            return false;
+        }
+        open_power::occ::FileDescriptor fileFd(fd);
+
+        // Send PLDM msg to get state sensor readings
+        log<level::INFO>(
+            fmt::format(
+                "checkActiveSensor: calling pldm_send(GetStateSensorReadings, OCC{}, msgInstance:{})",
+                instance, mctpInstance)
+                .c_str());
+        auto pldmRc = pldm_send(mctpEid, fileFd(), requestMsg.data(), msgSize);
+        lastErrno = errno;
+        if (pldmRc != PLDM_REQUESTER_SUCCESS)
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "checkActiveSensor: pldm_send(GetStateSenorReadings) failed with rc={} and errno={}",
+                    pldmRc, lastErrno)
+                    .c_str());
+            return false;
+        }
+
+        // Read the PLDM response
+        uint8_t* rspPtr = nullptr;
+        size_t rspLen = 0;
+        log<level::INFO>("checkActiveSensor: calling pldm_recv()");
+        pldmRc = pldm_recv(mctpEid, fileFd(), msg->hdr.instance_id, &rspPtr,
+                           &rspLen);
+        lastErrno = errno;
+        if ((rspPtr != nullptr) && (rspLen > 0))
+        {
+            log<level::INFO>(
+                fmt::format("checkActiveSensor: pldm_recv() rsp was {} bytes",
+                            rspLen)
+                    .c_str());
+        }
+        if (pldmRc == PLDM_REQUESTER_SUCCESS)
+        {
+            // Decode the response
+            auto msgRspPtr = reinterpret_cast<const struct pldm_msg*>(rspPtr);
+            uint8_t compCode = 0, sensorCount = 1;
+            get_sensor_state_field field[6];
+            rspLen -= sizeof(pldm_msg_hdr);
+            msgRc = decode_get_state_sensor_readings_resp(
+                msgRspPtr, rspLen, &compCode, &sensorCount, field);
+
+            if ((msgRc != PLDM_SUCCESS) || (compCode != PLDM_SUCCESS))
+            {
+                if (msgRc != lastMsgRc)
+                {
+                    log<level::ERR>(
+                        fmt::format(
+                            "checkActiveSensor: decode_get_state_sensor_readings failed with rc={} and compCode={}",
+                            msgRc, compCode)
+                            .c_str());
+                    lastMsgRc = msgRc;
+                }
+
+                free(rspPtr);
+                rspPtr = nullptr;
+                return false;
+            }
+
+            if (field[0].present_state ==
+                PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_IN_SERVICE)
+            {
+                isActive = true;
+                log<level::INFO>(
+                    fmt::format("checkActiveSensor: OCC{} is RUNNING", instance,
+                                field[0].present_state)
+                        .c_str());
+            }
+            else
+            {
+                log<level::WARNING>(
+                    fmt::format(
+                        "checkActiveSensor: OCC{} is not running (state:{})",
+                        instance, field[0].present_state)
+                        .c_str());
+            }
+
+            free(rspPtr);
+            rspPtr = nullptr;
+            lastMsgRc = 0;
+            return true;
+        }
+        else
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "checkActiveSensor: pldm_recv(GetStateSenorReadings) failed with rc={} and errno={}",
+                    pldmRc, lastErrno)
+                    .c_str());
+        }
+    }
+    else
+    {
+        log<level::ERR>(
+            fmt::format(
+                "checkActiveSensor: Unable to find PLDM sensor for OCC{}",
+                instance)
+                .c_str());
+    }
+
+    return false;
 }
 
 } // namespace pldm
