@@ -67,29 +67,71 @@ void Manager::findAndCreateObjects()
 #else
     if (!fs::exists(HOST_ON_FILE))
     {
-        // Create the OCCs based on on the /dev/occX devices
-        auto occs = findOCCsInDev();
-
-        if (occs.empty() || (prevOCCSearch.size() != occs.size()))
+        static bool statusObjCreated = false;
+        if (!statusObjCreated)
         {
-            // Something changed or no OCCs yet, try again in 10s.
-            // Note on the first pass prevOCCSearch will be empty,
-            // so there will be at least one delay to give things
-            // a chance to settle.
-            prevOCCSearch = occs;
+            // Create the OCCs based on on the /dev/occX devices
+            auto occs = findOCCsInDev();
 
-            discoverTimer->restartOnce(10s);
-        }
-        else
-        {
-            discoverTimer.reset();
-
-            // createObjects requires OCC0 first.
-            std::sort(occs.begin(), occs.end());
-
-            for (auto id : occs)
+            if (occs.empty() || (prevOCCSearch.size() != occs.size()))
             {
-                createObjects(std::string(OCC_NAME) + std::to_string(id));
+                // Something changed or no OCCs yet, try again in 10s.
+                // Note on the first pass prevOCCSearch will be empty,
+                // so there will be at least one delay to give things
+                // a chance to settle.
+                prevOCCSearch = occs;
+
+                log<level::INFO>(
+                    fmt::format(
+                        "Manager::findAndCreateObjects(): Waiting for OCCs (currently {})",
+                        occs.size())
+                        .c_str());
+
+                discoverTimer->restartOnce(10s);
+            }
+            else
+            {
+                // All OCCs appear to be available, create status objects
+
+                // createObjects requires OCC0 first.
+                std::sort(occs.begin(), occs.end());
+
+                log<level::INFO>(
+                    fmt::format(
+                        "Manager::findAndCreateObjects(): Creating {} OCC Status Objects",
+                        occs.size())
+                        .c_str());
+                for (auto id : occs)
+                {
+                    createObjects(std::string(OCC_NAME) + std::to_string(id));
+                }
+                statusObjCreated = true;
+            }
+        }
+
+        if (statusObjCreated)
+        {
+            static bool tracedHostWait = false;
+            if (utils::isHostRunning())
+            {
+                if (tracedHostWait)
+                {
+                    log<level::INFO>(
+                        "Manager::findAndCreateObjects(): Host is running");
+                    tracedHostWait = false;
+                }
+                waitingForAllOccActiveSensors = true;
+                checkAllActiveSensors();
+            }
+            else
+            {
+                if (!tracedHostWait)
+                {
+                    log<level::INFO>(
+                        "Manager::findAndCreateObjects(): Waiting for host to start");
+                    tracedHostWait = true;
+                }
+                discoverTimer->restartOnce(30s);
             }
         }
     }
@@ -104,6 +146,78 @@ void Manager::findAndCreateObjects()
     }
 #endif
 }
+
+#ifdef POWER10
+// Check if all occActive sensors are available
+void Manager::checkAllActiveSensors()
+{
+    static bool allActiveSensorAvailable = false;
+    static bool tracedSensorWait = false;
+
+    // Start with the assumption that all are available
+    allActiveSensorAvailable = true;
+    for (auto& obj : statusObjects)
+    {
+        // If active sensor is already true, then no need to query sensor
+        if (!obj->occActive())
+        {
+            bool isActive = false;
+            const bool found = pldmHandle->checkActiveSensor(
+                obj->getOccInstanceID(), isActive);
+            if (!found)
+            {
+                // Unable to read the sensor for this OCC
+                allActiveSensorAvailable = false;
+                if (!tracedSensorWait)
+                {
+                    log<level::INFO>(
+                        fmt::format(
+                            "Manager::checkAllActiveSensors(): Waiting on OCC{} Active sensor",
+                            obj->getOccInstanceID())
+                            .c_str());
+                    tracedSensorWait = true;
+                }
+                break;
+            }
+            else
+            {
+                if (isActive)
+                {
+                    // Sensor was successfully read and OCC is active
+                    obj->occActive(isActive);
+                    log<level::INFO>(
+                        fmt::format(
+                            "Manager::checkAllActiveSensors(): OCC{} active:{}",
+                            obj->getOccInstanceID(), isActive)
+                            .c_str());
+                }
+            }
+        }
+    }
+
+    if (allActiveSensorAvailable)
+    {
+        // All sensors were found, disable the discovery timer
+        discoverTimer.reset();
+        waitingForAllOccActiveSensors = false;
+
+        log<level::INFO>(
+            "Manager::checkAllActiveSensors(): OCC Active sensors are available");
+        tracedSensorWait = false;
+    }
+    else
+    {
+        // Not all sensors were available, so keep waiting
+        if (!tracedSensorWait)
+        {
+            log<level::INFO>(
+                "Manager::checkAllActiveSensors(): Waiting for OCC Active sensors to become available");
+            tracedSensorWait = true;
+        }
+        discoverTimer->restartOnce(30s);
+    }
+}
+#endif
 
 std::vector<int> Manager::findOCCsInDev()
 {
@@ -287,6 +401,13 @@ void Manager::statusCallBack(instanceID instance, bool status)
         setSensorValueToNonFunctional(instance);
 #endif
     }
+
+#ifdef POWER10
+    if (waitingForAllOccActiveSensors)
+    {
+        checkAllActiveSensors();
+    }
+#endif
 }
 
 #ifdef I2C_OCC
@@ -326,8 +447,9 @@ void Manager::sbeTimeout(unsigned int instance)
 
     if (obj != statusObjects.end() && (*obj)->occActive())
     {
-        log<level::INFO>("SBE timeout, requesting HRESET",
-                         entry("SBE=%d", instance));
+        log<level::INFO>(
+            fmt::format("SBE timeout, requesting HRESET (OCC{})", instance)
+                .c_str());
 
         setSBEState(instance, SBE_STATE_NOT_USABLE);
 
@@ -361,7 +483,8 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
 {
     if (success)
     {
-        log<level::INFO>("HRESET succeeded", entry("SBE=%d", instance));
+        log<level::INFO>(
+            fmt::format("HRESET succeeded (OCC{})", instance).c_str());
 
         setSBEState(instance, SBE_STATE_BOOTED);
 
@@ -372,8 +495,9 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
 
     if (sbeCanDump(instance))
     {
-        log<level::INFO>("HRESET failed, triggering SBE dump",
-                         entry("SBE=%d", instance));
+        log<level::INFO>(
+            fmt::format("HRESET failed (OCC{}), triggering SBE dump", instance)
+                .c_str());
 
         auto& bus = utils::getBus();
         uint32_t src6 = instance << 16;
@@ -1066,6 +1190,36 @@ void Manager::validateOccMaster()
     int masterInstance = -1;
     for (auto& obj : statusObjects)
     {
+#ifdef POWER10
+        if (!obj->occActive())
+        {
+            if (utils::isHostRunning())
+            {
+                // OCC does not appear to be active yet, check active sensor
+                bool isActive = false;
+                const bool found = pldmHandle->checkActiveSensor(
+                    obj->getOccInstanceID(), isActive);
+                if (found && obj->occActive())
+                {
+                    log<level::INFO>(
+                        fmt::format(
+                            "validateOccMaster: OCC{} is ACTIVE after reading sensor",
+                            obj->getOccInstanceID())
+                            .c_str());
+                }
+            }
+            else
+            {
+                log<level::WARNING>(
+                    fmt::format(
+                        "validateOccMaster: HOST is not running (OCC{})",
+                        obj->getOccInstanceID())
+                        .c_str());
+                return;
+            }
+        }
+#endif // POWER10
+
         if (obj->isMasterOcc())
         {
             obj->addPresenceWatchMaster();
@@ -1086,9 +1240,13 @@ void Manager::validateOccMaster()
             }
         }
     }
+
     if (masterInstance < 0)
     {
-        log<level::ERR>("validateOccMaster: Master OCC not found!");
+        log<level::ERR>(
+            fmt::format("validateOccMaster: Master OCC not found! (of {} OCCs)",
+                        statusObjects.size())
+                .c_str());
         // request reset
         statusObjects.front()->deviceError();
     }

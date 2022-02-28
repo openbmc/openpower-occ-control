@@ -94,7 +94,8 @@ struct Manager
             std::bind(std::mem_fn(&Manager::updateOCCActive), this,
                       std::placeholders::_1, std::placeholders::_2),
             std::bind(std::mem_fn(&Manager::sbeHRESETResult), this,
-                      std::placeholders::_1, std::placeholders::_2)))
+                      std::placeholders::_1, std::placeholders::_2),
+            event))
 #endif
 #ifdef POWER10
         ,
@@ -219,6 +220,10 @@ struct Manager
     /** @brief Poll timer event */
     sdeventplus::Event sdpEvent;
 
+    /** @brief Flags to indicate if waiting for all of the OCC active sensors to
+     * come online */
+    bool waitingForAllOccActiveSensors = false;
+
     /**
      * @brief The timer to be used once the OCC goes active.  When it expires,
      *        a POLL command will be sent to the OCC and then timer restarted.
@@ -318,6 +323,11 @@ struct Manager
      * Manager).
      */
     void occsNotAllRunning();
+
+    /** @brief Check if all of the OCC Active sensors are available and if not
+     * restart the discoverTimer
+     */
+    void checkAllActiveSensors();
 #endif
 
     /**
