@@ -16,6 +16,98 @@
       "message": "You can\u0027t clear all OCC sensors here.  This function is called by the Status object for one specific OCC. You would need to know which OCC and only clear sensors for that OCC.",
       "revId": "f3b26558e827479a95caadd32d5fbeef6919e3c4",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "32f43f23_d03e9561",
+        "filename": "occ_manager.hpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 1000029
+      },
+      "writtenOn": "2022-03-01T21:01:33Z",
+      "side": 1,
+      "message": "setSensorValuesToNonFunctional\n\n...or have separate methods to set a sensor value to NaN and another to set a sensor to nonfunctional given the sensor path? This would allow more flexibility to do these to sensors individually in the future if needed.",
+      "range": {
+        "startLine": 148,
+        "startChar": 9,
+        "endLine": 148,
+        "endChar": 38
+      },
+      "revId": "f3b26558e827479a95caadd32d5fbeef6919e3c4",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f9fabfaa_a1df42ac",
+        "filename": "occ_status.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 1000029
+      },
+      "writtenOn": "2022-03-01T21:01:33Z",
+      "side": 1,
+      "message": "Wont this block everything from running for 1s since we\u0027re essentially single threaded on the BMC?",
+      "range": {
+        "startLine": 209,
+        "startChar": 16,
+        "endLine": 209,
+        "endChar": 50
+      },
+      "revId": "f3b26558e827479a95caadd32d5fbeef6919e3c4",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d32d519c_b26cd987",
+        "filename": "occ_status.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 279,
+      "author": {
+        "id": 1000029
+      },
+      "writtenOn": "2022-03-01T21:01:33Z",
+      "side": 1,
+      "message": "if (!good_state \u0026\u0026 !sensorsNonFunctional) ?\n\n...after saying that, changing `sensorsNonFunctional` to `sensorsFunctional` (or even better to `sensorsValid`) seems more appropriate.",
+      "range": {
+        "startLine": 279,
+        "startChar": 4,
+        "endLine": 279,
+        "endChar": 65
+      },
+      "revId": "f3b26558e827479a95caadd32d5fbeef6919e3c4",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a99a6df4_6afed8bb",
+        "filename": "occ_status.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 1000029
+      },
+      "writtenOn": "2022-03-01T21:01:33Z",
+      "side": 1,
+      "message": "Can just be:\n\nmanager.setSensorValueToNonFunctional(instance);",
+      "range": {
+        "startLine": 288,
+        "startChar": 8,
+        "endLine": 289,
+        "endChar": 63
+      },
+      "revId": "f3b26558e827479a95caadd32d5fbeef6919e3c4",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
