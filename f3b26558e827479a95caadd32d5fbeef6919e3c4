@@ -18,6 +18,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "214c8e86_270d75bd",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 268,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-02T20:07:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3e23112c_6ef49f4a",
+      "revId": "f3b26558e827479a95caadd32d5fbeef6919e3c4",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "32f43f23_d03e9561",
@@ -87,6 +105,30 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d104ade3_725cea8f",
+        "filename": "occ_status.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 279,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-02T20:07:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d32d519c_b26cd987",
+      "range": {
+        "startLine": 279,
+        "startChar": 4,
+        "endLine": 279,
+        "endChar": 65
+      },
+      "revId": "f3b26558e827479a95caadd32d5fbeef6919e3c4",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a99a6df4_6afed8bb",
@@ -100,6 +142,30 @@
       "writtenOn": "2022-03-01T21:01:33Z",
       "side": 1,
       "message": "Can just be:\n\nmanager.setSensorValueToNonFunctional(instance);",
+      "range": {
+        "startLine": 288,
+        "startChar": 8,
+        "endLine": 289,
+        "endChar": 63
+      },
+      "revId": "f3b26558e827479a95caadd32d5fbeef6919e3c4",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "739f7df7_47ad7f8d",
+        "filename": "occ_status.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-02T20:07:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a99a6df4_6afed8bb",
       "range": {
         "startLine": 288,
         "startChar": 8,
