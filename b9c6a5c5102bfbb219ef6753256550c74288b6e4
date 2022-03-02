@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6da783ac_96d9f978",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 12
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-02T22:08:36Z",
+      "side": 1,
+      "message": "Opened issue #3518 : Change function setSensorValueToNonFunctional ",
+      "revId": "b9c6a5c5102bfbb219ef6753256550c74288b6e4",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
