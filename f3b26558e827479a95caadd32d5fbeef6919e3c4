@@ -61,6 +61,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "df1d2a8f_68e14464",
+        "filename": "occ_manager.hpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-02T20:17:16Z",
+      "side": 1,
+      "message": "To me you have 2 options.\n1) set sensors to Nan.   I have no use case for this, just what was there.\n2) set nonFunctional that needs to include setting to Nan so no one uses old data.",
+      "parentUuid": "32f43f23_d03e9561",
+      "range": {
+        "startLine": 148,
+        "startChar": 9,
+        "endLine": 148,
+        "endChar": 38
+      },
+      "revId": "f3b26558e827479a95caadd32d5fbeef6919e3c4",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f9fabfaa_a1df42ac",
         "filename": "occ_status.cpp",
         "patchSetId": 8
