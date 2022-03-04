@@ -320,12 +320,28 @@ void Manager::initStatusObjects()
 #ifdef PLDM
 void Manager::sbeTimeout(unsigned int instance)
 {
-    log<level::INFO>("SBE timeout, requesting HRESET",
-                     entry("SBE=%d", instance));
+    bool performHRESET = false;
 
-    setSBEState(instance, SBE_STATE_NOT_USABLE);
+    for (auto &&obj = statusObjects)
+    {
+        if (instance == obj->getOccInstanceID()) {
+            if (obj->occActive())
+            {
+                performHRESET = true;
+            }
+            break;
+        }
+    }
 
-    pldmHandle->sendHRESET(instance);
+    if (performHRESET)
+    {
+        log<level::INFO>("SBE timeout, requesting HRESET",
+                        entry("SBE=%d", instance));
+
+        setSBEState(instance, SBE_STATE_NOT_USABLE);
+
+        pldmHandle->sendHRESET(instance);
+    }
 }
 
 bool Manager::updateOCCActive(instanceID instance, bool status)
