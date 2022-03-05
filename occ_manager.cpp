@@ -325,7 +325,7 @@ void Manager::sbeTimeout(unsigned int instance)
                                 return instance == obj->getOccInstanceID();
                             });
 
-    if (obj != statusObjects.end() && obj->occActive())
+    if (obj != statusObjects.end() && (*obj)->occActive())
     {
         log<level::INFO>("SBE timeout, requesting HRESET",
                          entry("SBE=%d", instance));
