@@ -41,6 +41,30 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ab0ba382_a59394ee",
+        "filename": "occ_status.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 404,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-05T00:02:01Z",
+      "side": 1,
+      "message": "prefixPath is the directory it is searching.\ndirectory_iterator() returns the directory it found in that path.\nThat assert is making sure there is only one and only one directory found.\n\nprefixPath \u003d\u003d /sys/bus/platform/drivers/occ-hwmon/occ-hwmon.1/hwmon\ndir_it(prefixPath) \u003d\u003d /sys/bus/platform/drivers/occ-hwmon/occ-hwmon.1/hwmon/hwmon9",
+      "parentUuid": "39925087_533664b5",
+      "range": {
+        "startLine": 404,
+        "startChar": 4,
+        "endLine": 404,
+        "endChar": 47
+      },
+      "revId": "8a4c1fe4b7ec8eb0403fdd5074f388735d5d642e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f2413085_d06ab181",
@@ -54,6 +78,30 @@
       "writtenOn": "2022-03-02T20:42:30Z",
       "side": 1,
       "message": "if you turned this into a template function it would work on any type",
+      "range": {
+        "startLine": 118,
+        "startChar": 0,
+        "endLine": 120,
+        "endChar": 73
+      },
+      "revId": "8a4c1fe4b7ec8eb0403fdd5074f388735d5d642e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ae14e611_2d0c2a9b",
+        "filename": "utils.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-05T00:02:01Z",
+      "side": 1,
+      "message": "I knew you would say that! I had tried that initially but ran into problems but think I understand it better now.",
+      "parentUuid": "f2413085_d06ab181",
       "range": {
         "startLine": 118,
         "startChar": 0,
