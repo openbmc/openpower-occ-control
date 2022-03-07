@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3f73b401_6098b657",
+        "filename": "powercap.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 277,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-03-07T21:28:46Z",
+      "side": 1,
+      "message": "it\u0027s a little dangerous moving something that was passed in as a reference, since it won\u0027t be valid anymore for the caller.\n\nMaybe just make these args all pass by value into the function.",
+      "range": {
+        "startLine": 277,
+        "startChar": 27,
+        "endLine": 277,
+        "endChar": 37
+      },
+      "revId": "ce021edaf0415b30f15836d6b5e0915d14095915",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
