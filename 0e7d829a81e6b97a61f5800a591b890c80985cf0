@@ -18,6 +18,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a44879cf_d0faf023",
+        "filename": "occ_device.hpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 286,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-08T22:31:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "61db9259_89c84677",
+      "revId": "0e7d829a81e6b97a61f5800a591b890c80985cf0",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "466636ac_da53baab",
@@ -31,6 +49,24 @@
       "writtenOn": "2022-03-08T20:10:26Z",
       "side": 1,
       "message": "could also be const",
+      "revId": "0e7d829a81e6b97a61f5800a591b890c80985cf0",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "555bb56f_0b63c40a",
+        "filename": "occ_status.hpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 207,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-08T22:31:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "466636ac_da53baab",
       "revId": "0e7d829a81e6b97a61f5800a591b890c80985cf0",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
@@ -58,6 +94,30 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d9fd6e2a_2cc4682a",
+        "filename": "powercap.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-08T22:31:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a41eabcc_3369c4fd",
+      "range": {
+        "startLine": 223,
+        "startChar": 9,
+        "endLine": 223,
+        "endChar": 18
+      },
+      "revId": "0e7d829a81e6b97a61f5800a591b890c80985cf0",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6ca206b1_25a77ec7",
@@ -71,6 +131,30 @@
       "writtenOn": "2022-03-08T20:10:26Z",
       "side": 1,
       "message": "I\u0027ve heard complaints about making pass by value const because it\u0027s exposing the details of the API to the caller, but it doesn\u0027t really affect anything.",
+      "range": {
+        "startLine": 269,
+        "startChar": 30,
+        "endLine": 269,
+        "endChar": 36
+      },
+      "revId": "0e7d829a81e6b97a61f5800a591b890c80985cf0",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "35edbe1e_7c73edc2",
+        "filename": "powercap.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 269,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-08T22:31:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6ca206b1_25a77ec7",
       "range": {
         "startLine": 269,
         "startChar": 30,
