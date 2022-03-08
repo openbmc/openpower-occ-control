@@ -22,6 +22,30 @@
       },
       "revId": "ce021edaf0415b30f15836d6b5e0915d14095915",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f7fb2d8a_f494e88a",
+        "filename": "powercap.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 277,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-08T16:50:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3f73b401_6098b657",
+      "range": {
+        "startLine": 277,
+        "startChar": 27,
+        "endLine": 277,
+        "endChar": 37
+      },
+      "revId": "ce021edaf0415b30f15836d6b5e0915d14095915",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
