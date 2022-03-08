@@ -1,0 +1,84 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "61db9259_89c84677",
+        "filename": "occ_device.hpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 286,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-03-08T20:10:26Z",
+      "side": 1,
+      "message": "this could be a const function",
+      "revId": "0e7d829a81e6b97a61f5800a591b890c80985cf0",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "466636ac_da53baab",
+        "filename": "occ_status.hpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 207,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-03-08T20:10:26Z",
+      "side": 1,
+      "message": "could also be const",
+      "revId": "0e7d829a81e6b97a61f5800a591b890c80985cf0",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a41eabcc_3369c4fd",
+        "filename": "powercap.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-03-08T20:10:26Z",
+      "side": 1,
+      "message": "you can simplify things a little bit by using a structured binding:\n\nfor (const auto\u0026 [prop, value] : msgData)",
+      "range": {
+        "startLine": 223,
+        "startChar": 9,
+        "endLine": 223,
+        "endChar": 18
+      },
+      "revId": "0e7d829a81e6b97a61f5800a591b890c80985cf0",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6ca206b1_25a77ec7",
+        "filename": "powercap.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 269,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-03-08T20:10:26Z",
+      "side": 1,
+      "message": "I\u0027ve heard complaints about making pass by value const because it\u0027s exposing the details of the API to the caller, but it doesn\u0027t really affect anything.",
+      "range": {
+        "startLine": 269,
+        "startChar": 30,
+        "endLine": 269,
+        "endChar": 36
+      },
+      "revId": "0e7d829a81e6b97a61f5800a591b890c80985cf0",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
