@@ -227,9 +227,6 @@ class Status : public Interface
     /** @brief OCC manager object */
     const Manager& manager;
 
-    /** @brief Power cap monitor and occ notification object */
-    std::unique_ptr<powercap::PowerCap> pcap;
-
 #ifdef POWER10
     /** @brief OCC PowerMode object */
     std::unique_ptr<powermode::PowerMode>& pmode;

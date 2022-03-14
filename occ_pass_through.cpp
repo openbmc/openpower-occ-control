@@ -75,7 +75,7 @@ std::vector<uint8_t> PassThrough::send(std::vector<uint8_t> command)
 {
     std::vector<uint8_t> response{};
 
-    log<level::DEBUG>(
+    log<level::INFO>(
         fmt::format("PassThrough::send() Sending 0x{:02X} command to OCC{}",
                     command.front(), occInstance)
             .c_str());

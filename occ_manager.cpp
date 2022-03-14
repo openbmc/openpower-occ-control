@@ -170,6 +170,13 @@ void Manager::createObjects(const std::string& occ)
 #endif
             ));
 
+    // Create the power cap monitor object
+    if (!pcap)
+    {
+        pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
+            *statusObjects.back());
+    }
+
     if (statusObjects.back()->isMasterOcc())
     {
         log<level::INFO>(
@@ -181,6 +188,8 @@ void Manager::createObjects(const std::string& occ)
 #ifdef POWER10
         // Set the master OCC on the PowerMode object
         pmode->setMasterOcc(path);
+        // Update power cap bounds
+        pcap->updatePcapBounds();
 #endif
     }
 
@@ -296,6 +305,9 @@ void Manager::initStatusObjects()
         statusObjects.emplace_back(
             std::make_unique<Status>(event, path.c_str(), *this));
     }
+    // The first device is master occ
+    pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
+        *statusObjects.front());
 #ifdef POWER10
     pmode = std::make_unique<powermode::PowerMode>(*this, powermode::PMODE_PATH,
                                                    powermode::PIPS_PATH);
@@ -1037,6 +1049,14 @@ void Manager::validateOccMaster()
             fmt::format("validateOccMaster: OCC{} is master of {} OCCs",
                         masterInstance, activeCount)
                 .c_str());
+    }
+}
+
+void Manager::updatePcapBounds() const
+{
+    if (pcap)
+    {
+        pcap->updatePcapBounds();
     }
 }
 

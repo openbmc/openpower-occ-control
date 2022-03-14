@@ -93,6 +93,12 @@ class PowerCap
      */
     void writeOcc(uint32_t pcapValue);
 
+    /** @brief Read the user power cap from sysfs
+     *
+     * @return User power cap value in Watts or 0 if disabled
+     */
+    uint32_t readUserCapHwmon();
+
     /**
      * @brief Returns the filename to use for the user power cap
      *
@@ -116,13 +122,12 @@ class PowerCap
 
     /** @brief Update the power cap bounds on DBus
      *
-     * @param[in]  softMin - soft minimum power cap in Watts
      * @param[in]  hardMin - hard minimum power cap in Watts
      * @param[in]  pcapMax - maximum power cap in Watts
      *
      * @return true if all parms were written successfully
      */
-    bool updateDbusPcap(uint32_t softMin, uint32_t hardMin, uint32_t pcapMax);
+    bool updateDbusPcap(uint32_t hardMin, uint32_t pcapMax);
 };
 
 } // namespace powercap

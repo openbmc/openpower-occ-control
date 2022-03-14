@@ -40,13 +40,8 @@ bool Status::occActive(bool value)
 
             if (device.master())
             {
-                if (!pcap)
-                {
-                    // Create the power cap monitor object for master OCC
-                    pcap = std::make_unique<powercap::PowerCap>(*this);
-                }
                 // Update powercap bounds from OCC
-                pcap->updatePcapBounds();
+                manager.updatePcapBounds();
             }
 
             // Call into Manager to let know that we have bound

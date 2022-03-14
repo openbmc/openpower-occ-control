@@ -7,6 +7,7 @@
 
 #include <libphal.H>
 #endif
+#include "powercap.hpp"
 #include "utils.hpp"
 #ifdef POWER10
 #include "powermode.hpp"
@@ -140,6 +141,9 @@ struct Manager
     void getAmbientData(bool& ambientValid, uint8_t& ambientTemp,
                         uint16_t& altitude) const;
 
+    /** @brief Notify pcap object to update bounds */
+    void updatePcapBounds() const;
+
   private:
     /** @brief Creates the OCC D-Bus objects.
      */
@@ -182,6 +186,9 @@ struct Manager
 
     /** @brief OCC Status objects */
     std::vector<std::unique_ptr<Status>> statusObjects;
+
+    /** @brief Power cap monitor and occ notification object */
+    std::unique_ptr<open_power::occ::powercap::PowerCap> pcap;
 
 #ifdef POWER10
     /** @brief Power mode monitor and notification object */
