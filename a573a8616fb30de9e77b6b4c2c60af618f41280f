@@ -1,0 +1,300 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2c06ef82_328db89b",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 505,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-18T21:37:25Z",
+      "side": 1,
+      "message": "no change??",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d66925d7_4b169414",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 852,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-18T21:37:25Z",
+      "side": 1,
+      "message": "you could break once you find the match",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "469d34ca_452c5361",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-18T21:37:25Z",
+      "side": 1,
+      "message": "Maybe add comment that this function is called by Manager to initiate a poll to the OCC.  (to explain how it is different from the occReadStateNow())",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "35ec3d0f_ed17c402",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 328,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-18T21:37:25Z",
+      "side": 1,
+      "message": "Called to read the state (for normal case in addition to when read state fail timer expires)",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ba4fd1e8_6c68dbf3",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 337,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-18T21:37:25Z",
+      "side": 1,
+      "message": "You can delete this line and just define it on line 342 (could be const) since errno means nothing here",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "685ae9c7_84236664",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 357,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-18T21:37:25Z",
+      "side": 1,
+      "message": "This code could be combined/moved to 395-7 (so you don\u0027t have to duplicate same state checks)",
+      "range": {
+        "startLine": 350,
+        "startChar": 0,
+        "endLine": 357,
+        "endChar": 9
+      },
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "309b0986_2db12a7d",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 405,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-18T21:37:25Z",
+      "side": 1,
+      "message": "There are no retries here.  This is essentially disabling the sensors immediately right?",
+      "range": {
+        "startLine": 405,
+        "startChar": 36,
+        "endLine": 405,
+        "endChar": 78
+      },
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4f540d97_667a30cc",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 413,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-18T21:37:25Z",
+      "side": 1,
+      "message": "do you want to set the sensorsValue to true here?  (since they should be good)",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0a207e43_02b20d83",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 420,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-18T21:37:25Z",
+      "side": 1,
+      "message": "You blindly decrement here, but this could be a good or bad read right?\nSeems like you would want this after line 433.",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ae2e5ade_fa3ad033",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 424,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-18T21:37:25Z",
+      "side": 1,
+      "message": "Should this be an OR?",
+      "range": {
+        "startLine": 424,
+        "startChar": 22,
+        "endLine": 424,
+        "endChar": 24
+      },
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f974e389_3400b33b",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 427,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-18T21:37:25Z",
+      "side": 1,
+      "message": "ERR",
+      "range": {
+        "startLine": 427,
+        "startChar": 19,
+        "endLine": 427,
+        "endChar": 23
+      },
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "34652f8f_23289157",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 442,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-18T21:37:25Z",
+      "side": 1,
+      "message": "Wouldn\u0027t we want to set the sensors to not valid as soon as the state is not good?  (since we can\u0027t say the data is valid)",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b211f3ea_d7a16147",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 454,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-18T21:37:25Z",
+      "side": 1,
+      "message": "I think this block (432-453) could be in #ifdef POWER10.\nif the retryCount \u003e 0, it does nothing...",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b4ac47d2_91d5f39c",
+        "filename": "occ_status.hpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 230,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-18T21:37:25Z",
+      "side": 1,
+      "message": "no description",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "37b36c59_30375ea7",
+        "filename": "occ_status.hpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-18T21:37:25Z",
+      "side": 1,
+      "message": "Is that description correct?  Or is the variable saying if the sensors are valid/not",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5bdada96_c904fc02",
+        "filename": "occ_status.hpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 298,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-18T21:37:25Z",
+      "side": 1,
+      "message": "So this really only detecting a failure on \"read state\"?  What if we get read failure on sensor data, etc?\nI guess that might need to be another story?  Matt?",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
