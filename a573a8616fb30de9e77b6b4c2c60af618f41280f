@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "53935028_4b0c72c0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 26
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-21T16:49:20Z",
+      "side": 1,
+      "message": "Code changed,",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2c06ef82_328db89b",
@@ -14,6 +31,24 @@
       "writtenOn": "2022-03-18T21:37:25Z",
       "side": 1,
       "message": "no change??",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "59ceb3c8_597b6416",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 505,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-21T16:49:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2c06ef82_328db89b",
       "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
@@ -35,6 +70,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0e5f975a_446b568b",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 852,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-21T16:49:20Z",
+      "side": 1,
+      "message": "NO this is going through a list, and when this SENSOR is found for this OCC ID, it will set Nan and NonFunctional, then got to the next one in list.",
+      "parentUuid": "d66925d7_4b169414",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "469d34ca_452c5361",
@@ -48,6 +101,24 @@
       "writtenOn": "2022-03-18T21:37:25Z",
       "side": 1,
       "message": "Maybe add comment that this function is called by Manager to initiate a poll to the OCC.  (to explain how it is different from the occReadStateNow())",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "915ad0d5_2f9cdb0f",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-21T16:49:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "469d34ca_452c5361",
       "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
@@ -69,6 +140,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "262286e6_346032bb",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 328,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-21T16:49:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "35ec3d0f_ed17c402",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ba4fd1e8_6c68dbf3",
@@ -86,6 +175,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "79554e2d_e25cd107",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 337,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-21T16:49:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ba4fd1e8_6c68dbf3",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "685ae9c7_84236664",
@@ -99,6 +206,30 @@
       "writtenOn": "2022-03-18T21:37:25Z",
       "side": 1,
       "message": "This code could be combined/moved to 395-7 (so you don\u0027t have to duplicate same state checks)",
+      "range": {
+        "startLine": 350,
+        "startChar": 0,
+        "endLine": 357,
+        "endChar": 9
+      },
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "de27934c_d02816b4",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 357,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-21T16:49:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "685ae9c7_84236664",
       "range": {
         "startLine": 350,
         "startChar": 0,
@@ -132,6 +263,30 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b2958142_a069f97a",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 405,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-21T16:49:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "309b0986_2db12a7d",
+      "range": {
+        "startLine": 405,
+        "startChar": 36,
+        "endLine": 405,
+        "endChar": 78
+      },
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4f540d97_667a30cc",
@@ -145,6 +300,24 @@
       "writtenOn": "2022-03-18T21:37:25Z",
       "side": 1,
       "message": "do you want to set the sensorsValue to true here?  (since they should be good)",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "11e29601_2cecae2b",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 413,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-21T16:49:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4f540d97_667a30cc",
       "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
@@ -166,6 +339,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "584de594_be3bd010",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 420,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-21T16:49:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0a207e43_02b20d83",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ae2e5ade_fa3ad033",
@@ -179,6 +370,30 @@
       "writtenOn": "2022-03-18T21:37:25Z",
       "side": 1,
       "message": "Should this be an OR?",
+      "range": {
+        "startLine": 424,
+        "startChar": 22,
+        "endLine": 424,
+        "endChar": 24
+      },
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bb0047f9_8878a847",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 424,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-21T16:49:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ae2e5ade_fa3ad033",
       "range": {
         "startLine": 424,
         "startChar": 22,
@@ -212,6 +427,30 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "93f06c43_8eee4889",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 427,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-21T16:49:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f974e389_3400b33b",
+      "range": {
+        "startLine": 427,
+        "startChar": 19,
+        "endLine": 427,
+        "endChar": 23
+      },
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "34652f8f_23289157",
@@ -225,6 +464,24 @@
       "writtenOn": "2022-03-18T21:37:25Z",
       "side": 1,
       "message": "Wouldn\u0027t we want to set the sensors to not valid as soon as the state is not good?  (since we can\u0027t say the data is valid)",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bb2f0023_f7378a06",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 442,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-21T16:49:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "34652f8f_23289157",
       "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
@@ -246,6 +503,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "90467d50_6df25b77",
+        "filename": "occ_status.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 454,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-21T16:49:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b211f3ea_d7a16147",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b4ac47d2_91d5f39c",
@@ -259,6 +534,24 @@
       "writtenOn": "2022-03-18T21:37:25Z",
       "side": 1,
       "message": "no description",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b624d89f_8f1267ed",
+        "filename": "occ_status.hpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 230,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-21T16:49:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b4ac47d2_91d5f39c",
       "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
@@ -280,6 +573,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "750c290f_1b4210e1",
+        "filename": "occ_status.hpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-21T16:49:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "37b36c59_30375ea7",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5bdada96_c904fc02",
@@ -293,6 +604,24 @@
       "writtenOn": "2022-03-18T21:37:25Z",
       "side": 1,
       "message": "So this really only detecting a failure on \"read state\"?  What if we get read failure on sensor data, etc?\nI guess that might need to be another story?  Matt?",
+      "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f2620b0e_3216e774",
+        "filename": "occ_status.hpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 298,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-03-21T16:49:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5bdada96_c904fc02",
       "revId": "a573a8616fb30de9e77b6b4c2c60af618f41280f",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
