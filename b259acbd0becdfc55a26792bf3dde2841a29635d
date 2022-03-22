@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "94106c6f_603a38bb",
+        "filename": "occ_status.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 421,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-22T21:08:07Z",
+      "side": 1,
+      "message": "In the case where POWER10 is not defined, sensorsValid is always false (as expected), but it will always go down this leg and eventually trigger deviceError().",
+      "revId": "b259acbd0becdfc55a26792bf3dde2841a29635d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ef6c0191_a68e1b69",
+        "filename": "occ_status.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 430,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-22T21:08:07Z",
+      "side": 1,
+      "message": "This will get called on every retry...  probably fine, but just consumes extra cycles",
+      "revId": "b259acbd0becdfc55a26792bf3dde2841a29635d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
