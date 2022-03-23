@@ -377,7 +377,8 @@ void Interface::sendHRESET(open_power::occ::instanceID sbeInstanceId)
         return;
     }
 
-    sendPldm(request);
+    // Make asynchronous call to do the reset
+    sendPldm(request, true);
 }
 
 bool Interface::getMctpInstanceId(uint8_t& instanceId)
