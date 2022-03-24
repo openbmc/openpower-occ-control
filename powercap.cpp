@@ -39,8 +39,8 @@ void PowerCap::updatePcapBounds()
     {
         minFile >> cap;
         minFile.close();
-        // Convert to Watts
-        capHardMin = cap / 1000000;
+        // Convert to Input Power in Watts (round up)
+        capHardMin = ((cap / (PS_DERATING_FACTOR / 100.0) / 1000000) + 0.9);
     }
     else
     {
@@ -55,8 +55,8 @@ void PowerCap::updatePcapBounds()
     {
         maxFile >> cap;
         maxFile.close();
-        // Convert to Watts
-        capMax = cap / 1000000;
+        // Convert to Input Power in Watts (truncate remainder)
+        capMax = cap / (PS_DERATING_FACTOR / 100.0) / 1000000;
     }
     else
     {
