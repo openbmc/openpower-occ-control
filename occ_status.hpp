@@ -204,7 +204,7 @@ class Status : public Interface
      *
      *  @return path or empty path if not found
      */
-    fs::path getHwmonPath() const;
+    fs::path getHwmonPath();
 
   private:
     /** @brief OCC dbus object path */
@@ -250,6 +250,9 @@ class Status : public Interface
     /** @brief timer event */
     sdeventplus::Event sdpEvent;
 #endif
+
+    /** @brief hwmon path for this OCC */
+    fs::path hwmonPath;
 
     /** @brief Callback function on host control signals
      *

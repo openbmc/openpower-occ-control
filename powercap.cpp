@@ -6,6 +6,7 @@
 #include <powercap.hpp>
 
 #include <cassert>
+#include <filesystem>
 
 namespace open_power
 {
@@ -141,23 +142,28 @@ fs::path PowerCap::getPcapFilename(const std::regex& expr)
 {
     if (pcapBasePathname.empty())
     {
-        static bool tracedError = false;
         pcapBasePathname = occStatus.getHwmonPath();
-        if (!fs::exists(pcapBasePathname) && !tracedError)
-        {
-            log<level::ERR>(fmt::format("Power Cap base filename not found: {}",
-                                        pcapBasePathname.c_str())
-                                .c_str());
-            tracedError = true;
-        }
     }
-    for (auto& file : fs::directory_iterator(pcapBasePathname))
+
+    if (fs::exists(pcapBasePathname))
     {
-        if (std::regex_search(file.path().string(), expr))
+        // Search for pcap file based on the supplied expr
+        for (auto& file : fs::directory_iterator(pcapBasePathname))
         {
-            return file;
+            if (std::regex_search(file.path().string(), expr))
+            {
+                // Found match
+                return file;
+            }
         }
     }
+    else
+    {
+        log<level::ERR>(fmt::format("Power Cap base filename not found: {}",
+                                    pcapBasePathname.c_str())
+                            .c_str());
+    }
+
     // return empty path
     return fs::path{};
 }
@@ -219,10 +225,10 @@ uint32_t PowerCap::readUserCapHwmon()
     }
 
     // Open the sysfs file and read the power cap
-    uint64_t cap;
     std::ifstream file(userCapName, std::ios::in);
     if (file)
     {
+        uint64_t cap;
         file >> cap;
         file.close();
         // Convert to Watts

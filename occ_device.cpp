@@ -3,12 +3,17 @@
 #include "occ_manager.hpp"
 #include "occ_status.hpp"
 
+#include <phosphor-logging/log.hpp>
+
+#include <filesystem>
 #include <iostream>
 
 namespace open_power
 {
 namespace occ
 {
+
+using namespace phosphor::logging;
 
 fs::path Device::bindPath = fs::path(OCC_HWMON_PATH) / "bind";
 fs::path Device::unBindPath = fs::path(OCC_HWMON_PATH) / "unbind";
@@ -80,6 +85,32 @@ void Device::throttleProcPowerCallback(bool error)
 void Device::throttleMemTempCallback(bool error)
 {
     statusObject.throttleMemTemp(error);
+}
+
+fs::path Device::getFilenameByRegex(fs::path basePath,
+                                    const std::regex& expr) const
+{
+    try
+    {
+        for (auto& file : fs::directory_iterator(basePath))
+        {
+            if (std::regex_search(file.path().string(), expr))
+            {
+                // Found match
+                return file;
+            }
+        }
+    }
+    catch (const fs::filesystem_error& e)
+    {
+        log<level::ERR>(
+            fmt::format("getFilenameByRegex: Failed to get filename: {}",
+                        e.what())
+                .c_str());
+    }
+
+    // Return empty path
+    return fs::path{};
 }
 
 } // namespace occ
