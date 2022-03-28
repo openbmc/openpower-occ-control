@@ -16,6 +16,40 @@
       "message": "This change is to fix the issue where occ-control terminated when an object was not not fully bound or gets unbound.  Example:\nMar 27 16:11:01 rain27bmc kernel: occ-hwmon occ-hwmon.1: OCC found, code level: op_p10_220322a\nMar 27 16:11:01 rain27bmc openpower-occ-control[689]: terminate called after throwing an instance of \u0027std::filesystem::__cxx11::filesystem_error\u0027\nMar 27 16:11:01 rain27bmc openpower-occ-control[689]:   what():  filesystem error: directory iterator cannot open directory: No such file or directory [/sys/bus/platform/drivers/occ-hwmon/occ-hwmon.1/hwmon/hwmon11]",
       "revId": "05c825dbcd4b7f4513fa17e5671157ab7a7f718e",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a947063b_98a8e8e0",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 847,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2022-03-28T20:05:15Z",
+      "side": 1,
+      "message": "Same concern",
+      "revId": "05c825dbcd4b7f4513fa17e5671157ab7a7f718e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "db2868a6_e2ecd276",
+        "filename": "occ_status.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 396,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2022-03-28T20:05:15Z",
+      "side": 1,
+      "message": "Is there some config option about processor count? Could we use that rather than hardcode to 8?",
+      "revId": "05c825dbcd4b7f4513fa17e5671157ab7a7f718e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
