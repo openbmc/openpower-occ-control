@@ -68,6 +68,24 @@
       "parentUuid": "db2868a6_e2ecd276",
       "revId": "05c825dbcd4b7f4513fa17e5671157ab7a7f718e",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "45f57560_c4b14449",
+        "filename": "occ_status.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 396,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2022-03-28T21:15:58Z",
+      "side": 1,
+      "message": "Oh yea, I didn\u0027t think about the fact that we have the same binary for Rainier/Everest. I guess it\u0027s fine then",
+      "parentUuid": "89b41116_c0f787fb",
+      "revId": "05c825dbcd4b7f4513fa17e5671157ab7a7f718e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
