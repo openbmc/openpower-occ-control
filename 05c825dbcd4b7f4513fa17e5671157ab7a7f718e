@@ -50,6 +50,24 @@
       "message": "Is there some config option about processor count? Could we use that rather than hardcode to 8?",
       "revId": "05c825dbcd4b7f4513fa17e5671157ab7a7f718e",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89b41116_c0f787fb",
+        "filename": "occ_status.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 396,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-28T21:11:29Z",
+      "side": 1,
+      "message": "The code has a MAX_CPUS, but that is currently hardcoded to 2 in config.h\nThere is also a max-cpus defined in meta-ibm/recipes-phosphor/occ/openpower-occ-control_%.bbappend\nbut that is not correct for Everest (since we can have 8).\n\nMatt do you know if this max-cpus should be updated to 8 or is that overridden somewhere else?",
+      "parentUuid": "db2868a6_e2ecd276",
+      "revId": "05c825dbcd4b7f4513fa17e5671157ab7a7f718e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
