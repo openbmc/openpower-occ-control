@@ -283,17 +283,8 @@ class Device
      *
      *  @return path to the file or empty path if not found
      */
-    fs::path getFilenameByRegex(fs::path basePath, const std::regex& expr) const
-    {
-        for (auto& file : fs::directory_iterator(basePath))
-        {
-            if (std::regex_search(file.path().string(), expr))
-            {
-                return file;
-            }
-        }
-        return fs::path{};
-    }
+    fs::path getFilenameByRegex(fs::path basePath,
+                                const std::regex& expr) const;
 };
 
 } // namespace occ

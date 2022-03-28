@@ -844,16 +844,33 @@ void Manager::setSensorValueToNaN(uint32_t id)
 
 void Manager::getSensorValues(std::unique_ptr<Status>& occ)
 {
-    const fs::path fileName = occ->getHwmonPath();
+    static bool tracedError[8] = {0};
+    const fs::path sensorPath = occ->getHwmonPath();
     const uint32_t id = occ->getOccInstanceID();
 
-    // Read temperature sensors
-    readTempSensors(fileName, id);
-
-    if (occ->isMasterOcc())
+    if (fs::exists(sensorPath))
     {
-        // Read power sensors
-        readPowerSensors(fileName, id);
+        // Read temperature sensors
+        readTempSensors(sensorPath, id);
+
+        if (occ->isMasterOcc())
+        {
+            // Read power sensors
+            readPowerSensors(sensorPath, id);
+        }
+        tracedError[id] = false;
+    }
+    else
+    {
+        if (!tracedError[id])
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "Manager::getSensorValues: OCC{} sensor path missing: {}",
+                    id, sensorPath.c_str())
+                    .c_str());
+            tracedError[id] = true;
+        }
     }
 
     return;

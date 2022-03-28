@@ -12,6 +12,8 @@
 #endif
 #include <phosphor-logging/log.hpp>
 
+#include <filesystem>
+
 namespace open_power
 {
 namespace occ
@@ -385,18 +387,67 @@ void Status::safeStateDelayExpired()
 }
 #endif // POWER10
 
-fs::path Status::getHwmonPath() const
+fs::path Status::getHwmonPath()
 {
     using namespace std::literals::string_literals;
 
-    // Build the base HWMON path
-    fs::path prefixPath = fs::path{OCC_HWMON_PATH + "occ-hwmon."s +
-                                   std::to_string(instance + 1) + "/hwmon/"s};
-    // Get the hwmonXX directory name, there better only be 1 dir
-    assert(std::distance(fs::directory_iterator(prefixPath),
-                         fs::directory_iterator{}) == 1);
+    if (!fs::exists(hwmonPath))
+    {
+        static bool tracedFail[8] = {0};
 
-    return *fs::directory_iterator(prefixPath);
+        if (!hwmonPath.empty())
+        {
+            log<level::ERR>(
+                fmt::format("Status::getHwmonPath(): path no longer exists: {}",
+                            hwmonPath.c_str())
+                    .c_str());
+            hwmonPath.clear();
+        }
+
+        // Build the base HWMON path
+        fs::path prefixPath =
+            fs::path{OCC_HWMON_PATH + "occ-hwmon."s +
+                     std::to_string(instance + 1) + "/hwmon/"s};
+
+        // Get the hwmonXX directory name
+        try
+        {
+            // there should only be one directory
+            const int numDirs = std::distance(
+                fs::directory_iterator(prefixPath), fs::directory_iterator{});
+            if (numDirs == 1)
+            {
+                hwmonPath = *fs::directory_iterator(prefixPath);
+                tracedFail[instance] = false;
+            }
+            else
+            {
+                if (!tracedFail[instance])
+                {
+                    log<level::ERR>(
+                        fmt::format(
+                            "Status::getHwmonPath(): Found multiple ({}) hwmon paths!",
+                            numDirs)
+                            .c_str());
+                    tracedFail[instance] = true;
+                }
+            }
+        }
+        catch (const fs::filesystem_error& e)
+        {
+            if (!tracedFail[instance])
+            {
+                log<level::ERR>(
+                    fmt::format(
+                        "Status::getHwmonPath(): error accessing {}: {}",
+                        prefixPath.c_str(), e.what())
+                        .c_str());
+                tracedFail[instance] = true;
+            }
+        }
+    }
+
+    return hwmonPath;
 }
 
 } // namespace occ
