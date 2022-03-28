@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "88d3e74e_fbd426d0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-03-28T17:04:38Z",
+      "side": 1,
+      "message": "This change is to fix the issue where occ-control terminated when an object was not not fully bound or gets unbound.  Example:\nMar 27 16:11:01 rain27bmc kernel: occ-hwmon occ-hwmon.1: OCC found, code level: op_p10_220322a\nMar 27 16:11:01 rain27bmc openpower-occ-control[689]: terminate called after throwing an instance of \u0027std::filesystem::__cxx11::filesystem_error\u0027\nMar 27 16:11:01 rain27bmc openpower-occ-control[689]:   what():  filesystem error: directory iterator cannot open directory: No such file or directory [/sys/bus/platform/drivers/occ-hwmon/occ-hwmon.1/hwmon/hwmon11]",
+      "revId": "05c825dbcd4b7f4513fa17e5671157ab7a7f718e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
