@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b4bb030b_fbc16322",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 502,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-03-29T21:56:12Z",
+      "side": 0,
+      "message": "this is safe to remove because 287 always runs first?",
+      "revId": "40501a231ec9ee1b972cd3996b726ee474c106c2",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
