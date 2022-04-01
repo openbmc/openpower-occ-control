@@ -328,15 +328,11 @@ CmdStatus PowerMode::sendModeChange()
         }
         else
         {
-            if (status == CmdStatus::OPEN_FAILURE)
-            {
-                // OCC not active yet
-                status = CmdStatus::SUCCESS;
-            }
-            else
-            {
-                log<level::ERR>("PowerMode::sendModeChange: SET_MODE FAILED!");
-            }
+            log<level::ERR>(
+                fmt::format(
+                    "PowerMode::sendModeChange: SET_MODE FAILED with status={}",
+                    status)
+                    .c_str());
         }
     }
     else
@@ -573,16 +569,11 @@ CmdStatus PowerMode::sendIpsData()
     }
     else
     {
-        if (status == CmdStatus::OPEN_FAILURE)
-        {
-            // OCC not active yet
-            status = CmdStatus::SUCCESS;
-        }
-        else
-        {
-            log<level::ERR>(
-                "PowerMode::sendIpsData: SET_CFG_DATA[IPS] FAILED!");
-        }
+        log<level::ERR>(
+            fmt::format(
+                "PowerMode::sendIpsData: SET_CFG_DATA[IPS] with status={}",
+                status)
+                .c_str());
     }
 
     return status;

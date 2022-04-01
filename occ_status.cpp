@@ -212,6 +212,9 @@ void Status::occsWentActive()
                 "Status::occsWentActive: OCC mode change failed with status {}",
                 status)
                 .c_str());
+
+        // Disable and reset to try recovering
+        deviceError();
     }
 
     status = pmode->sendIpsData();
@@ -222,6 +225,12 @@ void Status::occsWentActive()
                 "Status::occsWentActive: Sending Idle Power Save Config data failed with status {}",
                 status)
                 .c_str());
+
+        if (status == CmdStatus::COMM_FAILURE)
+        {
+            // Disable and reset to try recovering
+            deviceError();
+        }
     }
 }
 
@@ -269,7 +278,7 @@ CmdStatus Status::sendAmbient(const uint8_t inTemp, const uint16_t inAltitude)
             {
                 log<level::ERR>(
                     fmt::format(
-                        "sendAmbient: SEND_AMBIENT failed with status 0x{:02X}",
+                        "sendAmbient: SEND_AMBIENT failed with rspStatus 0x{:02X}",
                         rsp[2])
                         .c_str());
                 dump_hex(rsp);
@@ -278,21 +287,27 @@ CmdStatus Status::sendAmbient(const uint8_t inTemp, const uint16_t inAltitude)
         }
         else
         {
-            log<level::ERR>("sendAmbient: INVALID SEND_AMBIENT response");
+            log<level::ERR>(
+                fmt::format(
+                    "sendAmbient: INVALID SEND_AMBIENT response length:{}",
+                    rsp.size())
+                    .c_str());
             dump_hex(rsp);
             status = CmdStatus::FAILURE;
         }
     }
     else
     {
-        if (status == CmdStatus::OPEN_FAILURE)
+        log<level::ERR>(
+            fmt::format(
+                "sendAmbient: SEND_AMBIENT FAILED! with status 0x{:02X}",
+                status)
+                .c_str());
+
+        if (status == CmdStatus::COMM_FAILURE)
         {
-            // OCC not active yet
-            status = CmdStatus::SUCCESS;
-        }
-        else
-        {
-            log<level::ERR>("sendAmbient: SEND_AMBIENT FAILED!");
+            // Disable and reset to try recovering
+            deviceError();
         }
     }
 

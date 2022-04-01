@@ -82,18 +82,12 @@ void OccCommand::openDevice()
     fd = open(devicePath.c_str(), O_RDWR | O_NONBLOCK);
     if (fd < 0)
     {
-        const int open_errno = errno;
+        const int openErrno = errno;
         log<level::ERR>(
             fmt::format(
                 "OccCommand::openDevice: open failed (errno={}, path={})",
-                open_errno, devicePath)
+                openErrno, devicePath)
                 .c_str());
-        // This would log and terminate since its not handled.
-        elog<OpenFailure>(
-            phosphor::logging::org::open_power::OCC::Device::OpenFailure::
-                CALLOUT_ERRNO(open_errno),
-            phosphor::logging::org::open_power::OCC::Device::OpenFailure::
-                CALLOUT_DEVICE_PATH(devicePath.c_str()));
     }
     else
     {
@@ -127,11 +121,11 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
     if (fd < 0)
     {
         // OCC is inactive; empty response
-        return CmdStatus::OPEN_FAILURE;
+        return CmdStatus::COMM_FAILURE;
     }
 
+    const uint8_t cmd_type = command[0];
 #ifdef TRACE_PACKETS
-    uint8_t cmd_type = command[0];
     log<level::INFO>(
         fmt::format("OCC{}: Sending 0x{:02X} command (length={}, {})",
                     occInstance, cmd_type, command.size(), devicePath)
@@ -145,16 +139,17 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
     do
     {
         auto rc = write(fd, command.data(), command.size());
+        const int writeErrno = errno;
         if ((rc < 0) || (rc != (int)command.size()))
         {
-            const int write_errno = errno;
-            log<level::ERR>("OccCommand::send: write failed");
-            // This would log and terminate since its not handled.
-            elog<WriteFailure>(
-                phosphor::logging::org::open_power::OCC::Device::WriteFailure::
-                    CALLOUT_ERRNO(write_errno),
-                phosphor::logging::org::open_power::OCC::Device::WriteFailure::
-                    CALLOUT_DEVICE_PATH(devicePath.c_str()));
+            log<level::ERR>(
+                fmt::format(
+                    "OccCommand::send: write(OCC{}, command:0x{:02X}) failed with errno={} (retries={})",
+                    occInstance, cmd_type, writeErrno, retries)
+                    .c_str());
+            status = CmdStatus::COMM_FAILURE;
+            // retry if available
+            continue;
         }
         else
         {
@@ -166,12 +161,12 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
         {
             uint8_t data{};
             auto len = read(fd, &data, sizeof(data));
-            const int read_errno = errno;
+            const int readErrno = errno;
             if (len > 0)
             {
                 response.emplace_back(data);
             }
-            else if (len < 0 && read_errno == EAGAIN)
+            else if (len < 0 && readErrno == EAGAIN)
             {
                 // We may have data coming still.
                 // This driver does not need a sleep for a retry.
@@ -186,14 +181,20 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
             }
             else
             {
-                log<level::ERR>("OccCommand::send: read failed");
-                // This would log and terminate since its not handled.
-                elog<ReadFailure>(
-                    phosphor::logging::org::open_power::OCC::Device::
-                        ReadFailure::CALLOUT_ERRNO(read_errno),
-                    phosphor::logging::org::open_power::OCC::Device::
-                        ReadFailure::CALLOUT_DEVICE_PATH(devicePath.c_str()));
+                log<level::ERR>(
+                    fmt::format(
+                        "OccCommand::send: read(OCC{}, command:0x{:02X}) failed with errno={} (rspSize={}, retries={})",
+                        occInstance, cmd_type, readErrno, response.size(),
+                        retries)
+                        .c_str());
+                status = CmdStatus::COMM_FAILURE;
+                break;
             }
+        }
+        if (status != CmdStatus::SUCCESS)
+        {
+            // retry if available
+            continue;
         }
 
         if (response.size() > 2)
@@ -228,7 +229,7 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
                                 occInstance, rspChecksum, calcChecksum)
                         .c_str());
                 dump_hex(response);
-                status = CmdStatus::INVALID_CHECKSUM;
+                status = CmdStatus::COMM_FAILURE;
             }
             else
             {
@@ -271,7 +272,6 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
             log<level::ERR>("OccCommand::send: Command will be retried");
             response.clear();
         }
-
     } while (retries-- > 0);
 
     closeDevice();
