@@ -335,7 +335,11 @@ CmdStatus PowerMode::sendModeChange()
             }
             else
             {
-                log<level::ERR>("PowerMode::sendModeChange: SET_MODE FAILED!");
+                log<level::ERR>(
+                    fmt::format(
+                        "PowerMode::sendModeChange: SET_MODE FAILED with status={}",
+                        status)
+                        .c_str());
             }
         }
     }
@@ -581,7 +585,10 @@ CmdStatus PowerMode::sendIpsData()
         else
         {
             log<level::ERR>(
-                "PowerMode::sendIpsData: SET_CFG_DATA[IPS] FAILED!");
+                fmt::format(
+                    "PowerMode::sendIpsData: SET_CFG_DATA[IPS] with status={}",
+                    status)
+                    .c_str());
         }
     }
 

@@ -78,10 +78,10 @@ enum class RspStatus
 
 enum class CmdStatus
 {
-    SUCCESS,
-    OPEN_FAILURE,
-    FAILURE,
-    INVALID_CHECKSUM
+    SUCCESS = 0x00,
+    OPEN_FAILURE = 0x01,
+    FAILURE = 0x02,
+    COMM_FAILURE = 0x03
 };
 
 /** @brief Trace block of data in hex with log<level:INFO>
