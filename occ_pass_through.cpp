@@ -97,14 +97,11 @@ std::vector<uint8_t> PassThrough::send(std::vector<uint8_t> command)
     }
     else
     {
-        if (status == CmdStatus::OPEN_FAILURE)
-        {
-            log<level::WARNING>("PassThrough::send() - OCC not active yet");
-        }
-        else
-        {
-            log<level::ERR>("PassThrough::send() - OCC command failed!");
-        }
+        log<level::ERR>(
+            fmt::format(
+                "PassThrough::send(): OCC command failed with status {}",
+                uint32_t(status))
+                .c_str());
     }
 
     return response;
