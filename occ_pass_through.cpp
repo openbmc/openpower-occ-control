@@ -103,7 +103,11 @@ std::vector<uint8_t> PassThrough::send(std::vector<uint8_t> command)
         }
         else
         {
-            log<level::ERR>("PassThrough::send() - OCC command failed!");
+            log<level::ERR>(
+                fmt::format(
+                    "PassThrough::send(): OCC command failed with status {}",
+                    uint32_t(status))
+                    .c_str());
         }
     }
 
