@@ -39,6 +39,7 @@ constexpr auto POWER_MODE_PROP = "PowerMode";
 constexpr auto PIPS_PATH = "/xyz/openbmc_project/control/host0/power_ips";
 constexpr auto PIPS_INTERFACE =
     "xyz.openbmc_project.Control.Power.IdlePowerSaver";
+constexpr auto IPS_ACTIVE_PROP = "Active";
 constexpr auto IPS_ENABLED_PROP = "Enabled";
 constexpr auto IPS_ENTER_UTIL = "EnterUtilizationPercent";
 constexpr auto IPS_ENTER_TIME = "EnterDwellTime";
@@ -233,7 +234,7 @@ class PowerMode : public ModeInterface, public IpsInterface
      * @param[in] ipsPath - Idle Power Saver dbus path
      */
     explicit PowerMode(const Manager& managerRef, const char* modePath,
-                       const char* ipsPath) :
+                       const char* ipsPath, EventPtr& event) :
         ModeInterface(utils::getBus(), modePath, false),
         IpsInterface(utils::getBus(), ipsPath, false), manager(managerRef),
         pmodeMatch(utils::getBus(),
@@ -249,7 +250,7 @@ class PowerMode : public ModeInterface, public IpsInterface
             sdbusplus::bus::match::rules::propertiesChangedNamespace(
                 "/xyz/openbmc_project/inventory", PMODE_DEFAULT_INTERFACE),
             [this](auto& msg) { this->defaultsReady(msg); }),
-        masterOccSet(false), masterActive(false)
+        masterOccSet(false), masterActive(false), event(event)
     {
         // restore Power Mode to DBus
         SysPwrMode currentMode;
@@ -309,6 +310,16 @@ class PowerMode : public ModeInterface, public IpsInterface
         masterActive = isActive;
     };
 
+    /** @brief Starts to monitor for IPS active state change conditions
+     *
+     *  @param[in] poll - Indicates whether or not the IPS state file should
+     *                    actually be read for changes.
+     */
+    void addIpsWatch(bool poll = true);
+
+    /** @brief Removes IPS active watch */
+    void removeIpsWatch();
+
   private:
     /** @brief OCC manager object */
     const Manager& manager;
@@ -338,6 +349,20 @@ class PowerMode : public ModeInterface, public IpsInterface
 
     /** @brief True when the master OCC is active */
     bool masterActive;
+
+    /** @brief Last IPS Active State (Not Persistent) */
+    bool LastIpsActiveState = false;
+
+    /** @brief IPS status data filename to read */
+    fs::path ipsStatusFile = std::filesystem::path{OCC_HWMON_PATH} /
+                             std::filesystem::path{OCC_MASTER_NAME} /
+                             "occ_ips_status";
+
+    /** @brief Current state of error watching */
+    bool watching = false;
+
+    /** @brief register for the callback from the POLL IPS changed event */
+    void registerIpsStatusCallBack();
 
     /** @brief Callback for pmode setting changes
      *
@@ -435,6 +460,29 @@ class PowerMode : public ModeInterface, public IpsInterface
      * @return true if restore was successful
      */
     bool useDefaultIPSParms();
+
+    /** @brief callback for the POLL IPS changed event
+     *
+     *  @param[in] es       - Populated event source
+     *  @param[in] fd       - Associated File descriptor
+     *  @param[in] revents  - Type of event
+     *  @param[in] userData - User data that was passed during registration
+     */
+    static int ipsStatusCallBack(sd_event_source* es, int fd, uint32_t revents,
+                                 void* userData);
+
+    /** @brief sd_event wrapped in unique_ptr */
+    EventPtr& event;
+
+    /** @brief event source wrapped in unique_ptr */
+    EventSourcePtr eventSource;
+
+    /** @brief When the ips status event is received, analyzes it */
+    virtual void analyzeIpsEvent();
+
+  protected:
+    /** @brief File descriptor to watch for errors */
+    int fd = -1;
 };
 
 } // namespace powermode

@@ -6,6 +6,7 @@
 #include "occ_events.hpp"
 #include "occ_ffdc.hpp"
 #include "occ_presence.hpp"
+#include "powermode.hpp"
 
 #include <org/open_power/OCC/Device/error.hpp>
 
@@ -45,7 +46,11 @@ class Device
      *  @param[in] instance - OCC instance number
      */
     Device(EventPtr& event, const fs::path& path, Manager& manager,
-           Status& status, unsigned int instance = 0) :
+           Status& status,
+#ifdef POWER10
+           std::unique_ptr<powermode::PowerMode>& powerModeRef,
+#endif
+           unsigned int instance = 0) :
         config(getPathBack(path)),
         devPath(path), instance(instance), statusObject(status),
         managerObject(manager),
@@ -78,6 +83,10 @@ class Device
         throttleMemTemp(event, path / "occ_mem_throttle",
                         std::bind(std::mem_fn(&Device::throttleMemTempCallback),
                                   this, std::placeholders::_1))
+#ifdef POWER10
+        ,
+        pmode(powerModeRef)
+#endif
     {
         // Nothing to do here
     }
@@ -129,6 +138,8 @@ class Device
             throttleProcTemp.addWatch(poll);
         }
 
+        pmode->addIpsWatch(poll);
+
         throttleProcPower.addWatch(poll);
         throttleMemTemp.addWatch(poll);
 
@@ -164,6 +175,7 @@ class Device
         throttleMemTemp.removeWatch();
         throttleProcPower.removeWatch();
         throttleProcTemp.removeWatch();
+        pmode->removeIpsWatch();
     }
 
     /** @brief Starts to watch how many OCCs are present on the master */
@@ -228,6 +240,11 @@ class Device
     Error throttleProcTemp;
     Error throttleProcPower;
     Error throttleMemTemp;
+
+#ifdef POWER10
+    /** @brief OCC PowerMode object */
+    std::unique_ptr<powermode::PowerMode>& pmode;
+#endif
 
     /** @brief file writer to achieve bind and unbind
      *

@@ -1,15 +1,20 @@
 #include "powermode.hpp"
 
+#include "elog-errors.hpp"
+
+#include <fcntl.h>
 #include <fmt/core.h>
+#include <sys/ioctl.h>
 
 #include <com/ibm/Host/Target/server.hpp>
+#include <org/open_power/OCC/Device/error.hpp>
 #include <phosphor-logging/log.hpp>
+#include <xyz/openbmc_project/Common/error.hpp>
 #include <xyz/openbmc_project/Control/Power/Mode/server.hpp>
 
 #include <cassert>
 #include <fstream>
 #include <regex>
-
 namespace open_power
 {
 namespace occ
@@ -18,7 +23,10 @@ namespace powermode
 {
 
 using namespace phosphor::logging;
+using InternalFailure =
+    sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure;
 using namespace std::literals::string_literals;
+using namespace sdbusplus::org::open_power::OCC::Device::Error;
 
 using Mode = sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
 
@@ -874,6 +882,153 @@ bool PowerMode::useDefaultIPSParms()
 
     // Write IPS parms to DBus
     return updateDbusIPS(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime);
+}
+
+// Starts to watch for IPS active state changes.
+void PowerMode::addIpsWatch(bool poll)
+{
+    if ((!watching) && poll)
+    {
+        // register the callback handler
+        registerIpsStatusCallBack();
+
+        // Set we are watching the error
+        watching = true;
+    }
+}
+
+// Stops watching for IPS active state changes.
+void PowerMode::removeIpsWatch()
+{
+    if (watching)
+    {
+        // Stop watching for Active state, Set to False.
+        IpsInterface::setPropertyByName(IPS_ACTIVE_PROP, false, true);
+        LastIpsActiveState = false;
+
+        // Close the file
+        if (fd >= 0)
+        {
+            close(fd);
+        }
+
+        eventSource.reset();
+
+        // We are no longer watching the error
+        watching = false;
+    }
+}
+
+// Attaches the FD to event loop and registers the callback handler
+void PowerMode::registerIpsStatusCallBack()
+{
+    // using namespace phosphor::logging;
+    fd = open(ipsStatusFile.c_str(), O_RDONLY | O_NONBLOCK);
+    const int open_errno = errno;
+    if (fd < 0)
+    {
+        log<level::ERR>(
+            fmt::format("PowerMode::openFile: open failed (errno={})",
+                        open_errno)
+                .c_str());
+
+        // POINT A1: doing this elog kills and restarts APP.
+        //  DISCUSS: if there is any actions other than trace we need to do.
+
+        // elog<OpenFailure>(
+        //     phosphor::logging::org::open_power::OCC::Device::OpenFailure::
+        //         CALLOUT_ERRNO(open_errno),
+        //     phosphor::logging::org::open_power::OCC::Device::OpenFailure::
+        //         CALLOUT_DEVICE_PATH(ipsStatusFile.c_str()));
+    }
+
+    decltype(eventSource.get()) sourcePtr = nullptr;
+    auto r = sd_event_add_io(event.get(), &sourcePtr, fd, EPOLLPRI | EPOLLERR,
+                             ipsStatusCallBack, this);
+    eventSource.reset(sourcePtr);
+
+    if (r < 0)
+    {
+        log<level::ERR>("Failed to register callback handler",
+                        entry("ERROR=%s", strerror(-r)));
+
+        // POINT A2: doing this elog kills and restarts APP.
+        //  DISCUSS: Seems like if we can not add event, an APP kill restart
+        //  could fix the issue.  It could be an infinite loop, and could use a
+        //  threshold.
+
+        elog<InternalFailure>();
+    }
+}
+
+// Static function to redirect to non static analyze event function to be
+// able to read file and push onto dBus.
+int PowerMode::ipsStatusCallBack(sd_event_source* /*es*/, int /*fd*/,
+                                 uint32_t /*revents*/, void* userData)
+{
+    auto pmode = static_cast<PowerMode*>(userData);
+    pmode->analyzeIpsEvent();
+    return 0;
+}
+
+// Function to Read SysFs file change on IPS state and push on dBus.
+void PowerMode::analyzeIpsEvent()
+{
+    // This file gets created when polling OCCs. A value or length of 0 is
+    // deemed success. That means we would disable IPS active on dbus.
+    uint8_t data{};
+    auto len = read(fd, &data, sizeof(data));
+    const int read_errno = errno;
+    if (len == 0)
+    {
+        log<level::ERR>(
+            fmt::format("PowerMode: IPS state Read failed Length = {}", len)
+                .c_str());
+    }
+    else if (len < 0)
+    {
+        log<level::ERR>(
+            fmt::format("PowerMode: IPS state Read failed (errno={})",
+                        read_errno)
+                .c_str());
+    }
+
+    // MUST!! seek to START after read, else the subscription returns
+    // immediately telling there is data to be read, if not done this floods the
+    // system.
+    auto r = lseek(fd, 0, SEEK_SET);
+    if (r < 0)
+    {
+        log<level::ERR>("analyzeIpsEvent Failure seeking error file to START");
+
+        // POINT A3: doing this elog kills and restarts APP.
+        //  DISCUSS: To prevent flooding of this subscription on seek fail an
+        //  App reset would be advised.
+
+        elog<ConfigFailure>(
+            phosphor::logging::org::open_power::OCC::Device::ConfigFailure::
+                CALLOUT_ERRNO(errno),
+            phosphor::logging::org::open_power::OCC::Device::ConfigFailure::
+                CALLOUT_DEVICE_PATH(ipsStatusFile.c_str()));
+    }
+
+    // If current Idle Power Save Status has IPS active and
+    //   current ips active is disabled, then update dBus active.
+    // Bit 6: a 1 Indicates when OCC is actively in IdlePower Saver.
+    if (((data - 48) & 0x2) && (!LastIpsActiveState))
+    {
+        IpsInterface::setPropertyByName(IPS_ACTIVE_PROP, true, true);
+        LastIpsActiveState = true;
+    }
+    // else IPS is not Active or we could not read the IPS state above,
+    //   and if current ipsEnabled active is enabled, then update dbus inActive.
+    else if (LastIpsActiveState)
+    {
+        IpsInterface::setPropertyByName(IPS_ACTIVE_PROP, false, true);
+        LastIpsActiveState = false;
+    }
+
+    return;
 }
 
 } // namespace powermode
