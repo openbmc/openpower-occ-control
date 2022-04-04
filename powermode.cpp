@@ -1,9 +1,15 @@
 #include "powermode.hpp"
 
+#include "elog-errors.hpp"
+
+#include <fcntl.h>
 #include <fmt/core.h>
+#include <sys/ioctl.h>
 
 #include <com/ibm/Host/Target/server.hpp>
+#include <org/open_power/OCC/Device/error.hpp>
 #include <phosphor-logging/log.hpp>
+#include <xyz/openbmc_project/Common/error.hpp>
 #include <xyz/openbmc_project/Control/Power/Mode/server.hpp>
 
 #include <cassert>
@@ -19,6 +25,7 @@ namespace powermode
 
 using namespace phosphor::logging;
 using namespace std::literals::string_literals;
+using namespace sdbusplus::org::open_power::OCC::Device::Error;
 
 using Mode = sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
 
@@ -875,6 +882,217 @@ bool PowerMode::useDefaultIPSParms()
     // Write IPS parms to DBus
     return updateDbusIPS(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime);
 }
+
+#ifdef POWER10
+
+// Starts to watch for IPS active state changes.
+bool PowerMode::openIpsFile()
+{
+    bool rc = true;
+    fd = open(ipsStatusFile.c_str(), O_RDONLY | O_NONBLOCK);
+    const int open_errno = errno;
+    if (fd < 0)
+    {
+        log<level::ERR>(fmt::format("openIpsFile Error({})={} : File={}",
+                                    open_errno, strerror(open_errno),
+                                    ipsStatusFile.c_str())
+                            .c_str());
+
+        close(fd);
+
+        // Read File Failure :
+        // "Reference Code": "BD752004",
+        // "Process Name": "/usr/bin/openpower-occ-control",
+        // "CALLOUT_DEVICE_PATH":
+        // "/sys/bus/platform/drivers/occ-hwmon/occ-hwmon.1/occ_ips_status",
+        // "ERROR_NAME": "org.open_power.OCC.Device.Error.OpenFailure",
+        using namespace sdbusplus::org::open_power::OCC::Device::Error;
+        report<OpenFailure>(
+            phosphor::logging::org::open_power::OCC::Device::OpenFailure::
+                CALLOUT_ERRNO(open_errno),
+            phosphor::logging::org::open_power::OCC::Device::OpenFailure::
+                CALLOUT_DEVICE_PATH(ipsStatusFile.c_str()));
+
+        // We are no longer watching the error
+        active(false);
+
+        watching = false;
+        rc = false;
+        // NOTE: this will leave the system not reporting IPS active state to
+        // Fan Controls, Until an APP reload, or IPL and we will attempt again.
+    }
+    return rc;
+}
+
+// Starts to watch for IPS active state changes.
+void PowerMode::addIpsWatch(bool poll)
+{
+    // open file and register callback on file if we are not currently watching,
+    // and if poll=true, and if we are the master.
+    if ((!watching) && poll)
+    {
+        //  Open the file
+        if (openIpsFile())
+        {
+            // register the callback handler which sets 'watching'
+            registerIpsStatusCallBack();
+        }
+    }
+}
+
+// Stops watching for IPS active state changes.
+void PowerMode::removeIpsWatch()
+{
+    //  NOTE: we want to remove event, close file, and IPS active false no
+    //  matter what the 'watching' flags is set to.
+
+    // We are no longer watching the error
+    active(false);
+
+    watching = false;
+
+    // Close file
+    close(fd);
+
+    // clears sourcePtr in the event source.
+    eventSource.reset();
+}
+
+// Attaches the FD to event loop and registers the callback handler
+void PowerMode::registerIpsStatusCallBack()
+{
+    decltype(eventSource.get()) sourcePtr = nullptr;
+
+    auto r = sd_event_add_io(event.get(), &sourcePtr, fd, EPOLLPRI | EPOLLERR,
+                             ipsStatusCallBack, this);
+    if (r < 0)
+    {
+        log<level::ERR>(fmt::format("sd_event_add_io: Error({})={} : File={}",
+                                    r, strerror(-r), ipsStatusFile.c_str())
+                            .c_str());
+
+        // Add Event Failure :
+        // "Reference Code": "BD8D1002",
+        // "Process Name": "/usr/bin/openpower-occ-control",
+        using InternalFailure =
+            sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure;
+        report<InternalFailure>();
+
+        removeIpsWatch();
+        // NOTE: this will leave the system not reporting IPS active state to
+        // Fan Controls, Until an APP reload, or IPL and we will attempt again.
+    }
+    else
+    {
+        // puts sourcePtr in the event source.
+        eventSource.reset(sourcePtr);
+        // Set we are watching the error
+        watching = true;
+    }
+}
+
+// Static function to redirect to non static analyze event function to be
+// able to read file and push onto dBus.
+int PowerMode::ipsStatusCallBack(sd_event_source* /*es*/, int /*fd*/,
+                                 uint32_t /*revents*/, void* userData)
+{
+    auto pmode = static_cast<PowerMode*>(userData);
+    pmode->analyzeIpsEvent();
+    return 0;
+}
+
+// Function to Read SysFs file change on IPS state and push on dBus.
+void PowerMode::analyzeIpsEvent()
+{
+    // Need to seek to START, else the poll returns immediately telling
+    // there is data to be read. if not done this floods the system.
+    auto r = lseek(fd, 0, SEEK_SET);
+    const int open_errno = errno;
+    if (r < 0)
+    {
+        // NOTE: upon file access error we can not just re-open file, we have to
+        // remove and add to watch.
+        removeIpsWatch();
+        addIpsWatch(true);
+    }
+
+    // if we are 'watching' that is the file seek, or the re-open passed.. we
+    // can read the data
+    if (watching)
+    {
+        // This file gets created when polling OCCs. A value or length of 0 is
+        // deemed success. That means we would disable IPS active on dbus.
+        uint8_t data{};
+        bool CurrentIpsStateActive = false;
+        const auto len = read(fd, &data, sizeof(data));
+        const int readErrno = errno;
+        if (len <= 0)
+        {
+            removeIpsWatch();
+
+            log<level::ERR>(
+                fmt::format("IPS state Read Error({})={} : File={} : len={}",
+                            readErrno, strerror(readErrno),
+                            ipsStatusFile.c_str(), len)
+                    .c_str());
+
+            // Read File Failure :
+            // "Reference Code": "BD752004",
+            // "Process Name": "/usr/bin/openpower-occ-control",
+            // "CALLOUT_DEVICE_PATH":
+            // "/sys/bus/platform/drivers/occ-hwmon/occ-hwmon.1/occ_ips_status",
+            // "ERROR_NAME": "org.open_power.OCC.Device.Error.ReadFailure",
+            report<ReadFailure>(
+                phosphor::logging::org::open_power::OCC::Device::ReadFailure::
+                    CALLOUT_ERRNO(readErrno),
+                phosphor::logging::org::open_power::OCC::Device::ReadFailure::
+                    CALLOUT_DEVICE_PATH(ipsStatusFile.c_str()));
+
+            // NOTE: this will leave the system not reporting IPS active state
+            // to Fan Controls, Until an APP reload, or IPL and we will attempt
+            // again.
+        }
+        else
+        {
+            // Data returned in ASCII.
+            // subtract 48 to get number.
+            // Mask off Bit 6: a 1 Indicates when OCC is actively in IPS.
+            // Shift left one bit and store as bool.
+            CurrentIpsStateActive = static_cast<bool>(((data - 48) & 0x2) >> 1);
+        }
+
+        // If current Idle Power Save Status has IPS active and
+        //   current ips active is disabled, then update dBus active.
+        if ((CurrentIpsStateActive) && (!active()))
+        {
+            active(true);
+        }
+        // else IPS is not Active or we could not read the IPS state above,
+        //   and if current ipsEnabled active is enabled, then update dbus
+        //   inActive.
+        else if ((!CurrentIpsStateActive) && (active()))
+        {
+            active(false);
+        }
+    }
+    else
+    {
+        removeIpsWatch();
+
+        // If the Retry did not get to "watching = true" we already have an
+        // error log, just post trace.
+        log<level::ERR>(fmt::format("Retry on File seek Error({})={} : File={}",
+                                    open_errno, strerror(open_errno),
+                                    ipsStatusFile.c_str())
+                            .c_str());
+
+        // NOTE: this will leave the system not reporting IPS active state to
+        // Fan Controls, Until an APP reload, or IPL and we will attempt again.
+    }
+
+    return;
+}
+#endif
 
 } // namespace powermode
 

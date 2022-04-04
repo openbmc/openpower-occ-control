@@ -99,7 +99,11 @@ class Status : public Interface
                fs::path(DEV_PATH) /
                    fs::path(sysfsName + "." + std::to_string(instance + 1)),
 #endif
-               managerRef, *this, instance),
+               managerRef, *this,
+#ifdef POWER10
+               powerModeRef,
+#endif
+               instance),
         hostControlSignal(
             utils::getBus(),
             sdbusRule::type::signal() + sdbusRule::member("CommandComplete") +
