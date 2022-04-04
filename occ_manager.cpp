@@ -152,7 +152,12 @@ void Manager::createObjects(const std::string& occ)
     {
         // Create the power mode object
         pmode = std::make_unique<powermode::PowerMode>(
-            *this, powermode::PMODE_PATH, powermode::PIPS_PATH);
+            *this, powermode::PMODE_PATH, powermode::PIPS_PATH
+#ifdef POWER10
+            ,
+            event
+#endif
+        );
     }
 #endif
 
