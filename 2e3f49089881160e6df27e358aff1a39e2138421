@@ -16,6 +16,24 @@
       "message": "is that OK if it still continues on to the sendIpsData after deviceError runs?",
       "revId": "2e3f49089881160e6df27e358aff1a39e2138421",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "113bcf8a_5fb648e1",
+        "filename": "occ_status.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-04-05T14:19:29Z",
+      "side": 1,
+      "message": "Good point.  Looking at getIpsData(), we do check masterActive first, which gets cleared on the deviceError() call, so should be ok.",
+      "parentUuid": "5b0dcc8b_e908ea4d",
+      "revId": "2e3f49089881160e6df27e358aff1a39e2138421",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
