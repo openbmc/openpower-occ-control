@@ -138,7 +138,9 @@ class Device
             throttleProcTemp.addWatch(poll);
         }
 
+#ifdef POWER10
         pmode->addIpsWatch(poll);
+#endif
 
         throttleProcPower.addWatch(poll);
         throttleMemTemp.addWatch(poll);
@@ -175,7 +177,9 @@ class Device
         throttleMemTemp.removeWatch();
         throttleProcPower.removeWatch();
         throttleProcTemp.removeWatch();
+#ifdef POWER10
         pmode->removeIpsWatch();
+#endif
     }
 
     /** @brief Starts to watch how many OCCs are present on the master */

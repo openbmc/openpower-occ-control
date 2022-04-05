@@ -15,6 +15,7 @@
 #include <cassert>
 #include <fstream>
 #include <regex>
+
 namespace open_power
 {
 namespace occ
@@ -884,6 +885,7 @@ bool PowerMode::useDefaultIPSParms()
     return updateDbusIPS(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime);
 }
 
+#ifdef POWER10
 // Starts to watch for IPS active state changes.
 void PowerMode::addIpsWatch(bool poll)
 {
@@ -1030,6 +1032,7 @@ void PowerMode::analyzeIpsEvent()
 
     return;
 }
+#endif
 
 } // namespace powermode
 

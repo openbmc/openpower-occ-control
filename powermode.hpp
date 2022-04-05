@@ -234,7 +234,12 @@ class PowerMode : public ModeInterface, public IpsInterface
      * @param[in] ipsPath - Idle Power Saver dbus path
      */
     explicit PowerMode(const Manager& managerRef, const char* modePath,
-                       const char* ipsPath, EventPtr& event) :
+                       const char* ipsPath
+#ifdef POWER10
+                       ,
+                       EventPtr& event
+#endif
+                       ) :
         ModeInterface(utils::getBus(), modePath, false),
         IpsInterface(utils::getBus(), ipsPath, false), manager(managerRef),
         pmodeMatch(utils::getBus(),
@@ -250,7 +255,11 @@ class PowerMode : public ModeInterface, public IpsInterface
             sdbusplus::bus::match::rules::propertiesChangedNamespace(
                 "/xyz/openbmc_project/inventory", PMODE_DEFAULT_INTERFACE),
             [this](auto& msg) { this->defaultsReady(msg); }),
-        masterOccSet(false), masterActive(false), event(event)
+        masterOccSet(false), masterActive(false)
+#ifdef POWER10
+        ,
+        event(event)
+#endif
     {
         // restore Power Mode to DBus
         SysPwrMode currentMode;
@@ -310,6 +319,7 @@ class PowerMode : public ModeInterface, public IpsInterface
         masterActive = isActive;
     };
 
+#ifdef POWER10
     /** @brief Starts to monitor for IPS active state change conditions
      *
      *  @param[in] poll - Indicates whether or not the IPS state file should
@@ -319,6 +329,7 @@ class PowerMode : public ModeInterface, public IpsInterface
 
     /** @brief Removes IPS active watch */
     void removeIpsWatch();
+#endif
 
   private:
     /** @brief OCC manager object */
@@ -350,6 +361,7 @@ class PowerMode : public ModeInterface, public IpsInterface
     /** @brief True when the master OCC is active */
     bool masterActive;
 
+#ifdef POWER10
     /** @brief Last IPS Active State (Not Persistent) */
     bool LastIpsActiveState = false;
 
@@ -363,6 +375,7 @@ class PowerMode : public ModeInterface, public IpsInterface
 
     /** @brief register for the callback from the POLL IPS changed event */
     void registerIpsStatusCallBack();
+#endif
 
     /** @brief Callback for pmode setting changes
      *
@@ -461,6 +474,7 @@ class PowerMode : public ModeInterface, public IpsInterface
      */
     bool useDefaultIPSParms();
 
+#ifdef POWER10
     /** @brief callback for the POLL IPS changed event
      *
      *  @param[in] es       - Populated event source
@@ -483,6 +497,7 @@ class PowerMode : public ModeInterface, public IpsInterface
   protected:
     /** @brief File descriptor to watch for errors */
     int fd = -1;
+#endif
 };
 
 } // namespace powermode
