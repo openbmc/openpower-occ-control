@@ -86,7 +86,8 @@ class Status : public Interface
 #endif
            ) :
 
-        Interface(utils::getBus(), getDbusPath(path).c_str(), true),
+        Interface(utils::getBus(), getDbusPath(path).c_str(),
+                  Interface::action::defer_emit),
         path(path), managerCallBack(callBack), instance(getInstance(path)),
         manager(managerRef),
 #ifdef POWER10
