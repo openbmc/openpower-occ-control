@@ -14,7 +14,7 @@ namespace open_power
 namespace occ
 {
 
-using instanceID = int;
+using instanceID = unsigned int;
 using sensorID = uint8_t;
 using sensorName = std::string;
 using sensorDefs = std::tuple<sensorID, sensorName>;

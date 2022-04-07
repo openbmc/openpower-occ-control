@@ -337,7 +337,24 @@ void Manager::sbeTimeout(unsigned int instance)
 
 bool Manager::updateOCCActive(instanceID instance, bool status)
 {
-    return (statusObjects[instance])->occActive(status);
+    auto obj = std::find_if(statusObjects.begin(), statusObjects.end(),
+                            [instance](const auto& obj) {
+                                return instance == obj->getOccInstanceID();
+                            });
+
+    if (obj != statusObjects.end())
+    {
+        return (*obj)->occActive(status);
+    }
+    else
+    {
+        log<level::WARNING>(
+            fmt::format(
+                "Manager::updateOCCActive: No status object to update for OCC{} (active={})",
+                instance, status)
+                .c_str());
+        return false;
+    }
 }
 
 void Manager::sbeHRESETResult(instanceID instance, bool success)

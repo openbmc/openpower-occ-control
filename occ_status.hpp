@@ -36,7 +36,7 @@ namespace Control = sdbusplus::org::open_power::Control::server;
 namespace sdbusRule = sdbusplus::bus::match::rules;
 
 // OCC status instance. Ex. for "occ0", the instance is 0
-using instanceID = int;
+using instanceID = unsigned int;
 
 // IPMI sensor ID for a given OCC instance
 using sensorID = uint8_t;
