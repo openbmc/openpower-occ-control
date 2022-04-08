@@ -20,6 +20,7 @@ constexpr auto PCAP_INTERFACE = "xyz.openbmc_project.Control.Power.Cap";
 
 constexpr auto POWER_CAP_PROP = "PowerCap";
 constexpr auto POWER_CAP_ENABLE_PROP = "PowerCapEnable";
+constexpr auto POWER_CAP_SOFT_MIN = "MinSoftPowerCapValue";
 constexpr auto POWER_CAP_HARD_MIN = "MinPowerCapValue";
 constexpr auto POWER_CAP_MAX = "MaxPowerCapValue";
 
@@ -30,11 +31,31 @@ void PowerCap::updatePcapBounds()
 {
     // Build the hwmon string to write the power cap bounds
     fs::path minName = getPcapFilename(std::regex{"power\\d+_cap_min$"});
+    fs::path softMinName =
+        getPcapFilename(std::regex{"power\\d+_cap_min_soft$"});
     fs::path maxName = getPcapFilename(std::regex{"power\\d+_cap_max$"});
 
     // Read the power cap bounds from sysfs files
     uint64_t cap;
-    uint32_t capHardMin = 0, capMax = INT_MAX;
+    uint32_t capSoftMin = 0, capHardMin = 0, capMax = INT_MAX;
+
+    std::ifstream softMinFile(softMinName, std::ios::in);
+    if (softMinFile)
+    {
+        softMinFile >> cap;
+        softMinFile.close();
+        // Convert to Input Power in Watts (round up)
+        capSoftMin = ((cap / (PS_DERATING_FACTOR / 100.0) / 1000000) + 0.9);
+    }
+    else
+    {
+        log<level::ERR>(
+            fmt::format(
+                "updatePcapBounds: unable to find pcap_min_soft file: {} (errno={})",
+                pcapBasePathname.c_str(), errno)
+                .c_str());
+    }
+
     std::ifstream minFile(minName, std::ios::in);
     if (minFile)
     {
@@ -51,6 +72,7 @@ void PowerCap::updatePcapBounds()
                 pcapBasePathname.c_str(), errno)
                 .c_str());
     }
+
     std::ifstream maxFile(maxName, std::ios::in);
     if (maxFile)
     {
@@ -69,7 +91,7 @@ void PowerCap::updatePcapBounds()
     }
 
     // Save the bounds to dbus
-    updateDbusPcap(capHardMin, capMax);
+    updateDbusPcap(capSoftMin, capHardMin, capMax);
 
     // Validate dbus and hwmon user caps match
     const uint32_t dbusUserCap = getPcap();
@@ -312,9 +334,24 @@ void PowerCap::pcapChanged(sdbusplus::message::message& msg)
 }
 
 // Update the Power Cap bounds on DBus
-bool PowerCap::updateDbusPcap(uint32_t hardMin, uint32_t max)
+bool PowerCap::updateDbusPcap(uint32_t softMin, uint32_t hardMin, uint32_t max)
 {
     bool complete = true;
+
+    try
+    {
+        utils::setProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_SOFT_MIN,
+                           softMin);
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        log<level::ERR>(
+            fmt::format(
+                "updateDbusPcap: Failed to set SOFT PCAP to {}W due to {}",
+                softMin, e.what())
+                .c_str());
+        complete = false;
+    }
 
     try
     {

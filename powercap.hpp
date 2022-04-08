@@ -122,12 +122,13 @@ class PowerCap
 
     /** @brief Update the power cap bounds on DBus
      *
+     * @param[in]  softMin - soft minimum power cap in Watts
      * @param[in]  hardMin - hard minimum power cap in Watts
      * @param[in]  pcapMax - maximum power cap in Watts
      *
      * @return true if all parms were written successfully
      */
-    bool updateDbusPcap(uint32_t hardMin, uint32_t pcapMax);
+    bool updateDbusPcap(uint32_t softMin, uint32_t hardMin, uint32_t pcapMax);
 };
 
 } // namespace powercap
