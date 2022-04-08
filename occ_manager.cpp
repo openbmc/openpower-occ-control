@@ -65,6 +65,13 @@ void Manager::findAndCreateObjects()
         createObjects(occ);
     }
 #else
+    if (!pmode)
+    {
+        // Create the power mode object
+        pmode = std::make_unique<powermode::PowerMode>(
+            *this, powermode::PMODE_PATH, powermode::PIPS_PATH);
+    }
+
     if (!fs::exists(HOST_ON_FILE))
     {
         // Create the OCCs based on on the /dev/occX devices
@@ -146,15 +153,6 @@ int Manager::cpuCreated(sdbusplus::message::message& msg)
 void Manager::createObjects(const std::string& occ)
 {
     auto path = fs::path(OCC_CONTROL_ROOT) / occ;
-
-#ifdef POWER10
-    if (!pmode)
-    {
-        // Create the power mode object
-        pmode = std::make_unique<powermode::PowerMode>(
-            *this, powermode::PMODE_PATH, powermode::PIPS_PATH);
-    }
-#endif
 
     statusObjects.emplace_back(std::make_unique<Status>(
         event, path.c_str(), *this,
