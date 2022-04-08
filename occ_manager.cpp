@@ -65,6 +65,13 @@ void Manager::findAndCreateObjects()
         createObjects(occ);
     }
 #else
+    if (!pmode)
+    {
+        // Create the power mode object
+        pmode = std::make_unique<powermode::PowerMode>(
+            *this, powermode::PMODE_PATH, powermode::PIPS_PATH, event);
+    }
+
     if (!fs::exists(HOST_ON_FILE))
     {
         static bool statusObjCreated = false;
@@ -242,20 +249,9 @@ void Manager::createObjects(const std::string& occ)
 {
     auto path = fs::path(OCC_CONTROL_ROOT) / occ;
 
-#ifdef POWER10
-    if (!pmode)
-    {
-        // Create the power mode object
-        pmode = std::make_unique<powermode::PowerMode>(
-            *this, powermode::PMODE_PATH, powermode::PIPS_PATH
-#ifdef POWER10
-            ,
-            event
-#endif
-        );
-    }
-#endif
-
+<<<<<<< HEAD
+=======
+>>>>>>> ab6266c... Create PowerMode object before status objects
     statusObjects.emplace_back(std::make_unique<Status>(
         event, path.c_str(), *this,
 #ifdef POWER10
