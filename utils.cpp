@@ -1,10 +1,14 @@
 #include "utils.hpp"
 
 #include <fmt/core.h>
+#include <systemd/sd-event.h>
+#include <unistd.h>
 
 #include <phosphor-logging/elog-errors.hpp>
 #include <sdbusplus/bus.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
+#include <xyz/openbmc_project/State/Boot/Progress/server.hpp>
+#include <xyz/openbmc_project/State/Host/server.hpp>
 
 #include <string>
 namespace open_power
@@ -177,6 +181,99 @@ std::string getServiceUsingSubTree(const std::string& interface,
     }
 
     return service;
+}
+
+// FROM:
+// http://fstone07p1.aus.stglabs.ibm.com:8080/source/xref/ibm-openbmc/phosphor-debug-collector/dump_utils.cpp?r=8b46737b#126
+
+using BootProgress = sdbusplus::xyz::openbmc_project::State::Boot::server::
+    Progress::ProgressStages;
+using HostState =
+    sdbusplus::xyz::openbmc_project::State::server::Host::HostState;
+
+constexpr auto HOST_STATE_OBJ_PATH = "/xyz/openbmc_project/state/host0";
+
+std::string getStateValue(std::string intf, std::string objPath,
+                          std::string state);
+
+BootProgress getBootProgress()
+{
+    BootProgress bootProgessStage;
+    constexpr auto bootProgressInterface =
+        "xyz.openbmc_project.State.Boot.Progress";
+    std::string value = getStateValue(bootProgressInterface,
+                                      HOST_STATE_OBJ_PATH, "BootProgress");
+    bootProgessStage = sdbusplus::xyz::openbmc_project::State::Boot::server::
+        Progress::convertProgressStagesFromString(value);
+    return bootProgessStage;
+}
+
+std::string getStateValue(std::string intf, std::string objPath,
+                          std::string state)
+{
+    std::string stateVal;
+    try
+    {
+        auto& bus = getBus();
+        auto service = getService(objPath, intf);
+        if (service.empty())
+        {
+            throw std::runtime_error("getStateValue: Failed to get service");
+        }
+
+        auto method =
+            bus.new_method_call(service.c_str(), objPath.c_str(),
+                                "org.freedesktop.DBus.Properties", "Get");
+
+        method.append(intf, state);
+
+        auto reply = bus.call(method);
+
+        using DBusValue_t =
+            std::variant<std::string, bool, std::vector<uint8_t>,
+                         std::vector<std::string>>;
+        DBusValue_t propertyVal;
+
+        reply.read(propertyVal);
+
+        stateVal = std::get<std::string>(propertyVal);
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        log<level::ERR>(fmt::format("D-Bus call exception, OBJPATH({}), "
+                                    "INTERFACE({}), PROPERRT({}) EXCEPTION({})",
+                                    objPath, intf, state, e.what())
+                            .c_str());
+        throw std::runtime_error("Failed to get host state property");
+    }
+    catch (const std::bad_variant_access& e)
+    {
+        log<level::ERR>(
+            fmt::format("Exception raised while read host state({}) property "
+                        "value,  OBJPATH({}), INTERFACE({}), EXCEPTION({})",
+                        state, objPath, intf, e.what())
+                .c_str());
+        throw std::runtime_error("Failed to get host state property");
+    }
+
+    log<level::INFO>(fmt::format("getStateValue({},{},{}) returning {}", intf,
+                                 objPath, state, stateVal)
+                         .c_str());
+
+    return stateVal;
+}
+
+bool isHostRunning()
+{
+    BootProgress bootProgressStatus = getBootProgress();
+    if ((bootProgressStatus == BootProgress::SystemInitComplete) ||
+        (bootProgressStatus == BootProgress::SystemSetup) ||
+        (bootProgressStatus == BootProgress::OSStart) ||
+        (bootProgressStatus == BootProgress::OSRunning))
+    {
+        return true;
+    }
+    return false;
 }
 
 } // namespace utils

@@ -10,6 +10,8 @@
 
 #include <phosphor-logging/log.hpp>
 
+#include <algorithm>
+
 namespace pldm
 {
 
@@ -112,6 +114,11 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
     open_power::occ::instanceID count = start;
     for (auto const& pair : entityInstMap)
     {
+        log<level::INFO>(
+            fmt::format(
+                "fetchSensorInfo: Found SensorID:0x{:04X} for OCC{} (StateSetId:{})",
+                pair.second, count, stateSetId)
+                .c_str());
         sensorInstanceMap.emplace(pair.second, count);
         count++;
     }
@@ -527,15 +534,24 @@ bool Interface::checkActiveSensor(uint8_t instance, bool& isActive)
     {
         // Query the OCC Active Sensor state for this instance
         SensorID sID = entry->first;
+        log<level::INFO>(
+            fmt::format("checkActiveSensor: OCC{} / sensorID: 0x{:04X}",
+                        instance, sID)
+                .c_str());
 
         // Encode GetStateSensorReadings PLDM message
-        const uint8_t sInstance = 0;
+        const uint8_t sInstance = pldmMessageInstance++;
         bitfield8_t sRearm = {0};
         const size_t msgSize =
             sizeof(pldm_msg_hdr) + PLDM_GET_STATE_SENSOR_READINGS_REQ_BYTES;
         std::vector<uint8_t> requestMsg(msgSize);
         auto msg = reinterpret_cast<pldm_msg*>(requestMsg.data());
         static int lastMsgRc = 0;
+        log<level::INFO>(
+            fmt::format(
+                "checkActiveSensor: calling encode_get_state_sensor_readings_req(inst:0x{:02X},sensID:0x{:04X},rearm:0,0,msg)",
+                sInstance, sID)
+                .c_str());
         auto msgRc = encode_get_state_sensor_readings_req(sInstance, sID,
                                                           sRearm, 0, msg);
         if (msgRc != PLDM_SUCCESS)
@@ -553,36 +569,40 @@ bool Interface::checkActiveSensor(uint8_t instance, bool& isActive)
         }
 
         // Connect to MCTP scoket
+        int lastErrno = 0;
         int fd = pldm_open();
+        lastErrno = errno;
         if (fd == -1)
         {
             log<level::ERR>(
                 fmt::format(
                     "checkActiveSensor: Failed to connect to MCTP socket, errno={}",
-                    errno)
+                    lastErrno)
                     .c_str());
             return false;
         }
         open_power::occ::FileDescriptor fileFd(fd);
 
         // Send PLDM msg to get state sensor readings
+        open_power::occ::dump_hex(requestMsg);
         log<level::INFO>(
             fmt::format(
                 "checkActiveSensor: calling pldm_send(GetStateSensorReadings, OCC{})",
                 instance)
                 .c_str());
-        static auto lastPldmRc = PLDM_REQUESTER_SUCCESS;
+        // static auto lastPldmRc = PLDM_REQUESTER_SUCCESS;
         auto pldmRc = pldm_send(mctpEid, fileFd(), requestMsg.data(), msgSize);
+        lastErrno = errno;
         if (pldmRc != PLDM_REQUESTER_SUCCESS)
         {
-            if (pldmRc != lastPldmRc)
+            // if (pldmRc != lastPldmRc)
             {
                 log<level::ERR>(
                     fmt::format(
                         "checkActiveSensor: pldm_send(GetStateSenorReadings) failed with rc={} and errno={}",
-                        pldmRc, errno)
+                        pldmRc, lastErrno)
                         .c_str());
-                lastPldmRc = pldmRc;
+                // lastPldmRc = pldmRc;
             }
             return false;
         }
@@ -590,9 +610,25 @@ bool Interface::checkActiveSensor(uint8_t instance, bool& isActive)
         // Read the PLDM response
         uint8_t* rspPtr = nullptr;
         size_t rspLen = 0;
-        log<level::INFO>("checkActiveSensor: calling pldm_recv()");
+        log<level::INFO>(
+            fmt::format(
+                "checkActiveSensor: calling pldm_recv({},{},{},rsp,rspLen)",
+                mctpEid, fileFd(),
+                reinterpret_cast<uint8_t>(msg->hdr.instance_id))
+                .c_str());
         pldmRc = pldm_recv(mctpEid, fileFd(), msg->hdr.instance_id, &rspPtr,
                            &rspLen);
+        lastErrno = errno;
+
+        if ((rspPtr != nullptr) && (rspLen > 0))
+        {
+            log<level::INFO>(
+                fmt::format("checkActiveSensor: pldm_recv() rsp was {} bytes",
+                            rspLen)
+                    .c_str());
+            open_power::occ::dump_hex(rspPtr, (rspLen < 32) ? rspLen : 32);
+        }
+
         if (pldmRc == PLDM_REQUESTER_SUCCESS)
         {
             // Decode the response
@@ -600,6 +636,11 @@ bool Interface::checkActiveSensor(uint8_t instance, bool& isActive)
             uint8_t compCode = 0, sensorCount = 1;
             get_sensor_state_field field[6];
             rspLen -= sizeof(pldm_msg_hdr);
+            log<level::INFO>(
+                fmt::format(
+                    "checkActiveSensor: calling decode_get_state_sensor_readings_resp(rsp,rspLen:{},compCode,count:{},field)",
+                    rspLen, sensorCount)
+                    .c_str());
             msgRc = decode_get_state_sensor_readings_resp(
                 msgRspPtr, rspLen, &compCode, &sensorCount, field);
 
@@ -619,7 +660,12 @@ bool Interface::checkActiveSensor(uint8_t instance, bool& isActive)
                 rspPtr = nullptr;
                 return false;
             }
-
+            log<level::INFO>(
+                fmt::format(
+                    "checkActiveSensor: compCode:{}, count:{}, state of sensor[0]:{}, state:{}",
+                    compCode, sensorCount, field[0].sensor_op_state,
+                    field[0].present_state)
+                    .c_str());
             if (field[0].present_state ==
                 PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_IN_SERVICE)
             {
@@ -641,19 +687,19 @@ bool Interface::checkActiveSensor(uint8_t instance, bool& isActive)
             free(rspPtr);
             rspPtr = nullptr;
             lastMsgRc = 0;
-            lastPldmRc = PLDM_REQUESTER_SUCCESS;
+            // lastPldmRc = PLDM_REQUESTER_SUCCESS;
             return true;
         }
         else
         {
-            if (pldmRc != lastPldmRc)
+            // if (pldmRc != lastPldmRc)
             {
                 log<level::ERR>(
                     fmt::format(
                         "checkActiveSensor: pldm_recv(GetStateSenorReadings) failed with rc={} and errno={}",
-                        pldmRc, errno)
+                        pldmRc, lastErrno)
                         .c_str());
-                lastPldmRc = pldmRc;
+                // lastPldmRc = pldmRc;
             }
         }
     }

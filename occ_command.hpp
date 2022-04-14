@@ -91,6 +91,7 @@ enum class CmdStatus
  */
 void dump_hex(const std::vector<std::uint8_t>& data,
               const unsigned int data_len = 0);
+void dump_hex(const uint8_t* data, const unsigned int data_len);
 
 /** @class OccCommand
  *  @brief Send commands and process respsonses from the OCC
