@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "85af8796_b3fa1ed2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2022-04-14T15:12:10Z",
+      "side": 1,
+      "message": "Some suggestions but they aren\u0027t critical",
+      "revId": "993714dccdf48e7a867ccdce745c53c7e94b81e5",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "39c1d7b6_7d10f1ca",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2022-04-14T15:12:10Z",
+      "side": 1,
+      "message": "These static bools confused me for a while, should we use member variables instead?",
+      "revId": "993714dccdf48e7a867ccdce745c53c7e94b81e5",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b14f4f02_99c9ebb7",
+        "filename": "pldm.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 512,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2022-04-14T15:12:10Z",
+      "side": 1,
+      "message": "Shares a lot of boilerplate with sendPLDM function. Maybe if we can modify the \"decode\" portion of sendPLDM then you can just use that? Or at least could you use pldm_send_recv here, since you\u0027re doing both?",
+      "revId": "993714dccdf48e7a867ccdce745c53c7e94b81e5",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
