@@ -111,61 +111,24 @@ void Manager::findAndCreateObjects()
 
         if (statusObjCreated)
         {
-            static bool activeSensorAvailable = false;
-            static bool tracedSensorWait = false;
-            bool isActive = false;
-
-            // Wait for all occActive sensors to become available
-            activeSensorAvailable = true;
-            for (auto& obj : statusObjects)
+            static bool tracedHostWait = false;
+            if (utils::isHostRunning())
             {
-                const bool found = pldmHandle->checkActiveSensor(
-                    obj->getOccInstanceID(), isActive);
-                if ((!found) && (!obj->occActive()))
+                if (tracedHostWait)
                 {
-                    if (!tracedSensorWait)
-                    {
-                        log<level::WARNING>(
-                            fmt::format(
-                                "Manager::findAndCreateObjects(): OCC{} Active sensor not available",
-                                obj->getOccInstanceID())
-                                .c_str());
-                        tracedSensorWait = true;
-                    }
-                    activeSensorAvailable = false;
-                    break;
+                    log<level::INFO>(
+                        "Manager::findAndCreateObjects(): Host is running");
+                    tracedHostWait = false;
                 }
-                else
-                {
-                    if (!obj->occActive())
-                    {
-                        log<level::INFO>(
-                            fmt::format(
-                                "Manager::findAndCreateObjects(): OCC{} active:{}",
-                                obj->getOccInstanceID(), isActive)
-                                .c_str());
-                        obj->occActive(isActive);
-                    }
-                    // else a PLDM event came back indicating active state
-                }
-            }
-
-            if (activeSensorAvailable)
-            {
-                // Disable the discovery timer
-                discoverTimer.reset();
-
-                log<level::INFO>(
-                    "Manager::findAndCreateObjects(): OCC Active sensors are available");
-                tracedSensorWait = false;
+                checkAllActiveSensors();
             }
             else
             {
-                if (!tracedSensorWait)
+                if (!tracedHostWait)
                 {
                     log<level::INFO>(
-                        "Manager::findAndCreateObjects(): Waiting for OCC Active sensor to become available");
-                    tracedSensorWait = true;
+                        "Manager::findAndCreateObjects(): Waiting for host to start");
+                    tracedHostWait = true;
                 }
                 discoverTimer->restartOnce(30s);
             }
@@ -181,6 +144,68 @@ void Manager::findAndCreateObjects()
         discoverTimer->restartOnce(10s);
     }
 #endif
+}
+
+void Manager::checkAllActiveSensors()
+{
+    static bool activeSensorAvailable = false;
+    static bool tracedSensorWait = false;
+    bool isActive = false;
+
+    // Check if all occActive sensors are available
+    activeSensorAvailable = true;
+    for (auto& obj : statusObjects)
+    {
+        const bool found =
+            pldmHandle->checkActiveSensor(obj->getOccInstanceID(), isActive);
+        if ((!found) && (!obj->occActive()))
+        {
+            if (!tracedSensorWait)
+            {
+                log<level::WARNING>(
+                    fmt::format(
+                        "Manager::checkAllActiveSensors(): OCC{} Active sensor not available",
+                        obj->getOccInstanceID())
+                        .c_str());
+                tracedSensorWait = true;
+            }
+            activeSensorAvailable = false;
+            break;
+        }
+        else
+        {
+            if (!obj->occActive())
+            {
+                log<level::INFO>(
+                    fmt::format(
+                        "Manager::checkAllActiveSensors(): OCC{} active:{}",
+                        obj->getOccInstanceID(), isActive)
+                        .c_str());
+                obj->occActive(isActive);
+            }
+            // else a PLDM event came back indicating active state
+        }
+    }
+
+    if (activeSensorAvailable)
+    {
+        // Disable the discovery timer
+        discoverTimer.reset();
+
+        log<level::INFO>(
+            "Manager::checkAllActiveSensors(): OCC Active sensors are available");
+        tracedSensorWait = false;
+    }
+    else
+    {
+        if (!tracedSensorWait)
+        {
+            log<level::INFO>(
+                "Manager::checkAllActiveSensors(): Waiting for OCC Active sensor to become available");
+            tracedSensorWait = true;
+        }
+        discoverTimer->restartOnce(30s);
+    }
 }
 
 std::vector<int> Manager::findOCCsInDev()
@@ -318,6 +343,11 @@ void Manager::statusCallBack(instanceID instance, bool status)
                 waitForAllOccsTimer->setEnabled(false);
             }
 #endif
+
+            log<level::INFO>(
+                fmt::format("Manager::statusCallBack(OCC{}, ACTIVE) - {} OCCs",
+                            instance, activeCount)
+                    .c_str());
 
             // Verify master OCC and start presence monitor
             validateOccMaster();
@@ -1144,6 +1174,39 @@ void Manager::validateOccMaster()
     int masterInstance = -1;
     for (auto& obj : statusObjects)
     {
+        if (!obj->occActive())
+        {
+            if (utils::isHostRunning())
+            {
+                // OCC not running yet? Read sensor to be sure.
+                log<level::WARNING>(
+                    fmt::format("validateOccMaster: OCC{} is not active",
+                                obj->getOccInstanceID())
+                        .c_str());
+
+                bool isActive = false;
+                const bool found = pldmHandle->checkActiveSensor(
+                    obj->getOccInstanceID(), isActive);
+                if (found && obj->occActive())
+                {
+                    log<level::INFO>(
+                        fmt::format(
+                            "validateOccMaster: OCC{} is ACTIVE after reading sensor",
+                            obj->getOccInstanceID())
+                            .c_str());
+                }
+            }
+            else
+            {
+                log<level::WARNING>(
+                    fmt::format(
+                        "validateOccMaster: HOST is not running (OCC{})",
+                        obj->getOccInstanceID())
+                        .c_str());
+                return;
+            }
+        }
+
         if (obj->isMasterOcc())
         {
             obj->addPresenceWatchMaster();
@@ -1164,9 +1227,13 @@ void Manager::validateOccMaster()
             }
         }
     }
+
     if (masterInstance < 0)
     {
-        log<level::ERR>("validateOccMaster: Master OCC not found!");
+        log<level::ERR>(
+            fmt::format("validateOccMaster: Master OCC not found! (of {} OCCs)",
+                        statusObjects.size())
+                .c_str());
         // request reset
         statusObjects.front()->deviceError();
     }

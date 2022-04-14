@@ -56,6 +56,30 @@ void dump_hex(const std::vector<std::uint8_t>& data,
         }
     }
 }
+void dump_hex(const uint8_t* data, const unsigned int data_len)
+{
+    unsigned int dump_length = data_len;
+    std::string s;
+    for (uint32_t i = 0; i < dump_length; i++)
+    {
+        if (i % 16 == 0)
+        {
+            s += fmt::format("{:04X}: ", i);
+        }
+        else if (i % 4 == 0)
+        {
+            s += " ";
+        }
+
+        s += fmt::format("{:02X}", data[i]);
+
+        if ((i % 16 == 15) || (i == (dump_length - 1)))
+        {
+            log<level::INFO>(s.c_str());
+            s.clear();
+        }
+    }
+}
 
 OccCommand::OccCommand(uint8_t instance, const char* path) :
     occInstance(instance), path(path),

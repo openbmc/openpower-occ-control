@@ -197,6 +197,9 @@ class Interface
      */
     uint8_t sbeMaintenanceStatePosition = 0;
 
+    /** @brief Instance/sequence number for PLDM messages */
+    uint8_t pldmMessageInstance = 1;
+
     /** @brief When the OCC state changes host sends PlatformEventMessage
      *         StateSensorEvent, this function processes the D-Bus signal
      *         with the sensor event information and invokes the callback
