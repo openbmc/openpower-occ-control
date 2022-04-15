@@ -1,0 +1,165 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e78c1743_745f1913",
+        "filename": "powermode.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 908,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-04-15T13:51:31Z",
+      "side": 1,
+      "message": "can remove this",
+      "range": {
+        "startLine": 903,
+        "startChar": 0,
+        "endLine": 908,
+        "endChar": 71
+      },
+      "revId": "2fb04d0e4fa9b0424bf7ed29454f5253a189b82c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ee809f89_a0f74cb5",
+        "filename": "powermode.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 966,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-04-15T13:51:31Z",
+      "side": 1,
+      "message": "fyi there\u0027s a helper library called sdeventplus that provides C++ APIs for all of the event stuff but since this code was already using the C calls this is fine.",
+      "range": {
+        "startLine": 966,
+        "startChar": 13,
+        "endLine": 966,
+        "endChar": 28
+      },
+      "revId": "2fb04d0e4fa9b0424bf7ed29454f5253a189b82c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7a5c5ec8_ba6b9985",
+        "filename": "powermode.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 976,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-04-15T13:51:31Z",
+      "side": 1,
+      "message": "can remove\n\nalso just FYI internal failure PELs are always informational",
+      "range": {
+        "startLine": 974,
+        "startChar": 6,
+        "endLine": 976,
+        "endChar": 60
+      },
+      "revId": "2fb04d0e4fa9b0424bf7ed29454f5253a189b82c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "629bd6df_7b882021",
+        "filename": "powermode.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1026,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-04-15T13:51:31Z",
+      "side": 1,
+      "message": "lowercase",
+      "range": {
+        "startLine": 1026,
+        "startChar": 13,
+        "endLine": 1026,
+        "endChar": 14
+      },
+      "revId": "2fb04d0e4fa9b0424bf7ed29454f5253a189b82c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5dbaba71_c8e5c87b",
+        "filename": "powermode.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1044,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-04-15T13:51:31Z",
+      "side": 1,
+      "message": "can remove",
+      "range": {
+        "startLine": 1039,
+        "startChar": 2,
+        "endLine": 1044,
+        "endChar": 75
+      },
+      "revId": "2fb04d0e4fa9b0424bf7ed29454f5253a189b82c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f15f2cc9_8a5b6b5a",
+        "filename": "powermode.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1061,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-04-15T13:51:31Z",
+      "side": 1,
+      "message": "as I mentioned before, can just do \u003d\u003d \u00272\u0027",
+      "range": {
+        "startLine": 1061,
+        "startChar": 35,
+        "endLine": 1061,
+        "endChar": 80
+      },
+      "revId": "2fb04d0e4fa9b0424bf7ed29454f5253a189b82c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "91ba57d1_39e2c152",
+        "filename": "powermode.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1066,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-04-15T13:51:31Z",
+      "side": 1,
+      "message": "if you want, it\u0027s OK if you set it to active if it already is, because the generated code also checks it:\n\nauto Status::occActive(bool value, bool skipSignal) -\u003e  bool\n{\n    if (_occActive !\u003d value)",
+      "range": {
+        "startLine": 1066,
+        "startChar": 39,
+        "endLine": 1066,
+        "endChar": 50
+      },
+      "revId": "2fb04d0e4fa9b0424bf7ed29454f5253a189b82c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
