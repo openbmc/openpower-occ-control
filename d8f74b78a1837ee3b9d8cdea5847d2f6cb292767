@@ -33,6 +33,24 @@
       "message": "at least add a comment that says that this should only ever be a 2 or a 3 and not a 6 or a 7.\n\nI\u0027ll defer to Eddie if this is safe to do based on what the driver could return",
       "revId": "d8f74b78a1837ee3b9d8cdea5847d2f6cb292767",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "59f4e075_d52e3168",
+        "filename": "powermode.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 1036,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2022-04-18T16:33:44Z",
+      "side": 1,
+      "message": "Driver will directly return ips status field as string representing an integer (though stored as a u8 in the driver). So this looks fine to me.",
+      "parentUuid": "811138e2_89a1f141",
+      "revId": "d8f74b78a1837ee3b9d8cdea5847d2f6cb292767",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
