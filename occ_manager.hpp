@@ -383,9 +383,14 @@ struct Manager
         {"16", "fans_a_power"},    {"17", "fans_b_power"},
         {"18", "storage_a_power"}, {"19", "storage_b_power"},
         {"23", "mem_cache_power"}, {"25", "p0_mem_0_power"},
-        {"26", "p0_mem_1_power"},  {"27", "p0_mem_2_power"}};
+        {"26", "p0_mem_1_power"},  {"27", "p0_mem_2_power"},
+        {"35", "pcie_DCM0_power"}, {"36", "pcie_DCM1_power"},
+        {"37", "pcie_DCM2_power"}, {"38", "pcie_DCM3_power"},
+        {"39", "io_DCM0_power"},   {"40", "io_DCM1_power"},
+        {"41", "io_DCM2_power"},   {"42", "io_DCM3_power"},
+        {"43", "avdd_total_power"}};
 
-    /** @brief The dimm temperature sensor names map */
+    /** @brief The dimm temperature sensor names map  */
     const std::map<uint32_t, std::string> dimmTempSensorName = {
         {internalMemCtlr, "_intmb_temp"},
         {dimm, "_dram_temp"},
