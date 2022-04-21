@@ -258,8 +258,11 @@ class PowerMode : public ModeInterface, public IpsInterface
                        EventPtr& event
 #endif
                        ) :
-        ModeInterface(utils::getBus(), modePath, false),
-        IpsInterface(utils::getBus(), ipsPath, false), manager(managerRef),
+        ModeInterface(utils::getBus(), modePath,
+                      ModeInterface::action::emit_no_signals),
+        IpsInterface(utils::getBus(), ipsPath,
+                     IpsInterface::action::emit_no_signals),
+        manager(managerRef),
         pmodeMatch(utils::getBus(),
                    sdbusplus::bus::match::rules::propertiesChanged(
                        PMODE_PATH, PMODE_INTERFACE),
