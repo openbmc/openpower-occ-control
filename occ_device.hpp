@@ -46,9 +46,8 @@ class Device
      */
     Device(EventPtr& event, const fs::path& path, Manager& manager,
            Status& status, unsigned int instance = 0) :
-        config(getPathBack(path)),
-        devPath(path), instance(instance), statusObject(status),
-        managerObject(manager),
+        devPath(path),
+        instance(instance), statusObject(status), managerObject(manager),
         error(event, path / "occ_error",
               std::bind(std::mem_fn(&Device::errorCallback), this,
                         std::placeholders::_1)),
@@ -82,32 +81,11 @@ class Device
         // Nothing to do here
     }
 
-    /** @brief Binds device to the OCC driver */
-    inline void bind()
-    {
-        // Bind the device
-        return write(bindPath, config);
-    }
-
-    /** @brief Un-binds device from the OCC driver */
-    inline void unBind()
-    {
-        // Unbind the device
-        return write(unBindPath, config);
-    }
-
-    /** @brief Returns if device is already bound.
+    /** @brief Sets the device active or inactive
      *
-     *  On device bind, a soft link by the name $config
-     *  gets created in OCC_HWMON_PATH and gets removed
-     *  on unbind
-     *
-     *  @return true if bound, else false
+     * @param[in] active - Indicates whether or not to set the device active
      */
-    inline bool bound() const
-    {
-        return fs::exists(OCC_HWMON_PATH + config);
-    }
+    void setActive(bool active);
 
     /** @brief Starts to monitor for errors
      *
@@ -182,29 +160,18 @@ class Device
      */
     static std::string getPathBack(const fs::path& path);
 
+    /** @brief Returns true if the device is active */
+    bool active() const;
+
     /** @brief Returns true if device represents the master OCC */
     bool master() const;
 
   private:
-    /** @brief Config value to be used to do bind and unbind */
-    const std::string config;
-
     /** @brief This directory contains the error files */
     const fs::path devPath;
 
     /** @brief OCC instance ID */
     const unsigned int instance;
-
-    /**  @brief To bind the device to the OCC driver, do:
-     *
-     *    Write occ<#>-dev0 to: /sys/bus/platform/drivers/occ-hwmon/bind
-     */
-    static fs::path bindPath;
-
-    /**  @brief To un-bind the device from the OCC driver, do:
-     *    Write occ<#>-dev0 to: /sys/bus/platform/drivers/occ-hwmon/unbind
-     */
-    static fs::path unBindPath;
 
     /**  Store the associated Status instance */
     Status& statusObject;
@@ -228,6 +195,13 @@ class Device
     Error throttleProcTemp;
     Error throttleProcPower;
     Error throttleMemTemp;
+
+    /** @brief file reader to read a binary string ("1" or "0")
+     *
+     * @param[in] fileName - Name of file to be read
+     * @return             - The value returned by reading the file
+     */
+    bool readBinary(const std::string& fileName) const;
 
     /** @brief file writer to achieve bind and unbind
      *
