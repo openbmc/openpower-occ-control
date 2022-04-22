@@ -15,8 +15,21 @@ namespace occ
 
 using namespace phosphor::logging;
 
-fs::path Device::bindPath = fs::path(OCC_HWMON_PATH) / "bind";
-fs::path Device::unBindPath = fs::path(OCC_HWMON_PATH) / "unbind";
+void Device::setActive(bool active)
+{
+    std::string data = active ? "1" : "0";
+    auto activeFile = devPath / "occ_active";
+    try
+    {
+        write(activeFile, data);
+    }
+    catch (const std::exception& e)
+    {
+        log<level::ERR>(fmt::format("Failed to set {} active: {}",
+                                    devPath.c_str(), e.what())
+                            .c_str());
+    }
+}
 
 std::string Device::getPathBack(const fs::path& path)
 {
@@ -38,20 +51,30 @@ std::string Device::getPathBack(const fs::path& path)
     }
 }
 
+bool Device::active() const
+{
+    return readBinary("occ_active");
+}
+
 bool Device::master() const
 {
-    int master;
-    auto masterFile = devPath / "occ_master";
-    std::ifstream file(masterFile, std::ios::in);
+    return readBinary("occ_master");
+}
+
+bool Device::readBinary(const std::string& fileName) const
+{
+    int v;
+    auto filePath = devPath / fileName;
+    std::ifstream file(filePath, std::ios::in);
 
     if (!file)
     {
         return false;
     }
 
-    file >> master;
+    file >> v;
     file.close();
-    return (master != 0);
+    return v != 0;
 }
 
 void Device::errorCallback(bool error)

@@ -31,8 +31,8 @@ bool Status::occActive(bool value)
                              .c_str());
         if (value)
         {
-            // Bind the device
-            device.bind();
+            // Set the device active
+            device.setActive(true);
 
             // Start watching for errors
             addErrorWatch();
@@ -78,11 +78,11 @@ bool Status::occActive(bool value)
             // Stop watching for errors
             removeErrorWatch();
 
-            // Do the unbind.
-            device.unBind();
+            // Set the device inactive
+            device.setActive(false);
         }
     }
-    else if (value && !device.bound())
+    else if (value && !device.active())
     {
         // Existing error watch is on a dead file descriptor.
         removeErrorWatch();
@@ -96,12 +96,12 @@ bool Status::occActive(bool value)
          * later do FSI rescan, we will end up with occActive = true and device
          * NOT bound. Lets correct that situation here.
          */
-        device.bind();
+        device.setActive(true);
 
         // Add error watch again
         addErrorWatch();
     }
-    else if (!value && device.bound())
+    else if (!value && device.active())
     {
         removeErrorWatch();
 
@@ -110,7 +110,7 @@ bool Status::occActive(bool value)
         // with the host on, since the initial OCC driver probe will discover
         // the OCCs), this application needs to be able to unbind the device
         // when we get the OCC inactive signal.
-        device.unBind();
+        device.setActive(false);
     }
     return Base::Status::occActive(value);
 }
