@@ -75,6 +75,16 @@ std::vector<uint8_t> PassThrough::send(std::vector<uint8_t> command)
 {
     std::vector<uint8_t> response{};
 
+    if (!occActive)
+    {
+        log<level::ERR>(
+            fmt::format(
+                "PassThrough::send() - OCC{} not active, command not sent",
+                occInstance)
+                .c_str());
+        return response;
+    }
+
     log<level::INFO>(
         fmt::format("PassThrough::send() Sending 0x{:02X} command to OCC{}",
                     command.front(), occInstance)

@@ -172,6 +172,12 @@ fs::path PowerCap::getPcapFilename(const std::regex& expr)
 // This will trigger the driver to send the cap to the OCC
 void PowerCap::writeOcc(uint32_t pcapValue)
 {
+    if (!occStatus.occActive())
+    {
+        // OCC not running, skip update
+        return;
+    }
+
     // Build the hwmon string to write the user power cap
     fs::path fileName = getPcapFilename(std::regex{"power\\d+_cap_user$"});
     if (fileName.empty())

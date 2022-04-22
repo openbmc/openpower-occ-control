@@ -283,8 +283,6 @@ void Manager::createObjects(const std::string& occ)
 #ifdef POWER10
         // Set the master OCC on the PowerMode object
         pmode->setMasterOcc(path);
-        // Update power cap bounds
-        pcap->updatePcapBounds();
 #endif
     }
 
