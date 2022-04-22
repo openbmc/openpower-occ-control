@@ -235,6 +235,8 @@ class Interface
      */
     sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic> pldmRspTimer;
 
+    std::set<uint8_t> outstandingHResets;
+
     /** @brief Callback when PLDM response has not been received within the
      * timeout period.
      */

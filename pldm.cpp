@@ -205,21 +205,31 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
 
         if (sensorEntry != sensorToSBEInstance.end())
         {
-            if (eventState == static_cast<EventState>(SBE_HRESET_NOT_READY))
+            const uint8_t instance = sensorEntry->second;
+            auto match = std::find(outstandingHResets.begin(),
+                                   outstandingHResets.end(), instance);
+            if (match != outstandingHResets.end())
             {
-                log<level::INFO>(
-                    fmt::format("pldm: HRESET is NOT READY (OCC{})",
-                                sensorEntry->second)
-                        .c_str());
+                outstandingHResets.erase(match);
+                if (eventState == static_cast<EventState>(SBE_HRESET_NOT_READY))
+                {
+                    log<level::INFO>(
+                        fmt::format("pldm: HRESET is NOT READY (OCC{})",
+                                    instance)
+                            .c_str());
+                }
+                else if (eventState ==
+                         static_cast<EventState>(SBE_HRESET_READY))
+                {
+                    sbeCallBack(instance, true);
+                }
+                else if (eventState ==
+                         static_cast<EventState>(SBE_HRESET_FAILED))
+                {
+                    sbeCallBack(instance, false);
+                }
             }
-            else if (eventState == static_cast<EventState>(SBE_HRESET_READY))
-            {
-                sbeCallBack(sensorEntry->second, true);
-            }
-            else if (eventState == static_cast<EventState>(SBE_HRESET_FAILED))
-            {
-                sbeCallBack(sensorEntry->second, false);
-            }
+            // else request was not from us
         }
     }
 }
@@ -453,6 +463,7 @@ void Interface::sendHRESET(open_power::occ::instanceID sbeInstanceId)
 
         // Send request to issue HRESET of SBE (ignore response)
         sendPldm(request, sbeInstanceId, false);
+        outstandingHResets.insert(sbeInstanceId);
     }
     else
     {
