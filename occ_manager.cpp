@@ -826,6 +826,20 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
                 fmt::format("readTempSensors: Failed reading {}, errno = {}",
                             filePathString + inputSuffix, e.code().value())
                     .c_str());
+
+            // if errno == EAGAIN(Resource temporarily unavailable) then set
+            // temp to 0, to avoid using old temp, and affecting FAN Control.
+            if (e.code().value() == EAGAIN)
+            {
+                dbus::OccDBusSensors::getOccDBus().setValue(sensorPath, 0);
+
+                dbus::OccDBusSensors::getOccDBus().setOperationalStatus(
+                    sensorPath, true);
+            }
+            // else the errno would be something like
+            //     EBADF(Bad file descriptor)
+            // or ENOENT(No such file or directory)
+
             continue;
         }
 
