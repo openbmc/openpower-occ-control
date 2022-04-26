@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4a898956_265f7470",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 836,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-04-26T21:05:20Z",
+      "side": 1,
+      "message": "Do we still need to run lines 853-859?  You could just set tempValue to 0 here and fall through (the else leg can do the continue)",
+      "revId": "f3caf63dcca9b35ce4fbf9ddaf40828bd70379cf",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a7118ebc_0f93c7ea",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 839,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-04-26T21:05:20Z",
+      "side": 1,
+      "message": "Wouldn\u0027t we want to trace these errors, since they indicate an issue on the BMC side?  If so, we probably would want to throttle (only trace first or something)",
+      "revId": "f3caf63dcca9b35ce4fbf9ddaf40828bd70379cf",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
