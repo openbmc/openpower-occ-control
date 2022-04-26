@@ -420,8 +420,9 @@ void Status::occReadStateNow()
         {
             // Trace OCC state changes
             log<level::INFO>(
-                fmt::format("Status::readOccState: OCC{} state 0x{:02X}",
-                            instance, state)
+                fmt::format(
+                    "Status::readOccState: OCC{} state 0x{:02X} (lastState: 0x{:02X})",
+                    instance, state, lastState)
                     .c_str());
             lastState = state;
 #ifdef POWER10
@@ -500,11 +501,14 @@ void Status::occReadStateNow()
         else
         {
             // else this failed due to state not valid.
-            log<level::ERR>(
-                fmt::format(
-                    "Status::readOccState: OCC{} Invalid state 0x{:02X}",
-                    instance, state)
-                    .c_str());
+            if (state != lastState)
+            {
+                log<level::ERR>(
+                    fmt::format(
+                        "Status::readOccState: OCC{} Invalid state 0x{:02X} (last state: 0x{:02X})",
+                        instance, state, lastState)
+                        .c_str());
+            }
         }
 
 #ifdef READ_OCC_SENSORS

@@ -40,17 +40,20 @@ std::string Device::getPathBack(const fs::path& path)
 
 bool Device::master() const
 {
-    int master;
-    auto masterFile = devPath / "occ_master";
-    std::ifstream file(masterFile, std::ios::in);
-
-    if (!file)
+    int master = 0;
+    if (statusObject.occActive())
     {
-        return false;
-    }
+        auto masterFile = devPath / "occ_master";
+        std::ifstream file(masterFile, std::ios::in);
 
-    file >> master;
-    file.close();
+        if (!file)
+        {
+            return false;
+        }
+
+        file >> master;
+        file.close();
+    }
     return (master != 0);
 }
 

@@ -488,8 +488,8 @@ bool Interface::getMctpInstanceId(uint8_t& instanceId)
     }
     catch (const sdbusplus::exception::exception& e)
     {
-        log<level::ERR>("pldm: GetInstanceId returned error",
-                        entry("ERROR=%s", e.what()));
+        log<level::ERR>(
+            fmt::format("pldm: GetInstanceId failed: {}", e.what()).c_str());
         return false;
     }
 
@@ -543,7 +543,7 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
 
         // start timer waiting for the response
         using namespace std::literals::chrono_literals;
-        pldmRspTimer.restartOnce(10s);
+        pldmRspTimer.restartOnce(8s);
 
         // Wait for response/timeout
     }

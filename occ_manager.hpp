@@ -224,6 +224,10 @@ struct Manager
      * come online */
     bool waitingForAllOccActiveSensors = false;
 
+    /** @brief Set containing intance numbers of any OCCs that became active
+     *         while waiting for status objects to be created */
+    std::set<uint8_t> queuedActiveState;
+
     /**
      * @brief The timer to be used once the OCC goes active.  When it expires,
      *        a POLL command will be sent to the OCC and then timer restarted.
