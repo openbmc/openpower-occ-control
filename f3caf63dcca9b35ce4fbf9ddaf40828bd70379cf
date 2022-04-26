@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5e663623_eedc05bf",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-04-26T21:40:21Z",
+      "side": 1,
+      "message": "fan control isn\u0027t able to check for a \u00270\u0027 and do something special, so I assume a zero is just a low temp that is basically a no-op?\n\nOn witherspoon, an errno 11 would cause the sensor to be removed from dbus so fan control would also ignore it.",
+      "revId": "f3caf63dcca9b35ce4fbf9ddaf40828bd70379cf",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "4a898956_265f7470",
         "filename": "occ_manager.cpp",
         "patchSetId": 3
