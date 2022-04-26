@@ -63,17 +63,19 @@ bool Device::master() const
 
 bool Device::readBinary(const std::string& fileName) const
 {
-    int v;
-    auto filePath = devPath / fileName;
-    std::ifstream file(filePath, std::ios::in);
-
-    if (!file)
+    int v = 0;
+    if (statusObject.occActive())
     {
-        return false;
-    }
+        auto filePath = devPath / fileName;
+        std::ifstream file(filePath, std::ios::in);
+        if (!file)
+        {
+            return false;
+        }
 
-    file >> v;
-    file.close();
+        file >> v;
+        file.close();
+    }
     return v == 1;
 }
 

@@ -168,18 +168,33 @@ void Manager::checkAllActiveSensors()
         // If active sensor is already true, then no need to query sensor
         if (!obj->occActive())
         {
-            allActiveSensorAvailable = false;
-            if (!tracedSensorWait)
+            auto instance = obj->getOccInstanceID();
+            // Check if sensor was queued while waiting for discovery
+            auto match = queuedActiveState.find(instance);
+            if (match != queuedActiveState.end())
             {
                 log<level::INFO>(
                     fmt::format(
-                        "Manager::checkAllActiveSensors(): Waiting on OCC{} Active sensor",
-                        obj->getOccInstanceID())
+                        "checkAllActiveSensors(): OCC{} is ACTIVE (queued)",
+                        instance)
                         .c_str());
-                tracedSensorWait = true;
+                obj->occActive(true);
             }
-            pldmHandle->checkActiveSensor(obj->getOccInstanceID());
-            break;
+            else
+            {
+                allActiveSensorAvailable = false;
+                if (!tracedSensorWait)
+                {
+                    log<level::INFO>(
+                        fmt::format(
+                            "checkAllActiveSensors(): Waiting on OCC{} Active sensor",
+                            instance)
+                            .c_str());
+                    tracedSensorWait = true;
+                }
+                pldmHandle->checkActiveSensor(obj->getOccInstanceID());
+                break;
+            }
         }
     }
 
@@ -188,9 +203,10 @@ void Manager::checkAllActiveSensors()
         // All sensors were found, disable the discovery timer
         discoverTimer.reset();
         waitingForAllOccActiveSensors = false;
+        queuedActiveState.clear();
 
         log<level::INFO>(
-            "Manager::checkAllActiveSensors(): OCC Active sensors are available");
+            "checkAllActiveSensors(): OCC Active sensors are available");
         tracedSensorWait = false;
     }
     else
@@ -199,10 +215,10 @@ void Manager::checkAllActiveSensors()
         if (!tracedSensorWait)
         {
             log<level::INFO>(
-                "Manager::checkAllActiveSensors(): Waiting for OCC Active sensors to become available");
+                "checkAllActiveSensors(): Waiting for OCC Active sensors to become available");
             tracedSensorWait = true;
         }
-        discoverTimer->restartOnce(30s);
+        discoverTimer->restartOnce(10s);
     }
 }
 #endif
@@ -317,7 +333,7 @@ void Manager::statusCallBack(instanceID instance, bool status)
         if (activeCount == 1)
         {
             // First OCC went active (allow some time for all OCCs to go active)
-            waitForAllOccsTimer->restartOnce(30s);
+            waitForAllOccsTimer->restartOnce(60s);
         }
 #endif
 
@@ -452,6 +468,20 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
                 "Manager::updateOCCActive: No status object to update for OCC{} (active={})",
                 instance, status)
                 .c_str());
+        if (status == true)
+        {
+            // OCC went active
+            queuedActiveState.insert(instance);
+        }
+        else
+        {
+            auto match = queuedActiveState.find(instance);
+            if (match != queuedActiveState.end())
+            {
+                // OCC was disabled
+                queuedActiveState.erase(match);
+            }
+        }
         return false;
     }
 }
@@ -1167,20 +1197,35 @@ void Manager::validateOccMaster()
     int masterInstance = -1;
     for (auto& obj : statusObjects)
     {
+        auto instance = obj->getOccInstanceID();
 #ifdef POWER10
         if (!obj->occActive())
         {
             if (utils::isHostRunning())
             {
-                // OCC does not appear to be active yet, check active sensor
-                pldmHandle->checkActiveSensor(obj->getOccInstanceID());
-                if (obj->occActive())
+                // Check if sensor was queued while waiting for discovery
+                auto match = queuedActiveState.find(instance);
+                if (match != queuedActiveState.end())
                 {
                     log<level::INFO>(
                         fmt::format(
-                            "validateOccMaster: OCC{} is ACTIVE after reading sensor",
-                            obj->getOccInstanceID())
+                            "validateOccMaster: OCC{} is ACTIVE (queued)",
+                            instance)
                             .c_str());
+                    obj->occActive(true);
+                }
+                else
+                {
+                    // OCC does not appear to be active yet, check active sensor
+                    pldmHandle->checkActiveSensor(instance);
+                    if (obj->occActive())
+                    {
+                        log<level::INFO>(
+                            fmt::format(
+                                "validateOccMaster: OCC{} is ACTIVE after reading sensor",
+                                instance)
+                                .c_str());
+                    }
                 }
             }
             else
@@ -1188,7 +1233,7 @@ void Manager::validateOccMaster()
                 log<level::WARNING>(
                     fmt::format(
                         "validateOccMaster: HOST is not running (OCC{})",
-                        obj->getOccInstanceID())
+                        instance)
                         .c_str());
                 return;
             }
@@ -1201,14 +1246,14 @@ void Manager::validateOccMaster()
 
             if (masterInstance == -1)
             {
-                masterInstance = obj->getOccInstanceID();
+                masterInstance = instance;
             }
             else
             {
                 log<level::ERR>(
                     fmt::format(
                         "validateOccMaster: Multiple OCC masters! ({} and {})",
-                        masterInstance, obj->getOccInstanceID())
+                        masterInstance, instance)
                         .c_str());
                 // request reset
                 obj->deviceError();
