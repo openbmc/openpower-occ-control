@@ -113,10 +113,11 @@ void Manager::findAndCreateObjects()
                     createObjects(std::string(OCC_NAME) + std::to_string(id));
                 }
                 statusObjCreated = true;
+                waitingForAllOccActiveSensors = true;
             }
         }
 
-        if (statusObjCreated)
+        if (statusObjCreated && waitingForAllOccActiveSensors)
         {
             static bool tracedHostWait = false;
             if (utils::isHostRunning())
@@ -127,7 +128,6 @@ void Manager::findAndCreateObjects()
                         "Manager::findAndCreateObjects(): Host is running");
                     tracedHostWait = false;
                 }
-                waitingForAllOccActiveSensors = true;
                 checkAllActiveSensors();
             }
             else
@@ -398,7 +398,10 @@ void Manager::statusCallBack(instanceID instance, bool status)
 #ifdef POWER10
     if (waitingForAllOccActiveSensors)
     {
-        checkAllActiveSensors();
+        if (utils::isHostRunning())
+        {
+            checkAllActiveSensors();
+        }
     }
 #endif
 }

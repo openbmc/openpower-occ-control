@@ -34,6 +34,9 @@ bool Status::occActive(bool value)
             // Set the device active
             device.setActive(true);
 
+            // Update the OCC active sensor
+            Base::Status::occActive(value);
+
             // Start watching for errors
             addErrorWatch();
 
@@ -45,9 +48,6 @@ bool Status::occActive(bool value)
                 // Update powercap bounds from OCC
                 manager.updatePcapBounds();
             }
-
-            // Update the OCC active sensor before notifying Manager
-            Base::Status::occActive(value);
 
             // Call into Manager to let know that we have bound
             if (this->managerCallBack)
