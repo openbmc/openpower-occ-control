@@ -24,6 +24,30 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "01fec9f4_3224c010",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 4
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-05-03T16:47:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "778fa87b_08f05e41",
+      "range": {
+        "startLine": 7,
+        "startChar": 0,
+        "endLine": 7,
+        "endChar": 21
+      },
+      "revId": "d4b2e91a2180c9b79d5299c6fddfece59cb22656",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "40e0984c_d8eb003c",
@@ -41,6 +65,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b133e88c_45344193",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 4
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-05-03T16:47:11Z",
+      "side": 1,
+      "message": "OK,, re-formated in the gerrit tool directly... I hope that works for you.",
+      "parentUuid": "40e0984c_d8eb003c",
+      "revId": "d4b2e91a2180c9b79d5299c6fddfece59cb22656",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "974a9afa_8ec59820",
@@ -54,6 +96,24 @@
       "writtenOn": "2022-05-02T14:29:08Z",
       "side": 1,
       "message": "not sure you quite answered my question - Fan control can\u0027t do anything special with a \u00270\u0027, so is just treating it as zero degrees C enough?\n\n(also, this sentence doesn\u0027t quite read right as it is now)",
+      "revId": "d4b2e91a2180c9b79d5299c6fddfece59cb22656",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "681db12e_04df1a0f",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 4
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-05-03T16:47:11Z",
+      "side": 1,
+      "message": "Treating the temp as zero is ok. It will not prevent the fans from staying high. and will use the other temps to get the True Fan Speed.  If the other temps go down, then the fans would go down.",
+      "parentUuid": "974a9afa_8ec59820",
       "revId": "d4b2e91a2180c9b79d5299c6fddfece59cb22656",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
