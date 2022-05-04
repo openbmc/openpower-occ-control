@@ -201,6 +201,25 @@ class Status : public Interface
      */
     CmdStatus sendAmbient(const uint8_t ambient = 0xFF,
                           const uint16_t altitude = 0xFFFF);
+
+    /** @brief Set flag indicating if PLDM sensor has been received
+     *
+     *  @param[in] wasReceived - true if PLDM sensor was read
+     */
+    void setPldmSensorReceived(const bool wasReceived)
+    {
+        pldmSensorStateReceived = wasReceived;
+    }
+
+    /** @brief Read flag indicating if PLDM sensor has been read
+     *
+     *  @return true if sensor has been read
+     */
+    bool getPldmSensorReceived()
+    {
+        return pldmSensorStateReceived;
+    }
+
 #endif // POWER10
 
     /** @brief Return the HWMON path for this OCC
@@ -265,6 +284,9 @@ class Status : public Interface
 
     /** @brief hwmon path for this OCC */
     fs::path hwmonPath;
+
+    /** @brief flag indicating if the OCC sensor has been received */
+    bool pldmSensorStateReceived = false;
 
     /** @brief Callback function on host control signals
      *

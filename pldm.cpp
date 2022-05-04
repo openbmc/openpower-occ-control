@@ -710,6 +710,16 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
             fmt::format("pldmRspCallback: OCC{} is RUNNING", instance).c_str());
         pldmIface->callBack(instance, true);
     }
+    else if (occSensorState ==
+             PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_DORMANT)
+    {
+        log<level::INFO>(
+            fmt::format(
+                "pldmRspCallback: OCC{} has now STOPPED and system is in SAFE MODE",
+                instance)
+                .c_str());
+        pldmIface->callBack(instance, false);
+    }
     else
     {
         log<level::INFO>(

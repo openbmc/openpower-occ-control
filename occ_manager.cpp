@@ -165,8 +165,7 @@ void Manager::checkAllActiveSensors()
     allActiveSensorAvailable = true;
     for (auto& obj : statusObjects)
     {
-        // If active sensor is already true, then no need to query sensor
-        if (!obj->occActive())
+        if (!obj->getPldmSensorReceived())
         {
             auto instance = obj->getOccInstanceID();
             // Check if sensor was queued while waiting for discovery
@@ -462,6 +461,7 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
 
     if (obj != statusObjects.end())
     {
+        (*obj)->setPldmSensorReceived(true);
         return (*obj)->occActive(status);
     }
     else
