@@ -165,34 +165,38 @@ void Manager::checkAllActiveSensors()
     allActiveSensorAvailable = true;
     for (auto& obj : statusObjects)
     {
-        if (!obj->getPldmSensorReceived())
+        if (!obj->occActive())
         {
-            auto instance = obj->getOccInstanceID();
-            // Check if sensor was queued while waiting for discovery
-            auto match = queuedActiveState.find(instance);
-            if (match != queuedActiveState.end())
+            if (!obj->getPldmSensorReceived())
             {
-                log<level::INFO>(
-                    fmt::format(
-                        "checkAllActiveSensors(): OCC{} is ACTIVE (queued)",
-                        instance)
-                        .c_str());
-                obj->occActive(true);
-            }
-            else
-            {
-                allActiveSensorAvailable = false;
-                if (!tracedSensorWait)
+                auto instance = obj->getOccInstanceID();
+                // Check if sensor was queued while waiting for discovery
+                auto match = queuedActiveState.find(instance);
+                if (match != queuedActiveState.end())
                 {
+                    queuedActiveState.erase(match);
                     log<level::INFO>(
                         fmt::format(
-                            "checkAllActiveSensors(): Waiting on OCC{} Active sensor",
+                            "checkAllActiveSensors(): OCC{} is ACTIVE (queued)",
                             instance)
                             .c_str());
-                    tracedSensorWait = true;
+                    obj->occActive(true);
                 }
-                pldmHandle->checkActiveSensor(obj->getOccInstanceID());
-                break;
+                else
+                {
+                    allActiveSensorAvailable = false;
+                    if (!tracedSensorWait)
+                    {
+                        log<level::INFO>(
+                            fmt::format(
+                                "checkAllActiveSensors(): Waiting on OCC{} Active sensor",
+                                instance)
+                                .c_str());
+                        tracedSensorWait = true;
+                    }
+                    pldmHandle->checkActiveSensor(obj->getOccInstanceID());
+                    break;
+                }
             }
         }
     }
@@ -200,12 +204,18 @@ void Manager::checkAllActiveSensors()
     if (allActiveSensorAvailable)
     {
         // All sensors were found, disable the discovery timer
-        discoverTimer.reset();
-        waitingForAllOccActiveSensors = false;
-        queuedActiveState.clear();
+        if (discoverTimer->isEnabled())
+        {
+            discoverTimer.reset();
+        }
 
-        log<level::INFO>(
-            "checkAllActiveSensors(): OCC Active sensors are available");
+        if (waitingForAllOccActiveSensors)
+        {
+            log<level::INFO>(
+                "checkAllActiveSensors(): OCC Active sensors are available");
+            waitingForAllOccActiveSensors = false;
+        }
+        queuedActiveState.clear();
         tracedSensorWait = false;
     }
     else
@@ -217,7 +227,10 @@ void Manager::checkAllActiveSensors()
                 "checkAllActiveSensors(): Waiting for OCC Active sensors to become available");
             tracedSensorWait = true;
         }
-        discoverTimer->restartOnce(10s);
+        if (discoverTimer->isEnabled())
+        {
+            discoverTimer->restartOnce(10s);
+        }
     }
 }
 #endif
@@ -1186,12 +1199,10 @@ void Manager::getAmbientData(bool& ambientValid, uint8_t& ambientTemp,
 }
 
 #ifdef POWER10
+// Called when waitForAllOccsTimer expires
+// After the first OCC goes active, this timer will be started (60 seconds)
 void Manager::occsNotAllRunning()
 {
-    // Function will also gets called when occ-control app gets
-    // restarted. (occ active sensors do not change, so the Status
-    // object does not call Manager back for all OCCs)
-
     if (activeCount != statusObjects.size())
     {
         // Not all OCCs went active
@@ -1200,7 +1211,7 @@ void Manager::occsNotAllRunning()
                 "occsNotAllRunning: Active OCC count ({}) does not match expected count ({})",
                 activeCount, statusObjects.size())
                 .c_str());
-        // Procs may be garded, so may not need reset.
+        // Procs may be garded, so may be expected
     }
 
     validateOccMaster();
@@ -1223,6 +1234,7 @@ void Manager::validateOccMaster()
                 auto match = queuedActiveState.find(instance);
                 if (match != queuedActiveState.end())
                 {
+                    queuedActiveState.erase(match);
                     log<level::INFO>(
                         fmt::format(
                             "validateOccMaster: OCC{} is ACTIVE (queued)",
