@@ -382,7 +382,7 @@ void Manager::statusCallBack(instanceID instance, bool status)
         }
 #ifdef READ_OCC_SENSORS
         // Clear OCC sensors
-        setSensorValueToNonFunctional(instance);
+        setSensorValueToNaN(instance);
 #endif
     }
 
@@ -625,7 +625,7 @@ void Manager::pollerTimerExpired()
             // OCC is not running yet
 #ifdef READ_OCC_SENSORS
             auto id = obj->getOccInstanceID();
-            setSensorValueToNonFunctional(id);
+            setSensorValueToNaN(id);
 #endif
             continue;
         }
@@ -803,6 +803,7 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
             continue;
         }
 
+        // NOTE: if OCC sends back 0xFF kernal sets this fault value to 1.
         if (faultValue != 0)
         {
             dbus::OccDBusSensors::getOccDBus().setValue(
@@ -966,7 +967,7 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
     return;
 }
 
-void Manager::setSensorValueToNaN(uint32_t id)
+void Manager::setSensorValueToNaN(uint32_t id) const
 {
     for (const auto& [sensorPath, occId] : existingSensors)
     {
@@ -974,6 +975,9 @@ void Manager::setSensorValueToNaN(uint32_t id)
         {
             dbus::OccDBusSensors::getOccDBus().setValue(
                 sensorPath, std::numeric_limits<double>::quiet_NaN());
+
+            dbus::OccDBusSensors::getOccDBus().setOperationalStatus(sensorPath,
+                                                                    true);
         }
     }
     return;

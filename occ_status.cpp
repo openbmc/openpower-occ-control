@@ -508,7 +508,7 @@ void Status::occReadStateNow()
         }
 
 #ifdef READ_OCC_SENSORS
-        manager.setSensorValueToNonFunctional(instance);
+        manager.setSensorValueToNaN(instance);
 #endif
 
         // See occReadRetries for number of retry attempts.
