@@ -145,6 +145,12 @@ struct Manager
     /** @brief Notify pcap object to update bounds */
     void updatePcapBounds() const;
 
+    /**
+     * @brief Set all sensor values of this OCC to NaN.
+     * @param[in] id - Id of the OCC.
+     * */
+    void setSensorValueToNaN(uint32_t id) const;
+
     /** @brief Set all sensor values of this OCC to NaN and non functional.
      *
      *  @param[in] id - Id of the OCC.
@@ -367,12 +373,6 @@ struct Manager
      * @param[in] id - Id of the OCC.
      * */
     void readPowerSensors(const fs::path& path, uint32_t id);
-
-    /**
-     * @brief Set all sensor values of this OCC to NaN.
-     * @param[in] id - Id of the OCC.
-     * */
-    void setSensorValueToNaN(uint32_t id);
 
     /** @brief Store the existing OCC sensors on D-BUS */
     std::map<std::string, uint32_t> existingSensors;
