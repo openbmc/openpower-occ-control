@@ -1062,6 +1062,18 @@ void PowerMode::analyzeIpsEvent()
 }
 #endif
 
+/*  Set dbus property to SAFE mode(true) or clear(false) only if different */
+void PowerMode::updateDbusSafeMode(const bool safeModeReq)
+{
+    log<level::DEBUG>(
+        fmt::format("PowerMode:updateDbusSafeMode: Update dbus state ({})",
+                    safeModeReq)
+            .c_str());
+
+    // Note; this function checks and only updates if different.
+    Mode::safeMode(safeModeReq);
+}
+
 } // namespace powermode
 
 } // namespace occ
