@@ -95,6 +95,8 @@ struct Manager
                       std::placeholders::_1, std::placeholders::_2),
             std::bind(std::mem_fn(&Manager::sbeHRESETResult), this,
                       std::placeholders::_1, std::placeholders::_2),
+            std::bind(std::mem_fn(&Manager::updateOccSafeMode), this,
+                      std::placeholders::_1),
             event))
 #endif
 #ifdef POWER10
@@ -267,6 +269,11 @@ struct Manager
      *          fails.
      */
     bool updateOCCActive(instanceID instance, bool status);
+
+    /** @brief Callback handler invoked by the PLDM event handler when mode of
+     *         the OCC SAFE MODE is inacted or cleared.
+     */
+    void updateOccSafeMode(bool safeState);
 
     /** @brief Callback handler invoked by PLDM sensor change when
      *         the HRESET succeeds or fails.
