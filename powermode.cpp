@@ -1062,6 +1062,17 @@ void PowerMode::analyzeIpsEvent()
 }
 #endif
 
+/*  Set dbus property to SAFE mode(true) or clear(false) only if different than
+ * last*/
+void PowerMode::updateDbusSafeMode(const bool safeMode)
+{
+    if (SafeModeLast != safeMode)
+    {
+        ModeInterface::setPropertyByName(PMODE_OCC_SAFE, safeMode, true);
+        SafeModeLast = safeMode;
+    }
+}
+
 } // namespace powermode
 
 } // namespace occ

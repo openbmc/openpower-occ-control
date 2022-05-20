@@ -165,6 +165,10 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
                 log<level::INFO>(
                     fmt::format("PLDM: OCC{} is RUNNING", sensorEntry->second)
                         .c_str());
+
+                // Setting safe mode false
+                safeModeCallBack(false);
+
                 callBack(sensorEntry->second, true);
             }
             else if (eventState ==
@@ -185,6 +189,10 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
                         "PLDM: OCC{} has now STOPPED and system is in SAFE MODE",
                         sensorEntry->second)
                         .c_str());
+
+                // Setting safe mode true
+                safeModeCallBack(true);
+
                 callBack(sensorEntry->second, false);
             }
             else
@@ -718,6 +726,10 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
                 "pldmRspCallback: OCC{} has now STOPPED and system is in SAFE MODE",
                 instance)
                 .c_str());
+
+        // Setting safe mode true
+        pldmIface->safeModeCallBack(true);
+
         pldmIface->callBack(instance, false);
     }
     else

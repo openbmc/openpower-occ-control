@@ -35,6 +35,7 @@ using namespace std::literals::string_literals;
 constexpr auto PMODE_PATH = "/xyz/openbmc_project/control/host0/power_mode";
 constexpr auto PMODE_INTERFACE = "xyz.openbmc_project.Control.Power.Mode";
 constexpr auto POWER_MODE_PROP = "PowerMode";
+constexpr auto PMODE_OCC_SAFE = "SafeMode";
 
 constexpr auto PIPS_PATH = "/xyz/openbmc_project/control/host0/power_ips";
 constexpr auto PIPS_INTERFACE =
@@ -331,6 +332,9 @@ class PowerMode : public ModeInterface, public IpsInterface
     void removeIpsWatch();
 #endif
 
+    /** @brief Set dbus property to SAFE Mode(true) or clear SAFE Mode(false)*/
+    void updateDbusSafeMode(const bool safeMode);
+
   private:
     /** @brief OCC manager object */
     const Manager& manager;
@@ -493,6 +497,10 @@ class PowerMode : public ModeInterface, public IpsInterface
 
     /** @brief When the ips status event is received, analyzes it */
     virtual void analyzeIpsEvent();
+
+    /** @brief Last Safe Mode state, to prevent dbus update if no change needed.
+     */
+    bool SafeModeLast = false;
 
   protected:
     /** @brief File descriptor to watch for errors */

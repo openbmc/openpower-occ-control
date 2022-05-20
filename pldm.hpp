@@ -58,9 +58,10 @@ class Interface
     explicit Interface(
         std::function<bool(open_power::occ::instanceID, bool)> callBack,
         std::function<void(open_power::occ::instanceID, bool)> sbeCallBack,
-        EventPtr& event) :
+        std::function<void(bool)> safeModeCallBack, EventPtr& event) :
         callBack(callBack),
-        sbeCallBack(sbeCallBack), event(event),
+        sbeCallBack(sbeCallBack), safeModeCallBack(safeModeCallBack),
+        event(event),
         pldmEventSignal(
             open_power::occ::utils::getBus(),
             MatchRules::type::signal() +
@@ -153,6 +154,11 @@ class Interface
      */
     std::function<void(open_power::occ::instanceID, bool)> sbeCallBack =
         nullptr;
+
+    /** @brief Callback handler to be invoked when the OCC is in SAFE Mode =
+     *         true or when OCCs are in_service = false.
+     */
+    std::function<void(bool)> safeModeCallBack = nullptr;
 
     /** @brief reference to sd_event wrapped in unique_ptr */
     EventPtr& event;
