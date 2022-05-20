@@ -1062,6 +1062,44 @@ void PowerMode::analyzeIpsEvent()
 }
 #endif
 
+/*  Set dbus property to SAFE mode(true) or clear(false) only if different */
+void PowerMode::updateDbusSafeMode(const bool safeMode)
+{
+    ModeInterface::PropertiesVariant NewSafeMode = safeMode;
+    bool dbusSafeMode = getdbusSafeMode();
+
+    if (dbusSafeMode != safeMode)
+    {
+        log<level::DEBUG>(
+            fmt::format("PowerMode:updateDbusSafeMode: Update dbus state ({})",
+                        safeMode)
+                .c_str());
+        ModeInterface::setPropertyByName(POWER_SAFE_MODE_PROP, NewSafeMode,
+                                         true);
+    }
+}
+
+/*  Read dbus for SafeMode */
+bool PowerMode::getdbusSafeMode()
+{
+    ModeInterface::PropertiesVariant safeMode{};
+    try
+    {
+        safeMode = ModeInterface::getPropertyByName(POWER_SAFE_MODE_PROP);
+
+        return std::get<bool>(safeMode);
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        log<level::ERR>(
+            fmt::format("Failed to get Safe Mode property ERROR({}) PATH({}) ",
+                        e.what(), PMODE_PATH)
+                .c_str());
+
+        return false;
+    }
+}
+
 } // namespace powermode
 
 } // namespace occ

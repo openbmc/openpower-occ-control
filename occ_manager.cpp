@@ -502,6 +502,12 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
     }
 }
 
+// Called upon pldm event To set powermode Safe Mode State for system.
+void Manager::updateOccSafeMode(bool safeMode)
+{
+    pmode->updateDbusSafeMode(safeMode);
+}
+
 void Manager::sbeHRESETResult(instanceID instance, bool success)
 {
     if (success)
@@ -1308,6 +1314,7 @@ void Manager::validateOccMaster()
             fmt::format("validateOccMaster: OCC{} is master of {} OCCs",
                         masterInstance, activeCount)
                 .c_str());
+        pmode->updateDbusSafeMode(false);
     }
 }
 
