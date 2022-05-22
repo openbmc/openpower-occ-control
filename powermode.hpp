@@ -73,6 +73,7 @@ struct PowerModeData
     uint16_t ipsEnterTime = 0;
     uint8_t ipsExitUtil = 0;
     uint16_t ipsExitTime = 0;
+    bool ModeLocked = false;
 
     /** @brief Function specifying data to archive for cereal.
      */
@@ -80,7 +81,8 @@ struct PowerModeData
     void serialize(Archive& archive)
     {
         archive(modeInitialized, mode, oemModeData, ipsInitialized, ipsEnabled,
-                ipsEnterUtil, ipsEnterTime, ipsExitUtil, ipsExitTime);
+                ipsEnterUtil, ipsEnterTime, ipsExitUtil, ipsExitTime,
+                ModeLocked);
     }
 };
 
@@ -117,6 +119,15 @@ class OccPersistData
         save();
     }
 
+    /** @brief Save Power Mode Lock value to persistent file
+     *
+     *  @param[in] ModeLock - desired System Power Mode Lock
+     */
+    void updateModeLock(const bool ModeLock)
+    {
+        modeData.ModeLocked = ModeLock;
+        save();
+    }
     /** @brief Write Idle Power Saver parameters to persistent file
      *
      *  @param[in] enabled - Idle Power Save status (true = enabled)
@@ -181,6 +192,12 @@ class OccPersistData
         exitUtil = modeData.ipsExitUtil;
         exitTime = modeData.ipsExitTime;
         return true;
+    }
+
+    /** @brief Return persisted mode lock */
+    bool getModeLock()
+    {
+        return modeData.ModeLocked;
     }
 
     /** @brief Return true if the power mode is available */
@@ -276,6 +293,11 @@ class PowerMode : public ModeInterface, public IpsInterface
         {
             updateDbusIPS(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime);
         }
+        if (persistedData.getModeLock())
+        {
+            // Update dbus mode Lock
+            Mode::powerModeLocked(true);
+        }
     };
 
     /** @brief Initialize the persistent data with default values
@@ -283,6 +305,12 @@ class PowerMode : public ModeInterface, public IpsInterface
      * @return true if initialization completed
      */
     bool initPersistentData();
+
+    /** @brief Set the PowerModeLocked property to true
+     *
+     * @return true if successful
+     */
+    bool powerModeLock();
 
     /** @brief Set the current power mode property
      *
@@ -330,6 +358,15 @@ class PowerMode : public ModeInterface, public IpsInterface
     /** @brief Removes IPS active watch */
     void removeIpsWatch();
 #endif
+
+    // using Base::PowerMode::powerMode;
+    /** @brief override the set/get MODE function
+     *
+     *  @param[in] value - Intended value
+     *
+     *  @return          - the value or Updated value of the property
+     */
+    Base::Mode::PowerMode powerMode(Base::Mode::PowerMode value) override;
 
   private:
     /** @brief OCC manager object */

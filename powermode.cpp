@@ -29,6 +29,11 @@ using namespace sdbusplus::org::open_power::OCC::Device::Error;
 
 using Mode = sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
 
+// For throwing exceptions
+using namespace phosphor::logging;
+using InternalFailure =
+    sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure;
+
 // Set the Master OCC
 void PowerMode::setMasterOcc(const std::string& masterOccPath)
 {
@@ -73,6 +78,22 @@ void PowerMode::modeChanged(sdbusplus::message::message& msg)
         auto modeEntryValue = modeEntry->second;
         propVal = std::get<std::string>(modeEntryValue);
         SysPwrMode newMode = convertStringToMode(propVal);
+
+        // If mode set was requested via direct dbus property change then we
+        // need to see if mode set is locked and ignore the request.
+        if (persistedData.getModeLock())
+        {
+            // Fix up the mode property since we are going to ignore this
+            // set mode request.
+            SysPwrMode currentMode;
+            uint16_t oemModeData;
+            getMode(currentMode, oemModeData);
+            updateDbusMode(currentMode);
+            log<level::INFO>(
+                fmt::format("Power Mode Locked: Mode change Blocked").c_str());
+            return;
+        }
+
         if (newMode != SysPwrMode::NO_CHANGE)
         {
             // Update persisted data with new mode
@@ -87,9 +108,24 @@ void PowerMode::modeChanged(sdbusplus::message::message& msg)
     }
 }
 
+// Set the state of PowerModeLocked property to true
+bool PowerMode::powerModeLock()
+{
+    log<level::INFO>(fmt::format("Power Mode Locked:").c_str());
+    persistedData.updateModeLock(true); // Update persistant data  mode Locked
+    return Mode::powerModeLocked(true); // Update dbus mode Locked and return
+}
+
 // Called from OCC PassThrough interface (via CE login / BMC command line)
 bool PowerMode::setMode(const SysPwrMode newMode, const uint16_t oemModeData)
 {
+    if (persistedData.getModeLock())
+    {
+        log<level::INFO>(
+            fmt::format("Power Mode Locked: Mode change Blocked").c_str());
+        return false;
+    }
+
     if (updateDbusMode(newMode) == false)
     {
         // Unsupported mode
@@ -593,8 +629,9 @@ void OccPersistData::print()
     {
         log<level::INFO>(
             fmt::format(
-                "OccPersistData: Mode: 0x{:02X}, OEM Mode Data: {} (0x{:04X})",
-                modeData.mode, modeData.oemModeData, modeData.oemModeData)
+                "OccPersistData: Mode: 0x{:02X}, OEM Mode Data: {} (0x{:04X} Locked{})",
+                modeData.mode, modeData.oemModeData, modeData.oemModeData,
+                modeData.ModeLocked)
                 .c_str());
     }
     if (modeData.ipsInitialized)
@@ -1059,6 +1096,24 @@ void PowerMode::analyzeIpsEvent()
     }
 
     return;
+}
+
+// overrides read/write to powerMode dbus property.
+Mode::PowerMode PowerMode::powerMode(Mode::PowerMode value)
+{
+    if (persistedData.getModeLock())
+    {
+        log<level::ERR>(fmt::format("Power Mode is Locked.").c_str());
+
+        // Throwing exception
+        elog<InternalFailure>();
+
+        return value;
+    }
+    else
+    {
+        return Mode::powerMode(value);
+    }
 }
 #endif
 
