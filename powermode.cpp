@@ -73,6 +73,20 @@ void PowerMode::modeChanged(sdbusplus::message::message& msg)
         auto modeEntryValue = modeEntry->second;
         propVal = std::get<std::string>(modeEntryValue);
         SysPwrMode newMode = convertStringToMode(propVal);
+
+        // If mode set was requested via direct dbus property change then we
+        // need to see if mode set is locked and ignore the request.
+        if (Mode::powerModeLocked())
+        {
+            // Fix up the mode property since we are going to ignore this
+            // set mode request.
+            SysPwrMode currentMode;
+            uint16_t oemModeData;
+            getMode(currentMode, oemModeData);
+            updateDbusMode(currentMode);
+            return;
+        }
+
         if (newMode != SysPwrMode::NO_CHANGE)
         {
             // Update persisted data with new mode
@@ -87,9 +101,20 @@ void PowerMode::modeChanged(sdbusplus::message::message& msg)
     }
 }
 
+// Set the state of PowerModeLocked property to true
+bool PowerMode::powerModeLock()
+{
+    return Mode::powerModeLocked(true);
+}
+
 // Called from OCC PassThrough interface (via CE login / BMC command line)
 bool PowerMode::setMode(const SysPwrMode newMode, const uint16_t oemModeData)
 {
+    if (Mode::powerModeLocked())
+    {
+        return false;
+    }
+
     if (updateDbusMode(newMode) == false)
     {
         // Unsupported mode
