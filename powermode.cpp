@@ -1,13 +1,12 @@
 #include "powermode.hpp"
 
-#include "elog-errors.hpp"
-
 #include <fcntl.h>
 #include <fmt/core.h>
 #include <sys/ioctl.h>
 
 #include <com/ibm/Host/Target/server.hpp>
 #include <org/open_power/OCC/Device/error.hpp>
+#include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/log.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
 #include <xyz/openbmc_project/Control/Power/Mode/server.hpp>
@@ -28,6 +27,9 @@ using namespace std::literals::string_literals;
 using namespace sdbusplus::org::open_power::OCC::Device::Error;
 
 using Mode = sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
+
+using NotAllowed = sdbusplus::xyz::openbmc_project::Common::Error::NotAllowed;
+using Reason = xyz::openbmc_project::Common::NotAllowed::REASON;
 
 // Set the Master OCC
 void PowerMode::setMasterOcc(const std::string& masterOccPath)
@@ -73,6 +75,24 @@ void PowerMode::modeChanged(sdbusplus::message::message& msg)
         auto modeEntryValue = modeEntry->second;
         propVal = std::get<std::string>(modeEntryValue);
         SysPwrMode newMode = convertStringToMode(propVal);
+
+        // If mode set was requested via direct dbus property change then we
+        // need to see if mode set is locked and ignore the request. We should
+        // not get to this path since the property change method should also be
+        // checking the mode lock status.
+        if (persistedData.getModeLock())
+        {
+            // Fix up the mode property since we are going to ignore this
+            // set mode request.
+            log<level::ERR>(
+                "PowerMode::modeChanged: mode property changed while locked");
+            SysPwrMode currentMode;
+            uint16_t oemModeData;
+            getMode(currentMode, oemModeData);
+            updateDbusMode(currentMode);
+            return;
+        }
+
         if (newMode != SysPwrMode::NO_CHANGE)
         {
             // Update persisted data with new mode
@@ -87,9 +107,33 @@ void PowerMode::modeChanged(sdbusplus::message::message& msg)
     }
 }
 
+// Set the state of power mode lock. Writing persistent data via dbus method.
+bool PowerMode::powerModeLock()
+{
+    log<level::INFO>("PowerMode::powerModeLock: locking mode change");
+    persistedData.updateModeLock(true); // write persistent data
+    return true;
+}
+
+// Get the state of power mode. Reading persistent data via dbus method.
+bool PowerMode::powerModeLockStatus()
+{
+    bool status = persistedData.getModeLock(); // read persistent data
+    log<level::INFO>(fmt::format("PowerMode::powerModeLockStatus: {}",
+                                 status ? "locked" : "unlocked")
+                         .c_str());
+    return status;
+}
+
 // Called from OCC PassThrough interface (via CE login / BMC command line)
 bool PowerMode::setMode(const SysPwrMode newMode, const uint16_t oemModeData)
 {
+    if (persistedData.getModeLock())
+    {
+        log<level::INFO>("PowerMode::setMode: mode change blocked");
+        return false;
+    }
+
     if (updateDbusMode(newMode) == false)
     {
         // Unsupported mode
@@ -593,8 +637,9 @@ void OccPersistData::print()
     {
         log<level::INFO>(
             fmt::format(
-                "OccPersistData: Mode: 0x{:02X}, OEM Mode Data: {} (0x{:04X})",
-                modeData.mode, modeData.oemModeData, modeData.oemModeData)
+                "OccPersistData: Mode: 0x{:02X}, OEM Mode Data: {} (0x{:04X} Locked{})",
+                modeData.mode, modeData.oemModeData, modeData.oemModeData,
+                modeData.modeLocked)
                 .c_str());
     }
     if (modeData.ipsInitialized)
@@ -1059,6 +1104,22 @@ void PowerMode::analyzeIpsEvent()
     }
 
     return;
+}
+
+// overrides read/write to powerMode dbus property.
+Mode::PowerMode PowerMode::powerMode(Mode::PowerMode value)
+{
+    if (persistedData.getModeLock())
+    {
+        log<level::INFO>("PowerMode::powerMode: mode property change blocked");
+        elog<NotAllowed>(xyz::openbmc_project::Common::NotAllowed::REASON(
+            "mode change not allowed due to lock"));
+        return value;
+    }
+    else
+    {
+        return Mode::powerMode(value);
+    }
 }
 #endif
 

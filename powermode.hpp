@@ -74,6 +74,7 @@ struct PowerModeData
     uint16_t ipsEnterTime = 0;
     uint8_t ipsExitUtil = 0;
     uint16_t ipsExitTime = 0;
+    bool modeLocked = false;
 
     /** @brief Function specifying data to archive for cereal.
      */
@@ -81,7 +82,8 @@ struct PowerModeData
     void serialize(Archive& archive)
     {
         archive(modeInitialized, mode, oemModeData, ipsInitialized, ipsEnabled,
-                ipsEnterUtil, ipsEnterTime, ipsExitUtil, ipsExitTime);
+                ipsEnterUtil, ipsEnterTime, ipsExitUtil, ipsExitTime,
+                modeLocked);
     }
 };
 
@@ -118,6 +120,15 @@ class OccPersistData
         save();
     }
 
+    /** @brief Save Power Mode Lock value to persistent file
+     *
+     *  @param[in] modeLock - desired System Power Mode Lock
+     */
+    void updateModeLock(const bool modeLock)
+    {
+        modeData.modeLocked = modeLock;
+        save();
+    }
     /** @brief Write Idle Power Saver parameters to persistent file
      *
      *  @param[in] enabled - Idle Power Save status (true = enabled)
@@ -182,6 +193,12 @@ class OccPersistData
         exitUtil = modeData.ipsExitUtil;
         exitTime = modeData.ipsExitTime;
         return true;
+    }
+
+    /** @brief Return persisted mode lock */
+    bool getModeLock()
+    {
+        return modeData.modeLocked;
     }
 
     /** @brief Return true if the power mode is available */
@@ -285,6 +302,18 @@ class PowerMode : public ModeInterface, public IpsInterface
      */
     bool initPersistentData();
 
+    /** @brief Set the power mode lock (dbus method)
+     *
+     * @return true if successful
+     */
+    bool powerModeLock();
+
+    /** @brief Get the power mode lock status (dbus method)
+     *
+     * @return true if locked
+     */
+    bool powerModeLockStatus();
+
     /** @brief Set the current power mode property
      *
      * @param[in] newMode     - desired system power mode
@@ -334,6 +363,14 @@ class PowerMode : public ModeInterface, public IpsInterface
 
     /** @brief Set dbus property to SAFE Mode(true) or clear SAFE Mode(false)*/
     void updateDbusSafeMode(const bool safeMode);
+
+    /** @brief override the set/get MODE function
+     *
+     *  @param[in] value - Intended value
+     *
+     *  @return          - the value or Updated value of the property
+     */
+    Base::Mode::PowerMode powerMode(Base::Mode::PowerMode value) override;
 
   private:
     /** @brief OCC manager object */
