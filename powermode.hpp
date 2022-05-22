@@ -284,6 +284,12 @@ class PowerMode : public ModeInterface, public IpsInterface
      */
     bool initPersistentData();
 
+    /** @brief Set the PowerModeLocked property to true
+     *
+     * @return true if successful
+     */
+    bool powerModeLock();
+
     /** @brief Set the current power mode property
      *
      * @param[in] newMode     - desired system power mode
