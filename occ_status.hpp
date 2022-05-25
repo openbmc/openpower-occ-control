@@ -184,8 +184,11 @@ class Status : public Interface
     /** @brief Read OCC state (will trigger kernel to poll the OCC) */
     void readOccState();
 
-    /** @brief Called when device errors are detected */
-    void deviceError();
+    /** @brief Called when device errors are detected
+     *
+     * @param[in] d - description of the error that occurred
+     */
+    void deviceError(Error::Descriptor d = Error::Descriptor());
 
 #ifdef POWER10
     /** @brief Handle additional tasks when the OCCs reach active state */

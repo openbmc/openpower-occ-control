@@ -15,6 +15,9 @@ namespace occ
 
 namespace fs = std::filesystem;
 
+constexpr auto PRESENCE_ERROR_PATH = "org.open_power.OCC.Error.Presence";
+constexpr auto SAFE_ERROR_PATH = "org.open_power.OCC.Error.Safe";
+
 /** @class Error
  *  @brief Monitors for OCC device error condition
  */
@@ -34,7 +37,7 @@ class Error
      *  @param[in] callBack - Optional function callback on error condition
      */
     Error(EventPtr& event, const fs::path& file,
-          std::function<void(bool)> callBack = nullptr) :
+          std::function<void(int)> callBack = nullptr) :
         event(event),
         file(file), callBack(callBack)
     {
@@ -48,6 +51,38 @@ class Error
             close(fd);
         }
     }
+
+    /** @class Descriptor
+     *  @brief Contains data relevant to an error that occurred.
+     */
+    class Descriptor
+    {
+      public:
+        Descriptor(const Descriptor&) = default;
+        Descriptor& operator=(const Descriptor&) = default;
+        Descriptor(Descriptor&&) = default;
+        Descriptor& operator=(Descriptor&&) = default;
+
+        Descriptor() : log(false), err(0), callout(nullptr), path(nullptr)
+        {}
+
+        /** @brief Constructs the Descriptor object
+         *
+         *  @param[in] path - the DBus error path
+         *  @param[in] err - Optional error return code
+         *  @param[in] callout - Optional PEL callout path
+         */
+        Descriptor(const char* path, int err = 0,
+                   const char* callout = nullptr) :
+            log(true),
+            err(err), callout(callout), path(path)
+        {}
+
+        bool log;
+        int err;
+        const char* callout;
+        const char* path;
+    };
 
     /** @brief Starts to monitor for error conditions
      *
@@ -109,7 +144,7 @@ class Error
     fs::path file;
 
     /** @brief Optional function to call on error scenario */
-    std::function<void(bool)> callBack;
+    std::function<void(int)> callBack;
 
     /** @brief Reads file data
      *

@@ -28,7 +28,7 @@ class Presence : public Error
      *  @param[in] callBack - Optional function callback on error condition
      */
     Presence(EventPtr& event, const fs::path& file, const Manager& mgr,
-             std::function<void(bool)> callBack = nullptr) :
+             std::function<void(int)> callBack = nullptr) :
         Error(event, file, callBack),
         manager(mgr)
     {

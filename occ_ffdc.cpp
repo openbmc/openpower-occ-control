@@ -5,6 +5,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <fmt/core.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -25,6 +26,7 @@ static constexpr size_t sbe_status_header_size = 8;
 
 static constexpr auto loggingObjectPath = "/xyz/openbmc_project/logging";
 static constexpr auto loggingInterface = "org.open_power.Logging.PEL";
+static constexpr auto loggingMethod = "CreatePELWithFFDCFiles";
 
 using namespace phosphor::logging;
 using namespace sdbusplus::org::open_power::OCC::Device::Error;
@@ -61,9 +63,8 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
     {
         std::string service =
             utils::getService(loggingObjectPath, loggingInterface);
-        auto method =
-            bus.new_method_call(service.c_str(), loggingObjectPath,
-                                loggingInterface, "CreatePELWithFFDCFiles");
+        auto method = bus.new_method_call(service.c_str(), loggingObjectPath,
+                                          loggingInterface, loggingMethod);
         auto level =
             sdbusplus::xyz::openbmc_project::Logging::server::convertForMessage(
                 sdbusplus::xyz::openbmc_project::Logging::server::Entry::Level::
@@ -78,6 +79,58 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
     catch (const sdbusplus::exception::exception& e)
     {
         log<level::ERR>("Failed to create PEL");
+    }
+
+    return plid;
+}
+
+uint32_t FFDC::createOCCResetPEL(unsigned int instance, const char* path,
+                                 int err, const char* callout)
+{
+    uint32_t plid = 0;
+    std::map<std::string, std::string> additionalData;
+    std::vector<std::tuple<
+        sdbusplus::xyz::openbmc_project::Logging::server::Create::FFDCFormat,
+        uint8_t, uint8_t, sdbusplus::message::unix_fd>>
+        pelFFDCInfo;
+
+    additionalData.emplace("_PID", std::to_string(getpid()));
+
+    if (err)
+    {
+        additionalData.emplace("CALLOUT_ERRNO", std::to_string(-err));
+    }
+
+    if (callout)
+    {
+        additionalData.emplace("CALLOUT_DEVICE_PATH", std::string(callout));
+    }
+
+    additionalData.emplace("OCC", std::to_string(instance));
+
+    auto& bus = utils::getBus();
+
+    try
+    {
+        std::string service =
+            utils::getService(loggingObjectPath, loggingInterface);
+        auto method = bus.new_method_call(service.c_str(), loggingObjectPath,
+                                          loggingInterface, loggingMethod);
+        auto level =
+            sdbusplus::xyz::openbmc_project::Logging::server::convertForMessage(
+                sdbusplus::xyz::openbmc_project::Logging::server::Entry::Level::
+                    Error);
+        method.append(path, level, additionalData, pelFFDCInfo);
+        auto response = bus.call(method);
+        std::tuple<uint32_t, uint32_t> reply = {0, 0};
+
+        response.read(reply);
+        plid = std::get<1>(reply);
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        log<level::ERR>(
+            fmt::format("Failed to create PEL: {}", e.what()).c_str());
     }
 
     return plid;

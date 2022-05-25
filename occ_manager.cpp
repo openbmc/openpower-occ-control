@@ -1288,7 +1288,7 @@ void Manager::validateOccMaster()
                         masterInstance, instance)
                         .c_str());
                 // request reset
-                obj->deviceError();
+                obj->deviceError(Error::Descriptor(PRESENCE_ERROR_PATH));
             }
         }
     }
@@ -1300,7 +1300,8 @@ void Manager::validateOccMaster()
                         statusObjects.size())
                 .c_str());
         // request reset
-        statusObjects.front()->deviceError();
+        statusObjects.front()->deviceError(
+            Error::Descriptor(PRESENCE_ERROR_PATH));
     }
     else
     {
