@@ -245,37 +245,44 @@ class Device
         return;
     }
 
-    /** @brief callback for OCC error and presence monitoring
+    /** @brief callback for OCC error monitoring
      *
-     * @param[in] error - True if an error is reported, false otherwise
+     * @param[in] error - Errno stored in the error file, 0 if no error
      */
-    void errorCallback(bool error);
+    void errorCallback(int error);
+
+    /** @brief callback for OCC presence monitoring
+     *
+     * @param[in] occsPresent - The number of OCCs indicated in the poll
+     * response
+     */
+    void presenceCallback(int occsPresent);
 
 #ifdef PLDM
     /** @brief callback for SBE timeout monitoring
      *
      * @param[in] error - True if an error is reported, false otherwise
      */
-    void timeoutCallback(bool error);
+    void timeoutCallback(int error);
 #endif
 
     /** @brief callback for the proc temp throttle event
      *
      *  @param[in] error - True if an error is reported, false otherwise
      */
-    void throttleProcTempCallback(bool error);
+    void throttleProcTempCallback(int error);
 
     /** @brief callback for the proc power throttle event
      *
      *  @param[in] error - True if an error is reported, false otherwise
      */
-    void throttleProcPowerCallback(bool error);
+    void throttleProcPowerCallback(int error);
 
     /** @brief callback for the proc temp throttle event
      *
      *  @param[in] error - True if an error is reported, false otherwise
      */
-    void throttleMemTempCallback(bool error);
+    void throttleMemTempCallback(int error);
 
     /** @brief Get the pathname for a file based on a regular expression
      *

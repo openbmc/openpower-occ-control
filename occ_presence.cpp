@@ -51,7 +51,7 @@ void Presence::analyzeEvent()
                             .c_str());
         if (callBack)
         {
-            callBack(true);
+            callBack(occsPresent);
         }
     }
 }

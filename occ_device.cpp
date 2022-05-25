@@ -79,16 +79,34 @@ bool Device::readBinary(const std::string& fileName) const
     return v == 1;
 }
 
-void Device::errorCallback(bool error)
+void Device::errorCallback(int error)
 {
     if (error)
     {
-        statusObject.deviceError();
+        if (error != -EHOSTDOWN)
+        {
+            fs::path p = devPath;
+            if (fs::is_symlink(p))
+            {
+                p = fs::read_symlink(p);
+            }
+            statusObject.deviceError(Error::Descriptor(
+                "org.open_power.OCC.Device.ReadFailure", error, p.c_str()));
+        }
+        else
+        {
+            statusObject.deviceError(Error::Descriptor(SAFE_ERROR_PATH));
+        }
     }
 }
 
+void Device::presenceCallback(int)
+{
+    statusObject.deviceError(Error::Descriptor(PRESENCE_ERROR_PATH));
+}
+
 #ifdef PLDM
-void Device::timeoutCallback(bool error)
+void Device::timeoutCallback(int error)
 {
     if (error)
     {
@@ -97,17 +115,17 @@ void Device::timeoutCallback(bool error)
 }
 #endif
 
-void Device::throttleProcTempCallback(bool error)
+void Device::throttleProcTempCallback(int error)
 {
     statusObject.throttleProcTemp(error);
 }
 
-void Device::throttleProcPowerCallback(bool error)
+void Device::throttleProcPowerCallback(int error)
 {
     statusObject.throttleProcPower(error);
 }
 
-void Device::throttleMemTempCallback(bool error)
+void Device::throttleMemTempCallback(int error)
 {
     statusObject.throttleMemTemp(error);
 }

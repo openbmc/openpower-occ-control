@@ -53,6 +53,17 @@ class FFDC : public Error
     static uint32_t createPEL(const char* path, uint32_t src6, const char* msg,
                               int fd = -1);
 
+    /** @brief Helper function to create a PEL for the OCC reset with the
+     * OpenPower DBus interface
+     *
+     * @param[in] instance - the OCC instance id
+     * @param[in] path - the DBus error path
+     * @param[in] err - the error return code
+     * @param[in] callout - the PEL callout path
+     */
+    static void createOCCResetPEL(unsigned int instance, const char* path,
+                                  int err, const char* callout);
+
   private:
     /** @brief OCC instance number. Ex, 0,1, etc */
     unsigned int instance;

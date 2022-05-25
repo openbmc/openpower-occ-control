@@ -5,6 +5,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <fmt/core.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -24,7 +25,8 @@ static constexpr size_t max_ffdc_size = 8192;
 static constexpr size_t sbe_status_header_size = 8;
 
 static constexpr auto loggingObjectPath = "/xyz/openbmc_project/logging";
-static constexpr auto loggingInterface = "org.open_power.Logging.PEL";
+static constexpr auto loggingInterface = "xyz.openbmc_project.Logging.Create";
+static constexpr auto opLoggingInterface = "org.open_power.Logging.PEL";
 
 using namespace phosphor::logging;
 using namespace sdbusplus::org::open_power::OCC::Device::Error;
@@ -60,10 +62,10 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
     try
     {
         std::string service =
-            utils::getService(loggingObjectPath, loggingInterface);
+            utils::getService(loggingObjectPath, opLoggingInterface);
         auto method =
             bus.new_method_call(service.c_str(), loggingObjectPath,
-                                loggingInterface, "CreatePELWithFFDCFiles");
+                                opLoggingInterface, "CreatePELWithFFDCFiles");
         auto level =
             sdbusplus::xyz::openbmc_project::Logging::server::convertForMessage(
                 sdbusplus::xyz::openbmc_project::Logging::server::Entry::Level::
@@ -81,6 +83,47 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
     }
 
     return plid;
+}
+
+void FFDC::createOCCResetPEL(unsigned int instance, const char* path, int err,
+                             const char* callout)
+{
+    std::map<std::string, std::string> additionalData;
+
+    additionalData.emplace("_PID", std::to_string(getpid()));
+
+    if (err)
+    {
+        additionalData.emplace("CALLOUT_ERRNO", std::to_string(-err));
+    }
+
+    if (callout)
+    {
+        additionalData.emplace("CALLOUT_DEVICE_PATH", std::string(callout));
+    }
+
+    additionalData.emplace("OCC", std::to_string(instance));
+
+    auto& bus = utils::getBus();
+
+    try
+    {
+        std::string service =
+            utils::getService(loggingObjectPath, loggingInterface);
+        auto method = bus.new_method_call(service.c_str(), loggingObjectPath,
+                                          loggingInterface, "Create");
+        auto level =
+            sdbusplus::xyz::openbmc_project::Logging::server::convertForMessage(
+                sdbusplus::xyz::openbmc_project::Logging::server::Entry::Level::
+                    Error);
+        method.append(path, level, additionalData);
+        bus.call(method);
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        log<level::ERR>(
+            fmt::format("Failed to create PEL: {}", e.what()).c_str());
+    }
 }
 
 // Reads the FFDC file and create an error log
