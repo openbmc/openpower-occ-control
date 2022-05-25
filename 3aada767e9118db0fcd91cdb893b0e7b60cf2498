@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7b652353_1503743f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-05-25T19:38:09Z",
+      "side": 1,
+      "message": "Lock needs to get persisted by the service",
+      "revId": "3aada767e9118db0fcd91cdb893b0e7b60cf2498",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7da89965_1a2a1319",
+        "filename": "powermode.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-05-25T19:38:09Z",
+      "side": 1,
+      "message": "Add trace so we know why the mode change was ignored",
+      "revId": "3aada767e9118db0fcd91cdb893b0e7b60cf2498",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "806c856c_b5ac2445",
+        "filename": "powermode.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-05-25T19:38:09Z",
+      "side": 1,
+      "message": "Add trace here to know when lock enabled",
+      "revId": "3aada767e9118db0fcd91cdb893b0e7b60cf2498",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ae58d3ee_d4f36915",
+        "filename": "powermode.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 115,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-05-25T19:38:09Z",
+      "side": 1,
+      "message": "Add trace so we know why the mode change was ignored",
+      "revId": "3aada767e9118db0fcd91cdb893b0e7b60cf2498",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5796cc46_20fe38aa",
+        "filename": "powermode.hpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-05-25T19:38:09Z",
+      "side": 1,
+      "message": "The lock status will need to be persisted so it needs to get added to this object so that it gets saved.",
+      "revId": "3aada767e9118db0fcd91cdb893b0e7b60cf2498",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
