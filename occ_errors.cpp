@@ -17,9 +17,6 @@ namespace open_power
 namespace occ
 {
 
-// Value in error file indicating success
-constexpr auto NO_ERROR = '0';
-
 using namespace phosphor::logging;
 using namespace sdbusplus::org::open_power::OCC::Device::Error;
 using InternalFailure =
@@ -113,6 +110,7 @@ int Error::processEvents(sd_event_source* /*es*/, int /*fd*/,
 void Error::analyzeEvent()
 {
     // Get the number of bytes to read
+    int err = 0;
     int len = -1;
     auto r = ioctl(fd, FIONREAD, &len);
     if (r < 0)
@@ -127,10 +125,11 @@ void Error::analyzeEvent()
     // A non-zero data indicates an error condition
     // Let the caller take appropriate action on this
     auto data = readFile(len);
-    bool error = !(data.empty() || data.front() == NO_ERROR);
+    if (!data.empty())
+        err = std::stoi(data, nullptr, 0);
     if (callBack)
     {
-        callBack(error);
+        callBack(err);
     }
     return;
 }

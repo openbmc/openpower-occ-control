@@ -116,13 +116,18 @@ bool Status::occActive(bool value)
 }
 
 // Callback handler when a device error is reported.
-void Status::deviceError()
+void Status::deviceError(Error::Descriptor d)
 {
 #ifdef POWER10
     if (pmode && device.master())
     {
         // Prevent mode changes
         pmode->setMasterActive(false);
+    }
+
+    if (d.log)
+    {
+        FFDC::createOCCResetPEL(instance, d.path, d.err, d.callout);
     }
 #endif
 
@@ -327,7 +332,7 @@ void Status::safeStateDelayExpired()
                 instance)
                 .c_str());
         // Disable and reset to try recovering
-        deviceError();
+        deviceError(Error::Descriptor(SAFE_ERROR_PATH));
     }
 }
 #endif // POWER10
