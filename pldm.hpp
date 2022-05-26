@@ -36,12 +36,18 @@ constexpr open_power::occ::instanceID start = 0;
 /** @brief Hardcoded mctpEid for HBRT */
 constexpr mctp_eid_t mctpEid = 10;
 
+constexpr uint8_t INSTANCE_ID_NOT_REQUESTED = 0xFF;
+
 /** @class Interface
  *
  *  @brief Abstracts the PLDM details related to the OCC
  */
 class Interface
 {
+    /** @brief MCTP instance number used in PLDM requests
+     */
+    static uint8_t mctpInstance;
+
   public:
     Interface() = delete;
     ~Interface() = default;
@@ -222,10 +228,6 @@ class Interface
     /** @brief File descriptor for PLDM messages */
     int pldmFd = -1;
 
-    /** @brief MCTP instance number used in PLDM requests
-     */
-    uint8_t mctpInstance{};
-
     /** @brief The response for the PLDM request msg is received flag.
      */
     bool pldmResponseReceived = false;
@@ -295,11 +297,9 @@ class Interface
 
     /** @brief Query PLDM for the MCTP requester instance id
      *
-     * @param[out] - the instance id
-     *
      * @return true if the id was found and false if not
      */
-    bool getMctpInstanceId(uint8_t& instanceId);
+    bool getMctpInstanceId();
 
     /** @brief Encode a GetStateSensor command into a PLDM request
      *  @param[in] instance - OCC instance number

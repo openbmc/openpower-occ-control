@@ -28,6 +28,8 @@ constexpr auto clockId = sdeventplus::ClockId::RealTime;
 using Clock = sdeventplus::Clock<clockId>;
 using Timer = Time<clockId>;
 
+uint8_t Interface::mctpInstance = INSTANCE_ID_NOT_REQUESTED;
+
 void Interface::fetchSensorInfo(uint16_t stateSetId,
                                 SensorToInstance& sensorInstanceMap,
                                 SensorOffset& sensorOffset)
@@ -158,24 +160,23 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
 
         if (sensorEntry != sensorToOCCInstance.end())
         {
+            const uint8_t instance = sensorEntry->second;
             if (eventState ==
                 static_cast<EventState>(
                     PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_IN_SERVICE))
             {
                 log<level::INFO>(
-                    fmt::format("PLDM: OCC{} is RUNNING", sensorEntry->second)
-                        .c_str());
-
+                    fmt::format("PLDM: OCC{} is RUNNING", instance).c_str());
                 callBack(sensorEntry->second, true);
             }
             else if (eventState ==
                      static_cast<EventState>(
                          PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_STOPPED))
             {
-                log<level::INFO>(fmt::format("PLDM: OCC{} has now STOPPED",
-                                             sensorEntry->second)
-                                     .c_str());
-                callBack(sensorEntry->second, false);
+                log<level::INFO>(
+                    fmt::format("PLDM: OCC{} has now STOPPED", instance)
+                        .c_str());
+                callBack(instance, false);
             }
             else if (eventState ==
                      static_cast<EventState>(
@@ -184,22 +185,21 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
                 log<level::INFO>(
                     fmt::format(
                         "PLDM: OCC{} has now STOPPED and system is in SAFE MODE",
-                        sensorEntry->second)
+                        instance)
                         .c_str());
 
                 // Setting safe mode true
                 safeModeCallBack(true);
 
-                callBack(sensorEntry->second, false);
+                callBack(instance, false);
             }
             else
             {
                 log<level::INFO>(
                     fmt::format("PLDM: Unexpected PLDM state {} for OCC{}",
-                                eventState, sensorEntry->second)
+                                eventState, instance)
                         .c_str());
             }
-
             return;
         }
     }
@@ -400,7 +400,7 @@ void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
             return;
         }
 
-        if (!getMctpInstanceId(mctpInstance))
+        if (!getMctpInstanceId())
         {
             return;
         }
@@ -449,7 +449,7 @@ void Interface::sendHRESET(open_power::occ::instanceID sbeInstanceId)
             return;
         }
 
-        if (!getMctpInstanceId(mctpInstance))
+        if (!getMctpInstanceId())
         {
             return;
         }
@@ -479,23 +479,31 @@ void Interface::sendHRESET(open_power::occ::instanceID sbeInstanceId)
     }
 }
 
-bool Interface::getMctpInstanceId(uint8_t& instanceId)
+bool Interface::getMctpInstanceId()
 {
-    auto& bus = open_power::occ::utils::getBus();
-    try
+    if (mctpInstance == INSTANCE_ID_NOT_REQUESTED)
     {
-        auto method = bus.new_method_call(
-            "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
-            "xyz.openbmc_project.PLDM.Requester", "GetInstanceId");
-        method.append(mctpEid);
-        auto reply = bus.call(method);
-        reply.read(instanceId);
-    }
-    catch (const sdbusplus::exception::exception& e)
-    {
-        log<level::ERR>(
-            fmt::format("pldm: GetInstanceId failed: {}", e.what()).c_str());
-        return false;
+        // Request new instance ID
+        auto& bus = open_power::occ::utils::getBus();
+        try
+        {
+            auto method = bus.new_method_call(
+                "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
+                "xyz.openbmc_project.PLDM.Requester", "GetInstanceId");
+            method.append(mctpEid);
+            auto reply = bus.call(method);
+            reply.read(mctpInstance);
+            log<level::INFO>(
+                fmt::format("pldm: got new InstanceId: {}", mctpInstance)
+                    .c_str());
+        }
+        catch (const sdbusplus::exception::exception& e)
+        {
+            log<level::ERR>(
+                fmt::format("pldm: GetInstanceId failed: {}", e.what())
+                    .c_str());
+            return false;
+        }
     }
 
     return true;
@@ -569,6 +577,11 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
                     mctpEid, pldmFd, request.size(), rc, sendErrno,
                     strerror(sendErrno))
                     .c_str());
+        }
+        else
+        {
+            // Not waiting for response, instance ID should be freed
+            mctpInstance = INSTANCE_ID_NOT_REQUESTED;
         }
         pldmClose();
     }
@@ -657,6 +670,8 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
                 .c_str());
         return -1;
     }
+
+    // We got the response for the PLDM request msg that was sent
     log<level::INFO>(
         fmt::format("pldmRspCallback: pldm_recv() rsp was {} bytes",
                     responseMsgSize)
@@ -668,13 +683,13 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
         pldmIface->pldmRspTimer.setEnabled(false);
     }
 
+    // instance ID should be freed
+    mctpInstance = INSTANCE_ID_NOT_REQUESTED;
+
     // Set pointer to autodelete
     std::unique_ptr<uint8_t, decltype(std::free)*> responseMsgPtr{responseMsg,
                                                                   std::free};
 
-    // We've got the response meant for the PLDM request msg that was
-    // sent out
-    // io.set_enabled(Enabled::Off);
     auto response = reinterpret_cast<pldm_msg*>(responseMsgPtr.get());
     if (response->payload[0] != PLDM_SUCCESS)
     {
@@ -732,8 +747,9 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
     else
     {
         log<level::INFO>(
-            fmt::format("pldmRspCallback: OCC{} is not running (state:{})",
-                        instance, occSensorState)
+            fmt::format(
+                "pldmRspCallback: OCC{} is not running (sensor state:{})",
+                instance, occSensorState)
                 .c_str());
         pldmIface->callBack(instance, false);
     }
@@ -800,7 +816,7 @@ void Interface::checkActiveSensor(uint8_t instance)
                         instance, entry->first)
                 .c_str());
 
-        if (!getMctpInstanceId(mctpInstance))
+        if (!getMctpInstanceId())
         {
             log<level::ERR>("checkActiveSensor: failed to getMctpInstanceId");
             return;
