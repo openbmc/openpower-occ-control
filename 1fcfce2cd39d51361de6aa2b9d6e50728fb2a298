@@ -1,0 +1,112 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6f02d849_67b06967",
+        "filename": "occ_device.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-05-26T15:38:58Z",
+      "side": 1,
+      "message": "Looks like the OCC repo uses its own ReadFailure errors, like over in powermode.cpp:\n\nusing namespace sdbusplus::org::open_power::OCC::Device::Error;\n\n\n            report\u003cReadFailure\u003e(\n                phosphor::logging::org::open_power::OCC::Device::ReadFailure::\n                    CALLOUT_ERRNO(readErrno),\n                phosphor::logging::org::open_power::OCC::Device::ReadFailure::\n                    CALLOUT_DEVICE_PATH(ipsStatusFile.c_str()));\n\nI think it would be best to just use that one here - \n\"org.open_power.OCC.Device.ReadFailure\"\n\nHowever, I don\u0027t see it in the message registry, so it would need to be added.",
+      "revId": "1fcfce2cd39d51361de6aa2b9d6e50728fb2a298",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "37f40d98_86b3434c",
+        "filename": "occ_errors.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-05-26T15:38:58Z",
+      "side": 1,
+      "message": "currently the OCC uses the \u0027old style\u0027 error logging with those commit/report APIs where the errors have to be defined in YAML - ./org/open_power/OCC/Device.errors.yaml\n\nto be consistent, it seems like these new errors should be defined there, though functionally that report() API is a bit of a bummer because it uses the journal for IPC and many times the log daemon has to restart the journal daemon just to get the metadata fields to show up so it can get them into an error log, so I don\u0027t think we\u0027d need to actually use it.",
+      "revId": "1fcfce2cd39d51361de6aa2b9d6e50728fb2a298",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8acf41c8_2d023c95",
+        "filename": "occ_ffdc.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 101,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-05-26T15:38:58Z",
+      "side": 1,
+      "message": "this is support to be just the raw errno in case the  error handling code would want to do something different based on it.\nMaybe down below you can emplace the string meaning of it.",
+      "range": {
+        "startLine": 101,
+        "startChar": 47,
+        "endLine": 101,
+        "endChar": 70
+      },
+      "revId": "1fcfce2cd39d51361de6aa2b9d6e50728fb2a298",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "af2a3e8d_2ff630b1",
+        "filename": "occ_ffdc.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-05-26T15:38:58Z",
+      "side": 1,
+      "message": "since you don\u0027t need the FFDC files, you can just use this version of the dbus method:\n\nbusctl call xyz.openbmc_project.Logging /xyz/openbmc_project/logging xyz.openbmc_project.Logging.Create Create ssa{ss} xyz.openbmc_project.Common.Error.Timeout xyz.openbmc_project.Logging.Entry.Level.Error 1 TIMEOUT_IN_MSEC 5\n\nthough then that is using a different call than in the other function, so I guess I don\u0027t care that much either way.",
+      "revId": "1fcfce2cd39d51361de6aa2b9d6e50728fb2a298",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "84b966e3_fa29aadd",
+        "filename": "occ_ffdc.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-05-26T15:38:58Z",
+      "side": 1,
+      "message": "since you aren\u0027t using the plid this can probably be a void function",
+      "revId": "1fcfce2cd39d51361de6aa2b9d6e50728fb2a298",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9b0f80b8_12e4c737",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1291,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-05-26T15:38:58Z",
+      "side": 1,
+      "message": "Chris, what would the call out be for this error?",
+      "revId": "1fcfce2cd39d51361de6aa2b9d6e50728fb2a298",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
