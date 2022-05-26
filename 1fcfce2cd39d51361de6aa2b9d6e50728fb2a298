@@ -37,6 +37,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0d74b16a_9ac664b5",
+        "filename": "occ_errors.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-05-26T15:50:50Z",
+      "side": 1,
+      "message": "Should we use the \"new style\"? for these errors and then migrate the old to the new in a later release?",
+      "parentUuid": "37f40d98_86b3434c",
+      "revId": "1fcfce2cd39d51361de6aa2b9d6e50728fb2a298",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8acf41c8_2d023c95",
         "filename": "occ_ffdc.cpp",
         "patchSetId": 2
@@ -105,6 +123,24 @@
       "writtenOn": "2022-05-26T15:38:58Z",
       "side": 1,
       "message": "Chris, what would the call out be for this error?",
+      "revId": "1fcfce2cd39d51361de6aa2b9d6e50728fb2a298",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "79bff920_5211b983",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1291,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2022-05-26T15:50:50Z",
+      "side": 1,
+      "message": "HTMGT already does the detection for multiple masters and would not go active if that happened.\nIf we hit this case it would probably be a firmware bug.",
+      "parentUuid": "9b0f80b8_12e4c737",
       "revId": "1fcfce2cd39d51361de6aa2b9d6e50728fb2a298",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
