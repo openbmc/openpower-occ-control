@@ -158,24 +158,23 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
 
         if (sensorEntry != sensorToOCCInstance.end())
         {
+            const uint8_t instance = sensorEntry->second;
             if (eventState ==
                 static_cast<EventState>(
                     PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_IN_SERVICE))
             {
                 log<level::INFO>(
-                    fmt::format("PLDM: OCC{} is RUNNING", sensorEntry->second)
-                        .c_str());
-
+                    fmt::format("PLDM: OCC{} is RUNNING", instance).c_str());
                 callBack(sensorEntry->second, true);
             }
             else if (eventState ==
                      static_cast<EventState>(
                          PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_STOPPED))
             {
-                log<level::INFO>(fmt::format("PLDM: OCC{} has now STOPPED",
-                                             sensorEntry->second)
-                                     .c_str());
-                callBack(sensorEntry->second, false);
+                log<level::INFO>(
+                    fmt::format("PLDM: OCC{} has now STOPPED", instance)
+                        .c_str());
+                callBack(instance, false);
             }
             else if (eventState ==
                      static_cast<EventState>(
@@ -184,22 +183,21 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
                 log<level::INFO>(
                     fmt::format(
                         "PLDM: OCC{} has now STOPPED and system is in SAFE MODE",
-                        sensorEntry->second)
+                        instance)
                         .c_str());
 
                 // Setting safe mode true
                 safeModeCallBack(true);
 
-                callBack(sensorEntry->second, false);
+                callBack(instance, false);
             }
             else
             {
                 log<level::INFO>(
                     fmt::format("PLDM: Unexpected PLDM state {} for OCC{}",
-                                eventState, sensorEntry->second)
+                                eventState, instance)
                         .c_str());
             }
-
             return;
         }
     }
@@ -342,10 +340,15 @@ void Interface::fetchEffecterInfo(uint16_t stateSetId,
 }
 
 std::vector<uint8_t>
-    Interface::prepareSetEffecterReq(uint8_t instanceId, EffecterID effecterId,
+    Interface::prepareSetEffecterReq(EffecterID effecterId,
                                      CompositeEffecterCount effecterCount,
                                      uint8_t stateIdPos, uint8_t stateSetValue)
 {
+    if (!getMctpInstanceId())
+    {
+        return std::vector<uint8_t>();
+    }
+
     std::vector<uint8_t> request(
         sizeof(pldm_msg_hdr) + sizeof(effecterId) + sizeof(effecterCount) +
         (effecterCount * sizeof(set_effecter_state_field)));
@@ -366,7 +369,8 @@ std::vector<uint8_t>
         }
     }
     auto rc = encode_set_state_effecter_states_req(
-        instanceId, effecterId, effecterCount, stateField.data(), requestMsg);
+        mctpInstance.value(), effecterId, effecterCount, stateField.data(),
+        requestMsg);
     if (rc != PLDM_SUCCESS)
     {
         log<level::ERR>("encode set effecter states request returned error ",
@@ -400,15 +404,10 @@ void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
             return;
         }
 
-        if (!getMctpInstanceId(mctpInstance))
-        {
-            return;
-        }
-
         // Prepare the SetStateEffecterStates request to reset the OCC
         auto request = prepareSetEffecterReq(
-            mctpInstance, effecterEntry->second, OCCEffecterCount,
-            bootRestartPosition, PLDM_STATE_SET_BOOT_RESTART_CAUSE_WARM_RESET);
+            effecterEntry->second, OCCEffecterCount, bootRestartPosition,
+            PLDM_STATE_SET_BOOT_RESTART_CAUSE_WARM_RESET);
 
         if (request.empty())
         {
@@ -449,14 +448,9 @@ void Interface::sendHRESET(open_power::occ::instanceID sbeInstanceId)
             return;
         }
 
-        if (!getMctpInstanceId(mctpInstance))
-        {
-            return;
-        }
-
         // Prepare the SetStateEffecterStates request to HRESET the SBE
         auto request = prepareSetEffecterReq(
-            mctpInstance, effecterEntry->second, SBEEffecterCount,
+            effecterEntry->second, SBEEffecterCount,
             sbeMaintenanceStatePosition, SBE_RETRY_REQUIRED);
 
         if (request.empty())
@@ -479,23 +473,33 @@ void Interface::sendHRESET(open_power::occ::instanceID sbeInstanceId)
     }
 }
 
-bool Interface::getMctpInstanceId(uint8_t& instanceId)
+bool Interface::getMctpInstanceId()
 {
-    auto& bus = open_power::occ::utils::getBus();
-    try
+    if (!mctpInstance)
     {
-        auto method = bus.new_method_call(
-            "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
-            "xyz.openbmc_project.PLDM.Requester", "GetInstanceId");
-        method.append(mctpEid);
-        auto reply = bus.call(method);
-        reply.read(instanceId);
-    }
-    catch (const sdbusplus::exception::exception& e)
-    {
-        log<level::ERR>(
-            fmt::format("pldm: GetInstanceId failed: {}", e.what()).c_str());
-        return false;
+        // Request new instance ID
+        auto& bus = open_power::occ::utils::getBus();
+        try
+        {
+            auto method = bus.new_method_call(
+                "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
+                "xyz.openbmc_project.PLDM.Requester", "GetInstanceId");
+            method.append(mctpEid);
+            auto reply = bus.call(method);
+            uint8_t newInstanceId;
+            reply.read(newInstanceId);
+            mctpInstance = newInstanceId;
+            log<level::INFO>(fmt::format("pldm: got new InstanceId: {}",
+                                         mctpInstance.value())
+                                 .c_str());
+        }
+        catch (const sdbusplus::exception::exception& e)
+        {
+            log<level::ERR>(
+                fmt::format("pldm: GetInstanceId failed: {}", e.what())
+                    .c_str());
+            return false;
+        }
     }
 
     return true;
@@ -504,6 +508,12 @@ bool Interface::getMctpInstanceId(uint8_t& instanceId)
 void Interface::sendPldm(const std::vector<uint8_t>& request,
                          const uint8_t instance, const bool rspExpected)
 {
+    if (!mctpInstance)
+    {
+        log<level::ERR>("sendPldm: No MCTP Instance ID found!");
+        return;
+    }
+
     // Connect to MCTP scoket
     pldmFd = pldm_open();
     auto openErrno = errno;
@@ -527,7 +537,7 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         log<level::INFO>(
             fmt::format(
                 "sendPldm: calling pldm_send(OCC{}, instance:{}, {} bytes)",
-                instance, mctpInstance, request.size())
+                instance, mctpInstance.value(), request.size())
                 .c_str());
         pldmResponseReceived = false;
         pldmResponseTimeout = false;
@@ -569,6 +579,11 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
                     mctpEid, pldmFd, request.size(), rc, sendErrno,
                     strerror(sendErrno))
                     .c_str());
+        }
+        else
+        {
+            // Not waiting for response, instance ID should be freed
+            mctpInstance = std::nullopt;
         }
         pldmClose();
     }
@@ -638,15 +653,22 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
 
     auto pldmIface = static_cast<Interface*>(userData);
 
+    if (!pldmIface->mctpInstance)
+    {
+        log<level::ERR>(
+            "pldmRspCallback: No outstanding MCTP Instance ID found");
+        return -1;
+    }
+
     uint8_t* responseMsg = nullptr;
     size_t responseMsgSize{};
 
     log<level::INFO>(
         fmt::format("pldmRspCallback: calling pldm_recv() instance:{}",
-                    pldmIface->mctpInstance)
+                    pldmIface->mctpInstance.value())
             .c_str());
-    auto rc = pldm_recv(mctpEid, fd, pldmIface->mctpInstance, &responseMsg,
-                        &responseMsgSize);
+    auto rc = pldm_recv(mctpEid, fd, pldmIface->mctpInstance.value(),
+                        &responseMsg, &responseMsgSize);
     int lastErrno = errno;
     if (rc)
     {
@@ -657,6 +679,8 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
                 .c_str());
         return -1;
     }
+
+    // We got the response for the PLDM request msg that was sent
     log<level::INFO>(
         fmt::format("pldmRspCallback: pldm_recv() rsp was {} bytes",
                     responseMsgSize)
@@ -668,13 +692,13 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
         pldmIface->pldmRspTimer.setEnabled(false);
     }
 
+    // instance ID should be freed
+    pldmIface->mctpInstance = std::nullopt;
+
     // Set pointer to autodelete
     std::unique_ptr<uint8_t, decltype(std::free)*> responseMsgPtr{responseMsg,
                                                                   std::free};
 
-    // We've got the response meant for the PLDM request msg that was
-    // sent out
-    // io.set_enabled(Enabled::Off);
     auto response = reinterpret_cast<pldm_msg*>(responseMsgPtr.get());
     if (response->payload[0] != PLDM_SUCCESS)
     {
@@ -732,8 +756,9 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
     else
     {
         log<level::INFO>(
-            fmt::format("pldmRspCallback: OCC{} is not running (state:{})",
-                        instance, occSensorState)
+            fmt::format(
+                "pldmRspCallback: OCC{} is not running (sensor state:{})",
+                instance, occSensorState)
                 .c_str());
         pldmIface->callBack(instance, false);
     }
@@ -744,13 +769,21 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
 std::vector<uint8_t> Interface::encodeGetStateSensorRequest(uint8_t instance,
                                                             uint16_t sensorId)
 {
+    if (!getMctpInstanceId())
+    {
+        log<level::ERR>(
+            "encodeGetStateSensorRequest: failed to getMctpInstanceId");
+        return std::vector<uint8_t>();
+    }
+
     bitfield8_t sRearm = {0};
     const size_t msgSize =
         sizeof(pldm_msg_hdr) + PLDM_GET_STATE_SENSOR_READINGS_REQ_BYTES;
     std::vector<uint8_t> request(msgSize);
+
     auto msg = reinterpret_cast<pldm_msg*>(request.data());
-    auto msgRc = encode_get_state_sensor_readings_req(mctpInstance, sensorId,
-                                                      sRearm, 0, msg);
+    auto msgRc = encode_get_state_sensor_readings_req(mctpInstance.value(),
+                                                      sensorId, sRearm, 0, msg);
     if (msgRc != PLDM_SUCCESS)
     {
         log<level::ERR>(
@@ -799,12 +832,6 @@ void Interface::checkActiveSensor(uint8_t instance)
             fmt::format("checkActiveSensor: OCC{} / sensorID: 0x{:04X}",
                         instance, entry->first)
                 .c_str());
-
-        if (!getMctpInstanceId(mctpInstance))
-        {
-            log<level::ERR>("checkActiveSensor: failed to getMctpInstanceId");
-            return;
-        }
 
         // Encode GetStateSensorReadings PLDM message
         auto request = encodeGetStateSensorRequest(instance, entry->first);

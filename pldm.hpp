@@ -108,7 +108,6 @@ class Interface
 
     /** @brief Prepare the request for SetStateEffecterStates command
      *
-     *  @param[in] instanceId - PLDM instanceID
      *  @param[in] effecterId - the instance effecter ID
      *  @param[in] effecterCount - compositeEffecterCount for the effecter PDR
      *  @param[in] stateIdPos - position of the stateSetID
@@ -118,7 +117,7 @@ class Interface
      *          HRESET, empty response in the case of failure.
      */
     std::vector<uint8_t>
-        prepareSetEffecterReq(uint8_t instanceId, EffecterID effecterId,
+        prepareSetEffecterReq(EffecterID effecterId,
                               CompositeEffecterCount effecterCount,
                               uint8_t stateIdPos, uint8_t stateSetValue);
 
@@ -144,6 +143,10 @@ class Interface
     void checkActiveSensor(uint8_t instance);
 
   private:
+    /** @brief MCTP instance number used in PLDM requests
+     */
+    std::optional<uint8_t> mctpInstance;
+
     /** @brief Callback handler to be invoked when the state of the OCC
      *         changes
      */
@@ -222,10 +225,6 @@ class Interface
     /** @brief File descriptor for PLDM messages */
     int pldmFd = -1;
 
-    /** @brief MCTP instance number used in PLDM requests
-     */
-    uint8_t mctpInstance{};
-
     /** @brief The response for the PLDM request msg is received flag.
      */
     bool pldmResponseReceived = false;
@@ -295,11 +294,9 @@ class Interface
 
     /** @brief Query PLDM for the MCTP requester instance id
      *
-     * @param[out] - the instance id
-     *
      * @return true if the id was found and false if not
      */
-    bool getMctpInstanceId(uint8_t& instanceId);
+    bool getMctpInstanceId();
 
     /** @brief Encode a GetStateSensor command into a PLDM request
      *  @param[in] instance - OCC instance number
