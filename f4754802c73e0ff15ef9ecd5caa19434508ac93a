@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "25ceb743_d1eb5ae4",
+        "filename": "powermode.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1067,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-05-27T13:49:57Z",
+      "side": 1,
+      "message": "because the PowerMode class is derived from the ModeInterface, you will havee functions on the base class called bool safeMode() and bool safeMode(bool arg).\n\nsafeMode(bool)  will check if the values change as well I\u0027m pretty sure, but I think this function, if you even want to keep it, can boil down to something like:\n\nif (safeMode() !\u003d safeMode())\n{\n   safeMode(safeMode)\n  }",
+      "revId": "f4754802c73e0ff15ef9ecd5caa19434508ac93a",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "73ddc016_ee020e78",
+        "filename": "powermode.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1083,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-05-27T13:49:57Z",
+      "side": 1,
+      "message": "you shouldn\u0027t need this function since you can just use the safeMode() in the derived class()",
+      "range": {
+        "startLine": 1083,
+        "startChar": 0,
+        "endLine": 1083,
+        "endChar": 32
+      },
+      "revId": "f4754802c73e0ff15ef9ecd5caa19434508ac93a",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
