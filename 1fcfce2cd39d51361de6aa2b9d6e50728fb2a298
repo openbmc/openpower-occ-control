@@ -18,6 +18,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "20ea408f_4665c496",
+        "filename": "occ_device.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2022-05-27T19:36:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6f02d849_67b06967",
+      "revId": "1fcfce2cd39d51361de6aa2b9d6e50728fb2a298",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "37f40d98_86b3434c",
@@ -71,6 +89,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9cb84d73_a5174d0a",
+        "filename": "occ_errors.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2022-05-27T19:36:08Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "f09a9f5a_54b6bf86",
+      "revId": "1fcfce2cd39d51361de6aa2b9d6e50728fb2a298",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8acf41c8_2d023c95",
@@ -84,6 +120,30 @@
       "writtenOn": "2022-05-26T15:38:58Z",
       "side": 1,
       "message": "this is support to be just the raw errno in case the  error handling code would want to do something different based on it.\nMaybe down below you can emplace the string meaning of it.",
+      "range": {
+        "startLine": 101,
+        "startChar": 47,
+        "endLine": 101,
+        "endChar": 70
+      },
+      "revId": "1fcfce2cd39d51361de6aa2b9d6e50728fb2a298",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "792a9a40_5e034b8a",
+        "filename": "occ_ffdc.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 101,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2022-05-27T19:36:08Z",
+      "side": 1,
+      "message": "Well, additionalData holds strings, so I have to turn the errno into a string, like \"-6\", I think. It doesn\u0027t get the error string like strerror, if that\u0027s what you were concerned about.",
+      "parentUuid": "8acf41c8_2d023c95",
       "range": {
         "startLine": 101,
         "startChar": 47,
@@ -111,6 +171,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fc180456_ce1ed393",
+        "filename": "occ_ffdc.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2022-05-27T19:36:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "af2a3e8d_2ff630b1",
+      "revId": "1fcfce2cd39d51361de6aa2b9d6e50728fb2a298",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "84b966e3_fa29aadd",
@@ -124,6 +202,24 @@
       "writtenOn": "2022-05-26T15:38:58Z",
       "side": 1,
       "message": "since you aren\u0027t using the plid this can probably be a void function",
+      "revId": "1fcfce2cd39d51361de6aa2b9d6e50728fb2a298",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f73410c6_e84611cb",
+        "filename": "occ_ffdc.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 1000025
+      },
+      "writtenOn": "2022-05-27T19:36:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "84b966e3_fa29aadd",
       "revId": "1fcfce2cd39d51361de6aa2b9d6e50728fb2a298",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
