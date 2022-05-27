@@ -206,7 +206,7 @@ void Manager::checkAllActiveSensors()
         // All sensors were found, disable the discovery timer
         if (discoverTimer->isEnabled())
         {
-            discoverTimer.reset();
+            discoverTimer->setEnabled(false);
         }
 
         if (waitingForAllOccActiveSensors)
@@ -227,10 +227,7 @@ void Manager::checkAllActiveSensors()
                 "checkAllActiveSensors(): Waiting for OCC Active sensors to become available");
             tracedSensorWait = true;
         }
-        if (discoverTimer->isEnabled())
-        {
-            discoverTimer->restartOnce(10s);
-        }
+        discoverTimer->restartOnce(10s);
     }
 }
 #endif
