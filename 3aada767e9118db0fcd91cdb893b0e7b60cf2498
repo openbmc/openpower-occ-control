@@ -35,6 +35,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "93b3a415_b568927c",
+        "filename": "powermode.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-05-31T15:25:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7da89965_1a2a1319",
+      "revId": "3aada767e9118db0fcd91cdb893b0e7b60cf2498",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "806c856c_b5ac2445",
@@ -52,6 +70,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f474eab6_10cef0d0",
+        "filename": "powermode.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-05-31T15:25:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "806c856c_b5ac2445",
+      "revId": "3aada767e9118db0fcd91cdb893b0e7b60cf2498",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ae58d3ee_d4f36915",
@@ -65,6 +101,24 @@
       "writtenOn": "2022-05-25T19:38:09Z",
       "side": 1,
       "message": "Add trace so we know why the mode change was ignored",
+      "revId": "3aada767e9118db0fcd91cdb893b0e7b60cf2498",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ce37a0e1_18bd4102",
+        "filename": "powermode.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 115,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-05-31T15:25:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ae58d3ee_d4f36915",
       "revId": "3aada767e9118db0fcd91cdb893b0e7b60cf2498",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
