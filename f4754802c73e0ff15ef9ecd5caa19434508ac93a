@@ -36,6 +36,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b82736d0_0ad580f5",
+        "filename": "powermode.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1067,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-05-31T16:29:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4a890006_fc0b4631",
+      "revId": "f4754802c73e0ff15ef9ecd5caa19434508ac93a",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "73ddc016_ee020e78",
@@ -49,6 +67,30 @@
       "writtenOn": "2022-05-27T13:49:57Z",
       "side": 1,
       "message": "you shouldn\u0027t need this function since you can just use the safeMode() in the derived class()",
+      "range": {
+        "startLine": 1083,
+        "startChar": 0,
+        "endLine": 1083,
+        "endChar": 32
+      },
+      "revId": "f4754802c73e0ff15ef9ecd5caa19434508ac93a",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "56faceee_fc7720bf",
+        "filename": "powermode.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1083,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-05-31T16:29:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "73ddc016_ee020e78",
       "range": {
         "startLine": 1083,
         "startChar": 0,
