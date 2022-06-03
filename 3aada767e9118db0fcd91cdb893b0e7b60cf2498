@@ -138,6 +138,24 @@
       "message": "The lock status will need to be persisted so it needs to get added to this object so that it gets saved.",
       "revId": "3aada767e9118db0fcd91cdb893b0e7b60cf2498",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fd3ec3fe_afb6c85f",
+        "filename": "powermode.hpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2022-06-03T14:36:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5796cc46_20fe38aa",
+      "revId": "3aada767e9118db0fcd91cdb893b0e7b60cf2498",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
