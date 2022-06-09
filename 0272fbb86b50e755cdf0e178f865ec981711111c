@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d3305a28_ed331e06",
+        "filename": "powermode.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1112,
+      "author": {
+        "id": 1000369
+      },
+      "writtenOn": "2022-06-09T22:34:35Z",
+      "side": 1,
+      "message": "Still investigating NotAllowed",
+      "parentUuid": "9089011c_d07862a0",
+      "revId": "0272fbb86b50e755cdf0e178f865ec981711111c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "3d0b3a3c_e74bbbe7",
         "filename": "powermode.hpp",
         "patchSetId": 9
@@ -49,6 +67,30 @@
       "writtenOn": "2022-06-09T18:50:51Z",
       "side": 1,
       "message": "nit: modeLocked",
+      "range": {
+        "startLine": 77,
+        "startChar": 9,
+        "endLine": 77,
+        "endChar": 19
+      },
+      "revId": "0272fbb86b50e755cdf0e178f865ec981711111c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1ae79fb6_81fa4179",
+        "filename": "powermode.hpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 1000369
+      },
+      "writtenOn": "2022-06-09T22:34:35Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3d0b3a3c_e74bbbe7",
       "range": {
         "startLine": 77,
         "startChar": 9,
@@ -72,6 +114,30 @@
       "writtenOn": "2022-06-09T18:50:51Z",
       "side": 1,
       "message": "modeLock",
+      "range": {
+        "startLine": 127,
+        "startChar": 35,
+        "endLine": 127,
+        "endChar": 43
+      },
+      "revId": "0272fbb86b50e755cdf0e178f865ec981711111c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6d580609_538b7437",
+        "filename": "powermode.hpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1000369
+      },
+      "writtenOn": "2022-06-09T22:34:35Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fc436b08_7c4960be",
       "range": {
         "startLine": 127,
         "startChar": 35,
