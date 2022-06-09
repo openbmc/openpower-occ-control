@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c5eaa6e8_e23f5c49",
+        "filename": "powermode.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1112,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-06-09T18:50:51Z",
+      "side": 1,
+      "message": "Is this the place Ben was going to make a change to return NotAllowed?",
+      "revId": "0272fbb86b50e755cdf0e178f865ec981711111c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d0b3a3c_e74bbbe7",
+        "filename": "powermode.hpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-06-09T18:50:51Z",
+      "side": 1,
+      "message": "nit: modeLocked",
+      "range": {
+        "startLine": 77,
+        "startChar": 9,
+        "endLine": 77,
+        "endChar": 19
+      },
+      "revId": "0272fbb86b50e755cdf0e178f865ec981711111c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fc436b08_7c4960be",
+        "filename": "powermode.hpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-06-09T18:50:51Z",
+      "side": 1,
+      "message": "modeLock",
+      "range": {
+        "startLine": 127,
+        "startChar": 35,
+        "endLine": 127,
+        "endChar": 43
+      },
+      "revId": "0272fbb86b50e755cdf0e178f865ec981711111c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
