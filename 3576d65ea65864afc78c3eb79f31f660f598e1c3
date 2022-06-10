@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fe27261c_b65c21e6",
+        "filename": "powermode.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-06-10T14:58:26Z",
+      "side": 1,
+      "message": "I kinda wonder if this whole function is dead code now that the occ app hosts this property...",
+      "revId": "3576d65ea65864afc78c3eb79f31f660f598e1c3",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "97e5ff0e_633a76d1",
+        "filename": "powermode.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-06-10T14:58:26Z",
+      "side": 1,
+      "message": "Would this be changing the value on D-Bus?  or just writing to back to what it already is?",
+      "range": {
+        "startLine": 91,
+        "startChar": 0,
+        "endLine": 92,
+        "endChar": 40
+      },
+      "revId": "3576d65ea65864afc78c3eb79f31f660f598e1c3",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e70e1d61_de15a256",
+        "filename": "powermode.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 640,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-06-10T14:58:26Z",
+      "side": 1,
+      "message": "nit:  \u0027Locked: {}\u0027 to be consistent?",
+      "range": {
+        "startLine": 640,
+        "startChar": 77,
+        "endLine": 640,
+        "endChar": 85
+      },
+      "revId": "3576d65ea65864afc78c3eb79f31f660f598e1c3",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
