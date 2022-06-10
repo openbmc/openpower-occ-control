@@ -35,6 +35,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e0a1bc62_d366a3dd",
+        "filename": "powermode.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1000369
+      },
+      "writtenOn": "2022-06-10T21:40:06Z",
+      "side": 1,
+      "message": "Agree. Recommend remove in future cleanup commit. The associated match rule can also probably be removed.",
+      "parentUuid": "fe27261c_b65c21e6",
+      "revId": "3576d65ea65864afc78c3eb79f31f660f598e1c3",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "97e5ff0e_633a76d1",
@@ -58,6 +76,30 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "43e9cb04_0b4a08cd",
+        "filename": "powermode.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 1000369
+      },
+      "writtenOn": "2022-06-10T21:40:06Z",
+      "side": 1,
+      "message": "Recommend remove in future cleanup commit. Fwiw, my intent: the persistent data (getMode) is what the D-Bus property was before the property change triggered this code to execute.",
+      "parentUuid": "97e5ff0e_633a76d1",
+      "range": {
+        "startLine": 91,
+        "startChar": 0,
+        "endLine": 92,
+        "endChar": 40
+      },
+      "revId": "3576d65ea65864afc78c3eb79f31f660f598e1c3",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e70e1d61_de15a256",
@@ -71,6 +113,30 @@
       "writtenOn": "2022-06-10T14:58:26Z",
       "side": 1,
       "message": "nit:  \u0027Locked: {}\u0027 to be consistent?",
+      "range": {
+        "startLine": 640,
+        "startChar": 77,
+        "endLine": 640,
+        "endChar": 85
+      },
+      "revId": "3576d65ea65864afc78c3eb79f31f660f598e1c3",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2e79fc45_5d0d4d9d",
+        "filename": "powermode.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 640,
+      "author": {
+        "id": 1000369
+      },
+      "writtenOn": "2022-06-10T21:40:06Z",
+      "side": 1,
+      "message": "Agree. Recommend to change in future cleanup commit.",
+      "parentUuid": "e70e1d61_de15a256",
       "range": {
         "startLine": 640,
         "startChar": 77,
