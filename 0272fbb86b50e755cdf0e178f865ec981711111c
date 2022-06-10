@@ -54,6 +54,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "129754f9_ffc4c538",
+        "filename": "powermode.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1112,
+      "author": {
+        "id": 1000369
+      },
+      "writtenOn": "2022-06-10T04:12:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d3305a28_ed331e06",
+      "revId": "0272fbb86b50e755cdf0e178f865ec981711111c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3d0b3a3c_e74bbbe7",
