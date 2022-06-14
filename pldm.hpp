@@ -70,12 +70,6 @@ class Interface
                 MatchRules::interface("xyz.openbmc_project.PLDM.Event"),
             std::bind(std::mem_fn(&Interface::sensorEvent), this,
                       std::placeholders::_1)),
-        hostStateSignal(
-            open_power::occ::utils::getBus(),
-            MatchRules::propertiesChanged("/xyz/openbmc_project/state/host0",
-                                          "xyz.openbmc_project.State.Host"),
-            std::bind(std::mem_fn(&Interface::hostStateEvent), this,
-                      std::placeholders::_1)),
         sdpEvent(sdeventplus::Event::get_default()),
         pldmRspTimer(
             sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>(
@@ -174,9 +168,6 @@ class Interface
      */
     sdbusplus::bus::match_t pldmEventSignal;
 
-    /** @brief Used to subscribe for host state change signal */
-    sdbusplus::bus::match_t hostStateSignal;
-
     /** @brief PLDM Sensor ID to OCC Instance mapping
      */
     SensorToInstance sensorToOCCInstance;
@@ -258,14 +249,6 @@ class Interface
      *  @param[in] msg - data associated with the subscribed signal
      */
     void sensorEvent(sdbusplus::message::message& msg);
-
-    /** @brief When the host state changes and if the CurrentHostState is
-     *         xyz.openbmc_project.State.Host.HostState.Off then
-     *         the cache of OCC sensors and effecters mapping is cleared.
-     *
-     *  @param[in] msg - data associated with the subscribed signal
-     */
-    void hostStateEvent(sdbusplus::message::message& msg);
 
     /** @brief Called when it is determined that the Host is not running.
      *         The cache of OCC sensors and effecters mapping is cleared.

@@ -117,8 +117,7 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
     {
         auto pdrPtr =
             reinterpret_cast<const pldm_state_sensor_pdr*>(pdr.data());
-        uint32_t key = (static_cast<uint32_t>(pdrPtr->container_id) << 16) |
-                       static_cast<uint32_t>(pdrPtr->entity_instance);
+        uint32_t key = pdrPtr->sensor_id;
         entityInstMap.emplace(key, static_cast<SensorID>(pdrPtr->sensor_id));
     }
 
@@ -132,6 +131,12 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
 
 void Interface::sensorEvent(sdbusplus::message::message& msg)
 {
+    if (!open_power::occ::utils::isHostRunning())
+    {
+        clearData();
+        return;
+    }
+
     if (!isOCCSensorCacheValid())
     {
         fetchSensorInfo(PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS,
@@ -144,13 +149,14 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
                         SBESensorOffset);
     }
 
-    TerminusID tid{};
+    TerminusID sensorTid{};
     SensorID sensorId{};
     SensorOffset msgSensorOffset{};
     EventState eventState{};
     EventState previousEventState{};
 
-    msg.read(tid, sensorId, msgSensorOffset, eventState, previousEventState);
+    msg.read(sensorTid, sensorId, msgSensorOffset, eventState,
+             previousEventState);
 
     if (msgSensorOffset == OCCSensorOffset)
     {
@@ -237,30 +243,49 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
     }
 }
 
-void Interface::hostStateEvent(sdbusplus::message::message& msg)
-{
-    std::map<std::string, std::variant<std::string>> properties{};
-    std::string interface;
-    msg.read(interface, properties);
-    const auto stateEntry = properties.find("CurrentHostState");
-    if (stateEntry != properties.end())
-    {
-        auto stateEntryValue = stateEntry->second;
-        auto propVal = std::get<std::string>(stateEntryValue);
-        if (propVal == "xyz.openbmc_project.State.Host.HostState.Off")
-        {
-            clearData();
-        }
-    }
-}
-
 void Interface::clearData()
 {
-    sensorToOCCInstance.clear();
-    occInstanceToEffecter.clear();
-
-    sensorToSBEInstance.clear();
-    sbeInstanceToEffecter.clear();
+    if (!sensorToOCCInstance.empty())
+    {
+        log<level::INFO>(
+            fmt::format("clearData: Clearing sensorToOCCInstance ({} entries)",
+                        sensorToOCCInstance.size())
+                .c_str());
+        for (auto entry : sensorToOCCInstance)
+        {
+            log<level::INFO>(
+                fmt::format("clearData: OCC{} / sensorID: 0x{:04X}",
+                            entry.second, entry.first)
+                    .c_str());
+        }
+        sensorToOCCInstance.clear();
+    }
+    if (!occInstanceToEffecter.empty())
+    {
+        log<level::DEBUG>(
+            fmt::format(
+                "clearData: Clearing occInstanceToEffecter ({} entries)",
+                occInstanceToEffecter.size())
+                .c_str());
+        occInstanceToEffecter.clear();
+    }
+    if (!sensorToSBEInstance.empty())
+    {
+        log<level::DEBUG>(
+            fmt::format("clearData: Clearing sensorToSBEInstance ({} entries)",
+                        sensorToSBEInstance.size())
+                .c_str());
+        sensorToSBEInstance.clear();
+    }
+    if (!sbeInstanceToEffecter.empty())
+    {
+        log<level::DEBUG>(
+            fmt::format(
+                "clearData: Clearing sbeInstanceToEffecter ({} entries)",
+                sbeInstanceToEffecter.size())
+                .c_str());
+        sbeInstanceToEffecter.clear();
+    }
 }
 
 void Interface::fetchEffecterInfo(uint16_t stateSetId,
@@ -326,8 +351,7 @@ void Interface::fetchEffecterInfo(uint16_t stateSetId,
     {
         auto pdrPtr =
             reinterpret_cast<const pldm_state_effecter_pdr*>(pdr.data());
-        uint32_t key = (static_cast<uint32_t>(pdrPtr->container_id) << 16) |
-                       static_cast<uint32_t>(pdrPtr->entity_instance);
+        uint32_t key = pdrPtr->sensor_id;
         entityInstMap.emplace(key, static_cast<SensorID>(pdrPtr->effecter_id));
     }
 
@@ -850,6 +874,8 @@ void Interface::checkActiveSensor(uint8_t instance)
                 "checkActiveSensor: Unable to find PLDM sensor for OCC{}",
                 instance)
                 .c_str());
+        // Clear cache to recollect the sensor ids
+        clearData();
     }
 }
 
