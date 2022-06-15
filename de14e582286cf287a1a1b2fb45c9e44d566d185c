@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2add070c_39e94a31",
+        "filename": "pldm.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-06-15T13:59:18Z",
+      "side": 1,
+      "message": "There\u0027s quite a few calls to this now, and they all all go to dbus to read the property.  Ideally, it would be read once and then there\u0027d be a watch for property changes, so maybe an improvement for the future.",
+      "range": {
+        "startLine": 135,
+        "startChar": 8,
+        "endLine": 135,
+        "endChar": 48
+      },
+      "revId": "de14e582286cf287a1a1b2fb45c9e44d566d185c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "23b71b82_50deec0a",
+        "filename": "pldm.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 257,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2022-06-15T13:59:18Z",
+      "side": 1,
+      "message": "these 2 are INFO, and the rest are DEBUG.  You still want them INFO?",
+      "range": {
+        "startLine": 251,
+        "startChar": 0,
+        "endLine": 257,
+        "endChar": 29
+      },
+      "revId": "de14e582286cf287a1a1b2fb45c9e44d566d185c",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
