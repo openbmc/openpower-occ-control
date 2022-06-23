@@ -35,10 +35,12 @@ void PowerCap::updatePcapBounds()
         getPcapFilename(std::regex{"power\\d+_cap_min_soft$"});
     fs::path maxName = getPcapFilename(std::regex{"power\\d+_cap_max$"});
 
-    // Read the power cap bounds from sysfs files
+    // Read the current cap bounds from sysfs files
     uint64_t cap;
-    uint32_t capSoftMin = 0, capHardMin = 0, capMax = INT_MAX;
+    uint32_t capSoftMin, capHardMin, capMax;
+    readDbusPcap(capSoftMin, capHardMin, capMax);
 
+    // Read the power cap bounds from sysfs files
     std::ifstream softMinFile(softMinName, std::ios::in);
     if (softMinFile)
     {
@@ -384,6 +386,63 @@ bool PowerCap::updateDbusPcap(uint32_t softMin, uint32_t hardMin, uint32_t max)
 
     return complete;
 }
+
+// Read the Power Cap bounds from DBus
+bool PowerCap::readDbusPcap(uint32_t& softMin, uint32_t& hardMin, uint32_t& max)
+{
+    bool complete = true;
+    utils::PropertyValue prop{};
+
+    try
+    {
+        prop =
+            utils::getProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_SOFT_MIN);
+        softMin = std::get<uint32_t>(prop);
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        log<level::ERR>(
+            fmt::format("readDbusPcap: Failed to get SOFT PCAP due to {}",
+                        e.what())
+                .c_str());
+        softMin = 0;
+        complete = false;
+    }
+
+    try
+    {
+        prop =
+            utils::getProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_HARD_MIN);
+        hardMin = std::get<uint32_t>(prop);
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        log<level::ERR>(
+            fmt::format("readDbusPcap: Failed to get HARD PCAP due to {}",
+                        e.what())
+                .c_str());
+        hardMin = 0;
+        complete = false;
+    }
+
+    try
+    {
+        prop = utils::getProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_MAX);
+        max = std::get<uint32_t>(prop);
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        log<level::ERR>(
+            fmt::format("readDbusPcap: Failed to get MAX PCAP due to {}",
+                        e.what())
+                .c_str());
+        max = INT_MAX;
+        complete = false;
+    }
+
+    return complete;
+}
+
 } // namespace powercap
 
 } // namespace occ

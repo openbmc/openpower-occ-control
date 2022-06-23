@@ -129,6 +129,18 @@ class PowerCap
      * @return true if all parms were written successfully
      */
     bool updateDbusPcap(uint32_t softMin, uint32_t hardMin, uint32_t pcapMax);
+
+    /** @brief Read the power cap bounds from DBus
+     *
+     * @param[out]  softMin - soft minimum power cap in Watts
+     * @param[out]  hardMin - hard minimum power cap in Watts
+     * @param[out]  pcapMax - maximum power cap in Watts
+     *
+     * @return true if all parms were read successfully
+     *         If a parm is not successfully read, it will default to 0 for the
+     *           Min parameter and INT_MAX for the Max parameter
+     */
+    bool readDbusPcap(uint32_t& softMin, uint32_t& hardMin, uint32_t& max);
 };
 
 } // namespace powercap
