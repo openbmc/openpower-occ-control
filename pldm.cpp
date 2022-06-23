@@ -131,12 +131,6 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
 
 void Interface::sensorEvent(sdbusplus::message::message& msg)
 {
-    if (!open_power::occ::utils::isHostRunning())
-    {
-        clearData();
-        return;
-    }
-
     if (!isOCCSensorCacheValid())
     {
         fetchSensorInfo(PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS,
@@ -874,8 +868,6 @@ void Interface::checkActiveSensor(uint8_t instance)
                 "checkActiveSensor: Unable to find PLDM sensor for OCC{}",
                 instance)
                 .c_str());
-        // Clear cache to recollect the sensor ids
-        clearData();
     }
 }
 
