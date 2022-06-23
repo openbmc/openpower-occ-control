@@ -131,12 +131,6 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
 
 void Interface::sensorEvent(sdbusplus::message::message& msg)
 {
-    if (!open_power::occ::utils::isHostRunning())
-    {
-        clearData();
-        return;
-    }
-
     if (!isOCCSensorCacheValid())
     {
         fetchSensorInfo(PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS,
@@ -239,6 +233,23 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
                 }
             }
             // else request was not from us
+        }
+    }
+}
+
+void Interface::hostStateEvent(sdbusplus::message::message& msg)
+{
+    std::map<std::string, std::variant<std::string>> properties{};
+    std::string interface;
+    msg.read(interface, properties);
+    const auto stateEntry = properties.find("CurrentHostState");
+    if (stateEntry != properties.end())
+    {
+        auto stateEntryValue = stateEntry->second;
+        auto propVal = std::get<std::string>(stateEntryValue);
+        if (propVal == "xyz.openbmc_project.State.Host.HostState.Off")
+        {
+            clearData();
         }
     }
 }
@@ -874,8 +885,6 @@ void Interface::checkActiveSensor(uint8_t instance)
                 "checkActiveSensor: Unable to find PLDM sensor for OCC{}",
                 instance)
                 .c_str());
-        // Clear cache to recollect the sensor ids
-        clearData();
     }
 }
 
