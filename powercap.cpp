@@ -35,16 +35,18 @@ void PowerCap::updatePcapBounds()
         getPcapFilename(std::regex{"power\\d+_cap_min_soft$"});
     fs::path maxName = getPcapFilename(std::regex{"power\\d+_cap_max$"});
 
-    // Read the power cap bounds from sysfs files
-    uint64_t cap;
-    uint32_t capSoftMin = 0, capHardMin = 0, capMax = INT_MAX;
+    // Read the current cap bounds from dbus
+    uint32_t capSoftMin, capHardMin, capMax;
+    readDbusPcapLimits(capSoftMin, capHardMin, capMax);
 
+    // Read the power cap bounds from sysfs files (from OCC)
+    uint64_t cap;
     std::ifstream softMinFile(softMinName, std::ios::in);
     if (softMinFile)
     {
         softMinFile >> cap;
         softMinFile.close();
-        // Convert to Input Power in Watts (round up)
+        // Convert to input/AC Power in Watts (round up)
         capSoftMin = ((cap / (PS_DERATING_FACTOR / 100.0) / 1000000) + 0.9);
     }
     else
@@ -61,7 +63,7 @@ void PowerCap::updatePcapBounds()
     {
         minFile >> cap;
         minFile.close();
-        // Convert to Input Power in Watts (round up)
+        // Convert to input/AC Power in Watts (round up)
         capHardMin = ((cap / (PS_DERATING_FACTOR / 100.0) / 1000000) + 0.9);
     }
     else
@@ -78,7 +80,7 @@ void PowerCap::updatePcapBounds()
     {
         maxFile >> cap;
         maxFile.close();
-        // Convert to Input Power in Watts (truncate remainder)
+        // Convert to input/AC Power in Watts (truncate remainder)
         capMax = cap / (PS_DERATING_FACTOR / 100.0) / 1000000;
     }
     else
@@ -90,24 +92,69 @@ void PowerCap::updatePcapBounds()
                 .c_str());
     }
 
-    // Save the bounds to dbus
-    updateDbusPcap(capSoftMin, capHardMin, capMax);
+    // Save the power cap bounds to dbus
+    updateDbusPcapLimits(capSoftMin, capHardMin, capMax);
 
-    // Validate dbus and hwmon user caps match
+    // Validate user power cap (if enabled) is within the bounds
     const uint32_t dbusUserCap = getPcap();
-    const uint32_t hwmonUserCap = readUserCapHwmon();
-    if ((hwmonUserCap != 0) && (dbusUserCap != hwmonUserCap))
+    const bool pcapEnabled = getPcapEnabled();
+    if (pcapEnabled && (dbusUserCap != 0))
     {
-        // User power cap is enabled, but does not match dbus
-        log<level::ERR>(
-            fmt::format(
-                "updatePcapBounds: user powercap mismatch (hwmon:{}W, bdus:{}W) - using dbus",
-                hwmonUserCap, dbusUserCap)
-                .c_str());
-        writeOcc(dbusUserCap);
+        const uint32_t hwmonUserCap = readUserCapHwmon();
+        if ((dbusUserCap >= capSoftMin) && (dbusUserCap <= capMax))
+        {
+            // Validate dbus and hwmon user caps match
+            if ((hwmonUserCap != 0) && (dbusUserCap != hwmonUserCap))
+            {
+                // User power cap is enabled, but does not match dbus
+                log<level::ERR>(
+                    fmt::format(
+                        "updatePcapBounds: user powercap mismatch (hwmon:{}W, bdus:{}W) - using dbus",
+                        hwmonUserCap, dbusUserCap)
+                        .c_str());
+                auto occInput = getOccInput(dbusUserCap, pcapEnabled);
+                writeOcc(occInput);
+            }
+        }
+        else
+        {
+            // User power cap is outside of current bounds
+            uint32_t newCap = capMax;
+            if (dbusUserCap < capSoftMin)
+            {
+                newCap = capSoftMin;
+            }
+            log<level::ERR>(
+                fmt::format(
+                    "updatePcapBounds: user powercap {}W is outside bounds "
+                    "(soft min:{}, min:{}, max:{})",
+                    dbusUserCap, capSoftMin, capHardMin, capMax)
+                    .c_str());
+            try
+            {
+                log<level::INFO>(
+                    fmt::format(
+                        "updatePcapBounds: Updating user powercap from {} to {}W",
+                        hwmonUserCap, newCap)
+                        .c_str());
+                utils::setProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_PROP,
+                                   newCap);
+                auto occInput = getOccInput(newCap, pcapEnabled);
+                writeOcc(occInput);
+            }
+            catch (const sdbusplus::exception::exception& e)
+            {
+                log<level::ERR>(
+                    fmt::format(
+                        "updatePcapBounds: Failed to update user powercap due to ",
+                        e.what())
+                        .c_str());
+            }
+        }
     }
 }
 
+// Get value of power cap to send to the OCC (output/DC power)
 uint32_t PowerCap::getOccInput(uint32_t pcap, bool pcapEnabled)
 {
     if (!pcapEnabled)
@@ -117,7 +164,7 @@ uint32_t PowerCap::getOccInput(uint32_t pcap, bool pcapEnabled)
     }
 
     // If pcap is not disabled then just return the pcap with the derating
-    // factor applied.
+    // factor applied (output/DC power).
     return ((static_cast<uint64_t>(pcap) * PS_DERATING_FACTOR) / 100);
 }
 
@@ -190,7 +237,7 @@ fs::path PowerCap::getPcapFilename(const std::regex& expr)
     return fs::path{};
 }
 
-// Write the user power cap to sysfs.
+// Write the user power cap to sysfs (output/DC power)
 // This will trigger the driver to send the cap to the OCC
 void PowerCap::writeOcc(uint32_t pcapValue)
 {
@@ -235,7 +282,7 @@ void PowerCap::writeOcc(uint32_t pcapValue)
     return;
 }
 
-// Read the current user power cap from sysfs.
+// Read the current user power cap from sysfs as input/AC power
 uint32_t PowerCap::readUserCapHwmon()
 {
     uint32_t userCap = 0;
@@ -259,8 +306,8 @@ uint32_t PowerCap::readUserCapHwmon()
         uint64_t cap;
         file >> cap;
         file.close();
-        // Convert to Watts
-        userCap = cap / 1000000;
+        // Convert to input/AC Power in Watts
+        userCap = (cap / (PS_DERATING_FACTOR / 100.0) / 1000000);
     }
     else
     {
@@ -314,6 +361,30 @@ void PowerCap::pcapChanged(sdbusplus::message::message& msg)
         }
     }
 
+    // Validate the cap is within supported range
+    uint32_t capSoftMin, capHardMin, capMax;
+    readDbusPcapLimits(capSoftMin, capHardMin, capMax);
+    if (((pcap > 0) && (pcap < capSoftMin)) || ((pcap == 0) && (pcapEnabled)))
+    {
+        log<level::ERR>(
+            fmt::format(
+                "pcapChanged: Power cap of {}W is lower than allowed (soft min:{}, min:{}) - using soft min",
+                pcap, capSoftMin, capHardMin)
+                .c_str());
+        pcap = capSoftMin;
+        utils::setProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_PROP, pcap);
+    }
+    else if (pcap > capMax)
+    {
+        log<level::ERR>(
+            fmt::format(
+                "pcapChanged: Power cap of {}W is higher than allowed (max:{}) - using max",
+                pcap, capSoftMin, capHardMin)
+                .c_str());
+        pcap = capMax;
+        utils::setProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_PROP, pcap);
+    }
+
     if (changeFound)
     {
         log<level::INFO>(
@@ -323,9 +394,7 @@ void PowerCap::pcapChanged(sdbusplus::message::message& msg)
                 .c_str());
 
         // Determine desired action to write to occ
-
         auto occInput = getOccInput(pcap, pcapEnabled);
-
         // Write action to occ
         writeOcc(occInput);
     }
@@ -334,7 +403,8 @@ void PowerCap::pcapChanged(sdbusplus::message::message& msg)
 }
 
 // Update the Power Cap bounds on DBus
-bool PowerCap::updateDbusPcap(uint32_t softMin, uint32_t hardMin, uint32_t max)
+bool PowerCap::updateDbusPcapLimits(uint32_t softMin, uint32_t hardMin,
+                                    uint32_t max)
 {
     bool complete = true;
 
@@ -347,7 +417,7 @@ bool PowerCap::updateDbusPcap(uint32_t softMin, uint32_t hardMin, uint32_t max)
     {
         log<level::ERR>(
             fmt::format(
-                "updateDbusPcap: Failed to set SOFT PCAP to {}W due to {}",
+                "updateDbusPcapLimits: Failed to set SOFT PCAP to {}W due to {}",
                 softMin, e.what())
                 .c_str());
         complete = false;
@@ -362,7 +432,7 @@ bool PowerCap::updateDbusPcap(uint32_t softMin, uint32_t hardMin, uint32_t max)
     {
         log<level::ERR>(
             fmt::format(
-                "updateDbusPcap: Failed to set HARD PCAP to {}W due to {}",
+                "updateDbusPcapLimits: Failed to set HARD PCAP to {}W due to {}",
                 hardMin, e.what())
                 .c_str());
         complete = false;
@@ -376,14 +446,72 @@ bool PowerCap::updateDbusPcap(uint32_t softMin, uint32_t hardMin, uint32_t max)
     {
         log<level::ERR>(
             fmt::format(
-                "updateDbusPcap: Failed to set MAX PCAP to {}W due to {}", max,
-                e.what())
+                "updateDbusPcapLimits: Failed to set MAX PCAP to {}W due to {}",
+                max, e.what())
                 .c_str());
         complete = false;
     }
 
     return complete;
 }
+
+// Read the Power Cap bounds from DBus
+bool PowerCap::readDbusPcapLimits(uint32_t& softMin, uint32_t& hardMin,
+                                  uint32_t& max)
+{
+    bool complete = true;
+    utils::PropertyValue prop{};
+
+    try
+    {
+        prop =
+            utils::getProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_SOFT_MIN);
+        softMin = std::get<uint32_t>(prop);
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        log<level::ERR>(
+            fmt::format("readDbusPcapLimits: Failed to get SOFT PCAP due to {}",
+                        e.what())
+                .c_str());
+        softMin = 0;
+        complete = false;
+    }
+
+    try
+    {
+        prop =
+            utils::getProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_HARD_MIN);
+        hardMin = std::get<uint32_t>(prop);
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        log<level::ERR>(
+            fmt::format("readDbusPcapLimits: Failed to get HARD PCAP due to {}",
+                        e.what())
+                .c_str());
+        hardMin = 0;
+        complete = false;
+    }
+
+    try
+    {
+        prop = utils::getProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_MAX);
+        max = std::get<uint32_t>(prop);
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        log<level::ERR>(
+            fmt::format("readDbusPcapLimits: Failed to get MAX PCAP due to {}",
+                        e.what())
+                .c_str());
+        max = INT_MAX;
+        complete = false;
+    }
+
+    return complete;
+}
+
 } // namespace powercap
 
 } // namespace occ

@@ -53,9 +53,10 @@ class PowerCap
             std::bind(std::mem_fn(&PowerCap::pcapChanged), this,
                       std::placeholders::_1)){};
 
-    /** @brief Return the appropriate value to write to the OCC
+    /** @brief Return the appropriate value to write to the OCC (output/DC
+     * power)
      *
-     * @param[in]  pcap        - Current user power cap setting
+     * @param[in]  pcap        - Current user power cap setting (input/AC power)
      * @param[in]  pcapEnabled - Current power cap enable setting
      *
      * @return The value to write to the occ user pcap
@@ -87,7 +88,7 @@ class PowerCap
      */
     bool getPcapEnabled();
 
-    /** @brief Write the input power cap to the occ hwmon entry
+    /** @brief Write the output/DC power cap to the occ hwmon entry
      *
      * @param[in]  pcapValue - Power cap value to write to OCC
      */
@@ -128,7 +129,21 @@ class PowerCap
      *
      * @return true if all parms were written successfully
      */
-    bool updateDbusPcap(uint32_t softMin, uint32_t hardMin, uint32_t pcapMax);
+    bool updateDbusPcapLimits(uint32_t softMin, uint32_t hardMin,
+                              uint32_t pcapMax);
+
+    /** @brief Read the power cap bounds from DBus
+     *
+     * @param[out]  softMin - soft minimum power cap in Watts
+     * @param[out]  hardMin - hard minimum power cap in Watts
+     * @param[out]  pcapMax - maximum power cap in Watts
+     *
+     * @return true if all parms were read successfully
+     *         If a parm is not successfully read, it will default to 0 for the
+     *           Min parameter and INT_MAX for the Max parameter
+     */
+    bool readDbusPcapLimits(uint32_t& softMin, uint32_t& hardMin,
+                            uint32_t& max);
 };
 
 } // namespace powercap
