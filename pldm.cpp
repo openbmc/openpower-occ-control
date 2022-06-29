@@ -885,6 +885,10 @@ void Interface::checkActiveSensor(uint8_t instance)
                 "checkActiveSensor: Unable to find PLDM sensor for OCC{}",
                 instance)
                 .c_str());
+        log<level::INFO>(
+            "checkActiveSensor: fetching STATE_SET_OPERATIONAL_RUNNING_STATUS");
+        fetchSensorInfo(PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS,
+                        sensorToOCCInstance, OCCSensorOffset);
     }
 }
 
