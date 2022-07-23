@@ -280,7 +280,7 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
 }
 
 // Called at OCC Status change signal
-void OccCommand::activeStatusEvent(sdbusplus::message::message& msg)
+void OccCommand::activeStatusEvent(sdbusplus::message_t& msg)
 {
     std::string statusInterface;
     std::map<std::string, std::variant<bool>> msgData;

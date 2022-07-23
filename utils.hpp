@@ -48,7 +48,7 @@ const std::string getService(const std::string& path,
  *
  *  @return The value of the property(type: variant)
  *
- *  @throw sdbusplus::exception::exception when it fails
+ *  @throw sdbusplus::exception_t when it fails
  */
 const PropertyValue getProperty(const std::string& objectPath,
                                 const std::string& interface,
@@ -72,7 +72,7 @@ void setProperty(const std::string& objectPath, const std::string& interface,
  *
  *  @return The D-Bus paths from the GetSubTree method
  *
- *  @throw sdbusplus::exception::exception when it fails
+ *  @throw sdbusplus::exception_t when it fails
  */
 std::vector<std::string>
     getSubtreePaths(const std::vector<std::string>& interfaces,

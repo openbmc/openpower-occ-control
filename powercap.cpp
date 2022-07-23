@@ -142,7 +142,7 @@ void PowerCap::updatePcapBounds()
                 auto occInput = getOccInput(newCap, pcapEnabled);
                 writeOcc(occInput);
             }
-            catch (const sdbusplus::exception::exception& e)
+            catch (const sdbusplus::exception_t& e)
             {
                 log<level::ERR>(
                     fmt::format(
@@ -177,7 +177,7 @@ uint32_t PowerCap::getPcap()
 
         return std::get<uint32_t>(pcap);
     }
-    catch (const sdbusplus::exception::exception& e)
+    catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>("Failed to get PowerCap property",
                         entry("ERROR=%s", e.what()),
@@ -197,7 +197,7 @@ bool PowerCap::getPcapEnabled()
 
         return std::get<bool>(pcapEnabled);
     }
-    catch (const sdbusplus::exception::exception& e)
+    catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>("Failed to get PowerCapEnable property",
                         entry("ERROR=%s", e.what()),
@@ -320,7 +320,7 @@ uint32_t PowerCap::readUserCapHwmon()
     return userCap;
 }
 
-void PowerCap::pcapChanged(sdbusplus::message::message& msg)
+void PowerCap::pcapChanged(sdbusplus::message_t& msg)
 {
     if (!occStatus.occActive())
     {
@@ -413,7 +413,7 @@ bool PowerCap::updateDbusPcapLimits(uint32_t softMin, uint32_t hardMin,
         utils::setProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_SOFT_MIN,
                            softMin);
     }
-    catch (const sdbusplus::exception::exception& e)
+    catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>(
             fmt::format(
@@ -428,7 +428,7 @@ bool PowerCap::updateDbusPcapLimits(uint32_t softMin, uint32_t hardMin,
         utils::setProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_HARD_MIN,
                            hardMin);
     }
-    catch (const sdbusplus::exception::exception& e)
+    catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>(
             fmt::format(
@@ -442,7 +442,7 @@ bool PowerCap::updateDbusPcapLimits(uint32_t softMin, uint32_t hardMin,
     {
         utils::setProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_MAX, max);
     }
-    catch (const sdbusplus::exception::exception& e)
+    catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>(
             fmt::format(
@@ -468,7 +468,7 @@ bool PowerCap::readDbusPcapLimits(uint32_t& softMin, uint32_t& hardMin,
             utils::getProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_SOFT_MIN);
         softMin = std::get<uint32_t>(prop);
     }
-    catch (const sdbusplus::exception::exception& e)
+    catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>(
             fmt::format("readDbusPcapLimits: Failed to get SOFT PCAP due to {}",
@@ -484,7 +484,7 @@ bool PowerCap::readDbusPcapLimits(uint32_t& softMin, uint32_t& hardMin,
             utils::getProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_HARD_MIN);
         hardMin = std::get<uint32_t>(prop);
     }
-    catch (const sdbusplus::exception::exception& e)
+    catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>(
             fmt::format("readDbusPcapLimits: Failed to get HARD PCAP due to {}",
@@ -499,7 +499,7 @@ bool PowerCap::readDbusPcapLimits(uint32_t& softMin, uint32_t& hardMin,
         prop = utils::getProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_MAX);
         max = std::get<uint32_t>(prop);
     }
-    catch (const sdbusplus::exception::exception& e)
+    catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>(
             fmt::format("readDbusPcapLimits: Failed to get MAX PCAP due to {}",

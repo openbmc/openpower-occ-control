@@ -253,7 +253,7 @@ std::vector<int> Manager::findOCCsInDev()
     return occs;
 }
 
-int Manager::cpuCreated(sdbusplus::message::message& msg)
+int Manager::cpuCreated(sdbusplus::message_t& msg)
 {
     namespace fs = std::filesystem;
 
@@ -557,7 +557,7 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
 
             auto response = bus.call(method);
         }
-        catch (const sdbusplus::exception::exception& e)
+        catch (const sdbusplus::exception_t& e)
         {
             constexpr auto ERROR_DUMP_DISABLED =
                 "xyz.openbmc_project.Dump.Create.Error.Disabled";
@@ -1116,7 +1116,7 @@ void Manager::readAltitude()
             }
         }
     }
-    catch (const sdbusplus::exception::exception& e)
+    catch (const sdbusplus::exception_t& e)
     {
         if (traceAltitudeErr)
         {
@@ -1129,7 +1129,7 @@ void Manager::readAltitude()
 }
 
 // Callback function when ambient temperature changes
-void Manager::ambientCallback(sdbusplus::message::message& msg)
+void Manager::ambientCallback(sdbusplus::message_t& msg)
 {
     double currentTemp = 0;
     uint8_t truncatedTemp = 0xFF;

@@ -27,7 +27,7 @@ namespace occ
 
 class Manager;
 namespace Base = sdbusplus::org::open_power::OCC::server;
-using Interface = sdbusplus::server::object::object<Base::Status>;
+using Interface = sdbusplus::server::object_t<Base::Status>;
 
 // IPMID's host control application
 namespace Control = sdbusplus::org::open_power::Control::server;
@@ -295,7 +295,7 @@ class Status : public Interface
      *
      *  @param[in]  msg - Data associated with subscribed signal
      */
-    void hostControlEvent(sdbusplus::message::message& msg);
+    void hostControlEvent(sdbusplus::message_t& msg);
 
     /** @brief Sends a message to host control command handler to reset OCC
      */

@@ -171,7 +171,7 @@ struct Manager
      *
      *  @returns 0 to indicate success
      */
-    int cpuCreated(sdbusplus::message::message& msg);
+    int cpuCreated(sdbusplus::message_t& msg);
 
     /** @brief Create child OCC objects.
      *
@@ -427,7 +427,7 @@ struct Manager
      *
      *  @param[in]  msg - Data associated with subscribed signal
      */
-    void ambientCallback(sdbusplus::message::message& msg);
+    void ambientCallback(sdbusplus::message_t& msg);
 
     /** @brief Confirm that a single OCC master was found and start presence
      * monitoring

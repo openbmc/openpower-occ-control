@@ -166,7 +166,7 @@ bool PassThrough::setMode(const uint8_t mode, const uint16_t modeData)
 }
 
 // Called at OCC Status change signal
-void PassThrough::activeStatusEvent(sdbusplus::message::message& msg)
+void PassThrough::activeStatusEvent(sdbusplus::message_t& msg)
 {
     std::string statusInterface;
     std::map<std::string, std::variant<bool>> msgData;

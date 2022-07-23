@@ -37,12 +37,12 @@ int main(int /*argc*/, char** /*argv[]*/)
     // Attach the bus to sd_event to service user requests
     bus.attach_event(eventP.get(), SD_EVENT_PRIORITY_NORMAL);
 
-    sdbusplus::server::manager::manager objManager(bus, OCC_CONTROL_ROOT);
+    sdbusplus::server::manager_t objManager(bus, OCC_CONTROL_ROOT);
 #ifdef READ_OCC_SENSORS
-    sdbusplus::server::manager::manager objManagerXyz(bus, OCC_SENSORS_ROOT);
+    sdbusplus::server::manager_t objManagerXyz(bus, OCC_SENSORS_ROOT);
 #endif
 #ifdef POWER10
-    sdbusplus::server::manager::manager objManagerXyzControl(
+    sdbusplus::server::manager_t objManagerXyzControl(
         bus, "/xyz/openbmc_project/control");
 #endif
     open_power::occ::Manager mgr(eventP);

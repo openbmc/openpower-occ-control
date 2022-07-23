@@ -166,7 +166,7 @@ class OccCommand
      *
      *  @param[in]  msg - Data associated with subscribed signal
      */
-    void activeStatusEvent(sdbusplus::message::message& msg);
+    void activeStatusEvent(sdbusplus::message_t& msg);
 };
 
 } // namespace occ

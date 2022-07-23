@@ -28,8 +28,8 @@ class Manager;
 namespace powermode
 {
 namespace Base = sdbusplus::xyz::openbmc_project::Control::Power::server;
-using ModeInterface = sdbusplus::server::object::object<Base::Mode>;
-using IpsInterface = sdbusplus::server::object::object<Base::IdlePowerSaver>;
+using ModeInterface = sdbusplus::server::object_t<Base::Mode>;
+using IpsInterface = sdbusplus::server::object_t<Base::IdlePowerSaver>;
 using namespace std::literals::string_literals;
 
 constexpr auto PMODE_PATH = "/xyz/openbmc_project/control/host0/power_mode";
@@ -422,7 +422,7 @@ class PowerMode : public ModeInterface, public IpsInterface
      * @param[in]  msg       - Data associated with pmode change signal
      *
      */
-    void modeChanged(sdbusplus::message::message& msg);
+    void modeChanged(sdbusplus::message_t& msg);
 
     /** @brief Get the current power mode property
      *
@@ -448,7 +448,7 @@ class PowerMode : public ModeInterface, public IpsInterface
      * @param[in]  msg - Data associated with IPS change signal
      *
      */
-    void ipsChanged(sdbusplus::message::message& msg);
+    void ipsChanged(sdbusplus::message_t& msg);
 
     /** @brief Get the Idle Power Saver properties
      *
@@ -481,7 +481,7 @@ class PowerMode : public ModeInterface, public IpsInterface
      *
      * Called when PowerModeProperties defaults are available
      */
-    void defaultsReady(sdbusplus::message::message& msg);
+    void defaultsReady(sdbusplus::message_t& msg);
 
     /** @brief Get the default power mode property for this system type
      *

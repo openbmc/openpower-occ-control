@@ -63,7 +63,7 @@ void PowerMode::setMasterOcc(const std::string& masterOccPath)
 };
 
 // Called when DBus power mode gets changed
-void PowerMode::modeChanged(sdbusplus::message::message& msg)
+void PowerMode::modeChanged(sdbusplus::message_t& msg)
 {
     std::map<std::string, std::variant<std::string>> properties{};
     std::string interface;
@@ -399,7 +399,7 @@ CmdStatus PowerMode::sendModeChange()
     return status;
 }
 
-void PowerMode::ipsChanged(sdbusplus::message::message& msg)
+void PowerMode::ipsChanged(sdbusplus::message_t& msg)
 {
     bool parmsChanged = false;
     std::string interface;
@@ -718,7 +718,7 @@ void OccPersistData::load()
 }
 
 // Called when PowerModeProperties defaults are available on DBus
-void PowerMode::defaultsReady(sdbusplus::message::message& msg)
+void PowerMode::defaultsReady(sdbusplus::message_t& msg)
 {
     std::map<std::string, std::variant<std::string>> properties{};
     std::string interface;
@@ -773,7 +773,7 @@ bool PowerMode::getDefaultMode(SysPwrMode& defaultMode)
             return true;
         }
     }
-    catch (const sdbusplus::exception::exception& e)
+    catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>(
             fmt::format("Unable to read Default Power Mode: {}", e.what())
@@ -813,7 +813,7 @@ bool PowerMode::getDefaultIPSParms(bool& ipsEnabled, uint8_t& enterUtil,
         auto reply = bus.call(method);
         reply.read(ipsProperties);
     }
-    catch (const sdbusplus::exception::exception& e)
+    catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>(
             fmt::format(
