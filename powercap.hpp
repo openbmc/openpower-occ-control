@@ -74,7 +74,7 @@ class PowerCap
      * @param[in]  msg       - Data associated with pcap change signal
      *
      */
-    void pcapChanged(sdbusplus::message::message& msg);
+    void pcapChanged(sdbusplus::message_t& msg);
 
     /** @brief Get the power cap property
      *

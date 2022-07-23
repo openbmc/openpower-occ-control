@@ -46,7 +46,7 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
         auto responseMsg = bus.call(method);
         responseMsg.read(pdrs);
     }
-    catch (const sdbusplus::exception::exception& e)
+    catch (const sdbusplus::exception_t& e)
     {
         if (!tracedError)
         {
@@ -129,7 +129,7 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
     }
 }
 
-void Interface::sensorEvent(sdbusplus::message::message& msg)
+void Interface::sensorEvent(sdbusplus::message_t& msg)
 {
     if (!isOCCSensorCacheValid())
     {
@@ -237,7 +237,7 @@ void Interface::sensorEvent(sdbusplus::message::message& msg)
     }
 }
 
-void Interface::hostStateEvent(sdbusplus::message::message& msg)
+void Interface::hostStateEvent(sdbusplus::message_t& msg)
 {
     std::map<std::string, std::variant<std::string>> properties{};
     std::string interface;
@@ -317,7 +317,7 @@ void Interface::fetchEffecterInfo(uint16_t stateSetId,
         auto responseMsg = bus.call(method);
         responseMsg.read(pdrs);
     }
-    catch (const sdbusplus::exception::exception& e)
+    catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>("pldm: Failed to fetch the state effecter PDRs",
                         entry("ERROR=%s", e.what()));
@@ -528,7 +528,7 @@ bool Interface::getMctpInstanceId()
                                          mctpInstance.value())
                                  .c_str());
         }
-        catch (const sdbusplus::exception::exception& e)
+        catch (const sdbusplus::exception_t& e)
         {
             log<level::ERR>(
                 fmt::format("pldm: GetInstanceId failed: {}", e.what())

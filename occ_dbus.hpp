@@ -13,11 +13,11 @@ namespace dbus
 
 using ObjectPath = std::string;
 
-using SensorIntf = sdbusplus::server::object::object<
+using SensorIntf = sdbusplus::server::object_t<
     sdbusplus::xyz::openbmc_project::Sensor::server::Value>;
 using OperationalStatusIntf =
-    sdbusplus::server::object::object<sdbusplus::xyz::openbmc_project::State::
-                                          Decorator::server::OperationalStatus>;
+    sdbusplus::server::object_t<sdbusplus::xyz::openbmc_project::State::
+                                    Decorator::server::OperationalStatus>;
 
 // Note: Not using object<> so the PropertiesVariant ctor is available.
 using AssociationIntf =

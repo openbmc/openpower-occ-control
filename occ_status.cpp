@@ -172,7 +172,7 @@ void Status::resetOCC()
 
 // Handler called by Host control command handler to convey the
 // status of the executed command
-void Status::hostControlEvent(sdbusplus::message::message& msg)
+void Status::hostControlEvent(sdbusplus::message_t& msg)
 {
     std::string cmdCompleted{};
     std::string cmdStatus{};

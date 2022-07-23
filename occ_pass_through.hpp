@@ -18,7 +18,7 @@ namespace open_power
 namespace occ
 {
 
-using Iface = sdbusplus::server::object::object<
+using Iface = sdbusplus::server::object_t<
     sdbusplus::org::open_power::OCC::server::PassThrough>;
 
 // For waiting on signals
@@ -107,7 +107,7 @@ class PassThrough : public Iface
      *
      *  @param[in]  msg - Data associated with subscribed signal
      */
-    void activeStatusEvent(sdbusplus::message::message& msg);
+    void activeStatusEvent(sdbusplus::message_t& msg);
 };
 
 } // namespace occ

@@ -214,7 +214,7 @@ std::string getStateValue(const std::string& intf, const std::string& objPath,
 
         stateVal = std::get<std::string>(propertyVal);
     }
-    catch (const sdbusplus::exception::exception& e)
+    catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>(fmt::format("D-Bus call exception, OBJPATH({}), "
                                     "INTERFACE({}), PROPERTY({}) EXCEPTION({})",

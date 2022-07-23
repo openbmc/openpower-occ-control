@@ -77,7 +77,7 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
         response.read(reply);
         plid = std::get<1>(reply);
     }
-    catch (const sdbusplus::exception::exception& e)
+    catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>("Failed to create PEL");
     }
@@ -119,7 +119,7 @@ void FFDC::createOCCResetPEL(unsigned int instance, const char* path, int err,
         method.append(path, level, additionalData);
         bus.call(method);
     }
-    catch (const sdbusplus::exception::exception& e)
+    catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>(
             fmt::format("Failed to create PEL: {}", e.what()).c_str());

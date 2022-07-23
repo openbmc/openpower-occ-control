@@ -257,7 +257,7 @@ class Interface
      *
      *  @param[in] msg - data associated with the subscribed signal
      */
-    void sensorEvent(sdbusplus::message::message& msg);
+    void sensorEvent(sdbusplus::message_t& msg);
 
     /** @brief When the host state changes and if the CurrentHostState is
      *         xyz.openbmc_project.State.Host.HostState.Off then
@@ -265,7 +265,7 @@ class Interface
      *
      *  @param[in] msg - data associated with the subscribed signal
      */
-    void hostStateEvent(sdbusplus::message::message& msg);
+    void hostStateEvent(sdbusplus::message_t& msg);
 
     /** @brief Called when it is determined that the Host is not running.
      *         The cache of OCC sensors and effecters mapping is cleared.
