@@ -36,13 +36,13 @@ class VerifyOccInput : public ::testing::Test
 TEST_F(VerifyOccInput, PcapDisabled)
 {
     uint32_t occInput = pcap.getOccInput(100, false);
-    EXPECT_EQ(occInput, 0);
+    EXPECT_EQ(occInput, 0U);
 }
 
 TEST_F(VerifyOccInput, PcapEnabled)
 {
     uint32_t occInput = pcap.getOccInput(100, true);
-    EXPECT_EQ(occInput, 90);
+    EXPECT_EQ(occInput, 90U);
 }
 
 TEST(VerifyPathParsing, EmptyPath)
