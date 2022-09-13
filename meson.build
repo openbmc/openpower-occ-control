@@ -48,8 +48,14 @@ configure_file(output: 'config.h',
     configuration: conf_data
 )
 
+sdbusplus_dep = dependency('sdbusplus')
 sdbusplusplus_prog = find_program('sdbus++')
 sdbuspp_gen_meson_prog = find_program('sdbus++-gen-meson')
+sdbusplusplus_depfiles = files()
+if sdbusplus_dep.type_name() == 'internal'
+    sdbusplusplus_depfiles = subproject('sdbusplus').get_variable('sdbusplusplus_depfiles')
+endif
+
 python_prog = find_program('python3', required: true)
 realpath_prog = find_program('realpath')
 
@@ -92,19 +98,6 @@ endforeach
 deps = []
 sources = []
 if get_option('install-error-yaml').disabled()
-    sdbusplus_dep = dependency('sdbusplus')
-    if sdbusplus_dep.found()
-        sdbusplusplus_prog = find_program('sdbus++')
-        sdbuspp_gen_meson_prog = find_program('sdbus++-gen-meson')
-    else
-        sdbusplus_proj = subproject('sdbusplus', required: true)
-        sdbusplus_dep = sdbusplus_proj.get_variable('sdbusplus_dep')
-        sdbusplusplus_prog = sdbusplus_proj.get_variable('sdbusplusplus_prog')
-        sdbuspp_gen_meson_prog = sdbusplus_proj.get_variable(
-            'sdbuspp_gen_meson_prog'
-        )
-    endif
-
     sdeventplus_dep = dependency(
         'sdeventplus',
         fallback: [
