@@ -50,6 +50,11 @@ configure_file(output: 'config.h',
 
 sdbusplusplus_prog = find_program('sdbus++')
 sdbuspp_gen_meson_prog = find_program('sdbus++-gen-meson')
+sdbusplusplus_depfiles = files()
+if sdbusplus_dep.type_name() == 'internal'
+    sdbusplusplus_depfiles = subproject('sdbusplus').get_variable('sdbusplusplus_depfiles')
+endif
+
 python_prog = find_program('python3', required: true)
 realpath_prog = find_program('realpath')
 
