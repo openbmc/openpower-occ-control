@@ -42,7 +42,10 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
         uint8_t, uint8_t, sdbusplus::message::unix_fd>>
         pelFFDCInfo;
 
-    log<level::INFO>("Creating PEL with SBE FFDC", entry("SRC6=%08x", src6));
+    log<level::INFO>(
+        fmt::format("Creating PEL for OCC{} with SBE FFDC: {} - SRC6: 0x{:08X}",
+                    src6 >> 16, path, src6)
+            .c_str());
 
     if (fd > 0)
     {
@@ -66,10 +69,13 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
         auto method =
             bus.new_method_call(service.c_str(), loggingObjectPath,
                                 opLoggingInterface, "CreatePELWithFFDCFiles");
+        // Set level to Notice (Informational). Error should trigger an OCC
+        // reset and if it does not recover, HTMGT/HBRT will create an
+        // unrecoverable error.
         auto level =
             sdbusplus::xyz::openbmc_project::Logging::server::convertForMessage(
                 sdbusplus::xyz::openbmc_project::Logging::server::Entry::Level::
-                    Error);
+                    Notice);
         method.append(path, level, additionalData, pelFFDCInfo);
         auto response = bus.call(method);
         std::tuple<uint32_t, uint32_t> reply = {0, 0};
@@ -79,7 +85,8 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
     }
     catch (const sdbusplus::exception_t& e)
     {
-        log<level::ERR>("Failed to create PEL");
+        log<level::ERR>(
+            fmt::format("Failed to create PEL: {}", e.what()).c_str());
     }
 
     return plid;
@@ -104,6 +111,10 @@ void FFDC::createOCCResetPEL(unsigned int instance, const char* path, int err,
 
     additionalData.emplace("OCC", std::to_string(instance));
 
+    log<level::INFO>(
+        fmt::format("Creating OCC Reset PEL for OCC{}: {}", instance, path)
+            .c_str());
+
     auto& bus = utils::getBus();
 
     try
@@ -112,17 +123,21 @@ void FFDC::createOCCResetPEL(unsigned int instance, const char* path, int err,
             utils::getService(loggingObjectPath, loggingInterface);
         auto method = bus.new_method_call(service.c_str(), loggingObjectPath,
                                           loggingInterface, "Create");
+        // Set level to Notice (Informational). Error should trigger an OCC
+        // reset and if it does not recover, HTMGT/HBRT will create an
+        // unrecoverable error.
         auto level =
             sdbusplus::xyz::openbmc_project::Logging::server::convertForMessage(
                 sdbusplus::xyz::openbmc_project::Logging::server::Entry::Level::
-                    Error);
+                    Notice);
         method.append(path, level, additionalData);
         bus.call(method);
     }
     catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>(
-            fmt::format("Failed to create PEL: {}", e.what()).c_str());
+            fmt::format("Failed to create OCC Reset PEL: {}", e.what())
+                .c_str());
     }
 }
 

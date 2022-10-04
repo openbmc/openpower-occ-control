@@ -17,7 +17,7 @@
 #include <memory>
 #include <string>
 
-//#define TRACE_PACKETS
+// #define TRACE_PACKETS
 
 namespace open_power
 {
