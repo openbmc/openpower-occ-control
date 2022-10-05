@@ -10,6 +10,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+#include <nlohmann/json.hpp>
 #include <org/open_power/OCC/Device/error.hpp>
 #include <phosphor-logging/elog.hpp>
 #include <phosphor-logging/log.hpp>
@@ -25,7 +26,6 @@ static constexpr size_t max_ffdc_size = 8192;
 static constexpr size_t sbe_status_header_size = 8;
 
 static constexpr auto loggingObjectPath = "/xyz/openbmc_project/logging";
-static constexpr auto loggingInterface = "xyz.openbmc_project.Logging.Create";
 static constexpr auto opLoggingInterface = "org.open_power.Logging.PEL";
 
 using namespace phosphor::logging;
@@ -55,6 +55,10 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
             static_cast<uint8_t>(0xCB), static_cast<uint8_t>(0x01), fd));
     }
 
+    // Add journal traces to PEL FFDC
+    auto occJournalFile =
+        addJournalEntries(pelFFDCInfo, "openpower-occ-control", 25);
+
     std::map<std::string, std::string> additionalData;
     additionalData.emplace("SRC6", std::to_string(src6));
     additionalData.emplace("_PID", std::to_string(getpid()));
@@ -69,6 +73,7 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
         auto method =
             bus.new_method_call(service.c_str(), loggingObjectPath,
                                 opLoggingInterface, "CreatePELWithFFDCFiles");
+
         // Set level to Notice (Informational). Error should trigger an OCC
         // reset and if it does not recover, HTMGT/HBRT will create an
         // unrecoverable error.
@@ -76,6 +81,7 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
             sdbusplus::xyz::openbmc_project::Logging::server::convertForMessage(
                 sdbusplus::xyz::openbmc_project::Logging::server::Entry::Level::
                     Notice);
+
         method.append(path, level, additionalData, pelFFDCInfo);
         auto response = bus.call(method);
         std::tuple<uint32_t, uint32_t> reply = {0, 0};
@@ -119,10 +125,17 @@ void FFDC::createOCCResetPEL(unsigned int instance, const char* path, int err,
 
     try
     {
+        FFDCFiles ffdc;
+        // Add journal traces to PEL FFDC
+        auto occJournalFile =
+            addJournalEntries(ffdc, "openpower-occ-control", 25);
+
         std::string service =
-            utils::getService(loggingObjectPath, loggingInterface);
-        auto method = bus.new_method_call(service.c_str(), loggingObjectPath,
-                                          loggingInterface, "Create");
+            utils::getService(loggingObjectPath, opLoggingInterface);
+        auto method =
+            bus.new_method_call(service.c_str(), loggingObjectPath,
+                                opLoggingInterface, "CreatePELWithFFDCFiles");
+
         // Set level to Notice (Informational). Error should trigger an OCC
         // reset and if it does not recover, HTMGT/HBRT will create an
         // unrecoverable error.
@@ -130,7 +143,8 @@ void FFDC::createOCCResetPEL(unsigned int instance, const char* path, int err,
             sdbusplus::xyz::openbmc_project::Logging::server::convertForMessage(
                 sdbusplus::xyz::openbmc_project::Logging::server::Entry::Level::
                     Notice);
-        method.append(path, level, additionalData);
+
+        method.append(path, level, additionalData, ffdc);
         bus.call(method);
     }
     catch (const sdbusplus::exception_t& e)
@@ -141,7 +155,7 @@ void FFDC::createOCCResetPEL(unsigned int instance, const char* path, int err,
     }
 }
 
-// Reads the FFDC file and create an error log
+// Reads the SBE FFDC file and create an error log
 void FFDC::analyzeEvent()
 {
     int tfd = -1;
@@ -214,6 +228,211 @@ void FFDC::analyzeEvent()
 
     createPEL("org.open_power.Processor.Error.SbeChipOpFailure", src6,
               "SBE command reported error", tfd);
+}
+
+// Create file with the latest journal entries for specified executable
+std::unique_ptr<FFDCFile> FFDC::addJournalEntries(FFDCFiles& fileList,
+                                                  const std::string& executable,
+                                                  unsigned int lines)
+{
+    auto journalFile = makeJsonFFDCFile(getJournalEntries(lines, executable));
+    if (journalFile && journalFile->fd() != -1)
+    {
+        log<level::DEBUG>(
+            fmt::format(
+                "addJournalEntries: Added up to {} journal entries for {}",
+                lines, executable)
+                .c_str());
+        fileList.emplace_back(FFDCFormat::JSON, 0x01, 0x01, journalFile->fd());
+    }
+    else
+    {
+        log<level::ERR>(
+            fmt::format(
+                "addJournalEntries: Failed to add journal entries for {}",
+                executable)
+                .c_str());
+    }
+    return journalFile;
+}
+
+// Write JSON data into FFDC file and return the file
+std::unique_ptr<FFDCFile> FFDC::makeJsonFFDCFile(const nlohmann::json& ffdcData)
+{
+    std::string tmpFile = fs::temp_directory_path() / "OCC_JOURNAL_XXXXXX";
+    auto fd = mkostemp(tmpFile.data(), O_RDWR);
+    if (fd != -1)
+    {
+        auto jsonString = ffdcData.dump();
+        auto rc = write(fd, jsonString.data(), jsonString.size());
+        close(fd);
+        if (rc != -1)
+        {
+            fs::path jsonFile{tmpFile};
+            return std::make_unique<FFDCFile>(jsonFile);
+        }
+        else
+        {
+            auto e = errno;
+            log<level::ERR>(
+                fmt::format(
+                    "makeJsonFFDCFile: Failed call to write JSON FFDC file, errno={}",
+                    e)
+                    .c_str());
+        }
+    }
+    else
+    {
+        auto e = errno;
+        log<level::ERR>(
+            fmt::format("makeJsonFFDCFile: Failed called to mkostemp, errno={}",
+                        e)
+                .c_str());
+    }
+    return nullptr;
+}
+
+// Collect the latest journal entries for a specified executable
+nlohmann::json FFDC::getJournalEntries(int numLines, std::string executable)
+{
+    // Sleep 100ms; otherwise recent journal entries sometimes not available
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(100ms);
+
+    std::vector<std::string> entries;
+
+    // Open the journal
+    sd_journal* journal;
+    int rc = sd_journal_open(&journal, SD_JOURNAL_LOCAL_ONLY);
+    if (rc < 0)
+    {
+        // Build one line string containing field values
+        entries.push_back("[Internal error: sd_journal_open(), rc=" +
+                          std::string(strerror(rc)) + "]");
+        return nlohmann::json(entries);
+    }
+
+    // Create object to automatically close journal
+    JournalCloser closer{journal};
+
+    // Add match so we only loop over entries with specified field value
+    std::string field{"SYSLOG_IDENTIFIER"};
+    std::string match{field + '=' + executable};
+    rc = sd_journal_add_match(journal, match.c_str(), 0);
+    if (rc < 0)
+    {
+        // Build one line string containing field values
+        entries.push_back("[Internal error: sd_journal_add_match(), rc=" +
+                          std::string(strerror(rc)) + "]");
+    }
+    else
+    {
+        int count{1};
+        entries.reserve(numLines);
+        std::string syslogID, pid, message, timeStamp;
+
+        // Loop through journal entries from newest to oldest
+        SD_JOURNAL_FOREACH_BACKWARDS(journal)
+        {
+            // Get relevant journal entry fields
+            timeStamp = getTimeStamp(journal);
+            syslogID = getFieldValue(journal, "SYSLOG_IDENTIFIER");
+            pid = getFieldValue(journal, "_PID");
+            message = getFieldValue(journal, "MESSAGE");
+
+            // Build one line string containing field values
+            entries.push_back(timeStamp + " " + syslogID + "[" + pid +
+                              "]: " + message);
+
+            // Stop after number of lines was read
+            if (count++ >= numLines)
+            {
+                break;
+            }
+        }
+    }
+
+    // put the journal entries in chronological order
+    std::reverse(entries.begin(), entries.end());
+
+    return nlohmann::json(entries);
+}
+
+std::string FFDC::getTimeStamp(sd_journal* journal)
+{
+    // Get realtime (wallclock) timestamp of current journal entry.  The
+    // timestamp is in microseconds since the epoch.
+    uint64_t usec{0};
+    int rc = sd_journal_get_realtime_usec(journal, &usec);
+    if (rc < 0)
+    {
+        return "[Internal error: sd_journal_get_realtime_usec(), rc=" +
+               std::string(strerror(rc)) + "]";
+    }
+
+    // Convert to number of seconds since the epoch
+    time_t secs = usec / 1000000;
+
+    // Convert seconds to tm struct required by strftime()
+    struct tm* timeStruct = localtime(&secs);
+    if (timeStruct == nullptr)
+    {
+        return "[Internal error: localtime() returned nullptr]";
+    }
+
+    // Convert tm struct into a date/time string
+    char timeStamp[80];
+    strftime(timeStamp, sizeof(timeStamp), "%b %d %H:%M:%S", timeStruct);
+
+    return timeStamp;
+}
+
+std::string FFDC::getFieldValue(sd_journal* journal, const std::string& field)
+{
+    std::string value{};
+
+    // Get field data from current journal entry
+    const void* data{nullptr};
+    size_t length{0};
+    int rc = sd_journal_get_data(journal, field.c_str(), &data, &length);
+    if (rc < 0)
+    {
+        if (-rc == ENOENT)
+        {
+            // Current entry does not include this field; return empty value
+            return value;
+        }
+        else
+        {
+            return "[Internal error: sd_journal_get_data() rc=" +
+                   std::string(strerror(rc)) + "]";
+        }
+    }
+
+    // Get value from field data.  Field data in format "FIELD=value".
+    std::string dataString{static_cast<const char*>(data), length};
+    std::string::size_type pos = dataString.find('=');
+    if ((pos != std::string::npos) && ((pos + 1) < dataString.size()))
+    {
+        // Value is substring after the '='
+        value = dataString.substr(pos + 1);
+    }
+
+    return value;
+}
+
+// Create temporary file that will automatically get removed when destructed
+FFDCFile::FFDCFile(const fs::path& name) :
+    _fd(open(name.c_str(), O_RDONLY)), _name(name)
+{
+    if (_fd() == -1)
+    {
+        auto e = errno;
+        log<level::ERR>(
+            fmt::format("FFDCFile: Could not open FFDC file {}. errno {}",
+                        _name.string(), e)
+                .c_str());
+    }
 }
 
 } // namespace occ
