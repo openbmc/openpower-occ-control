@@ -18,11 +18,84 @@ constexpr auto PCAP_INTERFACE = "xyz.openbmc_project.Control.Power.Cap";
 
 constexpr auto POWER_CAP_PROP = "PowerCap";
 constexpr auto POWER_CAP_ENABLE_PROP = "PowerCapEnable";
-constexpr auto POWER_CAP_SOFT_MIN = "MinSoftPowerCapValue";
-constexpr auto POWER_CAP_HARD_MIN = "MinPowerCapValue";
-constexpr auto POWER_CAP_MAX = "MaxPowerCapValue";
 
 namespace fs = std::filesystem;
+
+using CapLimits =
+    sdbusplus::xyz::openbmc_project::Control::Power::server::CapLimits;
+
+// Print the current values
+void OccPersistCapData::print()
+{
+    if (capData.initialized)
+    {
+        lg2::info(
+            "OccPersistCapData: Soft Min: {SOFT}, Hard Min: {HARD}, Max: {MAX}",
+            "SOFT", capData.softMin, "HARD", capData.hardMin, "MAX",
+            capData.max);
+    }
+}
+
+// Saves the power cap data in the filesystem.
+void OccPersistCapData::save()
+{
+    std::filesystem::path opath =
+        std::filesystem::path{OCC_CONTROL_PERSIST_PATH} / powerCapFilename;
+
+    if (!std::filesystem::exists(opath.parent_path()))
+    {
+        std::filesystem::create_directory(opath.parent_path());
+    }
+
+    try
+    {
+        std::ofstream stream{opath.c_str(), std::ios_base::binary};
+        stream.write((char*)&capData, sizeof(capData));
+    }
+    catch (const std::exception& e)
+    {
+        auto error = errno;
+        lg2::error(
+            "OccPersistCapData::save: failed to read {PATH}, errno={ERRNO}, err={ERR}",
+            "PATH", opath, "ERRNO", error, "ERR", e);
+        capData.initialized = false;
+    }
+}
+
+// Loads the power cap data from the filesystem
+void OccPersistCapData::load()
+{
+    std::filesystem::path ipath =
+        std::filesystem::path{OCC_CONTROL_PERSIST_PATH} / powerCapFilename;
+
+    if (!std::filesystem::exists(ipath))
+    {
+        capData.initialized = false;
+        return;
+    }
+
+    try
+    {
+        PowerCapData newCapData;
+        std::ifstream stream{ipath.c_str(), std::ios_base::binary};
+        stream.read((char*)&newCapData, sizeof(newCapData));
+        if (newCapData.version != PCAPDATA_FILE_VERSION)
+        {
+            lg2::warning(
+                "OccPersistCapData::load() file version was {VER} (expected {EXP})",
+                "VER", newCapData.version, "EXP", PCAPDATA_FILE_VERSION);
+        }
+        memcpy(&capData, &newCapData, sizeof(capData));
+    }
+    catch (const std::exception& e)
+    {
+        auto error = errno;
+        lg2::error(
+            "OccPersistCapData::load: failed to read {PATH}, errno={ERRNO}, err={ERR}",
+            "PATH", ipath, "ERRNO", error, "ERR", e);
+        capData.initialized = false;
+    }
+}
 
 void PowerCap::updatePcapBounds()
 {
@@ -32,12 +105,13 @@ void PowerCap::updatePcapBounds()
         getPcapFilename(std::regex{"power\\d+_cap_min_soft$"});
     fs::path maxName = getPcapFilename(std::regex{"power\\d+_cap_max$"});
 
-    // Read the current cap bounds from dbus
+    // Read the current limits from persistent data
     uint32_t capSoftMin, capHardMin, capMax;
-    readDbusPcapLimits(capSoftMin, capHardMin, capMax);
+    persistedData.getCapLimits(capSoftMin, capHardMin, capMax);
 
     // Read the power cap bounds from sysfs files (from OCC)
     uint64_t cap;
+    bool parmsChanged = false;
     std::ifstream softMinFile(softMinName, std::ios::in);
     if (softMinFile)
     {
@@ -45,6 +119,7 @@ void PowerCap::updatePcapBounds()
         softMinFile.close();
         // Convert to input/AC Power in Watts (round up)
         capSoftMin = ((cap / (PS_DERATING_FACTOR / 100.0) / 1000000) + 0.9);
+        parmsChanged = true;
     }
     else
     {
@@ -60,6 +135,7 @@ void PowerCap::updatePcapBounds()
         minFile.close();
         // Convert to input/AC Power in Watts (round up)
         capHardMin = ((cap / (PS_DERATING_FACTOR / 100.0) / 1000000) + 0.9);
+        parmsChanged = true;
     }
     else
     {
@@ -75,6 +151,7 @@ void PowerCap::updatePcapBounds()
         maxFile.close();
         // Convert to input/AC Power in Watts (truncate remainder)
         capMax = cap / (PS_DERATING_FACTOR / 100.0) / 1000000;
+        parmsChanged = true;
     }
     else
     {
@@ -83,8 +160,12 @@ void PowerCap::updatePcapBounds()
             "FILE", pcapBasePathname, "ERR", errno);
     }
 
-    // Save the power cap bounds to dbus
-    updateDbusPcapLimits(capSoftMin, capHardMin, capMax);
+    if (parmsChanged)
+    {
+        // Save the power cap bounds to dbus
+        updateDbusPcapLimits(capSoftMin, capHardMin, capMax);
+        persistedData.updateCapLimits(capSoftMin, capHardMin, capMax);
+    }
 
     // Validate user power cap (if enabled) is within the bounds
     const uint32_t dbusUserCap = getPcap();
@@ -334,7 +415,7 @@ void PowerCap::pcapChanged(sdbusplus::message_t& msg)
 
     // Validate the cap is within supported range
     uint32_t capSoftMin, capHardMin, capMax;
-    readDbusPcapLimits(capSoftMin, capHardMin, capMax);
+    persistedData.getCapLimits(capSoftMin, capHardMin, capMax);
     if (((pcap > 0) && (pcap < capSoftMin)) || ((pcap == 0) && (pcapEnabled)))
     {
         lg2::error(
@@ -368,101 +449,12 @@ void PowerCap::pcapChanged(sdbusplus::message_t& msg)
 }
 
 // Update the Power Cap bounds on DBus
-bool PowerCap::updateDbusPcapLimits(uint32_t softMin, uint32_t hardMin,
+void PowerCap::updateDbusPcapLimits(uint32_t softMin, uint32_t hardMin,
                                     uint32_t max)
 {
-    bool complete = true;
-
-    try
-    {
-        utils::setProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_SOFT_MIN,
-                           softMin);
-    }
-    catch (const sdbusplus::exception_t& e)
-    {
-        lg2::error(
-            "updateDbusPcapLimits: Failed to set SOFT PCAP to {MIN}W due to {ERR}",
-            "MIN", softMin, "ERR", e.what());
-        complete = false;
-    }
-
-    try
-    {
-        utils::setProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_HARD_MIN,
-                           hardMin);
-    }
-    catch (const sdbusplus::exception_t& e)
-    {
-        lg2::error(
-            "updateDbusPcapLimits: Failed to set HARD PCAP to {MIN}W due to {ERR}",
-            "MIN", hardMin, "ERR", e.what());
-        complete = false;
-    }
-
-    try
-    {
-        utils::setProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_MAX, max);
-    }
-    catch (const sdbusplus::exception_t& e)
-    {
-        lg2::error(
-            "updateDbusPcapLimits: Failed to set MAX PCAP to {MAX}W due to {ERR}",
-            "MAX", max, "ERR", e.what());
-        complete = false;
-    }
-
-    return complete;
-}
-
-// Read the Power Cap bounds from DBus
-bool PowerCap::readDbusPcapLimits(uint32_t& softMin, uint32_t& hardMin,
-                                  uint32_t& max)
-{
-    bool complete = true;
-    utils::PropertyValue prop{};
-
-    try
-    {
-        prop =
-            utils::getProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_SOFT_MIN);
-        softMin = std::get<uint32_t>(prop);
-    }
-    catch (const sdbusplus::exception_t& e)
-    {
-        lg2::error("readDbusPcapLimits: Failed to get SOFT PCAP due to {ERR}",
-                   "ERR", e.what());
-        softMin = 0;
-        complete = false;
-    }
-
-    try
-    {
-        prop =
-            utils::getProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_HARD_MIN);
-        hardMin = std::get<uint32_t>(prop);
-    }
-    catch (const sdbusplus::exception_t& e)
-    {
-        lg2::error("readDbusPcapLimits: Failed to get HARD PCAP due to {ERR}",
-                   "ERR", e.what());
-        hardMin = 0;
-        complete = false;
-    }
-
-    try
-    {
-        prop = utils::getProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_MAX);
-        max = std::get<uint32_t>(prop);
-    }
-    catch (const sdbusplus::exception_t& e)
-    {
-        lg2::error("readDbusPcapLimits: Failed to get MAX PCAP due to {ERR}",
-                   "ERR", e.what());
-        max = INT_MAX;
-        complete = false;
-    }
-
-    return complete;
+    CapLimits::minSoftPowerCapValue(softMin);
+    CapLimits::minPowerCapValue(hardMin);
+    CapLimits::maxPowerCapValue(max);
 }
 
 } // namespace powercap
