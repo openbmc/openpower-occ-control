@@ -6,6 +6,7 @@
 
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/bus/match.hpp>
+#include <xyz/openbmc_project/Control/Power/CapLimits/server.hpp>
 
 #include <filesystem>
 #include <regex>
@@ -22,6 +23,105 @@ namespace powercap
 namespace sdbusRule = sdbusplus::bus::match::rules;
 namespace fs = std::filesystem;
 
+constexpr auto PCAPLIMITS_PATH =
+    "/xyz/openbmc_project/control/host0/power_cap_limits";
+
+namespace Base = sdbusplus::xyz::openbmc_project::Control::Power::server;
+using CapLimitsInterface = sdbusplus::server::object_t<Base::CapLimits>;
+
+struct PowerCapData
+{
+    bool initialized = false;
+    uint32_t softMin = 0x0000;
+    uint32_t hardMin = 0x0000;
+    uint32_t max = UINT_MAX;
+
+    /** @brief Function specifying data to archive for cereal.
+     */
+    template <class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(initialized, softMin, hardMin, max);
+    }
+};
+
+/** @class OccPersistCapData
+ *  @brief Provides persistent container to store data for OCC
+ *
+ * Data is stored via cereal
+ */
+class OccPersistCapData
+{
+  public:
+    ~OccPersistCapData() = default;
+    OccPersistCapData(const OccPersistCapData&) = default;
+    OccPersistCapData& operator=(const OccPersistCapData&) = default;
+    OccPersistCapData(OccPersistCapData&&) = default;
+    OccPersistCapData& operator=(OccPersistCapData&&) = default;
+
+    /** @brief Loads any saved power cap data */
+    OccPersistCapData()
+    {
+        load();
+    }
+
+    /** @brief Save Power Mode data to persistent file
+     *
+     *  @param[in] softMin - soft minimum power cap in Watts
+     *  @param[in] hardMin - hard minimum power cap in Watts
+     *  @param[in] max     - maximum power cap in Watts
+     */
+    void updateCapLimits(const uint32_t softMin, const uint32_t hardMin,
+                         const uint32_t max)
+    {
+        capData.softMin = softMin;
+        capData.hardMin = hardMin;
+        capData.max = max;
+        capData.initialized = true;
+        save();
+    }
+
+    /** @brief Return the power cap limits
+     *
+     *  @param[out] softMin - soft minimum power cap in Watts
+     *  @param[out] hardMin - hard minimum power cap in Watts
+     *  @param[out] max     - maximum power cap in Watts
+     *
+     *  @returns true if limits are available
+     */
+    bool getCapLimits(uint32_t& softMin, uint32_t& hardMin, uint32_t& max) const
+    {
+        // If not initialized yet, still return PowerCapData defaults
+        softMin = capData.softMin;
+        hardMin = capData.hardMin;
+        max = capData.max;
+        return true;
+    }
+
+    /** @brief Return true if the power cap limits are available */
+    bool limitsAvailable()
+    {
+        return (capData.initialized);
+    }
+
+    /** @brief Saves the Power Mode data in the filesystem using cereal. */
+    void save();
+
+    /** @brief Trace the Power Mode and IPS parameters. */
+    void print();
+
+  private:
+    /** @brief Power Mode data filename to store persistent data */
+    static constexpr auto powerCapFilename = "powerCapData";
+
+    /** @brief Power Mode data object to be persisted */
+    PowerCapData capData;
+
+    /** @brief Loads the persisted power cap data in the filesystem using
+     * cereal. */
+    void load();
+};
+
 /** @class PowerCap
  *  @brief Monitors for changes to the power cap and notifies occ
  *
@@ -30,7 +130,7 @@ namespace fs = std::filesystem;
  *  the power cap to the OCC if the cap is changed while the occ is active.
  */
 
-class PowerCap
+class PowerCap : public CapLimitsInterface
 {
   public:
     /** @brief PowerCap object to inform occ of changes to cap
@@ -42,6 +142,8 @@ class PowerCap
      * @param[in] occStatus - The occ status object
      */
     explicit PowerCap(Status& occStatus) :
+        CapLimitsInterface(utils::getBus(), PCAPLIMITS_PATH,
+                           CapLimitsInterface::action::defer_emit),
         occStatus(occStatus),
         pcapMatch(
             utils::getBus(),
@@ -51,7 +153,18 @@ class PowerCap
                 sdbusRule::argN(0, "xyz.openbmc_project.Control.Power.Cap") +
                 sdbusRule::interface("org.freedesktop.DBus.Properties"),
             std::bind(std::mem_fn(&PowerCap::pcapChanged), this,
-                      std::placeholders::_1)) {};
+                      std::placeholders::_1))
+    {
+        //  Read the current limits from persistent data
+        uint32_t capSoftMin, capHardMin, capMax;
+        if (persistedData.getCapLimits(capSoftMin, capHardMin, capMax))
+        {
+            // Update limits on dbus
+            updateDbusPcapLimits(capSoftMin, capHardMin, capMax);
+        }
+        // CapLimit interface is now ready
+        this->emit_object_added();
+    };
 
     /** @brief Return the appropriate value to write to the OCC (output/DC
      * power)
@@ -67,6 +180,9 @@ class PowerCap
     void updatePcapBounds();
 
   private:
+    /** @brief Persisted power cap limits */
+    OccPersistCapData persistedData;
+
     /** @brief Callback for pcap setting changes
      *
      * Process change and inform OCC
@@ -126,24 +242,9 @@ class PowerCap
      * @param[in]  softMin - soft minimum power cap in Watts
      * @param[in]  hardMin - hard minimum power cap in Watts
      * @param[in]  pcapMax - maximum power cap in Watts
-     *
-     * @return true if all parms were written successfully
      */
-    bool updateDbusPcapLimits(uint32_t softMin, uint32_t hardMin,
+    void updateDbusPcapLimits(uint32_t softMin, uint32_t hardMin,
                               uint32_t pcapMax);
-
-    /** @brief Read the power cap bounds from DBus
-     *
-     * @param[out]  softMin - soft minimum power cap in Watts
-     * @param[out]  hardMin - hard minimum power cap in Watts
-     * @param[out]  pcapMax - maximum power cap in Watts
-     *
-     * @return true if all parms were read successfully
-     *         If a parm is not successfully read, it will default to 0 for the
-     *           Min parameter and INT_MAX for the Max parameter
-     */
-    bool readDbusPcapLimits(uint32_t& softMin, uint32_t& hardMin,
-                            uint32_t& max);
 };
 
 } // namespace powercap
