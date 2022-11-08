@@ -3,6 +3,8 @@
 #include "occ_errors.hpp"
 #include "utils.hpp"
 
+#include <fmt/ostream.h>
+
 #include <org/open_power/OCC/PassThrough/server.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
@@ -171,3 +173,12 @@ class OccCommand
 
 } // namespace occ
 } // namespace open_power
+
+std::ostream& operator<<(std::ostream& os, open_power::occ::SysPwrMode spm)
+{
+    return os << static_cast<int>(spm);
+}
+
+template <>
+struct fmt::formatter<open_power::occ::SysPwrMode> : ostream_formatter
+{};
