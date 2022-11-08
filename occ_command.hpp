@@ -171,3 +171,12 @@ class OccCommand
 
 } // namespace occ
 } // namespace open_power
+
+std::ostream& operator<<(std::ostream& os, open_power::occ::SysPwrMode spm)
+{
+    return os << static_cast<int>(spm);
+}
+
+template <>
+struct fmt::formatter<open_power::occ::SysPwrMode> : ostream_formatter
+{};
