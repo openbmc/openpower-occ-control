@@ -19,6 +19,11 @@
 
 // #define TRACE_PACKETS
 
+std::ostream& operator<<(std::ostream& os, open_power::occ::SysPwrMode spm)
+{
+    return os << static_cast<int>(spm);
+}
+
 namespace open_power
 {
 namespace occ
