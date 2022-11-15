@@ -3,7 +3,7 @@
 #include "occ_errors.hpp"
 #include "utils.hpp"
 
-#include <fmt/ostream.h>
+#include <fmt/format.h>
 
 #include <org/open_power/OCC/PassThrough/server.hpp>
 #include <sdbusplus/bus.hpp>
@@ -57,6 +57,11 @@ enum class SysPwrMode
     MAX_PERF = 0x0C      // Maximum Performance
 };
 
+static inline auto format_as(SysPwrMode spm)
+{
+    return fmt::underlying(spm);
+}
+
 // Only some of the SysPwrModes are currently supported and allowed to be set
 #define VALID_POWER_MODE_SETTING(mode)                                         \
     ((mode == SysPwrMode::STATIC) || (mode == SysPwrMode::POWER_SAVING) ||     \
@@ -84,6 +89,11 @@ enum class CmdStatus
     FAILURE = 0x02,
     COMM_FAILURE = 0x03
 };
+
+static inline auto format_as(CmdStatus cs)
+{
+    return fmt::underlying(cs);
+}
 
 /** @brief Trace block of data in hex with log<level:INFO>
  *
@@ -173,7 +183,3 @@ class OccCommand
 
 } // namespace occ
 } // namespace open_power
-
-template <>
-struct fmt::formatter<open_power::occ::SysPwrMode> : ostream_formatter
-{};
