@@ -48,6 +48,16 @@ configure_file(output: 'config.h',
     configuration: conf_data
 )
 
+install_data('occ-active.sh',
+    install_mode: 'rwxr-xr-x',
+    install_dir: get_option('bindir')
+)
+
+systemd = dependency('systemd')
+systemd_system_unit_dir = systemd.get_variable(
+    pkgconfig : 'systemdsystemunitdir')
+subdir('service_files')
+
 sdbusplus_dep = dependency('sdbusplus')
 sdbusplusplus_prog = find_program('sdbus++')
 sdbuspp_gen_meson_prog = find_program('sdbus++-gen-meson')
