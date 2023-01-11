@@ -4,7 +4,6 @@ import os
 import yaml
 import argparse
 from mako.template import Template
-import contextlib
 
 if __name__ == '__main__':
     script_dir = os.path.dirname(os.path.realpath(__file__))
