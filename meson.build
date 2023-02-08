@@ -130,11 +130,24 @@ if get_option('install-error-yaml').disabled()
         ],
     )
 
+    if cxx.has_header('nlohmann/json.hpp')
+        nlohmann_json_dep = declare_dependency()
+    else
+        subproject('nlohmann-json')
+        nlohmann_json_dep = declare_dependency(
+            include_directories: [
+                'subprojects/nlohmann-json/single_include',
+                'subprojects/nlohmann-json/single_include/nlohmann',
+            ]
+        )
+    endif
+
     deps += [
+        nlohmann_json_dep,
+        phosphor_dbus_interfaces_dep,
+        phosphor_logging_dep,
         sdbusplus_dep,
         sdeventplus_dep,
-        phosphor_logging_dep,
-        phosphor_dbus_interfaces_dep,
     ]
 
     sources += [
