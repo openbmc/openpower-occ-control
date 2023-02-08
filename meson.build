@@ -105,18 +105,18 @@ if get_option('install-error-yaml').disabled()
             'sdeventplus_dep'
         ],
     )
-    phosphor_logging_dep = dependency(
-        'phosphor-logging',
-        fallback: [
-            'phosphor-logging',
-            'phosphor_logging_dep'
-        ],
-    )
     phosphor_dbus_interfaces_dep = dependency(
         'phosphor-dbus-interfaces',
         fallback: [
             'phosphor-dbus-interfaces',
             'phosphor_dbus_interfaces_dep'
+        ],
+    )
+    phosphor_logging_dep = dependency(
+        'phosphor-logging',
+        fallback: [
+            'phosphor-logging',
+            'phosphor_logging_dep'
         ],
     )
 
