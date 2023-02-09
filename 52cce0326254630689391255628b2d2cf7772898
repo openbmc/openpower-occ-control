@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8bda81f0_19e92dd6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2023-02-09T22:50:26Z",
+      "side": 1,
+      "message": "The host dbus object is not upstream, so this change will allow enabling the power10 compile flag for occ-control",
+      "revId": "52cce0326254630689391255628b2d2cf7772898",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
