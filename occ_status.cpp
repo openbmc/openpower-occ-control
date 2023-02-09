@@ -7,9 +7,6 @@
 
 #include <fmt/core.h>
 
-#ifdef POWER10
-#include <com/ibm/Host/Target/server.hpp>
-#endif
 #include <phosphor-logging/log.hpp>
 
 #include <filesystem>
