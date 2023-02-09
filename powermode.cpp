@@ -4,7 +4,9 @@
 #include <fmt/core.h>
 #include <sys/ioctl.h>
 
+#ifdef POWERVM_CHECK
 #include <com/ibm/Host/Target/server.hpp>
+#endif
 #include <org/open_power/OCC/Device/error.hpp>
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/log.hpp>
@@ -190,12 +192,13 @@ SysPwrMode convertStringToMode(const std::string& i_modeString)
 // Check if Hypervisor target is PowerVM
 bool isPowerVM()
 {
+    bool powerVmTarget = true;
+#ifdef POWERVM_CHECK
     namespace Hyper = sdbusplus::com::ibm::Host::server;
     constexpr auto HYPE_PATH = "/com/ibm/host0/hypervisor";
     constexpr auto HYPE_INTERFACE = "com.ibm.Host.Target";
     constexpr auto HYPE_PROP = "Target";
 
-    bool powerVmTarget = false;
 
     // This will throw exception on failure
     auto& bus = utils::getBus();
@@ -216,6 +219,7 @@ bool isPowerVM()
 
     log<level::DEBUG>(
         fmt::format("isPowerVM returning {}", powerVmTarget).c_str());
+#endif
 
     return powerVmTarget;
 }
