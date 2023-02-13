@@ -8,42 +8,43 @@ option(
     'install-error-yaml',
     type : 'feature',
     description : 'Enable installing error yaml file',
-    value: 'disabled'
+    value : 'disabled'
 )
 
 option(
     'i2c-occ',
     type : 'feature',
     description : 'Enable I2C OCC support',
-    value: 'disabled'
+    value : 'disabled'
 )
 
 option(
     'read-occ-sensors',
     type : 'feature',
     description : 'Enable read occ sensors support',
-    value: 'disabled'
+    value : 'enabled'
 )
 
 option(
     'max-cpus',
     type : 'integer',
-    min:0, max:255,
+    min : 0, max : 255,
     description : 'Maximum number of CPUs',
-    value: 2
+    value : 8
 )
 
 option(
     'ps-derating-factor',
     type : 'integer',
-    min:0, max:100,
+    min : 0, max : 100,
     description : 'Power supply derating factor',
-    value: 90
+    value : 90
 )
 
 option(
     'with-host-communication-protocol',
     type : 'string',
+    value : 'pldm',
     description : 'To specify the host communication protocol'
 )
 
@@ -51,7 +52,7 @@ option(
     'power10-support',
     type : 'feature',
     description : 'Enable Power10 support',
-    value: 'disabled'
+    value : 'enabled'
 )
 
 option(
