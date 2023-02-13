@@ -22,7 +22,6 @@ option(
     'read-occ-sensors',
     type : 'feature',
     description : 'Enable read occ sensors support',
-    value: 'disabled'
 )
 
 option(
@@ -51,7 +50,6 @@ option(
     'power10-support',
     type : 'feature',
     description : 'Enable Power10 support',
-    value: 'disabled'
 )
 
 option(
