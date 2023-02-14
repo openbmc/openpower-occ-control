@@ -4,6 +4,8 @@
 #include "utils.hpp"
 
 #include <libpldm/pldm.h>
+#include <libpldm/transport/mctp-demux.h>
+#include <libpldm/transport/transport.h>
 
 #include <sdbusplus/bus/match.hpp>
 #include <sdeventplus/event.hpp>
@@ -225,6 +227,12 @@ class Interface
     /** @brief File descriptor for PLDM messages */
     int pldmFd = -1;
 
+    /** pldm requester instance  */
+    struct pldm_requester* pldmReq = NULL;
+
+    /** pldm transport instance  */
+    struct pldm_transport_mctp_demux* mctpTransport = NULL;
+
     /** @brief The response for the PLDM request msg is received flag.
      */
     bool pldmResponseReceived = false;
@@ -247,7 +255,10 @@ class Interface
      */
     void pldmRspExpired();
 
-    /** @brief Close the MCTP file */
+    /** @brief Setup the PLDM instances */
+    int pldmSetup(void);
+
+    /** @brief Close the PLDM instances */
     void pldmClose();
 
     /** @brief When the OCC state changes host sends PlatformEventMessage
@@ -306,6 +317,7 @@ class Interface
      */
     std::vector<uint8_t> encodeGetStateSensorRequest(uint8_t instance,
                                                      uint16_t sensorId);
+
     /** @brief Send the PLDM request
      *
      * @param[in] request - the request data
