@@ -8,6 +8,9 @@
 #include <libpldm/platform.h>
 #include <libpldm/state_set.h>
 #include <libpldm/state_set_oem_ibm.h>
+#include <libpldm/transport/mctp-demux.h>
+#include <libpldm/transport.h>
+#include <poll.h>
 
 #include <phosphor-logging/log.hpp>
 #include <sdbusplus/bus.hpp>
@@ -580,6 +583,61 @@ bool Interface::freePldmInstanceId()
     return true;
 }
 
+int Interface::setupPldm()
+{
+    auto openErrno = errno;
+    if (pldmTransport) {
+        log<level::ERR>(
+            std::format(
+                "setupPldm: init pldm_transport already setup!, errno={}/{}",
+                openErrno, strerror(openErrno))
+                .c_str());
+        return -1;
+    }
+    // Create PLDM stuffs
+
+    int rc= pldm_transport_mctp_demux_init(&mctpTransport);
+    if (rc) {
+        log<level::ERR>(
+            std::format(
+                "setupPldm: Failed to init MCTP demux transport, errno={}/{}",
+                rc, strerror(rc))
+                .c_str());
+        return -1;
+    }
+
+    pldmTransport = pldm_transport_mctp_demux_core(mctpTransport);
+
+    if (pldm_transport_mctp_demux_map_tid(mctpTransport, tid, mctpEid)) {
+        log<level::ERR>(
+            std::format(
+                "setupPldm: Failed to setup tid to eid mapping, errno={}/{}",
+                openErrno, strerror(openErrno))
+                .c_str());
+        pldmClose();
+        return -1;
+    }
+
+	struct pollfd pollfd;
+	if (pldm_transport_mctp_demux_init_pollfd(pldmTransport, &pollfd)) {
+        log<level::ERR>(
+            std::format(
+                "setupPldm: Failed to get pollfd , errno={}/{}",
+                openErrno, strerror(openErrno))
+                .c_str());
+        pldmClose();
+        return -1;
+
+	}
+	pldmFd = pollfd.fd;
+        log<level::ERR>(
+            std::format(
+                "setupPldm: pldmFd has fd={}",
+                pldmFd)
+                .c_str());
+	return 0;
+}
+
 void Interface::sendPldm(const std::vector<uint8_t>& request,
                          const uint8_t instance, const bool rspExpected)
 {
@@ -589,22 +647,24 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         return;
     }
 
-    // Connect to MCTP socket
-    pldmFd = pldm_open();
-    auto openErrno = errno;
-    if (pldmFd == PLDM_REQUESTER_OPEN_FAIL)
-    {
+    auto rc =setupPldm();
+    if (rc) {
         log<level::ERR>(
             std::format(
-                "sendPldm: Failed to connect to MCTP socket, errno={}/{}",
-                openErrno, strerror(openErrno))
+                "sendPldm: setupPldm failed{}",
+                rc)
                 .c_str());
-        return;
     }
 
+    pldm_tid_t pldmTID = static_cast<pldm_tid_t>(mctpEid);
     // Send the PLDM request message to HBRT
     if (rspExpected)
     {
+        log<level::ERR>(
+            std::format(
+                "sendPldm: pldmFd has fd={}",
+                pldmFd)
+                .c_str());
         // Register callback when response is available
         registerPldmRspCallback();
 
@@ -613,26 +673,26 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         {
             log<level::INFO>(
                 std::format(
-                    "sendPldm: calling pldm_send(OCC{}, instance:{}, {} bytes)",
+                    "sendPldm: calling pldm_transport_send_msg(OCC{}, instance:{}, {} bytes)",
                     instance, pldmInstanceID.value(), request.size())
                     .c_str());
         }
         pldmResponseReceived = false;
         pldmResponseTimeout = false;
         pldmResponseOcc = instance;
-        auto pldmRc = pldm_send(mctpEid, pldmFd, request.data(),
-                                request.size());
+        auto pldmRc =
+            pldm_transport_send_msg(pldmTransport, pldmTID, request.data(), request.size());
         auto sendErrno = errno;
         if (pldmRc != PLDM_REQUESTER_SUCCESS)
         {
             log<level::ERR>(
                 std::format(
-                    "sendPldm: pldm_send failed with rc={} and errno={}/{}",
+                    "sendPldm: pldm_transport_send_msg failed with rc={} and errno={}/{}",
                     static_cast<
                         std::underlying_type_t<pldm_requester_error_codes>>(
                         pldmRc),
-                    sendErrno, strerror(sendErrno))
-                    .c_str());
+                        sendErrno, strerror(sendErrno))
+                        .c_str());
             pldmClose();
             return;
         }
@@ -649,17 +709,17 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         {
             log<level::INFO>(
                 std::format(
-                    "sendPldm: calling pldm_send(mctpID:{}, fd:{}, {} bytes) for OCC{}",
+                    "sendPldm: calling pldm_transport_send_msg(mctpID:{}, fd:{}, {} bytes) for OCC{}",
                     mctpEid, pldmFd, request.size(), instance)
                     .c_str());
         }
-        auto rc = pldm_send(mctpEid, pldmFd, request.data(), request.size());
+        auto rc = pldm_transport_send_msg(pldmTransport, pldmTID, request.data(), request.size());
         auto sendErrno = errno;
         if (rc)
         {
             log<level::ERR>(
                 std::format(
-                    "sendPldm: pldm_send(mctpID:{}, fd:{}, {} bytes) failed with rc={} and errno={}/{}",
+                    "sendPldm: pldm_transport_send_msg(mctpID:{}, fd:{}, {} bytes) failed with rc={} and errno={}/{}",
                     mctpEid, pldmFd, request.size(),
                     static_cast<
                         std::underlying_type_t<pldm_requester_error_codes>>(rc),
@@ -725,14 +785,16 @@ void Interface::pldmClose()
         // stop PLDM response timer
         pldmRspTimer.setEnabled(false);
     }
-    pldm_close();
+
+    pldm_transport_mctp_demux_destroy(mctpTransport);
     pldmFd = -1;
     eventSource.reset();
 }
 
-int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
+int Interface::pldmRspCallback(sd_event_source* /*es*/, __attribute__((unused)) int fd,
                                uint32_t revents, void* userData)
 {
+
     if (!(revents & EPOLLIN))
     {
         log<level::INFO>(
@@ -751,16 +813,17 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
 
     uint8_t* responseMsg = nullptr;
     size_t responseMsgSize{};
+    pldm_tid_t pldmTID = static_cast<pldm_tid_t>(mctpEid);
 
     if (!throttleTraces)
     {
         log<level::INFO>(
-            std::format("pldmRspCallback: calling pldm_recv() instance:{}",
+            std::format("pldmRspCallback: calling pldm_transport_recv_msg() instance:{}",
                         pldmIface->pldmInstanceID.value())
                 .c_str());
     }
-    auto rc = pldm_recv(mctpEid, fd, pldmIface->pldmInstanceID.value(),
-                        &responseMsg, &responseMsgSize);
+    auto rc = pldm_transport_recv_msg(pldmIface->pldmTransport, &pldmTID,
+                        (void**)&responseMsg, &responseMsgSize);
     int lastErrno = errno;
     if (rc)
     {
@@ -768,7 +831,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
         {
             log<level::ERR>(
                 std::format(
-                    "pldmRspCallback: pldm_recv failed with rc={}, errno={}/{}",
+                    "pldmRspCallback: pldm_transport_recv_msg failed with rc={}, errno={}/{}",
                     static_cast<
                         std::underlying_type_t<pldm_requester_error_codes>>(rc),
                     lastErrno, strerror(lastErrno))
@@ -781,7 +844,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
     if (!throttleTraces)
     {
         log<level::INFO>(
-            std::format("pldmRspCallback: pldm_recv() rsp was {} bytes",
+            std::format("pldmRspCallback: pldm_transport_recv_msg() rsp was {} bytes",
                         responseMsgSize)
                 .c_str());
     }

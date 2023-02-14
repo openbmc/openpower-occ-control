@@ -6,6 +6,8 @@
 
 #include <libpldm/instance-id.h>
 #include <libpldm/pldm.h>
+#include <libpldm/transport.h>
+#include <libpldm/transport/mctp-demux.h>
 
 #include <sdbusplus/bus/match.hpp>
 #include <sdeventplus/event.hpp>
@@ -250,8 +252,16 @@ class Interface
     /** @brief OCC instance number for the PLDM message */
     uint8_t pldmResponseOcc = 0;
 
+
     /** @brief File descriptor for PLDM messages */
     int pldmFd = -1;
+
+
+    /** pldm transport instance  */
+    struct pldm_transport_mctp_demux *mctpTransport = NULL;
+    struct pldm_transport *pldmTransport = NULL;
+
+
 
     /** @brief The response for the PLDM request msg is received flag.
      */
@@ -345,6 +355,11 @@ class Interface
      */
     std::vector<uint8_t> encodeGetStateSensorRequest(uint8_t instance,
                                                      uint16_t sensorId);
+
+
+
+    int setupPldm(void);
+
     /** @brief Send the PLDM request
      *
      * @param[in] request - the request data
