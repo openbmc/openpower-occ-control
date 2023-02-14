@@ -8,6 +8,9 @@
 #include <libpldm/oem/ibm/state_set.h>
 #include <libpldm/platform.h>
 #include <libpldm/state_set.h>
+#include <libpldm/transport.h>
+#include <libpldm/transport/mctp-demux.h>
+#include <poll.h>
 
 #include <phosphor-logging/log.hpp>
 #include <sdbusplus/bus.hpp>
@@ -580,6 +583,69 @@ void Interface::freePldmInstanceId()
     }
 }
 
+int Interface::openMctpDemuxTransport()
+{
+    auto openErrno = errno;
+    mctpDemux = nullptr;
+    int rc = pldm_transport_mctp_demux_init(&mctpDemux);
+    if (rc)
+    {
+        log<level::ERR>(
+            std::format(
+                "openMctpDemuxTransport: Failed to init MCTP demux transport, errno={}/{}",
+                rc, strerror(rc))
+                .c_str());
+        return -1;
+    }
+
+    if (pldm_transport_mctp_demux_map_tid(mctpDemux, mctpEid, mctpEid))
+    {
+        log<level::ERR>(
+            std::format(
+                "openMctpDemuxTransport: Failed to setup tid to eid mapping, errno={}/{}",
+                openErrno, strerror(openErrno))
+                .c_str());
+        pldmClose();
+        return -1;
+    }
+    pldmTransport = pldm_transport_mctp_demux_core(mctpDemux);
+
+    struct pollfd pollfd;
+    if (pldm_transport_mctp_demux_init_pollfd(pldmTransport, &pollfd))
+    {
+        log<level::ERR>(
+            std::format(
+                "openMctpDemuxTransport: Failed to get pollfd , errno={}/{}",
+                openErrno, strerror(openErrno))
+                .c_str());
+        pldmClose();
+        return -1;
+    }
+    pldmFd = pollfd.fd;
+    if (!throttleTraces)
+    {
+        log<level::INFO>(
+            std::format("openMctpDemuxTransport: pldmFd has fd={}", pldmFd)
+                .c_str());
+    }
+    return 0;
+}
+
+int Interface::pldmOpen()
+{
+    auto openErrno = errno;
+
+    if (pldmTransport)
+    {
+        log<level::ERR>(
+            std::format("pldmOpen: pldmTransport already setup!, errno={}/{}",
+                        openErrno, strerror(openErrno))
+                .c_str());
+        return -1;
+    }
+    return openMctpDemuxTransport();
+}
+
 void Interface::sendPldm(const std::vector<uint8_t>& request,
                          const uint8_t instance, const bool rspExpected)
 {
@@ -589,20 +655,15 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         return;
     }
 
-    // Connect to MCTP socket
-    pldmFd = pldm_open();
-    auto openErrno = errno;
-    if (pldmFd == PLDM_REQUESTER_OPEN_FAIL)
+    auto rc = pldmOpen();
+    if (rc)
     {
-        log<level::ERR>(
-            std::format(
-                "sendPldm: Failed to connect to MCTP socket, errno={}/{}",
-                openErrno, strerror(openErrno))
-                .c_str());
+        log<level::ERR>(std::format("sendPldm: pldmOpen failed{}", rc).c_str());
         freePldmInstanceId();
         return;
     }
 
+    pldm_tid_t pldmTID = static_cast<pldm_tid_t>(mctpEid);
     // Send the PLDM request message to HBRT
     if (rspExpected)
     {
@@ -614,21 +675,21 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         {
             log<level::INFO>(
                 std::format(
-                    "sendPldm: calling pldm_send(OCC{}, instance:{}, {} bytes)",
+                    "sendPldm: calling pldm_transport_send_msg(OCC{}, instance:{}, {} bytes)",
                     instance, pldmInstanceID.value(), request.size())
                     .c_str());
         }
         pldmResponseReceived = false;
         pldmResponseTimeout = false;
         pldmResponseOcc = instance;
-        auto pldmRc = pldm_send(mctpEid, pldmFd, request.data(),
-                                request.size());
+        auto pldmRc = pldm_transport_send_msg(pldmTransport, pldmTID,
+                                              request.data(), request.size());
         auto sendErrno = errno;
         if (pldmRc != PLDM_REQUESTER_SUCCESS)
         {
             log<level::ERR>(
                 std::format(
-                    "sendPldm: pldm_send failed with rc={} and errno={}/{}",
+                    "sendPldm: pldm_transport_send_msg failed with rc={} and errno={}/{}",
                     static_cast<
                         std::underlying_type_t<pldm_requester_error_codes>>(
                         pldmRc),
@@ -651,24 +712,24 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         {
             log<level::INFO>(
                 std::format(
-                    "sendPldm: calling pldm_send(mctpID:{}, fd:{}, {} bytes) for OCC{}",
+                    "sendPldm: calling pldm_transport_send_msg(mctpID:{}, fd:{}, {} bytes) for OCC{}",
                     mctpEid, pldmFd, request.size(), instance)
                     .c_str());
         }
-        auto rc = pldm_send(mctpEid, pldmFd, request.data(), request.size());
+        auto rc = pldm_transport_send_msg(pldmTransport, pldmTID,
+                                          request.data(), request.size());
         auto sendErrno = errno;
         if (rc)
         {
             log<level::ERR>(
                 std::format(
-                    "sendPldm: pldm_send(mctpID:{}, fd:{}, {} bytes) failed with rc={} and errno={}/{}",
+                    "sendPldm: pldm_transport_send_msg(mctpID:{}, fd:{}, {} bytes) failed with rc={} and errno={}/{}",
                     mctpEid, pldmFd, request.size(),
                     static_cast<
                         std::underlying_type_t<pldm_requester_error_codes>>(rc),
                     sendErrno, strerror(sendErrno))
                     .c_str());
         }
-
         freePldmInstanceId();
         pldmClose();
     }
@@ -724,13 +785,17 @@ void Interface::pldmClose()
         // stop PLDM response timer
         pldmRspTimer.setEnabled(false);
     }
-    pldm_close();
+
+    pldm_transport_mctp_demux_destroy(mctpDemux);
+    mctpDemux = NULL;
     pldmFd = -1;
+    pldmTransport = NULL;
     eventSource.reset();
 }
 
-int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
-                               uint32_t revents, void* userData)
+int Interface::pldmRspCallback(sd_event_source* /*es*/,
+                               __attribute__((unused)) int fd, uint32_t revents,
+                               void* userData)
 {
     if (!(revents & EPOLLIN))
     {
@@ -750,16 +815,18 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
 
     uint8_t* responseMsg = nullptr;
     size_t responseMsgSize{};
+    pldm_tid_t pldmTID = static_cast<pldm_tid_t>(mctpEid);
 
     if (!throttleTraces)
     {
         log<level::INFO>(
-            std::format("pldmRspCallback: calling pldm_recv() instance:{}",
-                        pldmIface->pldmInstanceID.value())
+            std::format(
+                "pldmRspCallback: calling pldm_transport_recv_msg() instance:{}",
+                pldmIface->pldmInstanceID.value())
                 .c_str());
     }
-    auto rc = pldm_recv(mctpEid, fd, pldmIface->pldmInstanceID.value(),
-                        &responseMsg, &responseMsgSize);
+    auto rc = pldm_transport_recv_msg(pldmIface->pldmTransport, &pldmTID,
+                                      (void**)&responseMsg, &responseMsgSize);
     int lastErrno = errno;
     if (rc)
     {
@@ -767,7 +834,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
         {
             log<level::ERR>(
                 std::format(
-                    "pldmRspCallback: pldm_recv failed with rc={}, errno={}/{}",
+                    "pldmRspCallback: pldm_transport_recv_msg failed with rc={}, errno={}/{}",
                     static_cast<
                         std::underlying_type_t<pldm_requester_error_codes>>(rc),
                     lastErrno, strerror(lastErrno))
@@ -780,8 +847,9 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
     if (!throttleTraces)
     {
         log<level::INFO>(
-            std::format("pldmRspCallback: pldm_recv() rsp was {} bytes",
-                        responseMsgSize)
+            std::format(
+                "pldmRspCallback: pldm_transport_recv_msg() rsp was {} bytes",
+                responseMsgSize)
                 .c_str());
     }
 
