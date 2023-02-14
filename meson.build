@@ -43,6 +43,9 @@ if get_option('install-error-yaml').disabled()
     conf_data.set('PLDM', get_option('with-host-communication-protocol')=='pldm')
     conf_data.set('POWER10', get_option('power10-support').enabled())
 endif
+if cxx.has_header('poll.h')
+  conf_data.set('PLDM_HAS_POLL', 1)
+endif
 
 configure_file(output: 'config.h',
     configuration: conf_data
