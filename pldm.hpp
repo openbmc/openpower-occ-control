@@ -6,6 +6,8 @@
 
 #include <libpldm/instance-id.h>
 #include <libpldm/pldm.h>
+#include <libpldm/transport.h>
+#include <libpldm/transport/mctp-demux.h>
 
 #include <sdbusplus/bus/match.hpp>
 #include <sdeventplus/event.hpp>
@@ -29,14 +31,14 @@ using SensorOffset = uint8_t;
 using SensorToInstance = std::map<SensorID, open_power::occ::instanceID>;
 using TerminusID = uint8_t;
 
-/** @brief Hardcoded TID */
-constexpr TerminusID tid = 0;
-
 /** @brief OCC instance starts with 0 for example "occ0" */
 constexpr open_power::occ::instanceID start = 0;
 
 /** @brief Hardcoded mctpEid for HBRT */
 constexpr mctp_eid_t mctpEid = 10;
+
+/** @brief Hardcoded TID */
+constexpr TerminusID tid = mctpEid;
 
 /** @class Interface
  *
@@ -166,7 +168,6 @@ class Interface
     void setTraceThrottle(const bool throttle);
 
   private:
-    // when do we destroy this? on every pldmClose?
     /** @brief PLDM instance ID database object used to get instance IDs
      */
     pldm_instance_db* pldmInstanceIdDb = nullptr;
@@ -252,6 +253,11 @@ class Interface
 
     /** @brief File descriptor for PLDM messages */
     int pldmFd = -1;
+
+    /** pldm transport instance  */
+    struct pldm_transport* pldmTransport = NULL;
+
+    struct pldm_transport_mctp_demux* mctpDemux;
 
     /** @brief The response for the PLDM request msg is received flag.
      */
@@ -342,6 +348,19 @@ class Interface
      */
     std::vector<uint8_t> encodeGetStateSensorRequest(uint8_t instance,
                                                      uint16_t sensorId);
+
+    /** @brief setup PLDM transport for sending and receiving PLDM messages.
+     *
+     * @return true on success, otherwise return false
+     */
+    int pldmOpen(void);
+
+    /** @brief Opens the MCTP socket for sending and receiving messages.
+     *
+     * @return true on success, otherwise returns a negative error code
+     */
+    int openMctpDemuxTransport();
+
     /** @brief Send the PLDM request
      *
      * @param[in] request - the request data
