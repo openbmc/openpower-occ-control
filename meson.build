@@ -42,6 +42,10 @@ conf_data.set('READ_OCC_SENSORS', get_option('read-occ-sensors').allowed())
 conf_data.set('PLDM', get_option('with-host-communication-protocol')=='pldm')
 conf_data.set('POWER10', get_option('power10-support').allowed())
 
+if cxx.has_header('poll.h')
+    conf_data.set('PLDM_HAS_POLL', 1)
+endif
+
 configure_file(output: 'config.h',
     configuration: conf_data
 )
@@ -112,6 +116,13 @@ sources += [
 
 if get_option('with-host-communication-protocol')=='pldm'
     libpldm_dep = dependency('libpldm')
+    libpldmutils = library(
+        'libpldm',
+        version: meson.project_version(),
+   )
+    libpldmutils_dep = declare_dependency(
+        link_with: libpldmutils,
+    )
     deps += [
         libpldm_dep,
         cxx.find_library('pdbg'),
