@@ -143,9 +143,9 @@ class Interface
     void checkActiveSensor(uint8_t instance);
 
   private:
-    /** @brief MCTP instance number used in PLDM requests
+    /** @brief PLDM instance number used in PLDM requests
      */
-    std::optional<uint8_t> mctpInstance;
+    std::optional<uint8_t> pldmInstanceID;
 
     /** @brief Callback handler to be invoked when the state of the OCC
      *         changes
@@ -292,11 +292,11 @@ class Interface
         return (occInstanceToEffecter.empty() ? false : true);
     }
 
-    /** @brief Query PLDM for the MCTP requester instance id
+    /** @brief Query PLDM for the PLDM requester instance id
      *
      * @return true if the id was found and false if not
      */
-    bool getMctpInstanceId();
+    bool getPldmInstanceId();
 
     /** @brief Encode a GetStateSensor command into a PLDM request
      *  @param[in] instance - OCC instance number

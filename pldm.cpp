@@ -381,7 +381,7 @@ std::vector<uint8_t>
                                      CompositeEffecterCount effecterCount,
                                      uint8_t stateIdPos, uint8_t stateSetValue)
 {
-    if (!getMctpInstanceId())
+    if (!getPldmInstanceId())
     {
         return std::vector<uint8_t>();
     }
@@ -406,7 +406,7 @@ std::vector<uint8_t>
         }
     }
     auto rc = encode_set_state_effecter_states_req(
-        mctpInstance.value(), effecterId, effecterCount, stateField.data(),
+        pldmInstanceID.value(), effecterId, effecterCount, stateField.data(),
         requestMsg);
     if (rc != PLDM_SUCCESS)
     {
@@ -510,9 +510,9 @@ void Interface::sendHRESET(open_power::occ::instanceID sbeInstanceId)
     }
 }
 
-bool Interface::getMctpInstanceId()
+bool Interface::getPldmInstanceId()
 {
-    if (!mctpInstance)
+    if (!pldmInstanceID)
     {
         // Request new instance ID
         auto& bus = open_power::occ::utils::getBus();
@@ -525,9 +525,9 @@ bool Interface::getMctpInstanceId()
             auto reply = bus.call(method);
             uint8_t newInstanceId;
             reply.read(newInstanceId);
-            mctpInstance = newInstanceId;
+            pldmInstanceID = newInstanceId;
             log<level::INFO>(fmt::format("pldm: got new InstanceId: {}",
-                                         mctpInstance.value())
+                                         pldmInstanceID.value())
                                  .c_str());
         }
         catch (const sdbusplus::exception_t& e)
@@ -545,9 +545,9 @@ bool Interface::getMctpInstanceId()
 void Interface::sendPldm(const std::vector<uint8_t>& request,
                          const uint8_t instance, const bool rspExpected)
 {
-    if (!mctpInstance)
+    if (!pldmInstanceID)
     {
-        log<level::ERR>("sendPldm: No MCTP Instance ID found!");
+        log<level::ERR>("sendPldm: No PLDM Instance ID found!");
         return;
     }
 
@@ -574,7 +574,7 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         log<level::INFO>(
             fmt::format(
                 "sendPldm: calling pldm_send(OCC{}, instance:{}, {} bytes)",
-                instance, mctpInstance.value(), request.size())
+                instance, pldmInstanceID.value(), request.size())
                 .c_str());
         pldmResponseReceived = false;
         pldmResponseTimeout = false;
@@ -620,7 +620,7 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         else
         {
             // Not waiting for response, instance ID should be freed
-            mctpInstance = std::nullopt;
+            pldmInstanceID = std::nullopt;
         }
         pldmClose();
     }
@@ -690,10 +690,10 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
 
     auto pldmIface = static_cast<Interface*>(userData);
 
-    if (!pldmIface->mctpInstance)
+    if (!pldmIface->pldmInstanceID)
     {
         log<level::ERR>(
-            "pldmRspCallback: No outstanding MCTP Instance ID found");
+            "pldmRspCallback: No outstanding PLDM Instance ID found");
         return -1;
     }
 
@@ -702,9 +702,9 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
 
     log<level::INFO>(
         fmt::format("pldmRspCallback: calling pldm_recv() instance:{}",
-                    pldmIface->mctpInstance.value())
+                    pldmIface->pldmInstanceID.value())
             .c_str());
-    auto rc = pldm_recv(mctpEid, fd, pldmIface->mctpInstance.value(),
+    auto rc = pldm_recv(mctpEid, fd, pldmIface->pldmInstanceID.value(),
                         &responseMsg, &responseMsgSize);
     int lastErrno = errno;
     if (rc)
@@ -730,7 +730,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
     }
 
     // instance ID should be freed
-    pldmIface->mctpInstance = std::nullopt;
+    pldmIface->pldmInstanceID = std::nullopt;
 
     // Set pointer to autodelete
     std::unique_ptr<uint8_t, decltype(std::free)*> responseMsgPtr{responseMsg,
@@ -819,10 +819,10 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
 std::vector<uint8_t> Interface::encodeGetStateSensorRequest(uint8_t instance,
                                                             uint16_t sensorId)
 {
-    if (!getMctpInstanceId())
+    if (!getPldmInstanceId())
     {
         log<level::ERR>(
-            "encodeGetStateSensorRequest: failed to getMctpInstanceId");
+            "encodeGetStateSensorRequest: failed to getPldmInstanceId");
         return std::vector<uint8_t>();
     }
 
@@ -832,7 +832,7 @@ std::vector<uint8_t> Interface::encodeGetStateSensorRequest(uint8_t instance,
     std::vector<uint8_t> request(msgSize);
 
     auto msg = reinterpret_cast<pldm_msg*>(request.data());
-    auto msgRc = encode_get_state_sensor_readings_req(mctpInstance.value(),
+    auto msgRc = encode_get_state_sensor_readings_req(pldmInstanceID.value(),
                                                       sensorId, sRearm, 0, msg);
     if (msgRc != PLDM_SUCCESS)
     {
