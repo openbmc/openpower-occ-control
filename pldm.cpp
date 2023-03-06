@@ -549,7 +549,7 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         return;
     }
 
-    // Connect to MCTP scoket
+    // Connect to MCTP socket
     pldmFd = pldm_open();
     auto openErrno = errno;
     if (pldmFd == PLDM_REQUESTER_OPEN_FAIL)
@@ -795,6 +795,19 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
                 "pldmRspCallback: OCC{} is not running (sensor state:{})",
                 instance, occSensorState)
                 .c_str());
+        if (occSensorState != PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_STOPPED)
+        {
+            const size_t rspLength = responseMsgSize + sizeof(pldm_msg_hdr);
+            std::vector<std::uint8_t> pldmResponse(rspLength);
+            memcpy(&pldmResponse[0], reinterpret_cast<std::uint8_t*>(response),
+                   rspLength);
+            log<level::ERR>(
+                fmt::format(
+                    "pldmRspCallback: Bad State - PLDM response ({} bytes) for OCC{}:",
+                    rspLength, instance)
+                    .c_str());
+            dump_hex(pldmResponse);
+        }
         pldmIface->callBack(instance, false);
     }
 
