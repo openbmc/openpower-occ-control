@@ -159,13 +159,14 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
         if (sensorEntry != sensorToOCCInstance.end())
         {
             const uint8_t instance = sensorEntry->second;
+            bool isRunning = false;
             if (eventState ==
                 static_cast<EventState>(
                     PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_IN_SERVICE))
             {
                 log<level::INFO>(
                     fmt::format("PLDM: OCC{} is RUNNING", instance).c_str());
-                callBack(sensorEntry->second, true);
+                isRunning = true;
             }
             else if (eventState ==
                      static_cast<EventState>(
@@ -174,7 +175,6 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
                 log<level::INFO>(
                     fmt::format("PLDM: OCC{} has now STOPPED", instance)
                         .c_str());
-                callBack(instance, false);
             }
             else if (eventState ==
                      static_cast<EventState>(
@@ -188,8 +188,6 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
 
                 // Setting safe mode true
                 safeModeCallBack(true);
-
-                callBack(instance, false);
             }
             else
             {
@@ -198,6 +196,14 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
                                 eventState, instance)
                         .c_str());
             }
+
+            if (!open_power::occ::utils::isHostRunning())
+            {
+                log<level::INFO>("PLDM: HOST is not running");
+                isRunning = false;
+            }
+            callBack(instance, isRunning);
+
             return;
         }
     }
