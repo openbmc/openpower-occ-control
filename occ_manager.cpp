@@ -160,44 +160,63 @@ void Manager::checkAllActiveSensors()
 {
     static bool allActiveSensorAvailable = false;
     static bool tracedSensorWait = false;
+    static bool waitingForHost = false;
 
-    // Start with the assumption that all are available
-    allActiveSensorAvailable = true;
-    for (auto& obj : statusObjects)
+    if (open_power::occ::utils::isHostRunning())
     {
-        if (!obj->occActive())
+        if (waitingForHost)
         {
-            if (!obj->getPldmSensorReceived())
+            waitingForHost = false;
+            log<level::INFO>("checkAllActiveSensors(): Host is now running");
+        }
+
+        // Start with the assumption that all are available
+        allActiveSensorAvailable = true;
+        for (auto& obj : statusObjects)
+        {
+            if (!obj->occActive())
             {
-                auto instance = obj->getOccInstanceID();
-                // Check if sensor was queued while waiting for discovery
-                auto match = queuedActiveState.find(instance);
-                if (match != queuedActiveState.end())
+                if (!obj->getPldmSensorReceived())
                 {
-                    queuedActiveState.erase(match);
-                    log<level::INFO>(
-                        fmt::format(
-                            "checkAllActiveSensors(): OCC{} is ACTIVE (queued)",
-                            instance)
-                            .c_str());
-                    obj->occActive(true);
-                }
-                else
-                {
-                    allActiveSensorAvailable = false;
-                    if (!tracedSensorWait)
+                    auto instance = obj->getOccInstanceID();
+                    // Check if sensor was queued while waiting for discovery
+                    auto match = queuedActiveState.find(instance);
+                    if (match != queuedActiveState.end())
                     {
+                        queuedActiveState.erase(match);
                         log<level::INFO>(
                             fmt::format(
-                                "checkAllActiveSensors(): Waiting on OCC{} Active sensor",
+                                "checkAllActiveSensors(): OCC{} is ACTIVE (queued)",
                                 instance)
                                 .c_str());
-                        tracedSensorWait = true;
+                        obj->occActive(true);
                     }
-                    pldmHandle->checkActiveSensor(obj->getOccInstanceID());
-                    break;
+                    else
+                    {
+                        allActiveSensorAvailable = false;
+                        if (!tracedSensorWait)
+                        {
+                            log<level::INFO>(
+                                fmt::format(
+                                    "checkAllActiveSensors(): Waiting on OCC{} Active sensor",
+                                    instance)
+                                    .c_str());
+                            tracedSensorWait = true;
+                        }
+                        pldmHandle->checkActiveSensor(obj->getOccInstanceID());
+                        break;
+                    }
                 }
             }
+        }
+    }
+    else
+    {
+        if (!waitingForHost)
+        {
+            waitingForHost = true;
+            log<level::INFO>(
+                "checkAllActiveSensors(): Waiting for host to start");
         }
     }
 
@@ -319,20 +338,6 @@ void Manager::createObjects(const std::string& occ)
 
 void Manager::statusCallBack(instanceID instance, bool status)
 {
-    using InternalFailure =
-        sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure;
-
-    // At this time, it won't happen but keeping it
-    // here just in case something changes in the future
-    if ((activeCount == 0) && (!status))
-    {
-        log<level::ERR>(
-            fmt::format("Invalid update on OCCActive with OCC{}", instance)
-                .c_str());
-
-        elog<InternalFailure>();
-    }
-
     if (status == true)
     {
         // OCC went active
@@ -376,7 +381,17 @@ void Manager::statusCallBack(instanceID instance, bool status)
     else
     {
         // OCC went away
-        --activeCount;
+        if (activeCount > 0)
+        {
+            --activeCount;
+        }
+        else
+        {
+            log<level::ERR>(
+                fmt::format("OCC{} disabled, but currently no active OCCs",
+                            instance)
+                    .c_str());
+        }
 
         if (activeCount == 0)
         {
@@ -469,18 +484,56 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
                                 return instance == obj->getOccInstanceID();
                             });
 
+    const bool hostRunning = open_power::occ::utils::isHostRunning();
     if (obj != statusObjects.end())
     {
-        (*obj)->setPldmSensorReceived(true);
-        return (*obj)->occActive(status);
+        if (!hostRunning && (status == true))
+        {
+            log<level::WARNING>(
+                fmt::format(
+                    "updateOCCActive: Host is not running yet (OCC{} active={}), clearing sensor received",
+                    instance, status)
+                    .c_str());
+            (*obj)->setPldmSensorReceived(false);
+            if (!waitingForAllOccActiveSensors)
+            {
+                log<level::INFO>(
+                    "updateOCCActive: Waiting for Host and all OCC Active Sensors");
+                waitingForAllOccActiveSensors = true;
+            }
+            discoverTimer->restartOnce(30s);
+            return false;
+        }
+        else
+        {
+            log<level::INFO>(fmt::format("updateOCCActive: OCC{} active={}",
+                                         instance, status)
+                                 .c_str());
+            (*obj)->setPldmSensorReceived(true);
+            return (*obj)->occActive(status);
+        }
     }
     else
     {
-        log<level::WARNING>(
-            fmt::format(
-                "Manager::updateOCCActive: No status object to update for OCC{} (active={})",
-                instance, status)
-                .c_str());
+        if (hostRunning)
+        {
+            log<level::WARNING>(
+                fmt::format(
+                    "updateOCCActive: No status object to update for OCC{} (active={})",
+                    instance, status)
+                    .c_str());
+        }
+        else
+        {
+            if (status == true)
+            {
+                log<level::WARNING>(
+                    fmt::format(
+                        "updateOCCActive: No status objects and Host is not running yet (OCC{} active={})",
+                        instance, status)
+                        .c_str());
+            }
+        }
         if (status == true)
         {
             // OCC went active

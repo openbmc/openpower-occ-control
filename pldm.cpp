@@ -197,11 +197,6 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
                         .c_str());
             }
 
-            if (!open_power::occ::utils::isHostRunning())
-            {
-                log<level::INFO>("PLDM: HOST is not running");
-                isRunning = false;
-            }
             callBack(instance, isRunning);
 
             return;
@@ -274,6 +269,7 @@ void Interface::clearData()
                 fmt::format("clearData: OCC{} / sensorID: 0x{:04X}",
                             entry.second, entry.first)
                     .c_str());
+            callBack(entry.second, false);
         }
         sensorToOCCInstance.clear();
     }
@@ -656,7 +652,7 @@ void Interface::pldmRspExpired()
 {
     if (!pldmResponseReceived)
     {
-        log<level::ERR>(
+        log<level::WARNING>(
             fmt::format(
                 "pldmRspExpired: timerCallback - timeout waiting for pldm response for OCC{}",
                 pldmResponseOcc)
