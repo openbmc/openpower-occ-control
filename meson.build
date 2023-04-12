@@ -1,7 +1,7 @@
 project(
     'openpower-occ-control', 'cpp',
     version : '1.0.0',
-    meson_version: '>=0.57.0',
+    meson_version: '>=0.58.0',
     default_options: [
         'warning_level=3',
         'werror=true',
@@ -55,7 +55,7 @@ install_data('occ-active.sh',
 
 systemd = dependency('systemd')
 systemd_system_unit_dir = systemd.get_variable(
-    pkgconfig : 'systemdsystemunitdir')
+    'systemdsystemunitdir')
 subdir('service_files')
 
 sdbusplus_dep = dependency('sdbusplus')
