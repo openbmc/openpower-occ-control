@@ -20,7 +20,6 @@ if not gtest_dep.found() or not gmock_dep.found()
 endif
 
 test_sources = [
-  generated_sources,
   '../occ_pass_through.cpp',
   '../occ_manager.cpp',
   '../occ_status.cpp',
@@ -33,6 +32,7 @@ test_sources = [
   '../powercap.cpp',
   '../i2c_occ.cpp',
   '../utils.cpp',
+  occ_sensor_hpp,
 ]
 
 if get_option('with-host-communication-protocol')=='pldm'
@@ -59,7 +59,7 @@ pthread_dep = dependency('threads')
 foreach t : tests
   test(t, executable(t.underscorify(), t,
                      test_sources,
-                     include_directories: ['..', '../gen'],
+                     include_directories: '..',
                      dependencies: [
                          gtest_dep,
                          gmock_dep,

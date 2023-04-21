@@ -1,6 +1,5 @@
 #include "occ_ffdc.hpp"
 
-#include "elog-errors.hpp"
 #include "utils.hpp"
 
 #include <errno.h>
@@ -12,6 +11,7 @@
 
 #include <nlohmann/json.hpp>
 #include <org/open_power/OCC/Device/error.hpp>
+#include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/elog.hpp>
 #include <phosphor-logging/log.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>

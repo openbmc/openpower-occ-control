@@ -3,9 +3,8 @@
 import argparse
 import os
 
-from mako.template import Template
-
 import yaml
+from mako.template import Template
 
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.realpath(__file__))
