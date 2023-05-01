@@ -33,6 +33,7 @@
 
 owners:
 - eajames@us.ibm.com
+- cjcain@us.ibm.com
 
 reviewers:
 
@@ -42,3 +43,6 @@ openbmc:
 - name: Eddie James
   email: eajames@us.ibm.com
   discord: eajames
+- name: Chris Cain
+  email: cjcain@us.ibm.com
+  discord: cjcain
