@@ -114,6 +114,12 @@ void Manager::findAndCreateObjects()
                 }
                 statusObjCreated = true;
                 waitingForAllOccActiveSensors = true;
+
+                // Find/update the processor path associated with each OCC
+                for (auto& obj : statusObjects)
+                {
+                    obj->updateProcAssociation();
+                }
             }
         }
 
@@ -555,6 +561,11 @@ void Manager::updateOccSafeMode(bool safeMode)
 #ifdef POWER10
     pmode->updateDbusSafeMode(safeMode);
 #endif
+    // Update the processor throttle status on dbus
+    for (auto& obj : statusObjects)
+    {
+        obj->updateThrottle(safeMode, THROTTLED_SAFE);
+    }
 }
 
 void Manager::sbeHRESETResult(instanceID instance, bool success)
