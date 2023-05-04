@@ -18,6 +18,9 @@ namespace occ
 
 using namespace phosphor::logging;
 
+using ThrottleObj =
+    sdbusplus::xyz::openbmc_project::Control::Power::server::Throttle;
+
 // Handles updates to occActive property
 bool Status::occActive(bool value)
 {
@@ -28,6 +31,9 @@ bool Status::occActive(bool value)
                              .c_str());
         if (value)
         {
+            // Clear prior throttle reason (before setting device active)
+            updateThrottle(false, THROTTLED_ALL);
+
             // Set the device active
             device.setActive(true);
 
@@ -77,6 +83,9 @@ bool Status::occActive(bool value)
 
             // Set the device inactive
             device.setActive(false);
+
+            // Clear throttles (OCC not active after disabling device)
+            updateThrottle(false, THROTTLED_ALL);
         }
     }
     else if (value && !device.active())
@@ -552,6 +561,122 @@ void Status::occReadStateNow()
             deviceError();
 #endif
         }
+    }
+}
+
+// Update processor throttle status on dbus
+void Status::updateThrottle(const bool isThrottled, const uint8_t newReason)
+{
+    if (!throttleHandle)
+    {
+        return;
+    }
+
+    uint8_t newThrottleCause = throttleCause;
+
+    if (isThrottled) // throttled due to newReason
+    {
+        if ((newReason & throttleCause) == 0)
+        {
+            // set the bit(s) for passed in reason
+            newThrottleCause |= newReason;
+        }
+        // else no change
+    }
+    else // no longer throttled due to newReason
+    {
+        if ((newReason & throttleCause) != 0)
+        {
+            // clear the bit(s) for passed in reason
+            newThrottleCause &= ~newReason;
+        }
+        // else no change
+    }
+
+    if (newThrottleCause != throttleCause)
+    {
+        if (newThrottleCause == THROTTLED_NONE)
+        {
+            log<level::DEBUG>(
+                fmt::format(
+                    "updateThrottle: OCC{} no longer throttled (prior reason: {})",
+                    instance, throttleCause)
+                    .c_str());
+            throttleCause = THROTTLED_NONE;
+            throttleHandle->throttled(false);
+            throttleHandle->throttleCauses({});
+        }
+        else
+        {
+            log<level::DEBUG>(
+                fmt::format(
+                    "updateThrottle: OCC{} is throttled with reason {} (prior reason: {})",
+                    instance, newThrottleCause, throttleCause)
+                    .c_str());
+            throttleCause = newThrottleCause;
+
+            std::vector<ThrottleObj::ThrottleReasons> updatedCauses;
+            if (throttleCause & THROTTLED_POWER)
+            {
+                updatedCauses.push_back(
+                    throttleHandle->ThrottleReasons::PowerLimit);
+            }
+            if (throttleCause & THROTTLED_THERMAL)
+            {
+                updatedCauses.push_back(
+                    throttleHandle->ThrottleReasons::ThermalLimit);
+            }
+            if (throttleCause & THROTTLED_SAFE)
+            {
+                updatedCauses.push_back(
+                    throttleHandle->ThrottleReasons::ManagementDetectedFault);
+            }
+            throttleHandle->throttleCauses(updatedCauses);
+            throttleHandle->throttled(true);
+        }
+    }
+    // else no change to throttle status
+}
+
+// Get processor path associated with this OCC
+void Status::readProcAssociation()
+{
+    std::string managedPath = path + "/power_managed_by";
+    log<level::DEBUG>(
+        fmt::format("readProcAssociation: getting endpoints for {} ({})",
+                    managedPath, path)
+            .c_str());
+    try
+    {
+        utils::PropertyValue procPathProperty{};
+        procPathProperty = utils::getProperty(
+            managedPath, "xyz.openbmc_project.Association", "endpoints");
+        auto result = std::get<std::vector<std::string>>(procPathProperty);
+        if (result.size() > 0)
+        {
+            procPath = result[0];
+            log<level::INFO>(
+                fmt::format("readProcAssociation: OCC{} has proc={}", instance,
+                            procPath.c_str())
+                    .c_str());
+        }
+        else
+        {
+            log<level::ERR>(
+                fmt::format(
+                    "readProcAssociation: No processor associated with OCC{} / {}",
+                    instance, path)
+                    .c_str());
+        }
+    }
+    catch (const sdbusplus::exception_t& e)
+    {
+        log<level::ERR>(
+            fmt::format(
+                "readProcAssociation: Unable to get proc assocated with {} - {}",
+                path, e.what())
+                .c_str());
+        procPath = {};
     }
 }
 

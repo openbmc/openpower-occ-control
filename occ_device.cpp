@@ -118,11 +118,15 @@ void Device::timeoutCallback(int error)
 void Device::throttleProcTempCallback(int error)
 {
     statusObject.throttleProcTemp(error);
+    // Update the processor throttle on dbus
+    statusObject.updateThrottle(error, THROTTLED_THERMAL);
 }
 
 void Device::throttleProcPowerCallback(int error)
 {
     statusObject.throttleProcPower(error);
+    // Update the processor throttle on dbus
+    statusObject.updateThrottle(error, THROTTLED_POWER);
 }
 
 void Device::throttleMemTempCallback(int error)
