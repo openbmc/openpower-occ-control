@@ -37,6 +37,7 @@ int main(int /*argc*/, char** /*argv[]*/)
     // Attach the bus to sd_event to service user requests
     bus.attach_event(eventP.get(), SD_EVENT_PRIORITY_NORMAL);
 
+    // Add object manager interfaces (for mapper)
     sdbusplus::server::manager_t objManager(bus, OCC_CONTROL_ROOT);
 #ifdef READ_OCC_SENSORS
     sdbusplus::server::manager_t objManagerXyz(bus, OCC_SENSORS_ROOT);
@@ -45,6 +46,8 @@ int main(int /*argc*/, char** /*argv[]*/)
     sdbusplus::server::manager_t objManagerXyzControl(
         bus, "/xyz/openbmc_project/control");
 #endif
+    sdbusplus::server::manager_t objManagerXyzInventory(
+        bus, "/xyz/openbmc_project/inventory");
     open_power::occ::Manager mgr(eventP);
 
     // Claim the bus since all the house keeping is done now
