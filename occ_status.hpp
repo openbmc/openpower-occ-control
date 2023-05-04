@@ -17,6 +17,7 @@
 #include <sdeventplus/event.hpp>
 #include <sdeventplus/utility/timer.hpp>
 #endif
+#include <xyz/openbmc_project/Control/Power/Throttle/server.hpp>
 
 #include <functional>
 
@@ -28,6 +29,9 @@ namespace occ
 class Manager;
 namespace Base = sdbusplus::org::open_power::OCC::server;
 using Interface = sdbusplus::server::object_t<Base::Status>;
+
+namespace xyzBase = sdbusplus::xyz::openbmc_project::Control::Power::server;
+using ThrottleInterface = sdbusplus::server::object_t<xyzBase::Throttle>;
 
 // IPMID's host control application
 namespace Control = sdbusplus::org::open_power::Control::server;
@@ -49,6 +53,12 @@ using sensorDefs = std::tuple<sensorID, sensorName>;
 
 // OCC sysfs name prefix
 const std::string sysfsName = "occ-hwmon";
+
+const uint8_t THROTTLED_NONE = 0x00;
+const uint8_t THROTTLED_POWER = 0x01;
+const uint8_t THROTTLED_THERMAL = 0x02;
+const uint8_t THROTTLED_SAFE = 0x04;
+const uint8_t THROTTLED_ALL = 0xFF;
 
 /** @class Status
  *  @brief Implementation of OCC Active Status
@@ -222,7 +232,6 @@ class Status : public Interface
     {
         return pldmSensorStateReceived;
     }
-
 #endif // POWER10
 
     /** @brief Return the HWMON path for this OCC
@@ -231,9 +240,32 @@ class Status : public Interface
      */
     fs::path getHwmonPath();
 
+    /** @brief Update the processor path associated with this OCC
+     */
+    void updateProcAssociation()
+    {
+        readProcAssociation();
+        if (nullptr != throttleHandle)
+        {
+            throttleHandle.reset();
+        }
+        if (!procPath.empty())
+        {
+            throttleHandle = std::make_unique<ThrottleInterface>(
+                utils::getBus(), procPath.c_str());
+        }
+    }
+
+    /** @brief Update the processor throttle status on dbus
+     */
+    void updateThrottle(const bool isThrottled, const uint8_t reason);
+
   private:
     /** @brief OCC dbus object path */
     std::string path;
+
+    /** @brief Processor path associated with this OCC */
+    std::string procPath;
 
     /** @brief Callback handler to be invoked during property change.
      *         This is a handler in Manager class
@@ -360,6 +392,15 @@ class Status : public Interface
 #ifdef PLDM
     std::function<void(instanceID)> resetCallBack = nullptr;
 #endif
+
+    /** @brief Current throttle reason(s) for this processor */
+    uint8_t throttleCause = THROTTLED_NONE;
+
+    /** @brief Throttle interface for the processor associated with this OCC */
+    std::unique_ptr<ThrottleInterface> throttleHandle;
+
+    /** @brief Read the processor path associated with this OCC */
+    void readProcAssociation();
 };
 
 } // namespace occ
