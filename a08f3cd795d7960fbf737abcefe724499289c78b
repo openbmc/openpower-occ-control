@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "6786800b_553447dd",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2023-05-09T19:03:07Z",
+      "side": 1,
+      "message": "can you add the new properties/interfaces to the commit message?  like with the output of busctl introspect.",
+      "revId": "a08f3cd795d7960fbf737abcefe724499289c78b",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "2906052c_88826f16",
         "filename": "occ_status.cpp",
         "patchSetId": 2
