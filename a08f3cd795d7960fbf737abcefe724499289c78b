@@ -18,6 +18,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "56e89867_0f93634c",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2023-05-10T16:18:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6786800b_553447dd",
+      "revId": "a08f3cd795d7960fbf737abcefe724499289c78b",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2906052c_88826f16",
@@ -35,6 +53,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "23fb71a0_c6115376",
+        "filename": "occ_status.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 579,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2023-05-10T16:18:12Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "2906052c_88826f16",
+      "revId": "a08f3cd795d7960fbf737abcefe724499289c78b",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4a9fa912_c1add26c",
@@ -48,6 +84,30 @@
       "writtenOn": "2023-05-09T18:59:51Z",
       "side": 1,
       "message": "so it would be  OCC0/power_managed_by.  Could this be backwards?\n\n  There\u0027s some wording in https://github.com/openbmc/phosphor-dbus-interfaces/blob/master/requirements.md#directed-associations-should-be-named-with-participle-verbs\n\n\n    The {primary element} is {primary association} the {secondary element}.\n    The {secondary element} is {secondary association} the {primary element}.",
+      "range": {
+        "startLine": 644,
+        "startChar": 28,
+        "endLine": 644,
+        "endChar": 57
+      },
+      "revId": "a08f3cd795d7960fbf737abcefe724499289c78b",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ac04df8b_e0db0eea",
+        "filename": "occ_status.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 644,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2023-05-10T16:18:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4a9fa912_c1add26c",
       "range": {
         "startLine": 644,
         "startChar": 28,
@@ -81,6 +141,30 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "54d6957c_55ceefa2",
+        "filename": "occ_status.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 252,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2023-05-10T16:18:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "39677075_1ca9bf35",
+      "range": {
+        "startLine": 252,
+        "startChar": 12,
+        "endLine": 252,
+        "endChar": 32
+      },
+      "revId": "a08f3cd795d7960fbf737abcefe724499289c78b",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "97db1c51_a50c5440",
@@ -94,6 +178,30 @@
       "writtenOn": "2023-05-09T18:59:51Z",
       "side": 1,
       "message": "nit: this is already what the unique_ptr constructor does.",
+      "range": {
+        "startLine": 400,
+        "startChar": 53,
+        "endLine": 400,
+        "endChar": 63
+      },
+      "revId": "a08f3cd795d7960fbf737abcefe724499289c78b",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "98c7d67b_d3c5fb1d",
+        "filename": "occ_status.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 400,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2023-05-10T16:18:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "97db1c51_a50c5440",
       "range": {
         "startLine": 400,
         "startChar": 53,
