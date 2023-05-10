@@ -21,8 +21,7 @@ class VerifyOccInput : public ::testing::Test
         EXPECT_GE(rc, 0);
         event = nullptr;
     }
-    ~VerifyOccInput()
-    {}
+    ~VerifyOccInput() {}
 
     sd_event* event;
     int rc;

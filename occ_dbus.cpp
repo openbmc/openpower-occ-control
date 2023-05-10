@@ -242,8 +242,8 @@ bool OccDBusSensors::hasDvfsTemp(const std::string& path) const
 
 void OccDBusSensors::setDvfsTemp(const std::string& path, double value)
 {
-    dvfsTemps[path] =
-        std::make_unique<SensorIntf>(utils::getBus(), path.c_str());
+    dvfsTemps[path] = std::make_unique<SensorIntf>(utils::getBus(),
+                                                   path.c_str());
     dvfsTemps[path]->value(value);
 }
 

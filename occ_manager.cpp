@@ -459,8 +459,8 @@ void Manager::sbeTimeout(unsigned int instance)
 {
     auto obj = std::find_if(statusObjects.begin(), statusObjects.end(),
                             [instance](const auto& obj) {
-                                return instance == obj->getOccInstanceID();
-                            });
+        return instance == obj->getOccInstanceID();
+    });
 
     if (obj != statusObjects.end() && (*obj)->occActive())
     {
@@ -478,8 +478,8 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
 {
     auto obj = std::find_if(statusObjects.begin(), statusObjects.end(),
                             [instance](const auto& obj) {
-                                return instance == obj->getOccInstanceID();
-                            });
+        return instance == obj->getOccInstanceID();
+    });
 
     const bool hostRunning = open_power::occ::utils::isHostRunning();
     if (obj != statusObjects.end())
@@ -590,8 +590,8 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
             constexpr auto function = "CreateDump";
 
             std::string service = utils::getService(path, interface);
-            auto method =
-                bus.new_method_call(service.c_str(), path, interface, function);
+            auto method = bus.new_method_call(service.c_str(), path, interface,
+                                              function);
 
             std::map<std::string, std::variant<std::string, uint64_t>>
                 createParams{
@@ -792,8 +792,8 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
             continue;
         }
 
-        std::string sensorPath =
-            OCC_SENSORS_ROOT + std::string("/temperature/");
+        std::string sensorPath = OCC_SENSORS_ROOT +
+                                 std::string("/temperature/");
 
         std::string dvfsTempPath;
 

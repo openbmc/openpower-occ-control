@@ -684,7 +684,6 @@ void OccPersistData::save()
 // Loads the OEM mode data in the filesystem using cereal.
 void OccPersistData::load()
 {
-
     std::filesystem::path ipath =
         std::filesystem::path{OCC_CONTROL_PERSIST_PATH} / powerModeFilename;
 
@@ -751,9 +750,9 @@ bool PowerMode::getDefaultMode(SysPwrMode& defaultMode)
         std::string path = "/";
         std::string service =
             utils::getServiceUsingSubTree(PMODE_DEFAULT_INTERFACE, path);
-        auto method =
-            bus.new_method_call(service.c_str(), path.c_str(),
-                                "org.freedesktop.DBus.Properties", "Get");
+        auto method = bus.new_method_call(service.c_str(), path.c_str(),
+                                          "org.freedesktop.DBus.Properties",
+                                          "Get");
         method.append(PMODE_DEFAULT_INTERFACE, "PowerMode");
         auto reply = bus.call(method);
 
@@ -761,8 +760,8 @@ bool PowerMode::getDefaultMode(SysPwrMode& defaultMode)
         reply.read(stateEntryValue);
         auto propVal = std::get<std::string>(stateEntryValue);
 
-        const std::string fullModeString =
-            PMODE_INTERFACE + ".PowerMode."s + propVal;
+        const std::string fullModeString = PMODE_INTERFACE + ".PowerMode."s +
+                                           propVal;
         defaultMode = powermode::convertStringToMode(fullModeString);
         if (!VALID_POWER_MODE_SETTING(defaultMode))
         {
@@ -809,9 +808,9 @@ bool PowerMode::getDefaultIPSParms(bool& ipsEnabled, uint8_t& enterUtil,
         std::string path = "/";
         std::string service =
             utils::getServiceUsingSubTree(PMODE_DEFAULT_INTERFACE, path);
-        auto method =
-            bus.new_method_call(service.c_str(), path.c_str(),
-                                "org.freedesktop.DBus.Properties", "GetAll");
+        auto method = bus.new_method_call(service.c_str(), path.c_str(),
+                                          "org.freedesktop.DBus.Properties",
+                                          "GetAll");
         method.append(PMODE_DEFAULT_INTERFACE);
         auto reply = bus.call(method);
         reply.read(ipsProperties);

@@ -210,8 +210,8 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
 
             // Validate checksum (last 2 bytes of response)
             const unsigned int csumIndex = response.size() - 2;
-            const uint32_t rspChecksum =
-                (response[csumIndex] << 8) + response[csumIndex + 1];
+            const uint32_t rspChecksum = (response[csumIndex] << 8) +
+                                         response[csumIndex + 1];
             uint32_t calcChecksum = 0;
             for (unsigned int index = 0; index < csumIndex; ++index)
             {

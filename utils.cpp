@@ -29,7 +29,6 @@ constexpr auto HOST_STATE_OBJ_PATH = "/xyz/openbmc_project/state/host0";
 const std::string getService(const std::string& path,
                              const std::string& interface)
 {
-
     using InterfaceList = std::vector<std::string>;
     std::map<std::string, std::vector<std::string>> mapperResponse;
 
@@ -200,9 +199,9 @@ std::string getStateValue(const std::string& intf, const std::string& objPath,
             throw std::runtime_error("getStateValue: Failed to get service");
         }
 
-        auto method =
-            bus.new_method_call(service.c_str(), objPath.c_str(),
-                                "org.freedesktop.DBus.Properties", "Get");
+        auto method = bus.new_method_call(service.c_str(), objPath.c_str(),
+                                          "org.freedesktop.DBus.Properties",
+                                          "Get");
 
         method.append(intf, state);
 

@@ -122,7 +122,7 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
     }
 
     open_power::occ::instanceID count = start;
-    for (auto const& pair : entityInstMap)
+    for (const auto& pair : entityInstMap)
     {
         sensorInstanceMap.emplace(pair.second, count);
         count++;
@@ -369,7 +369,7 @@ void Interface::fetchEffecterInfo(uint16_t stateSetId,
     }
 
     open_power::occ::instanceID position = start;
-    for (auto const& pair : entityInstMap)
+    for (const auto& pair : entityInstMap)
     {
         instanceToEffecterMap.emplace(position, pair.second);
         position++;
@@ -579,8 +579,8 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         pldmResponseReceived = false;
         pldmResponseTimeout = false;
         pldmResponseOcc = instance;
-        auto pldmRc =
-            pldm_send(mctpEid, pldmFd, request.data(), request.size());
+        auto pldmRc = pldm_send(mctpEid, pldmFd, request.data(),
+                                request.size());
         auto sendErrno = errno;
         if (pldmRc != PLDM_REQUESTER_SUCCESS)
         {
@@ -827,8 +827,8 @@ std::vector<uint8_t> Interface::encodeGetStateSensorRequest(uint8_t instance,
     }
 
     bitfield8_t sRearm = {0};
-    const size_t msgSize =
-        sizeof(pldm_msg_hdr) + PLDM_GET_STATE_SENSOR_READINGS_REQ_BYTES;
+    const size_t msgSize = sizeof(pldm_msg_hdr) +
+                           PLDM_GET_STATE_SENSOR_READINGS_REQ_BYTES;
     std::vector<uint8_t> request(msgSize);
 
     auto msg = reinterpret_cast<pldm_msg*>(request.data());

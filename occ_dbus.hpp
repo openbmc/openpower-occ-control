@@ -30,8 +30,7 @@ using AssociationIntf =
 class OccDBusSensors
 {
   private:
-    OccDBusSensors()
-    {}
+    OccDBusSensors() {}
 
   public:
     OccDBusSensors(const OccDBusSensors&) = delete;

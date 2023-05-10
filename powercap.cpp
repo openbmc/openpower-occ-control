@@ -464,8 +464,8 @@ bool PowerCap::readDbusPcapLimits(uint32_t& softMin, uint32_t& hardMin,
 
     try
     {
-        prop =
-            utils::getProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_SOFT_MIN);
+        prop = utils::getProperty(PCAP_PATH, PCAP_INTERFACE,
+                                  POWER_CAP_SOFT_MIN);
         softMin = std::get<uint32_t>(prop);
     }
     catch (const sdbusplus::exception_t& e)
@@ -480,8 +480,8 @@ bool PowerCap::readDbusPcapLimits(uint32_t& softMin, uint32_t& hardMin,
 
     try
     {
-        prop =
-            utils::getProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_HARD_MIN);
+        prop = utils::getProperty(PCAP_PATH, PCAP_INTERFACE,
+                                  POWER_CAP_HARD_MIN);
         hardMin = std::get<uint32_t>(prop);
     }
     catch (const sdbusplus::exception_t& e)

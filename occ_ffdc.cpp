@@ -56,8 +56,8 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
     }
 
     // Add journal traces to PEL FFDC
-    auto occJournalFile =
-        addJournalEntries(pelFFDCInfo, "openpower-occ-control", 25);
+    auto occJournalFile = addJournalEntries(pelFFDCInfo,
+                                            "openpower-occ-control", 25);
 
     std::map<std::string, std::string> additionalData;
     additionalData.emplace("SRC6", std::to_string(src6));
@@ -68,11 +68,11 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
 
     try
     {
-        std::string service =
-            utils::getService(loggingObjectPath, opLoggingInterface);
-        auto method =
-            bus.new_method_call(service.c_str(), loggingObjectPath,
-                                opLoggingInterface, "CreatePELWithFFDCFiles");
+        std::string service = utils::getService(loggingObjectPath,
+                                                opLoggingInterface);
+        auto method = bus.new_method_call(service.c_str(), loggingObjectPath,
+                                          opLoggingInterface,
+                                          "CreatePELWithFFDCFiles");
 
         // Set level to Notice (Informational). Error should trigger an OCC
         // reset and if it does not recover, HTMGT/HBRT will create an
@@ -127,14 +127,14 @@ void FFDC::createOCCResetPEL(unsigned int instance, const char* path, int err,
     {
         FFDCFiles ffdc;
         // Add journal traces to PEL FFDC
-        auto occJournalFile =
-            addJournalEntries(ffdc, "openpower-occ-control", 25);
+        auto occJournalFile = addJournalEntries(ffdc, "openpower-occ-control",
+                                                25);
 
-        std::string service =
-            utils::getService(loggingObjectPath, opLoggingInterface);
-        auto method =
-            bus.new_method_call(service.c_str(), loggingObjectPath,
-                                opLoggingInterface, "CreatePELWithFFDCFiles");
+        std::string service = utils::getService(loggingObjectPath,
+                                                opLoggingInterface);
+        auto method = bus.new_method_call(service.c_str(), loggingObjectPath,
+                                          opLoggingInterface,
+                                          "CreatePELWithFFDCFiles");
 
         // Set level to Notice (Informational). Error should trigger an OCC
         // reset and if it does not recover, HTMGT/HBRT will create an
@@ -194,8 +194,8 @@ void FFDC::analyzeEvent()
 
     if (total > sbe_status_header_size)
     {
-        std::string templateString =
-            fs::temp_directory_path() / "OCC_FFDC_XXXXXX";
+        std::string templateString = fs::temp_directory_path() /
+                                     "OCC_FFDC_XXXXXX";
         tfd = mkostemp(templateString.data(), O_RDWR);
         if (tfd < 0)
         {

@@ -64,8 +64,7 @@ class Error
         Descriptor(Descriptor&&) = default;
         Descriptor& operator=(Descriptor&&) = default;
 
-        Descriptor() : log(false), err(0), callout(nullptr), path(nullptr)
-        {}
+        Descriptor() : log(false), err(0), callout(nullptr), path(nullptr) {}
 
         /** @brief Constructs the Descriptor object
          *
