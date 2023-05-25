@@ -3,6 +3,7 @@
 #include "occ_status.hpp"
 #include "utils.hpp"
 
+#include "libpldm/instance-id.h"
 #include <libpldm/pldm.h>
 #include <libpldm/transport.h>
 #include <libpldm/transport/mctp-demux.h>
@@ -46,7 +47,7 @@ class Interface
 {
   public:
     Interface() = delete;
-    ~Interface() = default;
+    //~Interface() = default;
     Interface(const Interface&) = delete;
     Interface& operator=(const Interface&) = delete;
     Interface(Interface&&) = delete;
@@ -82,7 +83,22 @@ class Interface
         pldmRspTimer(
             sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>(
                 sdpEvent, std::bind(&Interface::pldmRspExpired, this)))
-    {}
+    {
+        int rc = pldm_instance_db_init_default(&pldmInstanceIdDb);
+        if (rc)
+        {
+            throw std::system_category().default_error_condition(rc);
+        }
+    }
+
+    ~Interface()
+    {
+        int rc = pldm_instance_db_destroy(pldmInstanceIdDb);
+        if (rc)
+        {
+            std::cout << "pldm_instance_db_destroy failed, rc =" << rc << "\n";
+        }
+    }
 
     /** @brief Fetch the state sensor PDRs and populate the cache with
      *         sensorId to OCC/SBE instance mapping information and the sensor
@@ -145,6 +161,11 @@ class Interface
     void checkActiveSensor(uint8_t instance);
 
   private:
+    //when do we destroy this? on every pldmClose?
+    /** @brief PLDM instance ID database object used to get instance IDs
+     */
+    pldm_instance_db* pldmInstanceIdDb = nullptr;
+
     /** @brief PLDM instance number used in PLDM requests
      */
     std::optional<uint8_t> pldmInstanceID;
@@ -302,11 +323,17 @@ class Interface
         return (occInstanceToEffecter.empty() ? false : true);
     }
 
-    /** @brief Query PLDM for the PLDM requester instance id
+    /** @brief Get a PLDM requester instance id
      *
      * @return true if the id was found and false if not
      */
     bool getPldmInstanceId();
+
+    /** @brief Free PLDM requester instance id
+     *
+     * @return true if the id was freed and false if not
+     */
+    bool freePldmInstanceId();
 
     /** @brief Encode a GetStateSensor command into a PLDM request
      *  @param[in] instance - OCC instance number

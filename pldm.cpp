@@ -4,6 +4,7 @@
 
 #include <fmt/core.h>
 #include <libpldm/entity.h>
+#include "libpldm/instance-id.h"
 #include <libpldm/platform.h>
 #include <libpldm/state_set.h>
 #include <libpldm/state_set_oem_ibm.h>
@@ -515,32 +516,55 @@ void Interface::sendHRESET(open_power::occ::instanceID sbeInstanceId)
 
 bool Interface::getPldmInstanceId()
 {
+    uint8_t id;
     if (!pldmInstanceID)
     {
         // Request new instance ID
-        auto& bus = open_power::occ::utils::getBus();
-        try
+        int rc = pldm_instance_id_alloc(pldmInstanceIdDb, tid, &id);
+        if (rc == -EAGAIN)
         {
-            auto method = bus.new_method_call(
-                "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
-                "xyz.openbmc_project.PLDM.Requester", "GetInstanceId");
-            method.append(mctpEid);
-            auto reply = bus.call(method);
-            uint8_t newInstanceId;
-            reply.read(newInstanceId);
-            pldmInstanceID = newInstanceId;
-            log<level::INFO>(fmt::format("pldm: got new InstanceId: {}",
-                                         pldmInstanceID.value())
-                                 .c_str());
+            rc = pldm_instance_id_alloc(pldmInstanceIdDb, tid, &id);
         }
-        catch (const sdbusplus::exception_t& e)
+
+        if (rc)
         {
             log<level::ERR>(
-                fmt::format("pldm: GetInstanceId failed: {}", e.what())
+                fmt::format("getPldmInstanceId: Failed to alloc ID for TID {}. RC{}", tid, rc)
                     .c_str());
             return false;
         }
+	pldmInstanceID.emplace(id);
+            log<level::ERR>(
+                fmt::format("got id {} and set PldmInstanceId to {}", id, pldmInstanceID.value())
+                    .c_str());
     }
+
+    return true;
+}
+
+bool Interface::freePldmInstanceId()
+{
+    if (pldmInstanceID)
+    {
+        int rc = pldm_instance_id_free(pldmInstanceIdDb, tid, pldmInstanceID.value());
+        if (rc)
+        {
+            log<level::ERR>(
+                fmt::format("freePldmInstanceId: Failed to free ID {} for TID {}. RC{}", pldmInstanceID.value(), tid, rc)
+                    .c_str());
+            return false;
+        }
+	pldmInstanceID.reset();
+        //or pldmInstanceID = std::nullopt;
+    }
+    if (pldmInstanceID)
+            log<level::ERR>(
+                fmt::format("freed" )
+                    .c_str());
+    else
+            log<level::ERR>(
+                fmt::format("failed to freed" )
+                    .c_str());
 
     return true;
 }
@@ -679,7 +703,7 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         else
         {
             // Not waiting for response, instance ID should be freed
-            pldmInstanceID = std::nullopt;
+	    freePldmInstanceId(); //check val?
         }
         pldmClose();
     }
