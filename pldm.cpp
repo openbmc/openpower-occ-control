@@ -1,5 +1,7 @@
 #include "pldm.hpp"
 
+#include "libpldm/instance-id.h"
+
 #include "file.hpp"
 
 #include <libpldm/entity.h>
@@ -521,37 +523,60 @@ void Interface::sendHRESET(open_power::occ::instanceID sbeInstanceId)
 
 bool Interface::getPldmInstanceId()
 {
+    pldm_instance_id_t id;
     if (!pldmInstanceID)
     {
         // Request new instance ID
-        auto& bus = open_power::occ::utils::getBus();
-        try
+        int rc = pldm_instance_id_alloc(pldmInstanceIdDb, tid, &id);
+        if (rc == -EAGAIN)
         {
-            auto method = bus.new_method_call(
-                "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
-                "xyz.openbmc_project.PLDM.Requester", "GetInstanceId");
-            method.append(mctpEid);
-            auto reply = bus.call(method);
-            uint8_t newInstanceId;
-            reply.read(newInstanceId);
-            pldmInstanceID = newInstanceId;
-            if (!throttleTraces)
-            {
-                log<level::INFO>(std::format("pldm: got new InstanceId: {}",
-                                             pldmInstanceID.value())
-                                     .c_str());
-            }
+            rc = pldm_instance_id_alloc(pldmInstanceIdDb, tid, &id);
         }
-        catch (const sdbusplus::exception_t& e)
+
+        if (rc)
         {
             log<level::ERR>(
-                std::format("pldm: GetInstanceId failed: {}", e.what())
+                std::format(
+                    "getPldmInstanceId: Failed to alloc ID for TID {}. RC{}",
+                    tid, rc)
                     .c_str());
             return false;
         }
+        pldmInstanceID.emplace(id);
+        if (!throttleTraces)
+        {
+            log<level::INFO>(
+                std::format("got id {} and set PldmInstanceId to {}", id,
+                            pldmInstanceID.value())
+                    .c_str());
+        }
     }
-
     return true;
+}
+
+void Interface::freePldmInstanceId()
+{
+    if (pldmInstanceID)
+    {
+        int rc = pldm_instance_id_free(pldmInstanceIdDb, tid,
+                                       pldmInstanceID.value());
+        if (rc)
+        {
+            log<level::ERR>(
+                std::format(
+                    "freePldmInstanceId: Failed to free ID {} for TID {}. RC{}",
+                    pldmInstanceID.value(), tid, rc)
+                    .c_str());
+            return;
+        }
+        if (!throttleTraces)
+        {
+            log<level::INFO>(
+                std::format("Freed PLDM instance ID {}", pldmInstanceID.value())
+                    .c_str());
+        }
+        pldmInstanceID = std::nullopt;
+    }
 }
 
 void Interface::sendPldm(const std::vector<uint8_t>& request,
@@ -573,6 +598,7 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
                 "sendPldm: Failed to connect to MCTP socket, errno={}/{}",
                 openErrno, strerror(openErrno))
                 .c_str());
+        freePldmInstanceId();
         return;
     }
 
@@ -607,6 +633,7 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
                         pldmRc),
                     sendErrno, strerror(sendErrno))
                     .c_str());
+            freePldmInstanceId();
             pldmClose();
             return;
         }
@@ -640,11 +667,8 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
                     sendErrno, strerror(sendErrno))
                     .c_str());
         }
-        else
-        {
-            // Not waiting for response, instance ID should be freed
-            pldmInstanceID = std::nullopt;
-        }
+
+        freePldmInstanceId();
         pldmClose();
     }
 }
