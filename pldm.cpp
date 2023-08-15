@@ -587,7 +587,10 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
             log<level::ERR>(
                 fmt::format(
                     "sendPldm: pldm_send failed with rc={} and errno={}/{}",
-                    pldmRc, sendErrno, strerror(sendErrno))
+                    static_cast<
+                        std::underlying_type_t<pldm_requester_error_codes>>(
+                        pldmRc),
+                    sendErrno, strerror(sendErrno))
                     .c_str());
             pldmClose();
             return;
@@ -613,8 +616,10 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
             log<level::ERR>(
                 fmt::format(
                     "sendPldm: pldm_send(mctpID:{}, fd:{}, {} bytes) failed with rc={} and errno={}/{}",
-                    mctpEid, pldmFd, request.size(), rc, sendErrno,
-                    strerror(sendErrno))
+                    mctpEid, pldmFd, request.size(),
+                    static_cast<
+                        std::underlying_type_t<pldm_requester_error_codes>>(rc),
+                    sendErrno, strerror(sendErrno))
                     .c_str());
         }
         else
@@ -711,7 +716,9 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
     {
         log<level::ERR>(
             fmt::format(
-                "pldmRspCallback: pldm_recv failed with rc={}, errno={}/{}", rc,
+                "pldmRspCallback: pldm_recv failed with rc={}, errno={}/{}",
+                static_cast<std::underlying_type_t<pldm_requester_error_codes>>(
+                    rc),
                 lastErrno, strerror(lastErrno))
                 .c_str());
         return -1;
