@@ -2,14 +2,13 @@
 
 #include "occ_pass_through.hpp"
 
-#include "elog-errors.hpp"
-
 #include <errno.h>
 #include <fcntl.h>
 #include <fmt/core.h>
 #include <unistd.h>
 
 #include <org/open_power/OCC/Device/error.hpp>
+#include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/elog.hpp>
 #include <phosphor-logging/log.hpp>
 

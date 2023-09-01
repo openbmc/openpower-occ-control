@@ -59,51 +59,8 @@ systemd_system_unit_dir = systemd.get_variable(
 subdir('service_files')
 
 sdbusplus_dep = dependency('sdbusplus')
-sdbusplusplus_prog = find_program('sdbus++')
-sdbuspp_gen_meson_prog = find_program('sdbus++-gen-meson')
-sdbusplusplus_depfiles = files()
-if sdbusplus_dep.type_name() == 'internal'
-    sdbusplusplus_depfiles = subproject('sdbusplus').get_variable('sdbusplusplus_depfiles')
-endif
 
 python_prog = find_program('python3', required: true)
-realpath_prog = find_program('realpath')
-
-selected_subdirs = []
-selected_subdirs += 'org/open_power/OCC'
-
-generated_root = meson.current_build_dir() / 'gen'
-generated_others = []
-generated_sources = []
-
-# Source the generated meson files.
-subdir('gen')
-foreach d : selected_subdirs
-  subdir('gen' / d)
-endforeach
-
-# Parse through the list from sdbus++-gendir and put into sets.
-generated_headers = []
-generated_cpp = []
-generated_others_files = []
-
-foreach g : generated_sources generated_others
-    foreach f : g.to_list()
-        rel_path = run_command(
-            realpath_prog,
-            '--relative-to', generated_root,
-            f.full_path(),
-        ).stdout().strip().split('\n')[-1]
-
-        if rel_path.endswith('.hpp')
-            generated_headers += rel_path
-        elif rel_path.endswith('.cpp')
-            generated_cpp += rel_path
-        else
-            generated_others_files += rel_path
-        endif
-    endforeach
-endforeach
 
 deps = []
 sources = []
@@ -207,8 +164,7 @@ if get_option('install-error-yaml').disabled()
     executable(
         'openpower-occ-control',
         sources,
-        generated_sources,
-        include_directories: ['.', 'gen'],
+        include_directories: '.',
         implicit_include_directories: true,
         dependencies: deps,
         install: true,
