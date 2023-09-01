@@ -1,14 +1,15 @@
 #include "config.h"
 
-#include "elog-errors.hpp"
 #include "occ_events.hpp"
 #include "occ_manager.hpp"
 #include "utils.hpp"
+
 #ifdef POWER10
 #include "powermode.hpp"
 #endif
 
 #include <org/open_power/OCC/Device/error.hpp>
+#include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/elog.hpp>
 #include <phosphor-logging/log.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>

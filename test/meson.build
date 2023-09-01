@@ -20,7 +20,6 @@ if not gtest_dep.found() or not gmock_dep.found()
 endif
 
 test_sources = [
-  generated_sources,
   '../occ_pass_through.cpp',
   '../occ_manager.cpp',
   '../occ_status.cpp',
@@ -59,7 +58,7 @@ pthread_dep = dependency('threads')
 foreach t : tests
   test(t, executable(t.underscorify(), t,
                      test_sources,
-                     include_directories: ['..', '../gen'],
+                     include_directories: '..',
                      dependencies: [
                          gtest_dep,
                          gmock_dep,
