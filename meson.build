@@ -37,12 +37,10 @@ else
     conf_data.set_quoted('DEV_PATH', '/sys/bus/platform/devices/')
 endif
 
-if get_option('install-error-yaml').disabled()
-    conf_data.set('I2C_OCC', get_option('i2c-occ').enabled())
-    conf_data.set('READ_OCC_SENSORS', get_option('read-occ-sensors').enabled())
-    conf_data.set('PLDM', get_option('with-host-communication-protocol')=='pldm')
-    conf_data.set('POWER10', get_option('power10-support').enabled())
-endif
+conf_data.set('I2C_OCC', get_option('i2c-occ').enabled())
+conf_data.set('READ_OCC_SENSORS', get_option('read-occ-sensors').enabled())
+conf_data.set('PLDM', get_option('with-host-communication-protocol')=='pldm')
+conf_data.set('POWER10', get_option('power10-support').enabled())
 
 configure_file(output: 'config.h',
     configuration: conf_data
@@ -64,101 +62,101 @@ python_prog = find_program('python3', required: true)
 
 deps = []
 sources = []
-if get_option('install-error-yaml').disabled()
-    sdeventplus_dep = dependency(
+
+sdeventplus_dep = dependency(
+    'sdeventplus',
+    fallback: [
         'sdeventplus',
-        fallback: [
-            'sdeventplus',
-            'sdeventplus_dep'
-        ],
-    )
-    phosphor_dbus_interfaces_dep = dependency(
+        'sdeventplus_dep'
+    ],
+)
+phosphor_dbus_interfaces_dep = dependency(
+    'phosphor-dbus-interfaces',
+    fallback: [
         'phosphor-dbus-interfaces',
-        fallback: [
-            'phosphor-dbus-interfaces',
-            'phosphor_dbus_interfaces_dep'
-        ],
-    )
-    phosphor_logging_dep = dependency(
+        'phosphor_dbus_interfaces_dep'
+    ],
+)
+phosphor_logging_dep = dependency(
+    'phosphor-logging',
+    fallback: [
         'phosphor-logging',
-        fallback: [
-            'phosphor-logging',
-            'phosphor_logging_dep'
-        ],
+        'phosphor_logging_dep'
+    ],
+)
+
+if cxx.has_header('nlohmann/json.hpp')
+    nlohmann_json_dep = declare_dependency()
+else
+    subproject('nlohmann-json')
+    nlohmann_json_dep = declare_dependency(
+        include_directories: [
+            'subprojects/nlohmann-json/single_include',
+            'subprojects/nlohmann-json/single_include/nlohmann',
+        ]
     )
+endif
 
-    if cxx.has_header('nlohmann/json.hpp')
-        nlohmann_json_dep = declare_dependency()
-    else
-        subproject('nlohmann-json')
-        nlohmann_json_dep = declare_dependency(
-            include_directories: [
-                'subprojects/nlohmann-json/single_include',
-                'subprojects/nlohmann-json/single_include/nlohmann',
-            ]
-        )
-    endif
+deps += [
+    nlohmann_json_dep,
+    phosphor_dbus_interfaces_dep,
+    phosphor_logging_dep,
+    sdbusplus_dep,
+    sdeventplus_dep,
+]
 
+sources += [
+    'app.cpp',
+    'occ_pass_through.cpp',
+    'occ_manager.cpp',
+    'occ_status.cpp',
+    'occ_device.cpp',
+    'occ_errors.cpp',
+    'occ_ffdc.cpp',
+    'occ_presence.cpp',
+    'occ_command.cpp',
+    'occ_dbus.cpp',
+    'powercap.cpp',
+    'i2c_occ.cpp',
+    'utils.cpp',
+]
+
+if get_option('with-host-communication-protocol')=='pldm'
+    libpldm_dep = dependency(
+        'libpldm',
+        fallback: ['pldm', 'libpldm_dep'],
+        default_options: ['libpldm-only=enabled', 'oem-ibm=enabled'],
+    )
     deps += [
-        nlohmann_json_dep,
-        phosphor_dbus_interfaces_dep,
-        phosphor_logging_dep,
-        sdbusplus_dep,
-        sdeventplus_dep,
+        libpldm_dep,
+        cxx.find_library('pdbg'),
+        cxx.find_library('phal'),
     ]
-
     sources += [
-        'app.cpp',
-        'occ_pass_through.cpp',
-        'occ_manager.cpp',
-        'occ_status.cpp',
-        'occ_device.cpp',
-        'occ_errors.cpp',
-        'occ_ffdc.cpp',
-        'occ_presence.cpp',
-        'occ_command.cpp',
-        'occ_dbus.cpp',
-        'powercap.cpp',
-        'i2c_occ.cpp',
-        'utils.cpp',
+        'pldm.cpp',
     ]
+endif
 
-    if get_option('with-host-communication-protocol')=='pldm'
-        libpldm_dep = dependency(
-            'libpldm',
-            fallback: ['pldm', 'libpldm_dep'],
-            default_options: ['libpldm-only=enabled', 'oem-ibm=enabled'],
-        )
-        deps += [
-            libpldm_dep,
-            cxx.find_library('pdbg'),
-            cxx.find_library('phal'),
-        ]
-        sources += [
-            'pldm.cpp',
-        ]
-    endif
+if get_option('power10-support').enabled()
+    sources += [
+        'powermode.cpp',
+    ]
+endif
 
-    if get_option('power10-support').enabled()
-        sources += [
-            'powermode.cpp',
-        ]
-    endif
+yamldir = get_option('yamldir')
+if yamldir == ''
+    yamldir = meson.project_source_root() / 'example'
+endif
 
-    yamldir = get_option('yamldir')
-    if yamldir == ''
-        yamldir = meson.project_source_root() / 'example'
-    endif
-
-    # Generate occ-sensor.hpp.
-    occ_sensor_hpp = custom_target(
-        'occ-sensor.hpp',
-        command : [
-            python_prog,
-            meson.project_source_root() + '/sensor_gen.py',
-            '-i', yamldir,
-        ],
-        output : 'occ-sensor.hpp')
+# Generate occ-sensor.hpp.
+occ_sensor_hpp = custom_target(
+    'occ-sensor.hpp',
+    command : [
+        python_prog,
+        meson.project_source_root() + '/sensor_gen.py',
+        '-i', yamldir,
+    ],
+    output : 'occ-sensor.hpp')
     sources += [occ_sensor_hpp]
 
     executable(
@@ -170,7 +168,6 @@ if get_option('install-error-yaml').disabled()
         install: true,
         install_dir: get_option('bindir')
     )
-endif
 
 if not get_option('tests').disabled()
   subdir('test')
