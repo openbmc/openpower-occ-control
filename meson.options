@@ -5,13 +5,6 @@ option(
 )
 
 option(
-    'install-error-yaml',
-    type : 'feature',
-    description : 'Enable installing error yaml file',
-    value: 'disabled'
-)
-
-option(
     'i2c-occ',
     type : 'feature',
     description : 'Enable I2C OCC support',
