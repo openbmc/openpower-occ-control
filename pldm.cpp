@@ -678,7 +678,7 @@ void Interface::pldmClose()
         // stop PLDM response timer
         pldmRspTimer.setEnabled(false);
     }
-    close(pldmFd);
+    pldm_close();
     pldmFd = -1;
     eventSource.reset();
 }
