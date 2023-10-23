@@ -762,6 +762,12 @@ void Manager::pollerTimerExpired()
 #ifdef READ_OCC_SENSORS
 void Manager::readTempSensors(const fs::path& path, uint32_t id)
 {
+    // There may be more than one sensor with the same FRU type
+    // and label so make two passes: the first to read the temps
+    // from sysfs, and the second to put them on D-Bus after
+    // resolving any conflicts.
+    std::map<std::string, double> sensorData;
+
     std::regex expr{"temp\\d+_label$"}; // Example: temp5_label
     for (auto& file : fs::directory_iterator(path))
     {
@@ -911,12 +917,13 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
         // NOTE: if OCC sends back 0xFF kernal sets this fault value to 1.
         if (faultValue != 0)
         {
-            dbus::OccDBusSensors::getOccDBus().setValue(
-                sensorPath, std::numeric_limits<double>::quiet_NaN());
-
-            dbus::OccDBusSensors::getOccDBus().setOperationalStatus(sensorPath,
-                                                                    false);
-
+            // For cases when there are multiple readings per fru type/label,
+            // don't overwrite a good value with an NaN.
+            if (!sensorData.contains(sensorPath))
+            {
+                sensorData[sensorPath] =
+                    std::numeric_limits<double>::quiet_NaN();
+            }
             continue;
         }
 
@@ -948,22 +955,39 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
             }
         }
 
-        dbus::OccDBusSensors::getOccDBus().setValue(
-            sensorPath, tempValue * std::pow(10, -3));
+        // If this object path already has a value, only overwite
+        // it if the previous one was an NaN or a smaller value.
+        auto existing = sensorData.find(sensorPath);
+        if (existing != sensorData.end())
+        {
+            if (std::isnan(existing->second) || (tempValue > existing->second))
+            {
+                existing->second = tempValue;
+            }
+        }
+        else
+        {
+            sensorData[sensorPath] = tempValue;
+        }
+    }
 
-        dbus::OccDBusSensors::getOccDBus().setOperationalStatus(sensorPath,
-                                                                true);
+    // Now publish the values on D-Bus.
+    for (const auto& [objectPath, value] : sensorData)
+    {
+        dbus::OccDBusSensors::getOccDBus().setValue(objectPath,
+                                                    value * std::pow(10, -3));
 
-        // At this point, the sensor will be created for sure.
-        if (existingSensors.find(sensorPath) == existingSensors.end())
+        dbus::OccDBusSensors::getOccDBus().setOperationalStatus(
+            objectPath, !std::isnan(value));
+
+        if (existingSensors.find(objectPath) == existingSensors.end())
         {
             dbus::OccDBusSensors::getOccDBus().setChassisAssociation(
-                sensorPath);
+                objectPath);
         }
 
-        existingSensors[sensorPath] = id;
+        existingSensors[objectPath] = id;
     }
-    return;
 }
 
 std::optional<std::string>
