@@ -850,6 +850,9 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
 
                 sensorPath.append("dimm" + std::to_string(instanceID) +
                                   iter->second);
+
+                dvfsTempPath = std::string{OCC_SENSORS_ROOT} + "/temperature/" +
+                               dimmDVFSSensorName.at(fruTypeValue);
             }
             else if (type == OCC_CPU_TEMP_SENSOR_TYPE)
             {

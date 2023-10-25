@@ -418,6 +418,14 @@ struct Manager
         {memCtrlAndDimm, "_dram_extmb_temp"},
         {PMIC, "_pmic_temp"},
         {memCtlrExSensor, "_extmb_temp"}};
+
+    /** @brief The dimm DVFS temperature sensor names map  */
+    const std::map<uint32_t, std::string> dimmDVFSSensorName = {
+        {internalMemCtlr, "dimm_intmb_dvfs_temp"},
+        {dimm, "dimm_dram_dvfs_temp"},
+        {memCtrlAndDimm, "dimm_dram_extmb_dvfs_temp"},
+        {PMIC, "dimm_pmic_dvfs_temp"},
+        {memCtlrExSensor, "dimm_extmb_dvfs_temp"}};
 #endif
 
     /** @brief Read the altitude from DBus */
