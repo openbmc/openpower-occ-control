@@ -28,7 +28,7 @@ conf_data.set('OCC_CPU_TEMP_SENSOR_TYPE', 0xC0)
 conf_data.set('OCC_DIMM_TEMP_SENSOR_TYPE', 0xD0)
 conf_data.set('PS_DERATING_FACTOR', get_option('ps-derating-factor'))
 
-if get_option('i2c-occ').enabled()
+if get_option('i2c-occ').allowed()
     conf_data.set_quoted('OCC_HWMON_PATH', '/sys/bus/i2c/drivers/occ-hwmon/')
     conf_data.set_quoted('DEV_PATH', '/sys/bus/i2c/devices')
     conf_data.set_quoted('I2C_OCC_DEVICE_NAME', 'p8-occ-hwmon')
@@ -37,10 +37,10 @@ else
     conf_data.set_quoted('DEV_PATH', '/sys/bus/platform/devices/')
 endif
 
-conf_data.set('I2C_OCC', get_option('i2c-occ').enabled())
-conf_data.set('READ_OCC_SENSORS', get_option('read-occ-sensors').enabled())
+conf_data.set('I2C_OCC', get_option('i2c-occ').allowed())
+conf_data.set('READ_OCC_SENSORS', get_option('read-occ-sensors').allowed())
 conf_data.set('PLDM', get_option('with-host-communication-protocol')=='pldm')
-conf_data.set('POWER10', get_option('power10-support').enabled())
+conf_data.set('POWER10', get_option('power10-support').allowed())
 
 configure_file(output: 'config.h',
     configuration: conf_data
@@ -137,7 +137,7 @@ if get_option('with-host-communication-protocol')=='pldm'
     ]
 endif
 
-if get_option('power10-support').enabled()
+if get_option('power10-support').allowed()
     sources += [
         'powermode.cpp',
     ]
