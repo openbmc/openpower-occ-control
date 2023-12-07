@@ -63,6 +63,7 @@ python_prog = find_program('python3', required: true)
 deps = []
 sources = []
 
+nlohmann_json_dep = dependency('nlohmann_json', include_type: 'system')
 sdeventplus_dep = dependency(
     'sdeventplus',
     fallback: [
@@ -84,18 +85,6 @@ phosphor_logging_dep = dependency(
         'phosphor_logging_dep'
     ],
 )
-
-if cxx.has_header('nlohmann/json.hpp')
-    nlohmann_json_dep = declare_dependency()
-else
-    subproject('nlohmann-json')
-    nlohmann_json_dep = declare_dependency(
-        include_directories: [
-            'subprojects/nlohmann-json/single_include',
-            'subprojects/nlohmann-json/single_include/nlohmann',
-        ]
-    )
-endif
 
 deps += [
     nlohmann_json_dep,
