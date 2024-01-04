@@ -90,8 +90,9 @@ void Device::errorCallback(int error)
             {
                 p = fs::read_symlink(p);
             }
-            statusObject.deviceError(Error::Descriptor(
-                "org.open_power.OCC.Device.ReadFailure", error, p.c_str()));
+            statusObject.deviceError(
+                Error::Descriptor("org.open_power.OCC.Device.Error.ReadFailure",
+                                  error, p.c_str()));
         }
         else
         {

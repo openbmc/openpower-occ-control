@@ -16,8 +16,8 @@ namespace occ
 namespace fs = std::filesystem;
 
 constexpr auto PRESENCE_ERROR_PATH =
-    "org.open_power.OCC.Firmware.PresenceMismatch";
-constexpr auto SAFE_ERROR_PATH = "org.open_power.OCC.Device.SafeState";
+    "org.open_power.OCC.Firmware.Error.PresenceMismatch";
+constexpr auto SAFE_ERROR_PATH = "org.open_power.OCC.Device.Error.SafeState";
 
 /** @class Error
  *  @brief Monitors for OCC device error condition
