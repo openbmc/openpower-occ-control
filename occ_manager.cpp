@@ -760,7 +760,7 @@ void Manager::pollerTimerExpired()
 }
 
 #ifdef READ_OCC_SENSORS
-void Manager::readTempSensors(const fs::path& path, uint32_t id)
+void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
 {
     // There may be more than one sensor with the same FRU type
     // and label so make two passes: the first to read the temps
@@ -813,16 +813,19 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
                                  std::string("/temperature/");
 
         std::string dvfsTempPath;
+        bool isDimm = false;
 
         if (fruTypeValue == VRMVdd)
         {
-            sensorPath.append("vrm_vdd" + std::to_string(id) + "_temp");
+            sensorPath.append("vrm_vdd" + std::to_string(occInstance) +
+                              "_temp");
         }
         else if (fruTypeValue == processorIoRing)
         {
-            sensorPath.append("proc" + std::to_string(id) + "_ioring_temp");
+            sensorPath.append("proc" + std::to_string(occInstance) +
+                              "_ioring_temp");
             dvfsTempPath = std::string{OCC_SENSORS_ROOT} + "/temperature/proc" +
-                           std::to_string(id) + "_ioring_dvfs_temp";
+                           std::to_string(occInstance) + "_ioring_dvfs_temp";
         }
         else
         {
@@ -853,6 +856,7 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
 
                 dvfsTempPath = std::string{OCC_SENSORS_ROOT} + "/temperature/" +
                                dimmDVFSSensorName.at(fruTypeValue);
+                isDimm = true;
             }
             else if (type == OCC_CPU_TEMP_SENSOR_TYPE)
             {
@@ -863,13 +867,13 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
                     // core mode, so use a big core name.
                     uint16_t coreNum = instanceID / 2;
                     uint16_t tempNum = instanceID % 2;
-                    sensorPath.append("proc" + std::to_string(id) + "_core" +
-                                      std::to_string(coreNum) + "_" +
+                    sensorPath.append("proc" + std::to_string(occInstance) +
+                                      "_core" + std::to_string(coreNum) + "_" +
                                       std::to_string(tempNum) + "_temp");
 
-                    dvfsTempPath = std::string{OCC_SENSORS_ROOT} +
-                                   "/temperature/proc" + std::to_string(id) +
-                                   "_core_dvfs_temp";
+                    dvfsTempPath =
+                        std::string{OCC_SENSORS_ROOT} + "/temperature/proc" +
+                        std::to_string(occInstance) + "_core_dvfs_temp";
                 }
                 else
                 {
@@ -963,13 +967,21 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
         auto existing = sensorData.find(sensorPath);
         if (existing != sensorData.end())
         {
+            // Multiple sensors found for this FRU type
             if (std::isnan(existing->second) || (tempValue > existing->second))
             {
+                if ((isDimm) && (tempValue == 0))
+                {
+                    // If neither DIMM sensor (for this FRU type) has a valid
+                    // temperature, set to NaN to force fan increase
+                    tempValue = std::numeric_limits<double>::quiet_NaN();
+                }
                 existing->second = tempValue;
             }
         }
         else
         {
+            // First sensor for this FRU type
             sensorData[sensorPath] = tempValue;
         }
     }
@@ -989,7 +1001,7 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
                 objectPath);
         }
 
-        existingSensors[objectPath] = id;
+        existingSensors[objectPath] = occInstance;
     }
 }
 
