@@ -760,7 +760,7 @@ void Manager::pollerTimerExpired()
 }
 
 #ifdef READ_OCC_SENSORS
-void Manager::readTempSensors(const fs::path& path, uint32_t id)
+void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
 {
     // There may be more than one sensor with the same FRU type
     // and label so make two passes: the first to read the temps
@@ -816,13 +816,15 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
 
         if (fruTypeValue == VRMVdd)
         {
-            sensorPath.append("vrm_vdd" + std::to_string(id) + "_temp");
+            sensorPath.append("vrm_vdd" + std::to_string(occInstance) +
+                              "_temp");
         }
         else if (fruTypeValue == processorIoRing)
         {
-            sensorPath.append("proc" + std::to_string(id) + "_ioring_temp");
+            sensorPath.append("proc" + std::to_string(occInstance) +
+                              "_ioring_temp");
             dvfsTempPath = std::string{OCC_SENSORS_ROOT} + "/temperature/proc" +
-                           std::to_string(id) + "_ioring_dvfs_temp";
+                           std::to_string(occInstance) + "_ioring_dvfs_temp";
         }
         else
         {
@@ -863,13 +865,13 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
                     // core mode, so use a big core name.
                     uint16_t coreNum = instanceID / 2;
                     uint16_t tempNum = instanceID % 2;
-                    sensorPath.append("proc" + std::to_string(id) + "_core" +
-                                      std::to_string(coreNum) + "_" +
+                    sensorPath.append("proc" + std::to_string(occInstance) +
+                                      "_core" + std::to_string(coreNum) + "_" +
                                       std::to_string(tempNum) + "_temp");
 
-                    dvfsTempPath = std::string{OCC_SENSORS_ROOT} +
-                                   "/temperature/proc" + std::to_string(id) +
-                                   "_core_dvfs_temp";
+                    dvfsTempPath =
+                        std::string{OCC_SENSORS_ROOT} + "/temperature/proc" +
+                        std::to_string(occInstance) + "_core_dvfs_temp";
                 }
                 else
                 {
@@ -917,44 +919,41 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
             continue;
         }
 
-        // NOTE: if OCC sends back 0xFF kernal sets this fault value to 1.
+        double tempValue{0};
+        // NOTE: if OCC sends back 0xFF, kernal sets this fault value to 1.
         if (faultValue != 0)
         {
-            // For cases when there are multiple readings per fru type/label,
-            // don't overwrite a good value with an NaN.
-            if (!sensorData.contains(sensorPath))
-            {
-                sensorData[sensorPath] =
-                    std::numeric_limits<double>::quiet_NaN();
-            }
-            continue;
+            tempValue = std::numeric_limits<double>::quiet_NaN();
         }
-
-        double tempValue{0};
-
-        try
+        else
         {
-            tempValue = readFile<double>(filePathString + inputSuffix);
-        }
-        catch (const std::system_error& e)
-        {
-            log<level::DEBUG>(
-                fmt::format("readTempSensors: Failed reading {}, errno = {}",
-                            filePathString + inputSuffix, e.code().value())
-                    .c_str());
-
-            // if errno == EAGAIN(Resource temporarily unavailable) then set
-            // temp to 0, to avoid using old temp, and affecting FAN Control.
-            if (e.code().value() == EAGAIN)
+            // Read the temperature
+            try
             {
-                tempValue = 0;
+                tempValue = readFile<double>(filePathString + inputSuffix);
             }
-            // else the errno would be something like
-            //     EBADF(Bad file descriptor)
-            // or ENOENT(No such file or directory)
-            else
+            catch (const std::system_error& e)
             {
-                continue;
+                log<level::DEBUG>(
+                    fmt::format(
+                        "readTempSensors: Failed reading {}, errno = {}",
+                        filePathString + inputSuffix, e.code().value())
+                        .c_str());
+
+                // if errno == EAGAIN(Resource temporarily unavailable) then set
+                // temp to 0, to avoid using old temp, and affecting FAN
+                // Control.
+                if (e.code().value() == EAGAIN)
+                {
+                    tempValue = 0;
+                }
+                // else the errno would be something like
+                //     EBADF(Bad file descriptor)
+                // or ENOENT(No such file or directory)
+                else
+                {
+                    continue;
+                }
             }
         }
 
@@ -963,6 +962,16 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
         auto existing = sensorData.find(sensorPath);
         if (existing != sensorData.end())
         {
+            // Multiple sensors found for this FRU type
+            if ((std::isnan(existing->second) && (tempValue == 0)) ||
+                ((existing->second == 0) && std::isnan(tempValue)))
+            {
+                // One of the redundant sensors has failed (0xFF/nan), and the
+                // other sensor has no reading (0), so set the FRU to NaN to
+                // force fan increase
+                tempValue = std::numeric_limits<double>::quiet_NaN();
+                existing->second = tempValue;
+            }
             if (std::isnan(existing->second) || (tempValue > existing->second))
             {
                 existing->second = tempValue;
@@ -970,6 +979,7 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
         }
         else
         {
+            // First sensor for this FRU type
             sensorData[sensorPath] = tempValue;
         }
     }
@@ -989,7 +999,7 @@ void Manager::readTempSensors(const fs::path& path, uint32_t id)
                 objectPath);
         }
 
-        existingSensors[objectPath] = id;
+        existingSensors[objectPath] = occInstance;
     }
 }
 
