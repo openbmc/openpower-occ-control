@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "08d3c349_209f5d4b",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 925,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2024-01-24T21:15:27Z",
+      "side": 1,
+      "message": "If the second sensor has a fault here, it would go down this path, hit the continue, and never get to line 971.\n\nso I wonder if the line 929 check needs to be like\nif !sensorData.contains(path) || existingSensorValue \u003d\u003d 0\n\n\neither that, or take out the continue so it makes it to 971 and instead have it skip over the the read on 941.",
+      "revId": "e790f4f181a35f72188a4dbcf1aea6eaf539e6a3",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "12a91dfd_e576f2c1",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 971,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2024-01-24T21:15:27Z",
+      "side": 1,
+      "message": "Does it even matter if it\u0027s a DIMM here?  if some other fru type also had multiple sensors would it work the same?",
+      "range": {
+        "startLine": 971,
+        "startChar": 15,
+        "endLine": 971,
+        "endChar": 22
+      },
+      "revId": "e790f4f181a35f72188a4dbcf1aea6eaf539e6a3",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
