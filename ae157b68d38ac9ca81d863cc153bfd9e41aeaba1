@@ -22,6 +22,30 @@
       },
       "revId": "ae157b68d38ac9ca81d863cc153bfd9e41aeaba1",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "03d607e9_435af783",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 975,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2024-01-25T17:42:21Z",
+      "side": 1,
+      "message": "Yes, Comparison with nan will be false on any \u003d, \u003c, \u003e, etc.",
+      "parentUuid": "34689405_45cea246",
+      "range": {
+        "startLine": 975,
+        "startChar": 12,
+        "endLine": 975,
+        "endChar": 14
+      },
+      "revId": "ae157b68d38ac9ca81d863cc153bfd9e41aeaba1",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
