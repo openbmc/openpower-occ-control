@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "34689405_45cea246",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 975,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2024-01-25T17:02:22Z",
+      "side": 1,
+      "message": "This check is still safe right? (otherwise looks good)",
+      "range": {
+        "startLine": 975,
+        "startChar": 12,
+        "endLine": 975,
+        "endChar": 14
+      },
+      "revId": "ae157b68d38ac9ca81d863cc153bfd9e41aeaba1",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
