@@ -47,14 +47,17 @@ enum class OccState
 enum class SysPwrMode
 {
     NO_CHANGE = 0,
-    STATIC = 0x01,       // Static Base Frequencey
-    SFP = 0x03,          // Static Frequency Point (requires freqPt)
+    STATIC = 0x01,            // Static Base Frequencey
+    NON_DETERMINISTIC = 0x02, // Non-Deterministic
+    SFP = 0x03,               // Static Frequency Point (requires freqPt)
     SAFE = 0x04,         // reported when system is in SAFE mode (not settable)
     POWER_SAVING = 0x05, // Static Power Saving
-    MAX_FREQ = 0x09,     // Maximum Frequency (per chip)
-    DYNAMIC_PERF = 0x0A, // Dynamic / Balanced Performance
-    FFO = 0x0B,          // Fixed Frequency Override (requires freqPt)
-    MAX_PERF = 0x0C      // Maximum Performance
+    EFF_FAVOR_POWER = 0x06, // Efficiency - Favor Power
+    EFF_FAVOR_PERF = 0x07,  // Efficiency - Favor Performance
+    MAX_FREQ = 0x09,        // Maximum Frequency (per chip)
+    BALANCED_PERF = 0x0A,   // Balanced Performance
+    FFO = 0x0B,             // Fixed Frequency Override (requires freqPt)
+    MAX_PERF = 0x0C         // Maximum Performance
 };
 
 static inline auto format_as(SysPwrMode spm)
@@ -65,10 +68,13 @@ static inline auto format_as(SysPwrMode spm)
 // Only some of the SysPwrModes are currently supported and allowed to be set
 #define VALID_POWER_MODE_SETTING(mode)                                         \
     ((mode == SysPwrMode::STATIC) || (mode == SysPwrMode::POWER_SAVING) ||     \
-     (mode == SysPwrMode::DYNAMIC_PERF) || (mode == SysPwrMode::MAX_PERF))
+     (mode == SysPwrMode::BALANCED_PERF) || (mode == SysPwrMode::MAX_PERF) ||  \
+     (mode == SysPwrMode::EFF_FAVOR_POWER) ||                                  \
+     (mode == SysPwrMode::EFF_FAVOR_PERF))
 #define VALID_OEM_POWER_MODE_SETTING(mode)                                     \
     ((mode == SysPwrMode::SFP) || (mode == SysPwrMode::FFO) ||                 \
-     (mode == SysPwrMode::MAX_FREQ))
+     (mode == SysPwrMode::MAX_FREQ) ||                                         \
+     (mode == SysPwrMode::NON_DETERMINISTIC))
 
 enum class RspStatus
 {

@@ -174,6 +174,18 @@ SysPwrMode convertStringToMode(const std::string& i_modeString)
     {
         pmode = SysPwrMode::STATIC;
     }
+    else if (mode == Mode::PowerMode::EfficiencyFavorPower)
+    {
+        pmode = SysPwrMode::EFF_FAVOR_POWER;
+    }
+    else if (mode == Mode::PowerMode::EfficiencyFavorPerformance)
+    {
+        pmode = SysPwrMode::EFF_FAVOR_PERF;
+    }
+    else if (mode == Mode::PowerMode::BalancedPerformance)
+    {
+        pmode = SysPwrMode::BALANCED_PERF;
+    }
     else
     {
         if (mode != Mode::PowerMode::OEM)
@@ -302,6 +314,15 @@ bool PowerMode::updateDbusMode(const SysPwrMode newMode)
             break;
         case SysPwrMode::MAX_PERF:
             dBusMode = Mode::PowerMode::MaximumPerformance;
+            break;
+        case SysPwrMode::EFF_FAVOR_POWER:
+            dBusMode = Mode::PowerMode::EfficiencyFavorPower;
+            break;
+        case SysPwrMode::EFF_FAVOR_PERF:
+            dBusMode = Mode::PowerMode::EfficiencyFavorPerformance;
+            break;
+        case SysPwrMode::BALANCED_PERF:
+            dBusMode = Mode::PowerMode::BalancedPerformance;
             break;
         default:
             dBusMode = Mode::PowerMode::OEM;
