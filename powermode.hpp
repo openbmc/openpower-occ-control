@@ -35,6 +35,7 @@ constexpr auto PMODE_PATH = "/xyz/openbmc_project/control/host0/power_mode";
 constexpr auto PMODE_INTERFACE = "xyz.openbmc_project.Control.Power.Mode";
 constexpr auto POWER_MODE_PROP = "PowerMode";
 constexpr auto POWER_SAFE_MODE_PROP = "SafeMode";
+constexpr auto POWER_ALLOWED_MODES_PROP = "AllowedPowerModes";
 
 constexpr auto PIPS_PATH = "/xyz/openbmc_project/control/host0/power_ips";
 constexpr auto PIPS_INTERFACE =
@@ -281,6 +282,15 @@ class PowerMode : public ModeInterface, public IpsInterface
         event(event)
 #endif
     {
+        using Mode =
+            sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
+        std::set<ModeInterface::PowerMode> allowedModes = {
+            Mode::PowerMode::Static,
+            Mode::PowerMode::MaximumPerformance,
+            Mode::PowerMode::PowerSaving};
+        ModeInterface::setPropertyByName(POWER_ALLOWED_MODES_PROP, allowedModes,
+                                         false);
+
         // restore Power Mode to DBus
         SysPwrMode currentMode;
         uint16_t oemModeData = 0;
