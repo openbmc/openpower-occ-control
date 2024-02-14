@@ -4,13 +4,12 @@
 #include "powermode.hpp"
 #include "utils.hpp"
 
-#include <fmt/core.h>
-
 #include <org/open_power/OCC/PassThrough/server.hpp>
 #include <phosphor-logging/log.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
 
+#include <format>
 #include <string>
 
 namespace open_power

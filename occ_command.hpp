@@ -3,13 +3,13 @@
 #include "occ_errors.hpp"
 #include "utils.hpp"
 
-#include <fmt/format.h>
-
 #include <org/open_power/OCC/PassThrough/server.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
 
+#include <format>
 #include <string>
+#include <utility>
 
 namespace open_power
 {
@@ -59,7 +59,7 @@ enum class SysPwrMode
 
 static inline auto format_as(SysPwrMode spm)
 {
-    return fmt::underlying(spm);
+    return std::to_underlying(spm);
 }
 
 // Only some of the SysPwrModes are currently supported and allowed to be set
@@ -92,7 +92,7 @@ enum class CmdStatus
 
 static inline auto format_as(CmdStatus cs)
 {
-    return fmt::underlying(cs);
+    return std::to_underlying(cs);
 }
 
 /** @brief Trace block of data in hex with log<level:INFO>

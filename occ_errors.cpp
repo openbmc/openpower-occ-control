@@ -2,7 +2,6 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <fmt/core.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
@@ -11,6 +10,8 @@
 #include <phosphor-logging/elog.hpp>
 #include <phosphor-logging/log.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
+
+#include <format>
 namespace open_power
 {
 namespace occ
@@ -31,7 +32,7 @@ void Error::openFile()
     if (fd < 0)
     {
         log<level::ERR>(
-            fmt::format("Error::openFile: open failed (errno={})", open_errno)
+            std::format("Error::openFile: open failed (errno={})", open_errno)
                 .c_str());
         elog<OpenFailure>(phosphor::logging::org::open_power::OCC::Device::
                               OpenFailure::CALLOUT_ERRNO(open_errno),

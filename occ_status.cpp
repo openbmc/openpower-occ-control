@@ -5,11 +5,10 @@
 #include "powermode.hpp"
 #include "utils.hpp"
 
-#include <fmt/core.h>
-
 #include <phosphor-logging/log.hpp>
 
 #include <filesystem>
+#include <format>
 
 namespace open_power
 {
@@ -26,7 +25,7 @@ bool Status::occActive(bool value)
 {
     if (value != this->occActive())
     {
-        log<level::INFO>(fmt::format("Status::occActive OCC{} changed to {}",
+        log<level::INFO>(std::format("Status::occActive OCC{} changed to {}",
                                      instance, value)
                              .c_str());
         if (value)
@@ -148,7 +147,7 @@ void Status::deviceError(Error::Descriptor d)
 void Status::resetOCC()
 {
     log<level::INFO>(
-        fmt::format(">>Status::resetOCC() - requesting reset for OCC{}",
+        std::format(">>Status::resetOCC() - requesting reset for OCC{}",
                     instance)
             .c_str());
 #ifdef PLDM
@@ -221,7 +220,7 @@ void Status::occsWentActive()
     if (status != CmdStatus::SUCCESS)
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "Status::occsWentActive: OCC mode change failed with status {}",
                 status)
                 .c_str());
@@ -234,7 +233,7 @@ void Status::occsWentActive()
     if (status != CmdStatus::SUCCESS)
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "Status::occsWentActive: Sending Idle Power Save Config data failed with status {}",
                 status)
                 .c_str());
@@ -260,7 +259,7 @@ CmdStatus Status::sendAmbient(const uint8_t inTemp, const uint16_t inAltitude)
         // Get latest readings from manager
         manager.getAmbientData(ambientValid, ambientTemp, altitude);
         log<level::DEBUG>(
-            fmt::format("sendAmbient: valid: {}, Ambient: {}C, altitude: {}m",
+            std::format("sendAmbient: valid: {}, Ambient: {}C, altitude: {}m",
                         ambientValid, ambientTemp, altitude)
                 .c_str());
     }
@@ -278,7 +277,7 @@ CmdStatus Status::sendAmbient(const uint8_t inTemp, const uint16_t inAltitude)
     cmd.push_back(0x00);                    // Reserved (3 bytes)
     cmd.push_back(0x00);
     cmd.push_back(0x00);
-    log<level::DEBUG>(fmt::format("sendAmbient: SEND_AMBIENT "
+    log<level::DEBUG>(std::format("sendAmbient: SEND_AMBIENT "
                                   "command to OCC{} ({} bytes)",
                                   instance, cmd.size())
                           .c_str());
@@ -290,7 +289,7 @@ CmdStatus Status::sendAmbient(const uint8_t inTemp, const uint16_t inAltitude)
             if (RspStatus::SUCCESS != RspStatus(rsp[2]))
             {
                 log<level::ERR>(
-                    fmt::format(
+                    std::format(
                         "sendAmbient: SEND_AMBIENT failed with rspStatus 0x{:02X}",
                         rsp[2])
                         .c_str());
@@ -301,7 +300,7 @@ CmdStatus Status::sendAmbient(const uint8_t inTemp, const uint16_t inAltitude)
         else
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "sendAmbient: INVALID SEND_AMBIENT response length:{}",
                     rsp.size())
                     .c_str());
@@ -312,7 +311,7 @@ CmdStatus Status::sendAmbient(const uint8_t inTemp, const uint16_t inAltitude)
     else
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "sendAmbient: SEND_AMBIENT FAILED! with status 0x{:02X}",
                 status)
                 .c_str());
@@ -333,7 +332,7 @@ void Status::safeStateDelayExpired()
     if (this->occActive())
     {
         log<level::INFO>(
-            fmt::format(
+            std::format(
                 "safeStateDelayExpired: OCC{} is in SAFE state, requesting reset",
                 instance)
                 .c_str());
@@ -354,7 +353,7 @@ fs::path Status::getHwmonPath()
         if (!hwmonPath.empty())
         {
             log<level::ERR>(
-                fmt::format("Status::getHwmonPath(): path no longer exists: {}",
+                std::format("Status::getHwmonPath(): path no longer exists: {}",
                             hwmonPath.c_str())
                     .c_str());
             hwmonPath.clear();
@@ -381,7 +380,7 @@ fs::path Status::getHwmonPath()
                 if (!tracedFail[instance])
                 {
                     log<level::ERR>(
-                        fmt::format(
+                        std::format(
                             "Status::getHwmonPath(): Found multiple ({}) hwmon paths!",
                             numDirs)
                             .c_str());
@@ -394,7 +393,7 @@ fs::path Status::getHwmonPath()
             if (!tracedFail[instance])
             {
                 log<level::ERR>(
-                    fmt::format(
+                    std::format(
                         "Status::getHwmonPath(): error accessing {}: {}",
                         prefixPath.c_str(), e.what())
                         .c_str());
@@ -431,7 +430,7 @@ void Status::occReadStateNow()
         {
             // Trace OCC state changes
             log<level::INFO>(
-                fmt::format(
+                std::format(
                     "Status::readOccState: OCC{} state 0x{:02X} (lastState: 0x{:02X})",
                     instance, state, lastState)
                     .c_str());
@@ -454,7 +453,7 @@ void Status::occReadStateNow()
                 if (status != CmdStatus::SUCCESS)
                 {
                     log<level::ERR>(
-                        fmt::format(
+                        std::format(
                             "readOccState: Sending Ambient failed with status {}",
                             status)
                             .c_str());
@@ -505,7 +504,7 @@ void Status::occReadStateNow()
         {
             // If not able to read, OCC may be offline
             log<level::ERR>(
-                fmt::format("Status::readOccState: open failed (errno={})",
+                std::format("Status::readOccState: open failed (errno={})",
                             openErrno)
                     .c_str());
         }
@@ -515,7 +514,7 @@ void Status::occReadStateNow()
             if (state != lastState)
             {
                 log<level::ERR>(
-                    fmt::format(
+                    std::format(
                         "Status::readOccState: OCC{} Invalid state 0x{:02X} (last state: 0x{:02X})",
                         instance, state, lastState)
                         .c_str());
@@ -598,7 +597,7 @@ void Status::updateThrottle(const bool isThrottled, const uint8_t newReason)
         if (newThrottleCause == THROTTLED_NONE)
         {
             log<level::DEBUG>(
-                fmt::format(
+                std::format(
                     "updateThrottle: OCC{} no longer throttled (prior reason: {})",
                     instance, throttleCause)
                     .c_str());
@@ -609,7 +608,7 @@ void Status::updateThrottle(const bool isThrottled, const uint8_t newReason)
         else
         {
             log<level::DEBUG>(
-                fmt::format(
+                std::format(
                     "updateThrottle: OCC{} is throttled with reason {} (prior reason: {})",
                     instance, newThrottleCause, throttleCause)
                     .c_str());
@@ -643,7 +642,7 @@ void Status::readProcAssociation()
 {
     std::string managingPath = path + "/power_managing";
     log<level::DEBUG>(
-        fmt::format("readProcAssociation: getting endpoints for {} ({})",
+        std::format("readProcAssociation: getting endpoints for {} ({})",
                     managingPath, path)
             .c_str());
     try
@@ -656,14 +655,14 @@ void Status::readProcAssociation()
         {
             procPath = result[0];
             log<level::INFO>(
-                fmt::format("readProcAssociation: OCC{} has proc={}", instance,
+                std::format("readProcAssociation: OCC{} has proc={}", instance,
                             procPath.c_str())
                     .c_str());
         }
         else
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "readProcAssociation: No processor associated with OCC{} / {}",
                     instance, path)
                     .c_str());
@@ -672,7 +671,7 @@ void Status::readProcAssociation()
     catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "readProcAssociation: Unable to get proc assocated with {} - {}",
                 path, e.what())
                 .c_str());

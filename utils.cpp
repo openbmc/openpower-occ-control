@@ -1,6 +1,5 @@
 #include "utils.hpp"
 
-#include <fmt/core.h>
 #include <systemd/sd-event.h>
 #include <unistd.h>
 
@@ -10,6 +9,7 @@
 #include <xyz/openbmc_project/State/Boot/Progress/server.hpp>
 #include <xyz/openbmc_project/State/Host/server.hpp>
 
+#include <format>
 #include <string>
 namespace open_power
 {
@@ -107,7 +107,7 @@ void setProperty(const std::string& objectPath, const std::string& interface,
         if (reply.is_method_error())
         {
             log<level::ERR>(
-                fmt::format("util::setProperty: Failed to set property {}",
+                std::format("util::setProperty: Failed to set property {}",
                             propertyName)
                     .c_str());
         }
@@ -116,7 +116,7 @@ void setProperty(const std::string& objectPath, const std::string& interface,
     {
         auto error = errno;
         log<level::ERR>(
-            fmt::format("setProperty: failed to Set {}, errno={}, what={}",
+            std::format("setProperty: failed to Set {}, errno={}, what={}",
                         propertyName.c_str(), error, e.what())
                 .c_str());
     }
@@ -161,7 +161,7 @@ std::string getServiceUsingSubTree(const std::string& interface,
     if (rspObjects.empty())
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "util::getServiceUsingSubTree: Failed getSubTree({},0,{})",
                 path.c_str(), interface)
                 .c_str());
@@ -176,7 +176,7 @@ std::string getServiceUsingSubTree(const std::string& interface,
         else
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "getServiceUsingSubTree: service not found for interface {} (path={})",
                     interface, path.c_str())
                     .c_str());
@@ -215,7 +215,7 @@ std::string getStateValue(const std::string& intf, const std::string& objPath,
     }
     catch (const sdbusplus::exception_t& e)
     {
-        log<level::ERR>(fmt::format("D-Bus call exception, OBJPATH({}), "
+        log<level::ERR>(std::format("D-Bus call exception, OBJPATH({}), "
                                     "INTERFACE({}), PROPERTY({}) EXCEPTION({})",
                                     objPath, intf, state, e.what())
                             .c_str());
@@ -224,7 +224,7 @@ std::string getStateValue(const std::string& intf, const std::string& objPath,
     catch (const std::bad_variant_access& e)
     {
         log<level::ERR>(
-            fmt::format("Exception raised while read host state({}) property "
+            std::format("Exception raised while read host state({}) property "
                         "value,  OBJPATH({}), INTERFACE({}), EXCEPTION({})",
                         state, objPath, intf, e.what())
                 .c_str());

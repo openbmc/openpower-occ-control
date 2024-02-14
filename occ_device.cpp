@@ -25,7 +25,7 @@ void Device::setActive(bool active)
     }
     catch (const std::exception& e)
     {
-        log<level::ERR>(fmt::format("Failed to set {} active: {}",
+        log<level::ERR>(std::format("Failed to set {} active: {}",
                                     devPath.c_str(), e.what())
                             .c_str());
     }
@@ -152,7 +152,7 @@ fs::path Device::getFilenameByRegex(fs::path basePath,
     catch (const fs::filesystem_error& e)
     {
         log<level::ERR>(
-            fmt::format("getFilenameByRegex: Failed to get filename: {}",
+            std::format("getFilenameByRegex: Failed to get filename: {}",
                         e.what())
                 .c_str());
     }

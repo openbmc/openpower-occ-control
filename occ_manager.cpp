@@ -89,7 +89,7 @@ void Manager::findAndCreateObjects()
                 prevOCCSearch = occs;
 
                 log<level::INFO>(
-                    fmt::format(
+                    std::format(
                         "Manager::findAndCreateObjects(): Waiting for OCCs (currently {})",
                         occs.size())
                         .c_str());
@@ -104,7 +104,7 @@ void Manager::findAndCreateObjects()
                 std::sort(occs.begin(), occs.end());
 
                 log<level::INFO>(
-                    fmt::format(
+                    std::format(
                         "Manager::findAndCreateObjects(): Creating {} OCC Status Objects",
                         occs.size())
                         .c_str());
@@ -151,7 +151,7 @@ void Manager::findAndCreateObjects()
     else
     {
         log<level::INFO>(
-            fmt::format(
+            std::format(
                 "Manager::findAndCreateObjects(): Waiting for {} to complete...",
                 HOST_ON_FILE)
                 .c_str());
@@ -189,7 +189,7 @@ void Manager::checkAllActiveSensors()
                 {
                     queuedActiveState.erase(match);
                     log<level::INFO>(
-                        fmt::format(
+                        std::format(
                             "checkAllActiveSensors(): OCC{} is ACTIVE (queued)",
                             instance)
                             .c_str());
@@ -201,7 +201,7 @@ void Manager::checkAllActiveSensors()
                     if (!tracedSensorWait)
                     {
                         log<level::INFO>(
-                            fmt::format(
+                            std::format(
                                 "checkAllActiveSensors(): Waiting on OCC{} Active sensor",
                                 instance)
                                 .c_str());
@@ -320,7 +320,7 @@ void Manager::createObjects(const std::string& occ)
     if (statusObjects.back()->isMasterOcc())
     {
         log<level::INFO>(
-            fmt::format("Manager::createObjects(): OCC{} is the master",
+            std::format("Manager::createObjects(): OCC{} is the master",
                         statusObjects.back()->getOccInstanceID())
                 .c_str());
         _pollTimer->setEnabled(false);
@@ -373,7 +373,7 @@ void Manager::statusCallBack(instanceID instance, bool status)
         if (!_pollTimer->isEnabled())
         {
             log<level::INFO>(
-                fmt::format("Manager: OCCs will be polled every {} seconds",
+                std::format("Manager: OCCs will be polled every {} seconds",
                             pollInterval)
                     .c_str());
 
@@ -391,7 +391,7 @@ void Manager::statusCallBack(instanceID instance, bool status)
         else
         {
             log<level::ERR>(
-                fmt::format("OCC{} disabled, but currently no active OCCs",
+                std::format("OCC{} disabled, but currently no active OCCs",
                             instance)
                     .c_str());
         }
@@ -471,7 +471,7 @@ void Manager::sbeTimeout(unsigned int instance)
     if (obj != statusObjects.end() && (*obj)->occActive())
     {
         log<level::INFO>(
-            fmt::format("SBE timeout, requesting HRESET (OCC{})", instance)
+            std::format("SBE timeout, requesting HRESET (OCC{})", instance)
                 .c_str());
 
         setSBEState(instance, SBE_STATE_NOT_USABLE);
@@ -493,7 +493,7 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
         if (!hostRunning && (status == true))
         {
             log<level::WARNING>(
-                fmt::format(
+                std::format(
                     "updateOCCActive: Host is not running yet (OCC{} active={}), clearing sensor received",
                     instance, status)
                     .c_str());
@@ -509,7 +509,7 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
         }
         else
         {
-            log<level::INFO>(fmt::format("updateOCCActive: OCC{} active={}",
+            log<level::INFO>(std::format("updateOCCActive: OCC{} active={}",
                                          instance, status)
                                  .c_str());
             (*obj)->setPldmSensorReceived(true);
@@ -521,7 +521,7 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
         if (hostRunning)
         {
             log<level::WARNING>(
-                fmt::format(
+                std::format(
                     "updateOCCActive: No status object to update for OCC{} (active={})",
                     instance, status)
                     .c_str());
@@ -531,7 +531,7 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
             if (status == true)
             {
                 log<level::WARNING>(
-                    fmt::format(
+                    std::format(
                         "updateOCCActive: No status objects and Host is not running yet (OCC{} active={})",
                         instance, status)
                         .c_str());
@@ -573,7 +573,7 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
     if (success)
     {
         log<level::INFO>(
-            fmt::format("HRESET succeeded (OCC{})", instance).c_str());
+            std::format("HRESET succeeded (OCC{})", instance).c_str());
 
         setSBEState(instance, SBE_STATE_BOOTED);
 
@@ -585,7 +585,7 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
     if (sbeCanDump(instance))
     {
         log<level::INFO>(
-            fmt::format("HRESET failed (OCC{}), triggering SBE dump", instance)
+            std::format("HRESET failed (OCC{}), triggering SBE dump", instance)
                 .c_str());
 
         auto& bus = utils::getBus();
@@ -753,7 +753,7 @@ void Manager::pollerTimerExpired()
     {
         // No OCCs running, so poll timer will not be restarted
         log<level::INFO>(
-            fmt::format(
+            std::format(
                 "Manager::pollerTimerExpired: poll timer will not be restarted")
                 .c_str());
     }
@@ -785,7 +785,7 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
         catch (const std::system_error& e)
         {
             log<level::DEBUG>(
-                fmt::format("readTempSensors: Failed reading {}, errno = {}",
+                std::format("readTempSensors: Failed reading {}, errno = {}",
                             file.path().string(), e.code().value())
                     .c_str());
             continue;
@@ -803,7 +803,7 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
         catch (const std::system_error& e)
         {
             log<level::DEBUG>(
-                fmt::format("readTempSensors: Failed reading {}, errno = {}",
+                std::format("readTempSensors: Failed reading {}, errno = {}",
                             filePathString + fruTypeSuffix, e.code().value())
                     .c_str());
             continue;
@@ -843,7 +843,7 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
                 if (iter == dimmTempSensorName.end())
                 {
                     log<level::ERR>(
-                        fmt::format(
+                        std::format(
                             "readTempSensors: Fru type error! fruTypeValue = {}) ",
                             fruTypeValue)
                             .c_str());
@@ -898,7 +898,7 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
             catch (const std::system_error& e)
             {
                 log<level::DEBUG>(
-                    fmt::format(
+                    std::format(
                         "readTempSensors: Failed reading {}, errno = {}",
                         filePathString + maxSuffix, e.code().value())
                         .c_str());
@@ -913,7 +913,7 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
         catch (const std::system_error& e)
         {
             log<level::DEBUG>(
-                fmt::format("readTempSensors: Failed reading {}, errno = {}",
+                std::format("readTempSensors: Failed reading {}, errno = {}",
                             filePathString + faultSuffix, e.code().value())
                     .c_str());
             continue;
@@ -935,7 +935,7 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
             catch (const std::system_error& e)
             {
                 log<level::DEBUG>(
-                    fmt::format(
+                    std::format(
                         "readTempSensors: Failed reading {}, errno = {}",
                         filePathString + inputSuffix, e.code().value())
                         .c_str());
@@ -1049,7 +1049,7 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
         catch (const std::system_error& e)
         {
             log<level::DEBUG>(
-                fmt::format("readPowerSensors: Failed reading {}, errno = {}",
+                std::format("readPowerSensors: Failed reading {}, errno = {}",
                             file.path().string(), e.code().value())
                     .c_str());
             continue;
@@ -1083,7 +1083,7 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
         catch (const std::system_error& e)
         {
             log<level::DEBUG>(
-                fmt::format("readPowerSensors: Failed reading {}, errno = {}",
+                std::format("readPowerSensors: Failed reading {}, errno = {}",
                             filePathString + inputSuffix, e.code().value())
                     .c_str());
             continue;
@@ -1164,7 +1164,7 @@ void Manager::getSensorValues(std::unique_ptr<Status>& occ)
         if (!tracedError[id])
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "Manager::getSensorValues: OCC{} sensor path missing: {}",
                     id, sensorPath.c_str())
                     .c_str());
@@ -1198,7 +1198,7 @@ void Manager::readAltitude()
                 // Round to nearest meter
                 altitude = uint16_t(sensorVal + 0.5);
             }
-            log<level::DEBUG>(fmt::format("readAltitude: sensor={} ({}m)",
+            log<level::DEBUG>(std::format("readAltitude: sensor={} ({}m)",
                                           sensorVal, altitude)
                                   .c_str());
             traceAltitudeErr = true;
@@ -1209,7 +1209,7 @@ void Manager::readAltitude()
             {
                 traceAltitudeErr = false;
                 log<level::DEBUG>(
-                    fmt::format("Invalid altitude value: {}", sensorVal)
+                    std::format("Invalid altitude value: {}", sensorVal)
                         .c_str());
             }
         }
@@ -1220,7 +1220,7 @@ void Manager::readAltitude()
         {
             traceAltitudeErr = false;
             log<level::INFO>(
-                fmt::format("Unable to read Altitude: {}", e.what()).c_str());
+                std::format("Unable to read Altitude: {}", e.what()).c_str());
         }
         altitude = 0xFFFF; // not available
     }
@@ -1263,7 +1263,7 @@ void Manager::ambientCallback(sdbusplus::message_t& msg)
     if (truncatedTemp != ambient)
     {
         log<level::DEBUG>(
-            fmt::format("ambientCallback: Ambient change from {} to {}C",
+            std::format("ambientCallback: Ambient change from {} to {}C",
                         ambient, currentTemp)
                 .c_str());
 
@@ -1275,7 +1275,7 @@ void Manager::ambientCallback(sdbusplus::message_t& msg)
         }
 
         log<level::DEBUG>(
-            fmt::format("ambientCallback: Ambient: {}C, altitude: {}m", ambient,
+            std::format("ambientCallback: Ambient: {}C, altitude: {}m", ambient,
                         altitude)
                 .c_str());
 #ifdef POWER10
@@ -1314,7 +1314,7 @@ void Manager::occsNotAllRunning()
     {
         // Not all OCCs went active
         log<level::WARNING>(
-            fmt::format(
+            std::format(
                 "occsNotAllRunning: Active OCC count ({}) does not match expected count ({})",
                 activeCount, statusObjects.size())
                 .c_str());
@@ -1343,7 +1343,7 @@ void Manager::validateOccMaster()
                 {
                     queuedActiveState.erase(match);
                     log<level::INFO>(
-                        fmt::format(
+                        std::format(
                             "validateOccMaster: OCC{} is ACTIVE (queued)",
                             instance)
                             .c_str());
@@ -1356,7 +1356,7 @@ void Manager::validateOccMaster()
                     if (obj->occActive())
                     {
                         log<level::INFO>(
-                            fmt::format(
+                            std::format(
                                 "validateOccMaster: OCC{} is ACTIVE after reading sensor",
                                 instance)
                                 .c_str());
@@ -1366,7 +1366,7 @@ void Manager::validateOccMaster()
             else
             {
                 log<level::WARNING>(
-                    fmt::format(
+                    std::format(
                         "validateOccMaster: HOST is not running (OCC{})",
                         instance)
                         .c_str());
@@ -1386,7 +1386,7 @@ void Manager::validateOccMaster()
             else
             {
                 log<level::ERR>(
-                    fmt::format(
+                    std::format(
                         "validateOccMaster: Multiple OCC masters! ({} and {})",
                         masterInstance, instance)
                         .c_str());
@@ -1399,7 +1399,7 @@ void Manager::validateOccMaster()
     if (masterInstance < 0)
     {
         log<level::ERR>(
-            fmt::format("validateOccMaster: Master OCC not found! (of {} OCCs)",
+            std::format("validateOccMaster: Master OCC not found! (of {} OCCs)",
                         statusObjects.size())
                 .c_str());
         // request reset
@@ -1409,7 +1409,7 @@ void Manager::validateOccMaster()
     else
     {
         log<level::INFO>(
-            fmt::format("validateOccMaster: OCC{} is master of {} OCCs",
+            std::format("validateOccMaster: OCC{} is master of {} OCCs",
                         masterInstance, activeCount)
                 .c_str());
 #ifdef POWER10
