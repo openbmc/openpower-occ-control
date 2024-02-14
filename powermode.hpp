@@ -281,6 +281,12 @@ class PowerMode : public ModeInterface, public IpsInterface
         event(event)
 #endif
     {
+        using Mode =
+            sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
+        ModeInterface::allowedPowerModes({Mode::PowerMode::Static,
+                                          Mode::PowerMode::MaximumPerformance,
+                                          Mode::PowerMode::PowerSaving});
+
         // restore Power Mode to DBus
         SysPwrMode currentMode;
         uint16_t oemModeData = 0;
