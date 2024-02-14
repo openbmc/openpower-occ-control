@@ -46,7 +46,7 @@ void Presence::analyzeEvent()
     auto occsPresent = std::stoi(data, nullptr, 0);
     if (manager.getNumOCCs() != occsPresent)
     {
-        log<level::ERR>(fmt::format("OCC presence mismatch - BMC: {}, OCC: {}",
+        log<level::ERR>(std::format("OCC presence mismatch - BMC: {}, OCC: {}",
                                     manager.getNumOCCs(), occsPresent)
                             .c_str());
         if (callBack)

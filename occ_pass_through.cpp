@@ -4,7 +4,6 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <fmt/core.h>
 #include <unistd.h>
 
 #include <org/open_power/OCC/Device/error.hpp>
@@ -13,6 +12,7 @@
 #include <phosphor-logging/log.hpp>
 
 #include <algorithm>
+#include <format>
 #include <memory>
 #include <string>
 
@@ -77,7 +77,7 @@ std::vector<uint8_t> PassThrough::send(std::vector<uint8_t> command)
     if (!occActive)
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "PassThrough::send() - OCC{} not active, command not sent",
                 occInstance)
                 .c_str());
@@ -85,7 +85,7 @@ std::vector<uint8_t> PassThrough::send(std::vector<uint8_t> command)
     }
 
     log<level::INFO>(
-        fmt::format("PassThrough::send() Sending 0x{:02X} command to OCC{}",
+        std::format("PassThrough::send() Sending 0x{:02X} command to OCC{}",
                     command.front(), occInstance)
             .c_str());
     CmdStatus status = occCmd.send(command, response);
@@ -94,7 +94,7 @@ std::vector<uint8_t> PassThrough::send(std::vector<uint8_t> command)
         if (response.size() >= 5)
         {
             log<level::DEBUG>(
-                fmt::format("PassThrough::send() response had {} bytes",
+                std::format("PassThrough::send() response had {} bytes",
                             response.size())
                     .c_str());
         }
@@ -107,7 +107,7 @@ std::vector<uint8_t> PassThrough::send(std::vector<uint8_t> command)
     else
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "PassThrough::send(): OCC command failed with status {}",
                 uint32_t(status))
                 .c_str());
@@ -125,7 +125,7 @@ bool PassThrough::setMode(const uint8_t mode, const uint16_t modeData)
         (!VALID_OEM_POWER_MODE_SETTING(newMode)))
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "PassThrough::setMode() Unsupported mode {} requested (0x{:04X})",
                 newMode, modeData)
                 .c_str());
@@ -136,7 +136,7 @@ bool PassThrough::setMode(const uint8_t mode, const uint16_t modeData)
         (modeData == 0))
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "PassThrough::setMode() Mode {} requires non-zero frequency point.",
                 newMode)
                 .c_str());
@@ -150,13 +150,13 @@ bool PassThrough::setMode(const uint8_t mode, const uint16_t modeData)
     }
 
     log<level::INFO>(
-        fmt::format("PassThrough::setMode() Setting Power Mode {} (data: {})",
+        std::format("PassThrough::setMode() Setting Power Mode {} (data: {})",
                     newMode, modeData)
             .c_str());
     return pmode->setMode(newMode, modeData);
 #else
     log<level::DEBUG>(
-        fmt::format(
+        std::format(
             "PassThrough::setMode() No support to setting Power Mode {} (data: {})",
             mode, modeData)
             .c_str());

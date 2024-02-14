@@ -1,8 +1,9 @@
 #include "powermode.hpp"
 
 #include <fcntl.h>
-#include <fmt/core.h>
 #include <sys/ioctl.h>
+
+#include <format>
 
 #ifdef POWERVM_CHECK
 #include <com/ibm/Host/Target/server.hpp>
@@ -41,7 +42,7 @@ void PowerMode::setMasterOcc(const std::string& masterOccPath)
         if (masterOccPath != path)
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "PowerMode::setMasterOcc: Master changed (was OCC{}, {})",
                     occInstance, masterOccPath)
                     .c_str());
@@ -53,7 +54,7 @@ void PowerMode::setMasterOcc(const std::string& masterOccPath)
     }
     path = masterOccPath;
     occInstance = path.back() - '0';
-    log<level::DEBUG>(fmt::format("PowerMode::setMasterOcc(OCC{}, {})",
+    log<level::DEBUG>(std::format("PowerMode::setMasterOcc(OCC{}, {})",
                                   occInstance, path.c_str())
                           .c_str());
     if (!occCmd)
@@ -101,7 +102,7 @@ void PowerMode::modeChanged(sdbusplus::message_t& msg)
             persistedData.updateMode(newMode, 0);
 
             log<level::INFO>(
-                fmt::format("DBus Power Mode Changed: {}", propVal).c_str());
+                std::format("DBus Power Mode Changed: {}", propVal).c_str());
 
             // Send mode change to OCC
             sendModeChange();
@@ -121,7 +122,7 @@ bool PowerMode::powerModeLock()
 bool PowerMode::powerModeLockStatus()
 {
     bool status = persistedData.getModeLock(); // read persistent data
-    log<level::INFO>(fmt::format("PowerMode::powerModeLockStatus: {}",
+    log<level::INFO>(std::format("PowerMode::powerModeLockStatus: {}",
                                  status ? "locked" : "unlocked")
                          .c_str());
     return status;
@@ -191,7 +192,7 @@ SysPwrMode convertStringToMode(const std::string& i_modeString)
         if (mode != Mode::PowerMode::OEM)
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "convertStringToMode: Invalid Power Mode specified: {}",
                     i_modeString)
                     .c_str());
@@ -229,7 +230,7 @@ bool isPowerVM()
     }
 
     log<level::DEBUG>(
-        fmt::format("isPowerVM returning {}", powerVmTarget).c_str());
+        std::format("isPowerVM returning {}", powerVmTarget).c_str());
 #endif
 
     return powerVmTarget;
@@ -248,7 +249,7 @@ bool PowerMode::initPersistentData()
             return false;
         }
         log<level::INFO>(
-            fmt::format("PowerMode::initPersistentData: Using default mode: {}",
+            std::format("PowerMode::initPersistentData: Using default mode: {}",
                         currentMode)
                 .c_str());
 
@@ -295,7 +296,7 @@ bool PowerMode::updateDbusMode(const SysPwrMode newMode)
         !VALID_OEM_POWER_MODE_SETTING(newMode))
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "PowerMode::updateDbusMode - Requested power mode not supported: {}",
                 newMode)
                 .c_str());
@@ -373,7 +374,7 @@ CmdStatus PowerMode::sendModeChange()
         cmd.push_back(oemModeData & 0xFF); //
         cmd.push_back(0x00);               // reserved
         log<level::INFO>(
-            fmt::format(
+            std::format(
                 "PowerMode::sendModeChange: SET_MODE({},{}) command to OCC{} ({} bytes)",
                 newMode, oemModeData, occInstance, cmd.size())
                 .c_str());
@@ -385,7 +386,7 @@ CmdStatus PowerMode::sendModeChange()
                 if (RspStatus::SUCCESS != RspStatus(rsp[2]))
                 {
                     log<level::ERR>(
-                        fmt::format(
+                        std::format(
                             "PowerMode::sendModeChange: SET MODE failed with status 0x{:02X}",
                             rsp[2])
                             .c_str());
@@ -404,7 +405,7 @@ CmdStatus PowerMode::sendModeChange()
         else
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "PowerMode::sendModeChange: SET_MODE FAILED with status={}",
                     status)
                     .c_str());
@@ -413,7 +414,7 @@ CmdStatus PowerMode::sendModeChange()
     else
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "PowerMode::sendModeChange: Unable to set power mode to {}",
                 newMode)
                 .c_str());
@@ -443,7 +444,7 @@ void PowerMode::ipsChanged(sdbusplus::message_t& msg)
     {
         ipsEnabled = std::get<bool>(ipsEntry->second);
         log<level::INFO>(
-            fmt::format("Idle Power Saver change: Enabled={}", ipsEnabled)
+            std::format("Idle Power Saver change: Enabled={}", ipsEnabled)
                 .c_str());
         parmsChanged = true;
     }
@@ -452,7 +453,7 @@ void PowerMode::ipsChanged(sdbusplus::message_t& msg)
     {
         enterUtil = std::get<uint8_t>(ipsEntry->second);
         log<level::INFO>(
-            fmt::format("Idle Power Saver change: Enter Util={}%", enterUtil)
+            std::format("Idle Power Saver change: Enter Util={}%", enterUtil)
                 .c_str());
         parmsChanged = true;
     }
@@ -463,7 +464,7 @@ void PowerMode::ipsChanged(sdbusplus::message_t& msg)
         enterTime =
             std::chrono::duration_cast<std::chrono::seconds>(ms).count();
         log<level::INFO>(
-            fmt::format("Idle Power Saver change: Enter Time={}sec", enterTime)
+            std::format("Idle Power Saver change: Enter Time={}sec", enterTime)
                 .c_str());
         parmsChanged = true;
     }
@@ -472,7 +473,7 @@ void PowerMode::ipsChanged(sdbusplus::message_t& msg)
     {
         exitUtil = std::get<uint8_t>(ipsEntry->second);
         log<level::INFO>(
-            fmt::format("Idle Power Saver change: Exit Util={}%", exitUtil)
+            std::format("Idle Power Saver change: Exit Util={}%", exitUtil)
                 .c_str());
         parmsChanged = true;
     }
@@ -482,7 +483,7 @@ void PowerMode::ipsChanged(sdbusplus::message_t& msg)
         std::chrono::milliseconds ms(std::get<uint64_t>(ipsEntry->second));
         exitTime = std::chrono::duration_cast<std::chrono::seconds>(ms).count();
         log<level::INFO>(
-            fmt::format("Idle Power Saver change: Exit Time={}sec", exitTime)
+            std::format("Idle Power Saver change: Exit Time={}sec", exitTime)
                 .c_str());
         parmsChanged = true;
     }
@@ -544,7 +545,7 @@ bool PowerMode::getIPSParms(bool& ipsEnabled, uint8_t& enterUtil,
     if (enterUtil > exitUtil)
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "ERROR: Idle Power Saver Enter Utilization ({}%) is > Exit Utilization ({}%) - using Exit for both",
                 enterUtil, exitUtil)
                 .c_str());
@@ -595,7 +596,7 @@ CmdStatus PowerMode::sendIpsData()
     getIPSParms(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime);
 
     log<level::INFO>(
-        fmt::format(
+        std::format(
             "Idle Power Saver Parameters: enabled:{}, enter:{}%/{}s, exit:{}%/{}s",
             ipsEnabled, enterUtil, enterTime, exitUtil, exitTime)
             .c_str());
@@ -614,7 +615,7 @@ CmdStatus PowerMode::sendIpsData()
     cmd.push_back(exitTime >> 8);      // Exit Delay Time
     cmd.push_back(exitTime & 0xFF);    //
     cmd.push_back(exitUtil);           // Exit Utilization
-    log<level::INFO>(fmt::format("PowerMode::sendIpsData: SET_CFG_DATA[IPS] "
+    log<level::INFO>(std::format("PowerMode::sendIpsData: SET_CFG_DATA[IPS] "
                                  "command to OCC{} ({} bytes)",
                                  occInstance, cmd.size())
                          .c_str());
@@ -626,7 +627,7 @@ CmdStatus PowerMode::sendIpsData()
             if (RspStatus::SUCCESS != RspStatus(rsp[2]))
             {
                 log<level::ERR>(
-                    fmt::format(
+                    std::format(
                         "PowerMode::sendIpsData: SET_CFG_DATA[IPS] failed with status 0x{:02X}",
                         rsp[2])
                         .c_str());
@@ -645,7 +646,7 @@ CmdStatus PowerMode::sendIpsData()
     else
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "PowerMode::sendIpsData: SET_CFG_DATA[IPS] with status={}",
                 status)
                 .c_str());
@@ -660,7 +661,7 @@ void OccPersistData::print()
     if (modeData.modeInitialized)
     {
         log<level::INFO>(
-            fmt::format(
+            std::format(
                 "OccPersistData: Mode: 0x{:02X}, OEM Mode Data: {} (0x{:04X} Locked{})",
                 modeData.mode, modeData.oemModeData, modeData.oemModeData,
                 modeData.modeLocked)
@@ -669,7 +670,7 @@ void OccPersistData::print()
     if (modeData.ipsInitialized)
     {
         log<level::INFO>(
-            fmt::format(
+            std::format(
                 "OccPersistData: IPS enabled:{}, enter:{}%/{}s, exit:{}%/{}s",
                 modeData.ipsEnabled, modeData.ipsEnterUtil,
                 modeData.ipsEnterTime, modeData.ipsExitUtil,
@@ -690,7 +691,7 @@ void OccPersistData::save()
     }
 
     log<level::DEBUG>(
-        fmt::format(
+        std::format(
             "OccPersistData::save: Writing Power Mode persisted data to {}",
             opath.c_str())
             .c_str());
@@ -716,7 +717,7 @@ void OccPersistData::load()
     }
 
     log<level::DEBUG>(
-        fmt::format(
+        std::format(
             "OccPersistData::load: Reading Power Mode persisted data from {}",
             ipath.c_str())
             .c_str());
@@ -730,7 +731,7 @@ void OccPersistData::load()
     {
         auto error = errno;
         log<level::ERR>(
-            fmt::format("OccPersistData::load: failed to read {}, errno={}",
+            std::format("OccPersistData::load: failed to read {}, errno={}",
                         ipath.c_str(), error)
                 .c_str());
         modeData.modeInitialized = false;
@@ -751,7 +752,7 @@ void PowerMode::defaultsReady(sdbusplus::message_t& msg)
     if ((!persistedData.modeAvailable()) || (!persistedData.ipsAvailable()))
     {
         log<level::INFO>(
-            fmt::format(
+            std::format(
                 "Default PowerModeProperties are now available (persistent modeAvail={}, ipsAvail={})",
                 persistedData.modeAvailable() ? 'y' : 'n',
                 persistedData.modeAvailable() ? 'y' : 'n')
@@ -787,7 +788,7 @@ bool PowerMode::getDefaultMode(SysPwrMode& defaultMode)
         if (!VALID_POWER_MODE_SETTING(defaultMode))
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "PowerMode::getDefaultMode: Invalid default power mode found: {}",
                     defaultMode)
                     .c_str());
@@ -799,7 +800,7 @@ bool PowerMode::getDefaultMode(SysPwrMode& defaultMode)
     catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>(
-            fmt::format("Unable to read Default Power Mode: {}", e.what())
+            std::format("Unable to read Default Power Mode: {}", e.what())
                 .c_str());
         return false;
     }
@@ -839,7 +840,7 @@ bool PowerMode::getDefaultIPSParms(bool& ipsEnabled, uint8_t& enterUtil,
     catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "Unable to read Default Idle Power Saver parameters so it will be disabled: {}",
                 e.what())
                 .c_str());
@@ -904,7 +905,7 @@ bool PowerMode::getDefaultIPSParms(bool& ipsEnabled, uint8_t& enterUtil,
     if (enterUtil > exitUtil)
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "ERROR: Default Idle Power Saver Enter Utilization ({}%) is > Exit Utilization ({}%) - using Exit for both",
                 enterUtil, exitUtil)
                 .c_str());
@@ -929,7 +930,7 @@ bool PowerMode::useDefaultIPSParms()
         return false;
     }
     log<level::INFO>(
-        fmt::format(
+        std::format(
             "PowerMode::useDefaultIPSParms: Using default IPS parms: Enabled: {}, EnterUtil: {}%, EnterTime: {}s, ExitUtil: {}%, ExitTime: {}s",
             ipsEnabled, enterUtil, enterTime, exitUtil, exitTime)
             .c_str());
@@ -952,7 +953,7 @@ bool PowerMode::openIpsFile()
     const int open_errno = errno;
     if (fd < 0)
     {
-        log<level::ERR>(fmt::format("openIpsFile Error({})={} : File={}",
+        log<level::ERR>(std::format("openIpsFile Error({})={} : File={}",
                                     open_errno, strerror(open_errno),
                                     ipsStatusFile.c_str())
                             .c_str());
@@ -1020,7 +1021,7 @@ void PowerMode::registerIpsStatusCallBack()
                              ipsStatusCallBack, this);
     if (r < 0)
     {
-        log<level::ERR>(fmt::format("sd_event_add_io: Error({})={} : File={}",
+        log<level::ERR>(std::format("sd_event_add_io: Error({})={} : File={}",
                                     r, strerror(-r), ipsStatusFile.c_str())
                             .c_str());
 
@@ -1081,7 +1082,7 @@ void PowerMode::analyzeIpsEvent()
             removeIpsWatch();
 
             log<level::ERR>(
-                fmt::format("IPS state Read Error({})={} : File={} : len={}",
+                std::format("IPS state Read Error({})={} : File={} : len={}",
                             readErrno, strerror(readErrno),
                             ipsStatusFile.c_str(), len)
                     .c_str());
@@ -1117,7 +1118,7 @@ void PowerMode::analyzeIpsEvent()
 
         // If the Retry did not get to "watching = true" we already have an
         // error log, just post trace.
-        log<level::ERR>(fmt::format("Retry on File seek Error({})={} : File={}",
+        log<level::ERR>(std::format("Retry on File seek Error({})={} : File={}",
                                     open_errno, strerror(open_errno),
                                     ipsStatusFile.c_str())
                             .c_str());
@@ -1150,7 +1151,7 @@ Mode::PowerMode PowerMode::powerMode(Mode::PowerMode value)
 void PowerMode::updateDbusSafeMode(const bool safeModeReq)
 {
     log<level::DEBUG>(
-        fmt::format("PowerMode:updateDbusSafeMode: Update dbus state ({})",
+        std::format("PowerMode:updateDbusSafeMode: Update dbus state ({})",
                     safeModeReq)
             .c_str());
 

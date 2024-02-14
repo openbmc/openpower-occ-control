@@ -2,10 +2,9 @@
 
 #include "utils.hpp"
 
-#include <fmt/core.h>
-
 #include <phosphor-logging/log.hpp>
 
+#include <format>
 #include <iostream>
 
 namespace open_power
@@ -215,7 +214,7 @@ std::string OccDBusSensors::getChassisPath()
                  paths.end())
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "Could not find a chassis out of {} chassis objects",
                     paths.size())
                     .c_str());
@@ -227,7 +226,7 @@ std::string OccDBusSensors::getChassisPath()
     catch (const std::exception& e)
     {
         log<level::ERR>(
-            fmt::format("Error looking up chassis objects: {}", e.what())
+            std::format("Error looking up chassis objects: {}", e.what())
                 .c_str());
         abort();
     }

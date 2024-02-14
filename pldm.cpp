@@ -2,7 +2,6 @@
 
 #include "file.hpp"
 
-#include <fmt/core.h>
 #include <libpldm/entity.h>
 #include <libpldm/platform.h>
 #include <libpldm/state_set.h>
@@ -16,6 +15,7 @@
 #include <sdeventplus/source/time.hpp>
 
 #include <algorithm>
+#include <format>
 
 namespace pldm
 {
@@ -51,7 +51,7 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
         if (!tracedError)
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "fetchSensorInfo: Failed to find stateSetID:{} PDR: {}",
                     stateSetId, e.what())
                     .c_str());
@@ -64,7 +64,7 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
         if (!tracedError)
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "fetchSensorInfo: state sensor PDRs ({}) not present",
                     stateSetId)
                     .c_str());
@@ -77,7 +77,7 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
     if (tracedError)
     {
         log<level::INFO>(
-            fmt::format("fetchSensorInfo: found {} PDRs", pdrs.size()).c_str());
+            std::format("fetchSensorInfo: found {} PDRs", pdrs.size()).c_str());
         tracedError = false;
     }
 
@@ -165,7 +165,7 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
                     PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_IN_SERVICE))
             {
                 log<level::INFO>(
-                    fmt::format("PLDM: OCC{} is RUNNING", instance).c_str());
+                    std::format("PLDM: OCC{} is RUNNING", instance).c_str());
                 isRunning = true;
             }
             else if (eventState ==
@@ -173,7 +173,7 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
                          PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_STOPPED))
             {
                 log<level::INFO>(
-                    fmt::format("PLDM: OCC{} has now STOPPED", instance)
+                    std::format("PLDM: OCC{} has now STOPPED", instance)
                         .c_str());
             }
             else if (eventState ==
@@ -181,7 +181,7 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
                          PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_DORMANT))
             {
                 log<level::INFO>(
-                    fmt::format(
+                    std::format(
                         "PLDM: OCC{} has now STOPPED and system is in SAFE MODE",
                         instance)
                         .c_str());
@@ -192,7 +192,7 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
             else
             {
                 log<level::INFO>(
-                    fmt::format("PLDM: Unexpected PLDM state {} for OCC{}",
+                    std::format("PLDM: Unexpected PLDM state {} for OCC{}",
                                 eventState, instance)
                         .c_str());
             }
@@ -218,7 +218,7 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
                 if (eventState == static_cast<EventState>(SBE_HRESET_NOT_READY))
                 {
                     log<level::INFO>(
-                        fmt::format("pldm: HRESET is NOT READY (OCC{})",
+                        std::format("pldm: HRESET is NOT READY (OCC{})",
                                     instance)
                             .c_str());
                 }
@@ -260,13 +260,13 @@ void Interface::clearData()
     if (!sensorToOCCInstance.empty())
     {
         log<level::INFO>(
-            fmt::format("clearData: Clearing sensorToOCCInstance ({} entries)",
+            std::format("clearData: Clearing sensorToOCCInstance ({} entries)",
                         sensorToOCCInstance.size())
                 .c_str());
         for (auto entry : sensorToOCCInstance)
         {
             log<level::INFO>(
-                fmt::format("clearData: OCC{} / sensorID: 0x{:04X}",
+                std::format("clearData: OCC{} / sensorID: 0x{:04X}",
                             entry.second, entry.first)
                     .c_str());
             callBack(entry.second, false);
@@ -276,7 +276,7 @@ void Interface::clearData()
     if (!occInstanceToEffecter.empty())
     {
         log<level::DEBUG>(
-            fmt::format(
+            std::format(
                 "clearData: Clearing occInstanceToEffecter ({} entries)",
                 occInstanceToEffecter.size())
                 .c_str());
@@ -285,7 +285,7 @@ void Interface::clearData()
     if (!sensorToSBEInstance.empty())
     {
         log<level::DEBUG>(
-            fmt::format("clearData: Clearing sensorToSBEInstance ({} entries)",
+            std::format("clearData: Clearing sensorToSBEInstance ({} entries)",
                         sensorToSBEInstance.size())
                 .c_str());
         sensorToSBEInstance.clear();
@@ -293,7 +293,7 @@ void Interface::clearData()
     if (!sbeInstanceToEffecter.empty())
     {
         log<level::DEBUG>(
-            fmt::format(
+            std::format(
                 "clearData: Clearing sbeInstanceToEffecter ({} entries)",
                 sbeInstanceToEffecter.size())
                 .c_str());
@@ -433,7 +433,7 @@ void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
         if (effecterEntry == occInstanceToEffecter.end())
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "pldm: Failed to find a matching effecter for OCC instance {}",
                     occInstanceId)
                     .c_str());
@@ -459,7 +459,7 @@ void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
     else
     {
         log<level::ERR>(
-            fmt::format("resetOCC: HOST is not running (OCC{})", occInstanceId)
+            std::format("resetOCC: HOST is not running (OCC{})", occInstanceId)
                 .c_str());
         clearData();
     }
@@ -503,7 +503,7 @@ void Interface::sendHRESET(open_power::occ::instanceID sbeInstanceId)
     }
     else
     {
-        log<level::ERR>(fmt::format("sendHRESET: HOST is not running (OCC{})",
+        log<level::ERR>(std::format("sendHRESET: HOST is not running (OCC{})",
                                     sbeInstanceId)
                             .c_str());
         clearData();
@@ -526,14 +526,14 @@ bool Interface::getMctpInstanceId()
             uint8_t newInstanceId;
             reply.read(newInstanceId);
             mctpInstance = newInstanceId;
-            log<level::INFO>(fmt::format("pldm: got new InstanceId: {}",
+            log<level::INFO>(std::format("pldm: got new InstanceId: {}",
                                          mctpInstance.value())
                                  .c_str());
         }
         catch (const sdbusplus::exception_t& e)
         {
             log<level::ERR>(
-                fmt::format("pldm: GetInstanceId failed: {}", e.what())
+                std::format("pldm: GetInstanceId failed: {}", e.what())
                     .c_str());
             return false;
         }
@@ -557,7 +557,7 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
     if (pldmFd == PLDM_REQUESTER_OPEN_FAIL)
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "sendPldm: Failed to connect to MCTP socket, errno={}/{}",
                 openErrno, strerror(openErrno))
                 .c_str());
@@ -572,7 +572,7 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
 
         // Send PLDM request
         log<level::INFO>(
-            fmt::format(
+            std::format(
                 "sendPldm: calling pldm_send(OCC{}, instance:{}, {} bytes)",
                 instance, mctpInstance.value(), request.size())
                 .c_str());
@@ -585,7 +585,7 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         if (pldmRc != PLDM_REQUESTER_SUCCESS)
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "sendPldm: pldm_send failed with rc={} and errno={}/{}",
                     static_cast<
                         std::underlying_type_t<pldm_requester_error_codes>>(
@@ -605,7 +605,7 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
     else // not expecting the response
     {
         log<level::INFO>(
-            fmt::format(
+            std::format(
                 "sendPldm: calling pldm_send(mctpID:{}, fd:{}, {} bytes) for OCC{}",
                 mctpEid, pldmFd, request.size(), instance)
                 .c_str());
@@ -614,7 +614,7 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         if (rc)
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "sendPldm: pldm_send(mctpID:{}, fd:{}, {} bytes) failed with rc={} and errno={}/{}",
                     mctpEid, pldmFd, request.size(),
                     static_cast<
@@ -640,7 +640,7 @@ void Interface::registerPldmRspCallback()
     if (rc < 0)
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "registerPldmRspCallback: sd_event_add_io: Error({})={} : fd={}",
                 rc, strerror(-rc), pldmFd)
                 .c_str());
@@ -658,7 +658,7 @@ void Interface::pldmRspExpired()
     if (!pldmResponseReceived)
     {
         log<level::WARNING>(
-            fmt::format(
+            std::format(
                 "pldmRspExpired: timerCallback - timeout waiting for pldm response for OCC{}",
                 pldmResponseOcc)
                 .c_str());
@@ -689,7 +689,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
     if (!(revents & EPOLLIN))
     {
         log<level::INFO>(
-            fmt::format("pldmRspCallback - revents={:08X}", revents).c_str());
+            std::format("pldmRspCallback - revents={:08X}", revents).c_str());
         return -1;
     }
 
@@ -706,7 +706,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
     size_t responseMsgSize{};
 
     log<level::INFO>(
-        fmt::format("pldmRspCallback: calling pldm_recv() instance:{}",
+        std::format("pldmRspCallback: calling pldm_recv() instance:{}",
                     pldmIface->mctpInstance.value())
             .c_str());
     auto rc = pldm_recv(mctpEid, fd, pldmIface->mctpInstance.value(),
@@ -715,7 +715,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
     if (rc)
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "pldmRspCallback: pldm_recv failed with rc={}, errno={}/{}",
                 static_cast<std::underlying_type_t<pldm_requester_error_codes>>(
                     rc),
@@ -726,7 +726,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
 
     // We got the response for the PLDM request msg that was sent
     log<level::INFO>(
-        fmt::format("pldmRspCallback: pldm_recv() rsp was {} bytes",
+        std::format("pldmRspCallback: pldm_recv() rsp was {} bytes",
                     responseMsgSize)
             .c_str());
 
@@ -747,7 +747,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
     if (response->payload[0] != PLDM_SUCCESS)
     {
         log<level::ERR>(
-            fmt::format("pldmRspCallback: payload[0] was not success: {}",
+            std::format("pldmRspCallback: payload[0] was not success: {}",
                         response->payload[0])
                 .c_str());
         pldmIface->pldmClose();
@@ -763,7 +763,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
     if ((msgRc != PLDM_SUCCESS) || (compCode != PLDM_SUCCESS))
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "pldmRspCallback: decode_get_state_sensor_readings failed with rc={} and compCode={}",
                 msgRc, compCode)
                 .c_str());
@@ -780,14 +780,14 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
     if (occSensorState == PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_IN_SERVICE)
     {
         log<level::INFO>(
-            fmt::format("pldmRspCallback: OCC{} is RUNNING", instance).c_str());
+            std::format("pldmRspCallback: OCC{} is RUNNING", instance).c_str());
         pldmIface->callBack(instance, true);
     }
     else if (occSensorState ==
              PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_DORMANT)
     {
         log<level::INFO>(
-            fmt::format(
+            std::format(
                 "pldmRspCallback: OCC{} has now STOPPED and system is in SAFE MODE",
                 instance)
                 .c_str());
@@ -800,7 +800,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
     else
     {
         log<level::INFO>(
-            fmt::format(
+            std::format(
                 "pldmRspCallback: OCC{} is not running (sensor state:{})",
                 instance, occSensorState)
                 .c_str());
@@ -811,7 +811,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
             memcpy(&pldmResponse[0], reinterpret_cast<std::uint8_t*>(response),
                    rspLength);
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "pldmRspCallback: Bad State - PLDM response ({} bytes) for OCC{}:",
                     rspLength, instance)
                     .c_str());
@@ -844,7 +844,7 @@ std::vector<uint8_t> Interface::encodeGetStateSensorRequest(uint8_t instance,
     if (msgRc != PLDM_SUCCESS)
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "encodeGetStateSensorRequest: Failed to encode sensorId:0x{:08X} for OCC{} (rc={})",
                 sensorId, instance, msgRc)
                 .c_str());
@@ -861,7 +861,7 @@ void Interface::checkActiveSensor(uint8_t instance)
         if (!tracedOnce)
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "checkActiveSensor: already waiting on OCC{} (fd={})",
                     pldmResponseOcc, pldmFd)
                     .c_str());
@@ -886,7 +886,7 @@ void Interface::checkActiveSensor(uint8_t instance)
         // Query the OCC Active Sensor state for this instance
         // SensorID sID = entry->first;
         log<level::INFO>(
-            fmt::format("checkActiveSensor: OCC{} / sensorID: 0x{:04X}",
+            std::format("checkActiveSensor: OCC{} / sensorID: 0x{:04X}",
                         instance, entry->first)
                 .c_str());
 
@@ -903,7 +903,7 @@ void Interface::checkActiveSensor(uint8_t instance)
     else
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "checkActiveSensor: Unable to find PLDM sensor for OCC{}",
                 instance)
                 .c_str());

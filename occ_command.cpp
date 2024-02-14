@@ -4,7 +4,6 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <fmt/core.h>
 #include <unistd.h>
 
 #include <org/open_power/OCC/Device/error.hpp>
@@ -13,6 +12,7 @@
 #include <phosphor-logging/log.hpp>
 
 #include <algorithm>
+#include <format>
 #include <memory>
 #include <string>
 
@@ -39,14 +39,14 @@ void dump_hex(const std::vector<std::uint8_t>& data,
     {
         if (i % 16 == 0)
         {
-            s += fmt::format("{:04X}: ", i);
+            s += std::format("{:04X}: ", i);
         }
         else if (i % 4 == 0)
         {
             s += " ";
         }
 
-        s += fmt::format("{:02X}", data.at(i));
+        s += std::format("{:02X}", data.at(i));
 
         if ((i % 16 == 15) || (i == (dump_length - 1)))
         {
@@ -66,7 +66,7 @@ OccCommand::OccCommand(uint8_t instance, const char* path) :
                   std::placeholders::_1))
 {
     log<level::DEBUG>(
-        fmt::format("OccCommand::OccCommand(path={}, devicePath={}", this->path,
+        std::format("OccCommand::OccCommand(path={}, devicePath={}", this->path,
                     devicePath)
             .c_str());
 }
@@ -76,14 +76,14 @@ void OccCommand::openDevice()
     using namespace sdbusplus::org::open_power::OCC::Device::Error;
 
     log<level::DEBUG>(
-        fmt::format("OccCommand::openDevice: calling open {}", devicePath)
+        std::format("OccCommand::openDevice: calling open {}", devicePath)
             .c_str());
     fd = open(devicePath.c_str(), O_RDWR | O_NONBLOCK);
     if (fd < 0)
     {
         const int openErrno = errno;
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "OccCommand::openDevice: open failed (errno={}, path={})",
                 openErrno, devicePath)
                 .c_str());
@@ -126,7 +126,7 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
     const uint8_t cmd_type = command[0];
 #ifdef TRACE_PACKETS
     log<level::INFO>(
-        fmt::format("OCC{}: Sending 0x{:02X} command (length={}, {})",
+        std::format("OCC{}: Sending 0x{:02X} command (length={}, {})",
                     occInstance, cmd_type, command.size(), devicePath)
             .c_str());
     dump_hex(command);
@@ -142,7 +142,7 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
         if ((rc < 0) || (rc != (int)command.size()))
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "OccCommand::send: write(OCC{}, command:0x{:02X}) failed with errno={} (retries={})",
                     occInstance, cmd_type, writeErrno, retries)
                     .c_str());
@@ -181,7 +181,7 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
             else
             {
                 log<level::ERR>(
-                    fmt::format(
+                    std::format(
                         "OccCommand::send: read(OCC{}, command:0x{:02X}) failed with errno={} (rspSize={}, retries={})",
                         occInstance, cmd_type, readErrno, response.size(),
                         retries)
@@ -200,7 +200,7 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
         {
 #ifdef TRACE_PACKETS
             log<level::INFO>(
-                fmt::format(
+                std::format(
                     "OCC{}: Received 0x{:02X} response (length={} w/checksum)",
                     occInstance, cmd_type, response.size())
                     .c_str());
@@ -223,7 +223,7 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
             if (calcChecksum != rspChecksum)
             {
                 log<level::ERR>(
-                    fmt::format("OCC{}: Checksum Mismatch: response "
+                    std::format("OCC{}: Checksum Mismatch: response "
                                 "0x{:04X}, calculated 0x{:04X}",
                                 occInstance, rspChecksum, calcChecksum)
                         .c_str());
@@ -245,7 +245,7 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
                 else
                 {
                     log<level::ERR>(
-                        fmt::format(
+                        std::format(
                             "OccCommand::send: Response command mismatch "
                             "(sent: "
                             "0x{:02X}, rsp: 0x{:02X}, rsp seq#: 0x{:02X}",
@@ -258,7 +258,7 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
         else
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "OccCommand::send: Invalid OCC{} response length: {}",
                     occInstance, response.size())
                     .c_str());

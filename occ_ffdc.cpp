@@ -4,7 +4,6 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <fmt/core.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -16,6 +15,8 @@
 #include <phosphor-logging/log.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
 #include <xyz/openbmc_project/Logging/Create/server.hpp>
+
+#include <format>
 
 namespace open_power
 {
@@ -43,7 +44,7 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
         pelFFDCInfo;
 
     log<level::INFO>(
-        fmt::format("Creating PEL for OCC{} with SBE FFDC: {} - SRC6: 0x{:08X}",
+        std::format("Creating PEL for OCC{} with SBE FFDC: {} - SRC6: 0x{:08X}",
                     src6 >> 16, path, src6)
             .c_str());
 
@@ -92,7 +93,7 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
     catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>(
-            fmt::format("Failed to create PEL: {}", e.what()).c_str());
+            std::format("Failed to create PEL: {}", e.what()).c_str());
     }
 
     return plid;
@@ -118,7 +119,7 @@ void FFDC::createOCCResetPEL(unsigned int instance, const char* path, int err,
     additionalData.emplace("OCC", std::to_string(instance));
 
     log<level::INFO>(
-        fmt::format("Creating OCC Reset PEL for OCC{}: {}", instance, path)
+        std::format("Creating OCC Reset PEL for OCC{}: {}", instance, path)
             .c_str());
 
     auto& bus = utils::getBus();
@@ -150,7 +151,7 @@ void FFDC::createOCCResetPEL(unsigned int instance, const char* path, int err,
     catch (const sdbusplus::exception_t& e)
     {
         log<level::ERR>(
-            fmt::format("Failed to create OCC Reset PEL: {}", e.what())
+            std::format("Failed to create OCC Reset PEL: {}", e.what())
                 .c_str());
     }
 }
@@ -239,7 +240,7 @@ std::unique_ptr<FFDCFile> FFDC::addJournalEntries(FFDCFiles& fileList,
     if (journalFile && journalFile->fd() != -1)
     {
         log<level::DEBUG>(
-            fmt::format(
+            std::format(
                 "addJournalEntries: Added up to {} journal entries for {}",
                 lines, executable)
                 .c_str());
@@ -248,7 +249,7 @@ std::unique_ptr<FFDCFile> FFDC::addJournalEntries(FFDCFiles& fileList,
     else
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "addJournalEntries: Failed to add journal entries for {}",
                 executable)
                 .c_str());
@@ -275,7 +276,7 @@ std::unique_ptr<FFDCFile> FFDC::makeJsonFFDCFile(const nlohmann::json& ffdcData)
         {
             auto e = errno;
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "makeJsonFFDCFile: Failed call to write JSON FFDC file, errno={}",
                     e)
                     .c_str());
@@ -285,7 +286,7 @@ std::unique_ptr<FFDCFile> FFDC::makeJsonFFDCFile(const nlohmann::json& ffdcData)
     {
         auto e = errno;
         log<level::ERR>(
-            fmt::format("makeJsonFFDCFile: Failed called to mkostemp, errno={}",
+            std::format("makeJsonFFDCFile: Failed called to mkostemp, errno={}",
                         e)
                 .c_str());
     }
@@ -429,7 +430,7 @@ FFDCFile::FFDCFile(const fs::path& name) :
     {
         auto e = errno;
         log<level::ERR>(
-            fmt::format("FFDCFile: Could not open FFDC file {}. errno {}",
+            std::format("FFDCFile: Could not open FFDC file {}. errno {}",
                         _name.string(), e)
                 .c_str());
     }
