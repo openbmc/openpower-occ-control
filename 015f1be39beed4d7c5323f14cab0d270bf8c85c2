@@ -16,6 +16,24 @@
       "message": "If you care, there is a 2nd bool argument on these you can use to tell it to skip emitting the propertiesChanged signal.  I don\u0027t think anyone is watching for it though so it probably doesn\u0027t matter much.",
       "revId": "015f1be39beed4d7c5323f14cab0d270bf8c85c2",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7e0d767f_ef9a814e",
+        "filename": "powermode.hpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 284,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2024-02-19T22:13:58Z",
+      "side": 1,
+      "message": "Ack. Probably ok to notify them if they are watching.",
+      "parentUuid": "29339684_211a2cb6",
+      "revId": "015f1be39beed4d7c5323f14cab0d270bf8c85c2",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
