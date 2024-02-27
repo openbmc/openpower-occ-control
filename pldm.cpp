@@ -27,6 +27,7 @@ using namespace sdeventplus::source;
 constexpr auto clockId = sdeventplus::ClockId::RealTime;
 using Clock = sdeventplus::Clock<clockId>;
 using Timer = Time<clockId>;
+bool Interface::throttleTraces = false;
 
 void Interface::fetchSensorInfo(uint16_t stateSetId,
                                 SensorToInstance& sensorInstanceMap,
@@ -159,6 +160,7 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
         if (sensorEntry != sensorToOCCInstance.end())
         {
             const uint8_t instance = sensorEntry->second;
+            bool validEvent = true;
             bool isRunning = false;
             if (eventState ==
                 static_cast<EventState>(
@@ -180,7 +182,7 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
                      static_cast<EventState>(
                          PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_DORMANT))
             {
-                log<level::INFO>(
+                log<level::ERR>(
                     std::format(
                         "PLDM: OCC{} has now STOPPED and system is in SAFE MODE",
                         instance)
@@ -191,14 +193,21 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
             }
             else
             {
-                log<level::INFO>(
+                log<level::WARNING>(
                     std::format("PLDM: Unexpected PLDM state {} for OCC{}",
                                 eventState, instance)
                         .c_str());
+                validEvent = false;
             }
-
-            callBack(instance, isRunning);
-
+            if (validEvent)
+            {
+                if ((pldmFd > 0) && (instance == pldmResponseOcc))
+                {
+                    // Waiting for a response for this OCC, can stop waiting
+                    pldmClose();
+                }
+                callBack(instance, isRunning);
+            }
             return;
         }
     }
@@ -526,9 +535,12 @@ bool Interface::getMctpInstanceId()
             uint8_t newInstanceId;
             reply.read(newInstanceId);
             mctpInstance = newInstanceId;
-            log<level::INFO>(std::format("pldm: got new InstanceId: {}",
-                                         mctpInstance.value())
-                                 .c_str());
+            if (!throttleTraces)
+            {
+                log<level::INFO>(std::format("pldm: got new InstanceId: {}",
+                                             mctpInstance.value())
+                                     .c_str());
+            }
         }
         catch (const sdbusplus::exception_t& e)
         {
@@ -571,11 +583,14 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         registerPldmRspCallback();
 
         // Send PLDM request
-        log<level::INFO>(
-            std::format(
-                "sendPldm: calling pldm_send(OCC{}, instance:{}, {} bytes)",
-                instance, mctpInstance.value(), request.size())
-                .c_str());
+        if (!throttleTraces)
+        {
+            log<level::INFO>(
+                std::format(
+                    "sendPldm: calling pldm_send(OCC{}, instance:{}, {} bytes)",
+                    instance, mctpInstance.value(), request.size())
+                    .c_str());
+        }
         pldmResponseReceived = false;
         pldmResponseTimeout = false;
         pldmResponseOcc = instance;
@@ -604,11 +619,14 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
     }
     else // not expecting the response
     {
-        log<level::INFO>(
-            std::format(
-                "sendPldm: calling pldm_send(mctpID:{}, fd:{}, {} bytes) for OCC{}",
-                mctpEid, pldmFd, request.size(), instance)
-                .c_str());
+        if (!throttleTraces)
+        {
+            log<level::INFO>(
+                std::format(
+                    "sendPldm: calling pldm_send(mctpID:{}, fd:{}, {} bytes) for OCC{}",
+                    mctpEid, pldmFd, request.size(), instance)
+                    .c_str());
+        }
         auto rc = pldm_send(mctpEid, pldmFd, request.data(), request.size());
         auto sendErrno = errno;
         if (rc)
@@ -657,11 +675,14 @@ void Interface::pldmRspExpired()
 {
     if (!pldmResponseReceived)
     {
-        log<level::WARNING>(
-            std::format(
-                "pldmRspExpired: timerCallback - timeout waiting for pldm response for OCC{}",
-                pldmResponseOcc)
-                .c_str());
+        if (!throttleTraces)
+        {
+            log<level::WARNING>(
+                std::format(
+                    "pldmRspExpired: timerCallback - timeout waiting for pldm response for OCC{}",
+                    pldmResponseOcc)
+                    .c_str());
+        }
         pldmResponseTimeout = true;
         if (pldmFd)
         {
@@ -705,30 +726,39 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
     uint8_t* responseMsg = nullptr;
     size_t responseMsgSize{};
 
-    log<level::INFO>(
-        std::format("pldmRspCallback: calling pldm_recv() instance:{}",
-                    pldmIface->mctpInstance.value())
-            .c_str());
+    if (!throttleTraces)
+    {
+        log<level::INFO>(
+            std::format("pldmRspCallback: calling pldm_recv() instance:{}",
+                        pldmIface->mctpInstance.value())
+                .c_str());
+    }
     auto rc = pldm_recv(mctpEid, fd, pldmIface->mctpInstance.value(),
                         &responseMsg, &responseMsgSize);
     int lastErrno = errno;
     if (rc)
     {
-        log<level::ERR>(
-            std::format(
-                "pldmRspCallback: pldm_recv failed with rc={}, errno={}/{}",
-                static_cast<std::underlying_type_t<pldm_requester_error_codes>>(
-                    rc),
-                lastErrno, strerror(lastErrno))
-                .c_str());
+        if (!throttleTraces)
+        {
+            log<level::ERR>(
+                std::format(
+                    "pldmRspCallback: pldm_recv failed with rc={}, errno={}/{}",
+                    static_cast<
+                        std::underlying_type_t<pldm_requester_error_codes>>(rc),
+                    lastErrno, strerror(lastErrno))
+                    .c_str());
+        }
         return -1;
     }
 
     // We got the response for the PLDM request msg that was sent
-    log<level::INFO>(
-        std::format("pldmRspCallback: pldm_recv() rsp was {} bytes",
-                    responseMsgSize)
-            .c_str());
+    if (!throttleTraces)
+    {
+        log<level::INFO>(
+            std::format("pldmRspCallback: pldm_recv() rsp was {} bytes",
+                        responseMsgSize)
+                .c_str());
+    }
 
     if (pldmIface->pldmRspTimer.isEnabled())
     {
@@ -786,7 +816,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
     else if (occSensorState ==
              PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_DORMANT)
     {
-        log<level::INFO>(
+        log<level::ERR>(
             std::format(
                 "pldmRspCallback: OCC{} has now STOPPED and system is in SAFE MODE",
                 instance)
@@ -797,27 +827,29 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/, int fd,
 
         pldmIface->callBack(instance, false);
     }
-    else
+    else if (occSensorState ==
+             PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_STOPPED)
     {
         log<level::INFO>(
-            std::format(
-                "pldmRspCallback: OCC{} is not running (sensor state:{})",
-                instance, occSensorState)
+            std::format("pldmRspCallback: OCC{} is not running", instance)
                 .c_str());
-        if (occSensorState != PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_STOPPED)
+        pldmIface->callBack(instance, false);
+    }
+    else
+    {
+        const size_t rspLength = responseMsgSize + sizeof(pldm_msg_hdr);
+        std::vector<std::uint8_t> pldmResponse(rspLength);
+        memcpy(&pldmResponse[0], reinterpret_cast<std::uint8_t*>(response),
+               rspLength);
+        if (!throttleTraces)
         {
-            const size_t rspLength = responseMsgSize + sizeof(pldm_msg_hdr);
-            std::vector<std::uint8_t> pldmResponse(rspLength);
-            memcpy(&pldmResponse[0], reinterpret_cast<std::uint8_t*>(response),
-                   rspLength);
-            log<level::ERR>(
+            log<level::WARNING>(
                 std::format(
-                    "pldmRspCallback: Bad State - PLDM response ({} bytes) for OCC{}:",
-                    rspLength, instance)
+                    "pldmRspCallback: Unexpected State: {} - PLDM response ({} bytes) for OCC{}:",
+                    occSensorState, rspLength, instance)
                     .c_str());
             dump_hex(pldmResponse);
         }
-        pldmIface->callBack(instance, false);
     }
 
     return 0;
@@ -858,9 +890,9 @@ void Interface::checkActiveSensor(uint8_t instance)
     static bool tracedOnce = false;
     if (pldmFd > 0)
     {
-        if (!tracedOnce)
+        if (!throttleTraces && !tracedOnce)
         {
-            log<level::ERR>(
+            log<level::WARNING>(
                 std::format(
                     "checkActiveSensor: already waiting on OCC{} (fd={})",
                     pldmResponseOcc, pldmFd)
@@ -884,11 +916,13 @@ void Interface::checkActiveSensor(uint8_t instance)
     if (entry != sensorToOCCInstance.end())
     {
         // Query the OCC Active Sensor state for this instance
-        // SensorID sID = entry->first;
-        log<level::INFO>(
-            std::format("checkActiveSensor: OCC{} / sensorID: 0x{:04X}",
-                        instance, entry->first)
-                .c_str());
+        if (!throttleTraces)
+        {
+            log<level::INFO>(
+                std::format("checkActiveSensor: OCC{} / sensorID: 0x{:04X}",
+                            instance, entry->first)
+                    .c_str());
+        }
 
         // Encode GetStateSensorReadings PLDM message
         auto request = encodeGetStateSensorRequest(instance, entry->first);
@@ -902,15 +936,34 @@ void Interface::checkActiveSensor(uint8_t instance)
     }
     else
     {
-        log<level::ERR>(
-            std::format(
-                "checkActiveSensor: Unable to find PLDM sensor for OCC{}",
-                instance)
-                .c_str());
-        log<level::INFO>(
-            "checkActiveSensor: fetching STATE_SET_OPERATIONAL_RUNNING_STATUS");
+        if (!throttleTraces)
+        {
+            log<level::ERR>(
+                std::format(
+                    "checkActiveSensor: Unable to find PLDM sensor for OCC{}",
+                    instance)
+                    .c_str());
+            log<level::INFO>(
+                "checkActiveSensor: fetching STATE_SET_OPERATIONAL_RUNNING_STATUS");
+        }
         fetchSensorInfo(PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS,
                         sensorToOCCInstance, OCCSensorOffset);
+    }
+}
+
+void Interface::setTraceThrottle(const bool throttle)
+{
+    if (throttle != throttleTraces)
+    {
+        if (throttle)
+        {
+            log<level::WARNING>("PLDM traces being throttled");
+        }
+        else
+        {
+            log<level::INFO>("PLDM traces no longer being throttled");
+        }
+        throttleTraces = throttle;
     }
 }
 
