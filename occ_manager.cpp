@@ -206,6 +206,13 @@ void Manager::checkAllActiveSensors()
                                 instance)
                                 .c_str());
                         tracedSensorWait = true;
+                        // Make sure traces are not throttled
+#ifdef PLDM
+                        pldmHandle->setTraceThrottle(false);
+                        // Start timer to throttle pldm traces when timer
+                        // expires
+                        throttleTraceTimer->restartOnce(5min);
+#endif
                     }
 #ifdef PLDM
                     pldmHandle->checkActiveSensor(obj->getOccInstanceID());
@@ -232,6 +239,14 @@ void Manager::checkAllActiveSensors()
         {
             discoverTimer->setEnabled(false);
         }
+#ifdef PLDM
+        if (throttleTraceTimer->isEnabled())
+        {
+            // Disable throttle timer and make sure traces are not throttled
+            throttleTraceTimer->setEnabled(false);
+            pldmHandle->setTraceThrottle(false);
+        }
+#endif
 
         if (waitingForAllOccActiveSensors)
         {
@@ -506,7 +521,9 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
                     "updateOCCActive: Waiting for Host and all OCC Active Sensors");
                 waitingForAllOccActiveSensors = true;
             }
+#ifdef POWER10
             discoverTimer->restartOnce(30s);
+#endif
             return false;
         }
         else
@@ -1325,6 +1342,17 @@ void Manager::occsNotAllRunning()
 
     validateOccMaster();
 }
+
+#ifdef PLDM
+// Called when throttleTraceTimer expires.
+// If this timer expires, that indicates there is still no confirmed OCC status
+//   which will trigger pldm traces to be throttled.
+void Manager::throttleTraceExpired()
+{
+    // Throttle traces
+    pldmHandle->setTraceThrottle(true);
+}
+#endif // PLDM
 #endif // POWER10
 
 // Verify single master OCC and start presence monitor

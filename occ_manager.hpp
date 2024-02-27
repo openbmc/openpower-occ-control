@@ -109,7 +109,14 @@ struct Manager
             std::make_unique<
                 sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
                 sdpEvent, std::bind(&Manager::occsNotAllRunning, this)))
+#ifdef PLDM
+        ,
+        throttleTraceTimer(
+            std::make_unique<
+                sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
+                sdpEvent, std::bind(&Manager::throttleTraceExpired, this)))
 #endif
+#endif // POWER10
     {
 #ifdef I2C_OCC
         // I2C OCC status objects are initialized directly
@@ -335,6 +342,22 @@ struct Manager
         sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>
         waitForAllOccsTimer;
 
+#ifdef PLDM
+    /**
+     * @brief Timer used to throttle PLDM traces when there are problems
+              determining the OCC status via pldm. Used to prevent excessive
+              journal traces.
+     */
+    std::unique_ptr<
+        sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>
+        throttleTraceTimer;
+
+    /** @brief Check if all of the OCC Active sensors are available and if not
+     * restart the discoverTimer
+     */
+    void throttleTraceExpired();
+#endif
+
     /** @brief Called when code times out waiting for all OCCs to be running or
      *         after the app is restarted (Status does not callback into
      * Manager).
@@ -345,7 +368,7 @@ struct Manager
      * restart the discoverTimer
      */
     void checkAllActiveSensors();
-#endif
+#endif // POWER10
 
     /**
      * @brief Called when poll timer expires and forces a POLL command to the

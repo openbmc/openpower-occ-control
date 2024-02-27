@@ -142,6 +142,12 @@ class Interface
      */
     void checkActiveSensor(uint8_t instance);
 
+    /** @brief Set the throttleTraces flag
+     *
+     * @param[in] throttle - Flag to indicate if traces should be throttled
+     */
+    void setTraceThrottle(const bool throttle);
+
   private:
     /** @brief MCTP instance number used in PLDM requests
      */
@@ -241,6 +247,11 @@ class Interface
     sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic> pldmRspTimer;
 
     std::set<uint8_t> outstandingHResets;
+
+    /** @brief Flag to indicate that traces should be throttled.
+               Used to limit traces when there are issues getting OCC status.
+     */
+    static bool throttleTraces;
 
     /** @brief Callback when PLDM response has not been received within the
      * timeout period.
