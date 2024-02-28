@@ -63,6 +63,23 @@ python_prog = find_program('python3', required: true)
 deps = []
 sources = []
 
+cereal_dep = dependency('cereal', required: false)
+has_cereal = cxx.has_header_symbol(
+    'cereal/cereal.hpp',
+    'cereal::specialize',
+    dependencies: cereal_dep,
+    required: false)
+if not has_cereal
+    cereal_opts = import('cmake').subproject_options()
+    cereal_opts.add_cmake_defines({'BUILD_TESTS': 'OFF'})
+    cereal_proj = import('cmake').subproject(
+        'cereal',
+        options: cereal_opts,
+        required: false)
+    assert(cereal_proj.found(), 'cereal is required')
+    cereal_dep = cereal_proj.dependency('cereal')
+endif
+
 nlohmann_json_dep = dependency('nlohmann_json', include_type: 'system')
 sdeventplus_dep = dependency(
     'sdeventplus',
@@ -87,6 +104,7 @@ phosphor_logging_dep = dependency(
 )
 
 deps += [
+    cereal_dep,
     nlohmann_json_dep,
     phosphor_dbus_interfaces_dep,
     phosphor_logging_dep,
