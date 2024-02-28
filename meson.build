@@ -111,11 +111,7 @@ sources += [
 ]
 
 if get_option('with-host-communication-protocol')=='pldm'
-    libpldm_dep = dependency(
-        'libpldm',
-        fallback: ['pldm', 'libpldm_dep'],
-        default_options: ['libpldm-only=enabled', 'oem-ibm=enabled'],
-    )
+    libpldm_dep = dependency('libpldm')
     deps += [
         libpldm_dep,
         cxx.find_library('pdbg'),
