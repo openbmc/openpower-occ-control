@@ -60,11 +60,6 @@ enum class SysPwrMode
     MAX_PERF = 0x0C         // Maximum Performance
 };
 
-static inline auto format_as(SysPwrMode spm)
-{
-    return std::to_underlying(spm);
-}
-
 // Only some of the SysPwrModes are currently supported and allowed to be set
 #define VALID_POWER_MODE_SETTING(mode)                                         \
     ((mode == SysPwrMode::STATIC) || (mode == SysPwrMode::POWER_SAVING) ||     \
@@ -95,11 +90,6 @@ enum class CmdStatus
     FAILURE = 0x02,
     COMM_FAILURE = 0x03
 };
-
-static inline auto format_as(CmdStatus cs)
-{
-    return std::to_underlying(cs);
-}
 
 /** @brief Trace block of data in hex with log<level:INFO>
  *
@@ -189,3 +179,21 @@ class OccCommand
 
 } // namespace occ
 } // namespace open_power
+
+template <>
+struct std::formatter<open_power::occ::SysPwrMode> : formatter<int>
+{
+    auto format(open_power::occ::SysPwrMode f, format_context& ctx) const
+    {
+        return formatter<int>::format(std::to_underlying(f), ctx);
+    }
+};
+
+template <>
+struct std::formatter<open_power::occ::CmdStatus> : formatter<int>
+{
+    auto format(open_power::occ::CmdStatus f, format_context& ctx) const
+    {
+        return formatter<int>::format(std::to_underlying(f), ctx);
+    }
+};
