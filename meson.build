@@ -81,27 +81,9 @@ if not has_cereal
 endif
 
 nlohmann_json_dep = dependency('nlohmann_json', include_type: 'system')
-sdeventplus_dep = dependency(
-    'sdeventplus',
-    fallback: [
-        'sdeventplus',
-        'sdeventplus_dep'
-    ],
-)
-phosphor_dbus_interfaces_dep = dependency(
-    'phosphor-dbus-interfaces',
-    fallback: [
-        'phosphor-dbus-interfaces',
-        'phosphor_dbus_interfaces_dep'
-    ],
-)
-phosphor_logging_dep = dependency(
-    'phosphor-logging',
-    fallback: [
-        'phosphor-logging',
-        'phosphor_logging_dep'
-    ],
-)
+phosphor_dbus_interfaces_dep = dependency('phosphor-dbus-interfaces')
+phosphor_logging_dep = dependency('phosphor-logging')
+sdeventplus_dep = dependency('sdeventplus')
 
 deps += [
     cereal_dep,
