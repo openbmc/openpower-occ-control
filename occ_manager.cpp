@@ -207,7 +207,9 @@ void Manager::checkAllActiveSensors()
                                 .c_str());
                         tracedSensorWait = true;
                     }
+#ifdef PLDM
                     pldmHandle->checkActiveSensor(obj->getOccInstanceID());
+#endif
                     break;
                 }
             }
@@ -1352,7 +1354,9 @@ void Manager::validateOccMaster()
                 else
                 {
                     // OCC does not appear to be active yet, check active sensor
+#ifdef PLDM
                     pldmHandle->checkActiveSensor(instance);
+#endif
                     if (obj->occActive())
                     {
                         log<level::INFO>(
