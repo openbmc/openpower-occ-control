@@ -25,7 +25,12 @@ class ErrorFiles : public ::testing::Test
   public:
     ErrorFiles() :
         rc(sd_event_default(&event)), pEvent(event), manager(pEvent),
-        status(pEvent, "/dummy1", manager)
+        status(pEvent, "/dummy1", manager
+#ifdef POWER10
+               ,
+               powerMode
+#endif
+        )
     {
         EXPECT_GE(rc, 0);
         event = nullptr;
@@ -75,6 +80,9 @@ class ErrorFiles : public ::testing::Test
     sd_event* event;
     int rc;
     open_power::occ::EventPtr pEvent;
+#ifdef POWER10
+    std::unique_ptr<powermode::PowerMode> powerMode = nullptr;
+#endif
 
     Manager manager;
     Status status;
@@ -86,7 +94,12 @@ class ErrorFiles : public ::testing::Test
 
 TEST_F(ErrorFiles, AddDeviceErrorWatch)
 {
-    Device occDevice(pEvent, devicePath, manager, status);
+    Device occDevice(pEvent, devicePath, manager, status
+#ifdef POWER10
+                     ,
+                     powerMode
+#endif
+    );
 
     occDevice.addErrorWatch(false);
     occDevice.removeErrorWatch();
@@ -94,7 +107,12 @@ TEST_F(ErrorFiles, AddDeviceErrorWatch)
 
 TEST_F(ErrorFiles, AddLegacyDeviceErrorWatch)
 {
-    Device legacyOccDevice(pEvent, legacyDevicePath, manager, status);
+    Device legacyOccDevice(pEvent, legacyDevicePath, manager, status
+#ifdef POWER10
+                           ,
+                           powerMode
+#endif
+    );
 
     legacyOccDevice.addErrorWatch(false);
     legacyOccDevice.removeErrorWatch();
