@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a5147524_e8226983",
+        "filename": "occ_manager.hpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2024-02-29T14:37:10Z",
+      "side": 1,
+      "message": "I wonder if it\u0027s safe to to just combine all the pldm and p10 ifdefs down into one now? (not in this commit of course)",
+      "revId": "755af1029964f7706d52c4b473aa16f1c03995f6",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
