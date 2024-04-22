@@ -4,6 +4,7 @@
 
 #include "i2c_occ.hpp"
 #include "occ_dbus.hpp"
+#include "occ_errors.hpp"
 #include "utils.hpp"
 
 #include <phosphor-logging/elog-errors.hpp>
@@ -1351,6 +1352,56 @@ void Manager::throttleTraceExpired()
 {
     // Throttle traces
     pldmHandle->setTraceThrottle(true);
+    // Create PEL
+    createPldmSensorPEL();
+}
+
+void Manager::createPldmSensorPEL()
+{
+    Error::Descriptor d = Error::Descriptor(MISSING_OCC_SENSORS_PATH);
+    std::map<std::string, std::string> additionalData;
+
+    additionalData.emplace("_PID", std::to_string(getpid()));
+
+    log<level::INFO>(
+        std::format(
+            "createPldmSensorPEL(): Unable to find PLDM sensors for the OCCs")
+            .c_str());
+
+    auto& bus = utils::getBus();
+
+    try
+    {
+        FFDCFiles ffdc;
+        // Add occ-control journal traces to PEL FFDC
+        auto occJournalFile =
+            FFDC::addJournalEntries(ffdc, "openpower-occ-control", 40);
+
+        static constexpr auto loggingObjectPath =
+            "/xyz/openbmc_project/logging";
+        static constexpr auto opLoggingInterface = "org.open_power.Logging.PEL";
+        std::string service = utils::getService(loggingObjectPath,
+                                                opLoggingInterface);
+        auto method = bus.new_method_call(service.c_str(), loggingObjectPath,
+                                          opLoggingInterface,
+                                          "CreatePELWithFFDCFiles");
+
+        // Set level to Notice (Informational).
+        auto level =
+            sdbusplus::xyz::openbmc_project::Logging::server::convertForMessage(
+                sdbusplus::xyz::openbmc_project::Logging::server::Entry::Level::
+                    Notice);
+
+        method.append(d.path, level, additionalData, ffdc);
+        bus.call(method);
+    }
+    catch (const sdbusplus::exception_t& e)
+    {
+        log<level::ERR>(
+            std::format("Failed to create MISSING_OCC_SENSORS PEL: {}",
+                        e.what())
+                .c_str());
+    }
 }
 #endif // PLDM
 #endif // POWER10

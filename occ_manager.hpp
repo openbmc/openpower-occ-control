@@ -356,6 +356,11 @@ struct Manager
      * restart the discoverTimer
      */
     void throttleTraceExpired();
+
+    /** @brief Create a PEL when the code is not able to obtain the OCC PDRs
+     * via PLDM. This is called when the throttleTraceTimer expires.
+     */
+    void createPldmSensorPEL();
 #endif
 
     /** @brief Called when code times out waiting for all OCCs to be running or
