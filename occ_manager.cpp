@@ -1386,11 +1386,11 @@ void Manager::createPldmSensorPEL()
                                           opLoggingInterface,
                                           "CreatePELWithFFDCFiles");
 
-        // Set level to Notice (Informational).
+        // Set level to Warning (Predictive).
         auto level =
             sdbusplus::xyz::openbmc_project::Logging::server::convertForMessage(
                 sdbusplus::xyz::openbmc_project::Logging::server::Entry::Level::
-                    Notice);
+                    Warning);
 
         method.append(d.path, level, additionalData, ffdc);
         bus.call(method);
