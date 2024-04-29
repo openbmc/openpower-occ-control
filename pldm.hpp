@@ -59,9 +59,8 @@ class Interface
         std::function<bool(open_power::occ::instanceID, bool)> callBack,
         std::function<void(open_power::occ::instanceID, bool)> sbeCallBack,
         std::function<void(bool)> safeModeCallBack, EventPtr& event) :
-        callBack(callBack),
-        sbeCallBack(sbeCallBack), safeModeCallBack(safeModeCallBack),
-        event(event),
+        callBack(callBack), sbeCallBack(sbeCallBack),
+        safeModeCallBack(safeModeCallBack), event(event),
         pldmEventSignal(
             open_power::occ::utils::getBus(),
             MatchRules::type::signal() +

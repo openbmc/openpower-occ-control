@@ -41,8 +41,7 @@ class Error
      */
     Error(EventPtr& event, const fs::path& file,
           std::function<void(int)> callBack = nullptr) :
-        event(event),
-        file(file), callBack(callBack)
+        event(event), file(file), callBack(callBack)
     {
         // Nothing to do here.
     }
@@ -76,8 +75,7 @@ class Error
          */
         Descriptor(const char* path, int err = 0,
                    const char* callout = nullptr) :
-            log(true),
-            err(err), callout(callout), path(path)
+            log(true), err(err), callout(callout), path(path)
         {}
 
         bool log;

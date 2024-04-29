@@ -31,8 +31,7 @@ PassThrough::PassThrough(
     std::unique_ptr<open_power::occ::powermode::PowerMode>& powerModeRef
 #endif
     ) :
-    Iface(utils::getBus(), path),
-    path(path),
+    Iface(utils::getBus(), path), path(path),
 #ifdef POWER10
     pmode(powerModeRef),
 #endif
