@@ -146,6 +146,17 @@ void Manager::findAndCreateObjects()
                     tracedHostWait = true;
                 }
                 discoverTimer->restartOnce(30s);
+#ifdef PLDM
+                if (throttleTraceTimer->isEnabled())
+                {
+                    // Host is no longer running, disable throttle timer and
+                    // make sure traces are not throttled
+                    log<level::INFO>(
+                        "findAndCreateObjects(): disabling sensor timer");
+                    throttleTraceTimer->setEnabled(false);
+                    pldmHandle->setTraceThrottle(false);
+                }
+#endif
             }
         }
     }
@@ -230,6 +241,17 @@ void Manager::checkAllActiveSensors()
             waitingForHost = true;
             log<level::INFO>(
                 "checkAllActiveSensors(): Waiting for host to start");
+#ifdef PLDM
+            if (throttleTraceTimer->isEnabled())
+            {
+                // Host is no longer running, disable throttle timer and
+                // make sure traces are not throttled
+                log<level::INFO>(
+                    "checkAllActiveSensors(): disabling sensor timer");
+                throttleTraceTimer->setEnabled(false);
+                pldmHandle->setTraceThrottle(false);
+            }
+#endif
         }
     }
 
@@ -1350,10 +1372,20 @@ void Manager::occsNotAllRunning()
 //   which will trigger pldm traces to be throttled.
 void Manager::throttleTraceExpired()
 {
-    // Throttle traces
-    pldmHandle->setTraceThrottle(true);
-    // Create PEL
-    createPldmSensorPEL();
+    if (utils::isHostRunning())
+    {
+        // Throttle traces
+        pldmHandle->setTraceThrottle(true);
+        // Create PEL
+        createPldmSensorPEL();
+    }
+    else
+    {
+        // Make sure traces are not throttled
+        pldmHandle->setTraceThrottle(false);
+        log<level::INFO>(
+            "throttleTraceExpired(): host it not running ignoring sensor timer");
+    }
 }
 
 void Manager::createPldmSensorPEL()
