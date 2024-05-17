@@ -156,17 +156,7 @@ class OccPersistData
      *
      *  @returns true if mode was available
      */
-    bool getMode(SysPwrMode& mode, uint16_t& oemModeData) const
-    {
-        if (!modeData.modeInitialized)
-        {
-            return false;
-        }
-
-        mode = modeData.mode;
-        oemModeData = modeData.oemModeData;
-        return true;
-    }
+    bool getMode(SysPwrMode& mode, uint16_t& oemModeData);
 
     /** @brief Get the Idle Power Saver properties from DBus
      *
@@ -227,6 +217,24 @@ class OccPersistData
 
     /** @brief Loads the OEM mode data in the filesystem using cereal. */
     void load();
+
+    /** @brief Check if the given mode is valid and if so, return true
+     */
+    bool isValidMode(const SysPwrMode mode) const
+    {
+        if ((mode == SysPwrMode::STATIC) ||
+            (mode == SysPwrMode::NON_DETERMINISTIC) ||
+            (mode == SysPwrMode::SFP) || (mode == SysPwrMode::POWER_SAVING) ||
+            (mode == SysPwrMode::EFF_FAVOR_POWER) ||
+            (mode == SysPwrMode::EFF_FAVOR_PERF) ||
+            (mode == SysPwrMode::MAX_FREQ) ||
+            (mode == SysPwrMode::BALANCED_PERF) || (mode == SysPwrMode::FFO) ||
+            (mode == SysPwrMode::MAX_PERF))
+        {
+            return true;
+        }
+        return false;
+    }
 };
 
 /** @class PowerMode
@@ -283,7 +291,9 @@ class PowerMode : public ModeInterface, public IpsInterface
     {
         using Mode =
             sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
-        ModeInterface::allowedPowerModes({Mode::PowerMode::Static,
+        // Define the power modes that will be supported by the Redfish
+        // interface
+        ModeInterface::allowedPowerModes({Mode::PowerMode::EfficiencyFavorPower,
                                           Mode::PowerMode::MaximumPerformance,
                                           Mode::PowerMode::PowerSaving});
 
