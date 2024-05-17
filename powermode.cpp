@@ -741,6 +741,28 @@ void OccPersistData::load()
     // print();
 }
 
+// Return the persisted power mode and mode data, else return false
+bool OccPersistData::getMode(SysPwrMode& mode, uint16_t& oemModeData)
+{
+    if (modeData.modeInitialized)
+    {
+        mode = modeData.mode;
+        oemModeData = modeData.oemModeData;
+
+        if (!isValidMode(mode))
+        {
+            // Persisted mode is not supported
+            log<level::ERR>(
+                std::format("getMode: Persisted power mode is not valid: {}",
+                            mode)
+                    .c_str());
+            modeData.modeInitialized = false;
+            save();
+        }
+    }
+    return modeData.modeInitialized;
+}
+
 // Called when PowerModeProperties defaults are available on DBus
 void PowerMode::defaultsReady(sdbusplus::message_t& msg)
 {
@@ -787,11 +809,10 @@ bool PowerMode::getDefaultMode(SysPwrMode& defaultMode)
         defaultMode = powermode::convertStringToMode(fullModeString);
         if (!VALID_POWER_MODE_SETTING(defaultMode))
         {
-            log<level::ERR>(
-                std::format(
-                    "PowerMode::getDefaultMode: Invalid default power mode found: {}",
-                    defaultMode)
-                    .c_str());
+            log<level::ERR>(std::format("PowerMode::getDefaultMode: Invalid "
+                                        "default power mode found: {}",
+                                        defaultMode)
+                                .c_str());
             // If default was read but not valid, use Max Performance
             defaultMode = SysPwrMode::MAX_PERF;
             return true;
