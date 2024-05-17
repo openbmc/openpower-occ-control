@@ -158,14 +158,12 @@ class OccPersistData
      */
     bool getMode(SysPwrMode& mode, uint16_t& oemModeData) const
     {
-        if (!modeData.modeInitialized)
+        if (modeData.modeInitialized)
         {
-            return false;
+            mode = modeData.mode;
+            oemModeData = modeData.oemModeData;
         }
-
-        mode = modeData.mode;
-        oemModeData = modeData.oemModeData;
-        return true;
+        return modeData.modeInitialized;
     }
 
     /** @brief Get the Idle Power Saver properties from DBus
@@ -218,6 +216,12 @@ class OccPersistData
     /** @brief Trace the Power Mode and IPS parameters. */
     void print();
 
+    /** @brief Invalidate the persisted mode */
+    void invalidateMode()
+    {
+        modeData.modeInitialized = false;
+    }
+
   private:
     /** @brief Power Mode data filename to store persistent data */
     static constexpr auto powerModeFilename = "powerModeData";
@@ -251,50 +255,7 @@ class PowerMode : public ModeInterface, public IpsInterface
      * @param[in] ipsPath - Idle Power Saver dbus path
      */
     explicit PowerMode(const Manager& managerRef, const char* modePath,
-                       const char* ipsPath, EventPtr& event) :
-        ModeInterface(utils::getBus(), modePath,
-                      ModeInterface::action::emit_no_signals),
-        IpsInterface(utils::getBus(), ipsPath,
-                     IpsInterface::action::emit_no_signals),
-        manager(managerRef),
-        ipsMatch(utils::getBus(),
-                 sdbusplus::bus::match::rules::propertiesChanged(
-                     PIPS_PATH, PIPS_INTERFACE),
-                 [this](auto& msg) { this->ipsChanged(msg); }),
-        defaultsUpdateMatch(
-            utils::getBus(),
-            sdbusplus::bus::match::rules::propertiesChangedNamespace(
-                "/xyz/openbmc_project/inventory", PMODE_DEFAULT_INTERFACE),
-            [this](auto& msg) { this->defaultsReady(msg); }),
-        masterOccSet(false), masterActive(false), event(event)
-    {
-        // Get power mode support from entity manager
-        if (false == getSupportedModes())
-        {
-            // Did not find them so use default customer modes
-            using Mode =
-                sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
-            ModeInterface::allowedPowerModes(
-                {Mode::PowerMode::Static, Mode::PowerMode::MaximumPerformance,
-                 Mode::PowerMode::PowerSaving});
-        }
-
-        // restore Power Mode to DBus
-        SysPwrMode currentMode;
-        uint16_t oemModeData = 0;
-        if (getMode(currentMode, oemModeData))
-        {
-            updateDbusMode(currentMode);
-        }
-        // restore Idle Power Saver parameters to DBus
-        uint8_t enterUtil, exitUtil;
-        uint16_t enterTime, exitTime;
-        bool ipsEnabled;
-        if (getIPSParms(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime))
-        {
-            updateDbusIPS(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime);
-        }
-    };
+                       const char* ipsPath, EventPtr& event);
 
     /** @brief Initialize the persistent data with default values
      *
@@ -405,8 +366,8 @@ class PowerMode : public ModeInterface, public IpsInterface
         SysPwrMode::STATIC, SysPwrMode::POWER_SAVING, SysPwrMode::MAX_PERF};
 
     /** @brief List of OEM supported power modes **/
-    std::vector<SysPwrMode> oemModeList = {SysPwrMode::SFP, SysPwrMode::FFO,
-                                           SysPwrMode::MAX_FREQ};
+    std::set<SysPwrMode> oemModeList = {SysPwrMode::SFP, SysPwrMode::FFO,
+                                        SysPwrMode::MAX_FREQ};
 
     /** @brief IPS status data filename to read */
     const fs::path ipsStatusFile = std::filesystem::path{OCC_HWMON_PATH} /
