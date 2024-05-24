@@ -218,12 +218,12 @@ void Manager::checkAllActiveSensors()
                                 instance)
                                 .c_str());
                         tracedSensorWait = true;
-                        // Make sure traces are not throttled
 #ifdef PLDM
+                        // Make sure traces are not throttled
                         pldmHandle->setTraceThrottle(false);
                         // Start timer to throttle pldm traces when timer
                         // expires
-                        throttleTraceTimer->restartOnce(5min);
+                        throttleTraceTimer->restartOnce(40min);
 #endif
                     }
 #ifdef PLDM
@@ -1368,8 +1368,8 @@ void Manager::occsNotAllRunning()
 
 #ifdef PLDM
 // Called when throttleTraceTimer expires.
-// If this timer expires, that indicates there is still no confirmed OCC status
-//   which will trigger pldm traces to be throttled.
+// If this timer expires, that indicates there are no OCC active sensor PDRs
+// found which will trigger pldm traces to be throttled and PEL to be created
 void Manager::throttleTraceExpired()
 {
     if (utils::isHostRunning())
