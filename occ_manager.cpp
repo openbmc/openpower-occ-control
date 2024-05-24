@@ -56,6 +56,14 @@ T readFile(const std::string& path)
     return data;
 }
 
+// findAndCreateObjects():
+// Takes care of getting the required objects created and
+// finds the available devices/processors.
+// (function is called everytime the discoverTimer expires)
+// - create the PowerMode object to control OCC modes
+// - create statusObjects for each OCC device found
+// - waits for OCC Active sensors PDRs to become available
+// - restart discoverTimer if all data is not available yet
 void Manager::findAndCreateObjects()
 {
 #ifndef POWER10
@@ -147,13 +155,13 @@ void Manager::findAndCreateObjects()
                 }
                 discoverTimer->restartOnce(30s);
 #ifdef PLDM
-                if (throttleTraceTimer->isEnabled())
+                if (throttlePldmTraceTimer->isEnabled())
                 {
                     // Host is no longer running, disable throttle timer and
                     // make sure traces are not throttled
                     log<level::INFO>(
                         "findAndCreateObjects(): disabling sensor timer");
-                    throttleTraceTimer->setEnabled(false);
+                    throttlePldmTraceTimer->setEnabled(false);
                     pldmHandle->setTraceThrottle(false);
                 }
 #endif
@@ -219,11 +227,12 @@ void Manager::checkAllActiveSensors()
                                 .c_str());
                         tracedSensorWait = true;
 #ifdef PLDM
-                        // Make sure traces are not throttled
+                        // Make sure PLDM traces are not throttled
                         pldmHandle->setTraceThrottle(false);
-                        // Start timer to throttle pldm traces when timer
+                        // Start timer to throttle PLDM traces when timer
                         // expires
-                        throttleTraceTimer->restartOnce(40min);
+                        onPldmTimeoutCreatePel = false;
+                        throttlePldmTraceTimer->restartOnce(5min);
 #endif
                     }
 #ifdef PLDM
@@ -242,13 +251,13 @@ void Manager::checkAllActiveSensors()
             log<level::INFO>(
                 "checkAllActiveSensors(): Waiting for host to start");
 #ifdef PLDM
-            if (throttleTraceTimer->isEnabled())
+            if (throttlePldmTraceTimer->isEnabled())
             {
                 // Host is no longer running, disable throttle timer and
                 // make sure traces are not throttled
                 log<level::INFO>(
                     "checkAllActiveSensors(): disabling sensor timer");
-                throttleTraceTimer->setEnabled(false);
+                throttlePldmTraceTimer->setEnabled(false);
                 pldmHandle->setTraceThrottle(false);
             }
 #endif
@@ -262,14 +271,12 @@ void Manager::checkAllActiveSensors()
         {
             discoverTimer->setEnabled(false);
         }
-#ifdef PLDM
-        if (throttleTraceTimer->isEnabled())
+        if (throttlePldmTraceTimer->isEnabled())
         {
             // Disable throttle timer and make sure traces are not throttled
-            throttleTraceTimer->setEnabled(false);
+            throttlePldmTraceTimer->setEnabled(false);
             pldmHandle->setTraceThrottle(false);
         }
-#endif
 
         if (waitingForAllOccActiveSensors)
         {
@@ -1367,24 +1374,36 @@ void Manager::occsNotAllRunning()
 }
 
 #ifdef PLDM
-// Called when throttleTraceTimer expires.
+// Called when throttlePldmTraceTimer expires.
 // If this timer expires, that indicates there are no OCC active sensor PDRs
-// found which will trigger pldm traces to be throttled and PEL to be created
-void Manager::throttleTraceExpired()
+// found which will trigger pldm traces to be throttled.
+// The second time this timer expires, a PEL will get created.
+void Manager::throttlePldmTraceExpired()
 {
     if (utils::isHostRunning())
     {
-        // Throttle traces
-        pldmHandle->setTraceThrottle(true);
-        // Create PEL
-        createPldmSensorPEL();
+        if (!onPldmTimeoutCreatePel)
+        {
+            // Throttle traces
+            pldmHandle->setTraceThrottle(true);
+            // Restart timer to log a PEL when timer expires
+            onPldmTimeoutCreatePel = true;
+            throttlePldmTraceTimer->restartOnce(40min);
+        }
+        else
+        {
+            log<level::ERR>(
+                "throttlePldmTraceExpired(): OCC active sensors still not available!");
+            // Create PEL
+            createPldmSensorPEL();
+        }
     }
     else
     {
         // Make sure traces are not throttled
         pldmHandle->setTraceThrottle(false);
         log<level::INFO>(
-            "throttleTraceExpired(): host it not running ignoring sensor timer");
+            "throttlePldmTraceExpired(): host it not running ignoring sensor timer");
     }
 }
 
