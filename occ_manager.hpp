@@ -111,10 +111,10 @@ struct Manager
                 sdpEvent, std::bind(&Manager::occsNotAllRunning, this)))
 #ifdef PLDM
         ,
-        throttleTraceTimer(
+        throttlePldmTraceTimer(
             std::make_unique<
                 sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
-                sdpEvent, std::bind(&Manager::throttleTraceExpired, this)))
+                sdpEvent, std::bind(&Manager::throttlePldmTraceExpired, this)))
 #endif
 #endif // POWER10
     {
@@ -350,15 +350,23 @@ struct Manager
      */
     std::unique_ptr<
         sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>
-        throttleTraceTimer;
+        throttlePldmTraceTimer;
+    /**
+     * @brief onPldmTimeoutCreatePel flag will be used to indicate if
+     *        a PEL should get created when the throttlePldmTraceTimer expires.
+     *        The first time the throttlePldmTraceTimer expires, the traces
+     *        will be throttled and then the timer gets restarted. The
+     *        next time the timer expires, a PEL will get created.
+     */
+    bool onPldmTimeoutCreatePel = false;
 
     /** @brief Check if all of the OCC Active sensors are available and if not
      * restart the discoverTimer
      */
-    void throttleTraceExpired();
+    void throttlePldmTraceExpired();
 
     /** @brief Create a PEL when the code is not able to obtain the OCC PDRs
-     * via PLDM. This is called when the throttleTraceTimer expires.
+     * via PLDM. This is called when the throttlePldmTraceTimer expires.
      */
     void createPldmSensorPEL();
 #endif
