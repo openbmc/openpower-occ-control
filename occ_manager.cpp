@@ -638,13 +638,13 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
 
         try
         {
-            constexpr auto path = "/org/openpower/dump";
             constexpr auto interface = "xyz.openbmc_project.Dump.Create";
             constexpr auto function = "CreateDump";
 
-            std::string service = utils::getService(path, interface);
-            auto method = bus.new_method_call(service.c_str(), path, interface,
-                                              function);
+            std::string service = utils::getService(OP_DUMP_OBJ_PATH,
+                                                    interface);
+            auto method = bus.new_method_call(service.c_str(), OP_DUMP_OBJ_PATH,
+                                              interface, function);
 
             std::map<std::string, std::variant<std::string, uint64_t>>
                 createParams{

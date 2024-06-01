@@ -52,3 +52,10 @@ option(
     type : 'string',
     description : 'The path to the yaml config files'
 )
+
+option(
+    'op_dump_obj_path',
+    type: 'string',
+    value: '/org/openpower/dump',
+    description : 'Object path requesting OpenPOWER dumps'
+)
