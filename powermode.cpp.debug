@@ -32,6 +32,7 @@ using namespace sdbusplus::org::open_power::OCC::Device::Error;
 using Mode = sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
 
 using NotAllowed = sdbusplus::xyz::openbmc_project::Common::Error::NotAllowed;
+using Reason = xyz::openbmc_project::Common::NotAllowed::REASON;
 
 // Set the Master OCC
 void PowerMode::setMasterOcc(const std::string& masterOccPath)
@@ -63,6 +64,51 @@ void PowerMode::setMasterOcc(const std::string& masterOccPath)
     }
     masterOccSet = true;
 };
+
+// Called when DBus power mode gets changed
+void PowerMode::modeChanged(sdbusplus::message_t& msg)
+{
+    std::map<std::string, std::variant<std::string>> properties{};
+    std::string interface;
+    std::string propVal;
+    msg.read(interface, properties);
+    const auto modeEntry = properties.find(POWER_MODE_PROP);
+    if (modeEntry != properties.end())
+    {
+        auto modeEntryValue = modeEntry->second;
+        propVal = std::get<std::string>(modeEntryValue);
+        SysPwrMode newMode = convertStringToMode(propVal);
+
+        // If mode set was requested via direct dbus property change then we
+        // need to see if mode set is locked and ignore the request. We should
+        // not get to this path since the property change method should also be
+        // checking the mode lock status.
+        if (persistedData.getModeLock())
+        {
+            // Fix up the mode property since we are going to ignore this
+            // set mode request.
+            log<level::ERR>(
+                "PowerMode::modeChanged: mode property changed while locked");
+            SysPwrMode currentMode;
+            uint16_t oemModeData;
+            getMode(currentMode, oemModeData);
+            updateDbusMode(currentMode);
+            return;
+        }
+
+        if (newMode != SysPwrMode::NO_CHANGE)
+        {
+            // Update persisted data with new mode
+            persistedData.updateMode(newMode, 0);
+
+            log<level::INFO>(
+                std::format("DBus Power Mode Changed: {}", propVal).c_str());
+
+            // Send mode change to OCC
+            sendModeChange();
+        }
+    }
+}
 
 // Set the state of power mode lock. Writing persistent data via dbus method.
 bool PowerMode::powerModeLock()
@@ -110,49 +156,50 @@ bool PowerMode::setMode(const SysPwrMode newMode, const uint16_t oemModeData)
     return true;
 }
 
-// Convert PowerMode value to occ-control internal SysPwrMode
-// Returns SysPwrMode::NO_CHANGE if mode not valid
-SysPwrMode getInternalMode(const Mode::PowerMode& mode)
-{
-    if (mode == Mode::PowerMode::MaximumPerformance)
-    {
-        return SysPwrMode::MAX_PERF;
-    }
-    else if (mode == Mode::PowerMode::PowerSaving)
-    {
-        return SysPwrMode::POWER_SAVING;
-    }
-    else if (mode == Mode::PowerMode::Static)
-    {
-        return SysPwrMode::STATIC;
-    }
-    else if (mode == Mode::PowerMode::EfficiencyFavorPower)
-    {
-        return SysPwrMode::EFF_FAVOR_POWER;
-    }
-    else if (mode == Mode::PowerMode::EfficiencyFavorPerformance)
-    {
-        return SysPwrMode::EFF_FAVOR_PERF;
-    }
-    else if (mode == Mode::PowerMode::BalancedPerformance)
-    {
-        return SysPwrMode::BALANCED_PERF;
-    }
-
-    log<level::WARNING>("getInternalMode: Invalid PowerMode specified");
-    return SysPwrMode::NO_CHANGE;
-}
-
 // Convert PowerMode string to OCC SysPwrMode
 // Returns NO_CHANGE if OEM or unsupported mode
 SysPwrMode convertStringToMode(const std::string& i_modeString)
 {
-    SysPwrMode newMode = SysPwrMode::NO_CHANGE;
+    SysPwrMode pmode = SysPwrMode::NO_CHANGE;
+
     try
     {
-        Mode::PowerMode newPMode =
-            Mode::convertPowerModeFromString(i_modeString);
-        newMode = getInternalMode(newPMode);
+        Mode::PowerMode mode = Mode::convertPowerModeFromString(i_modeString);
+        if (mode == Mode::PowerMode::MaximumPerformance)
+        {
+            pmode = SysPwrMode::MAX_PERF;
+        }
+        else if (mode == Mode::PowerMode::PowerSaving)
+        {
+            pmode = SysPwrMode::POWER_SAVING;
+        }
+        else if (mode == Mode::PowerMode::Static)
+        {
+            pmode = SysPwrMode::STATIC;
+        }
+        else if (mode == Mode::PowerMode::EfficiencyFavorPower)
+        {
+            pmode = SysPwrMode::EFF_FAVOR_POWER;
+        }
+        else if (mode == Mode::PowerMode::EfficiencyFavorPerformance)
+        {
+            pmode = SysPwrMode::EFF_FAVOR_PERF;
+        }
+        else if (mode == Mode::PowerMode::BalancedPerformance)
+        {
+            pmode = SysPwrMode::BALANCED_PERF;
+        }
+        else
+        {
+            if (mode != Mode::PowerMode::OEM)
+            {
+                log<level::ERR>(
+                    std::format(
+                        "convertStringToMode: Invalid Power Mode enum specified: {}",
+                        i_modeString)
+                        .c_str());
+            }
+        }
     }
     catch (const std::exception& e)
     {
@@ -166,19 +213,19 @@ SysPwrMode convertStringToMode(const std::string& i_modeString)
         }
         if (shortMode == "FFO")
         {
-            newMode = SysPwrMode::FFO;
+            pmode = SysPwrMode::FFO;
         }
         else if (shortMode == "SFP")
         {
-            newMode = SysPwrMode::SFP;
+            pmode = SysPwrMode::SFP;
         }
         else if (shortMode == "MaxFrequency")
         {
-            newMode = SysPwrMode::MAX_FREQ;
+            pmode = SysPwrMode::MAX_FREQ;
         }
         else if (shortMode == "NonDeterministic")
         {
-            newMode = SysPwrMode::NON_DETERMINISTIC;
+            pmode = SysPwrMode::NON_DETERMINISTIC;
         }
         else
         {
@@ -188,7 +235,7 @@ SysPwrMode convertStringToMode(const std::string& i_modeString)
                     .c_str());
         }
     }
-    return newMode;
+    return pmode;
 }
 
 // Check if Hypervisor target is PowerVM
@@ -932,6 +979,8 @@ bool PowerMode::useDefaultIPSParms()
     return updateDbusIPS(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime);
 }
 
+#ifdef POWER10
+
 // Starts to watch for IPS active state changes.
 bool PowerMode::openIpsFile()
 {
@@ -1125,43 +1174,16 @@ Mode::PowerMode PowerMode::powerMode(Mode::PowerMode value)
         log<level::INFO>("PowerMode::powerMode: mode property change blocked");
         elog<NotAllowed>(xyz::openbmc_project::Common::NotAllowed::REASON(
             "mode change not allowed due to lock"));
+        return value;
     }
     else
     {
-        // Verify requested mode is allowed
-
-        // Convert PowerMode to internal SysPwrMode
-        SysPwrMode newMode = getInternalMode(value);
-        if (newMode != SysPwrMode::NO_CHANGE)
-        {
-            // Validate it is an allowed customer mode
-            if (!customerModeList.contains(newMode))
-            {
-                // Not Allowed
-                log<level::ERR>(
-                    "PowerMode change not allowed. Value must be in AllowedPowerModes");
-                elog<NotAllowed>(
-                    xyz::openbmc_project::Common::NotAllowed::REASON(
-                        "PowerMode value not allowed"));
-            }
-        }
-        else
-        {
-            // Value is not valid
-            using InvalidArgument =
-                sdbusplus::xyz::openbmc_project::Common::Error::InvalidArgument;
-            using Argument = xyz::openbmc_project::Common::InvalidArgument;
-            log<level::ERR>(
-                "PowerMode not valid. Value must be one of the AllowedPowerModes");
-            elog<InvalidArgument>(Argument::ARGUMENT_NAME("PowerMode"),
-                                  Argument::ARGUMENT_VALUE("INVALID MODE"));
-        }
+        return Mode::powerMode(value);
     }
-    return Mode::powerMode(value);
 }
+#endif
 
-/*  Set dbus property to SAFE mode(true) or clear(false) only if different
- */
+/*  Set dbus property to SAFE mode(true) or clear(false) only if different */
 void PowerMode::updateDbusSafeMode(const bool safeModeReq)
 {
     log<level::DEBUG>(
@@ -1212,6 +1234,11 @@ bool PowerMode::getSupportedModes()
                                      ecoModeSupport)
                              .c_str());
     }
+    else
+    {
+        // DEBUG
+        log<level::INFO>("getSupportedModes(): could not find EcoModeSupport");
+    }
 
     // Determine what customer modes are supported
     using PMode = sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
@@ -1220,6 +1247,10 @@ bool PowerMode::getSupportedModes()
     if (custList != powerModeProperties.end())
     {
         auto modeList = std::get<std::vector<std::string>>(custList->second);
+        log<level::INFO>(
+            std::format("getSupportedModes(): found {} customer modes",
+                        modeList.size())
+                .c_str());
         for (auto mode : modeList)
         {
             // Ensure mode is valid
@@ -1243,7 +1274,13 @@ bool PowerMode::getSupportedModes()
                     PMode::convertStringToPowerMode(fullModeString);
                 if (cMode)
                     modesToAllow.insert(cMode.value());
-                customerModeList.insert(modeValue);
+                customerModeList.push_back(modeValue);
+                // DEBUG
+                log<level::INFO>(
+                    std::format(
+                        "getSupportedModes(): adding customer mode {} ({})",
+                        modeValue, mode)
+                        .c_str());
             }
             else
             {
@@ -1254,6 +1291,11 @@ bool PowerMode::getSupportedModes()
                         .c_str());
             }
         }
+    }
+    else
+    {
+        // DEBUG
+        log<level::INFO>("getSupportedModes(): could not find CustomerModes");
     }
     if (foundCustomerMode)
     {
@@ -1266,6 +1308,9 @@ bool PowerMode::getSupportedModes()
     {
         bool foundValidMode = false;
         auto OmodeList = std::get<std::vector<std::string>>(oemList->second);
+        log<level::INFO>(std::format("getSupportedModes(): found {} oem modes",
+                                     OmodeList.size())
+                             .c_str());
         for (auto mode : OmodeList)
         {
             // Ensure mode is valid
@@ -1284,6 +1329,11 @@ bool PowerMode::getSupportedModes()
                 }
                 // Add mode to list
                 oemModeList.push_back(modeValue);
+                // DEBUG
+                log<level::INFO>(
+                    std::format("getSupportedModes(): adding OEM mode {} ({})",
+                                modeValue, mode)
+                        .c_str());
             }
             else
             {
@@ -1294,6 +1344,11 @@ bool PowerMode::getSupportedModes()
                         .c_str());
             }
         }
+    }
+    else
+    {
+        // DEBUG
+        log<level::INFO>("getSupportedModes(): could not find OemModes");
     }
 
     return foundCustomerMode;
