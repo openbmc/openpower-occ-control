@@ -251,21 +251,12 @@ class PowerMode : public ModeInterface, public IpsInterface
      * @param[in] ipsPath - Idle Power Saver dbus path
      */
     explicit PowerMode(const Manager& managerRef, const char* modePath,
-                       const char* ipsPath
-#ifdef POWER10
-                       ,
-                       EventPtr& event
-#endif
-                       ) :
+                       const char* ipsPath, EventPtr& event) :
         ModeInterface(utils::getBus(), modePath,
                       ModeInterface::action::emit_no_signals),
         IpsInterface(utils::getBus(), ipsPath,
                      IpsInterface::action::emit_no_signals),
         manager(managerRef),
-        pmodeMatch(utils::getBus(),
-                   sdbusplus::bus::match::rules::propertiesChanged(
-                       PMODE_PATH, PMODE_INTERFACE),
-                   [this](auto& msg) { this->modeChanged(msg); }),
         ipsMatch(utils::getBus(),
                  sdbusplus::bus::match::rules::propertiesChanged(
                      PIPS_PATH, PIPS_INTERFACE),
@@ -275,17 +266,18 @@ class PowerMode : public ModeInterface, public IpsInterface
             sdbusplus::bus::match::rules::propertiesChangedNamespace(
                 "/xyz/openbmc_project/inventory", PMODE_DEFAULT_INTERFACE),
             [this](auto& msg) { this->defaultsReady(msg); }),
-        masterOccSet(false), masterActive(false)
-#ifdef POWER10
-        ,
-        event(event)
-#endif
+        masterOccSet(false), masterActive(false), event(event)
     {
-        using Mode =
-            sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
-        ModeInterface::allowedPowerModes({Mode::PowerMode::Static,
-                                          Mode::PowerMode::MaximumPerformance,
-                                          Mode::PowerMode::PowerSaving});
+        // Get power mode support from entity manager
+        if (false == getSupportedModes())
+        {
+            // Did not find them so use default customer modes
+            using Mode =
+                sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
+            ModeInterface::allowedPowerModes(
+                {Mode::PowerMode::Static, Mode::PowerMode::MaximumPerformance,
+                 Mode::PowerMode::PowerSaving});
+        }
 
         // restore Power Mode to DBus
         SysPwrMode currentMode;
@@ -357,7 +349,6 @@ class PowerMode : public ModeInterface, public IpsInterface
         masterActive = isActive;
     };
 
-#ifdef POWER10
     /** @brief Starts to monitor for IPS active state change conditions
      *
      *  @param[in] poll - Indicates whether or not the IPS state file should
@@ -367,7 +358,6 @@ class PowerMode : public ModeInterface, public IpsInterface
 
     /** @brief Removes IPS active watch */
     void removeIpsWatch();
-#endif
 
     /** @brief Set dbus property to SAFE Mode(true) or clear SAFE Mode(false)*/
     void updateDbusSafeMode(const bool safeMode);
@@ -393,9 +383,6 @@ class PowerMode : public ModeInterface, public IpsInterface
     /** @brief Object to send commands to the OCC */
     std::unique_ptr<open_power::occ::OccCommand> occCmd;
 
-    /** @brief Used to subscribe to dbus pmode property changes **/
-    sdbusplus::bus::match_t pmodeMatch;
-
     /** @brief Used to subscribe to dbus IPS property changes **/
     sdbusplus::bus::match_t ipsMatch;
 
@@ -404,13 +391,23 @@ class PowerMode : public ModeInterface, public IpsInterface
 
     OccPersistData persistedData;
 
-    /** @brief True when the master OCC has been established */
+    /** @brief True when the master OCC has been established **/
     bool masterOccSet;
 
-    /** @brief True when the master OCC is active */
+    /** @brief True when the master OCC is active **/
     bool masterActive;
 
-#ifdef POWER10
+    /** @brief True when the ecoModes are supported for this system **/
+    bool ecoModeSupport = false;
+
+    /** @brief List of customer supported power modes **/
+    std::set<SysPwrMode> customerModeList = {
+        SysPwrMode::STATIC, SysPwrMode::POWER_SAVING, SysPwrMode::MAX_PERF};
+
+    /** @brief List of OEM supported power modes **/
+    std::vector<SysPwrMode> oemModeList = {SysPwrMode::SFP, SysPwrMode::FFO,
+                                           SysPwrMode::MAX_FREQ};
+
     /** @brief IPS status data filename to read */
     const fs::path ipsStatusFile = std::filesystem::path{OCC_HWMON_PATH} /
                                    std::filesystem::path{OCC_MASTER_NAME} /
@@ -421,16 +418,6 @@ class PowerMode : public ModeInterface, public IpsInterface
 
     /** @brief register for the callback from the POLL IPS changed event */
     void registerIpsStatusCallBack();
-#endif
-
-    /** @brief Callback for pmode setting changes
-     *
-     * Process change and inform OCC
-     *
-     * @param[in]  msg       - Data associated with pmode change signal
-     *
-     */
-    void modeChanged(sdbusplus::message_t& msg);
 
     /** @brief Get the current power mode property
      *
@@ -520,7 +507,12 @@ class PowerMode : public ModeInterface, public IpsInterface
      */
     bool useDefaultIPSParms();
 
-#ifdef POWER10
+    /** @brief Read the supported power modes
+     *
+     * @return true if data was valid
+     */
+    bool getSupportedModes();
+
     /** @brief callback for the POLL IPS changed event
      *
      *  @param[in] es       - Populated event source
@@ -546,7 +538,6 @@ class PowerMode : public ModeInterface, public IpsInterface
   protected:
     /** @brief File descriptor to watch for errors */
     int fd = -1;
-#endif
 };
 
 } // namespace powermode
