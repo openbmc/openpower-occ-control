@@ -3,9 +3,9 @@
 #include "file.hpp"
 
 #include <libpldm/entity.h>
+#include <libpldm/oem/ibm/state_set.h>
 #include <libpldm/platform.h>
 #include <libpldm/state_set.h>
-#include <libpldm/state_set_oem_ibm.h>
 
 #include <phosphor-logging/log.hpp>
 #include <sdbusplus/bus.hpp>
