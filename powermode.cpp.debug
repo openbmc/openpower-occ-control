@@ -1234,6 +1234,11 @@ bool PowerMode::getSupportedModes()
                                      ecoModeSupport)
                              .c_str());
     }
+    else
+    {
+        // DEBUG
+        log<level::INFO>("getSupportedModes(): could not find EcoModeSupport");
+    }
 
     // Determine what customer modes are supported
     using PMode = sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
@@ -1242,6 +1247,10 @@ bool PowerMode::getSupportedModes()
     if (custList != powerModeProperties.end())
     {
         auto modeList = std::get<std::vector<std::string>>(custList->second);
+        log<level::INFO>(
+            std::format("getSupportedModes(): found {} customer modes",
+                        modeList.size())
+                .c_str());
         for (auto mode : modeList)
         {
             // Ensure mode is valid
@@ -1266,6 +1275,12 @@ bool PowerMode::getSupportedModes()
                 if (cMode)
                     modesToAllow.insert(cMode.value());
                 customerModeList.push_back(modeValue);
+                // DEBUG
+                log<level::INFO>(
+                    std::format(
+                        "getSupportedModes(): adding customer mode {} ({})",
+                        modeValue, mode)
+                        .c_str());
             }
             else
             {
@@ -1276,6 +1291,11 @@ bool PowerMode::getSupportedModes()
                         .c_str());
             }
         }
+    }
+    else
+    {
+        // DEBUG
+        log<level::INFO>("getSupportedModes(): could not find CustomerModes");
     }
     if (foundCustomerMode)
     {
@@ -1288,6 +1308,9 @@ bool PowerMode::getSupportedModes()
     {
         bool foundValidMode = false;
         auto OmodeList = std::get<std::vector<std::string>>(oemList->second);
+        log<level::INFO>(std::format("getSupportedModes(): found {} oem modes",
+                                     OmodeList.size())
+                             .c_str());
         for (auto mode : OmodeList)
         {
             // Ensure mode is valid
@@ -1306,6 +1329,11 @@ bool PowerMode::getSupportedModes()
                 }
                 // Add mode to list
                 oemModeList.push_back(modeValue);
+                // DEBUG
+                log<level::INFO>(
+                    std::format("getSupportedModes(): adding OEM mode {} ({})",
+                                modeValue, mode)
+                        .c_str());
             }
             else
             {
@@ -1316,6 +1344,11 @@ bool PowerMode::getSupportedModes()
                         .c_str());
             }
         }
+    }
+    else
+    {
+        // DEBUG
+        log<level::INFO>("getSupportedModes(): could not find OemModes");
     }
 
     return foundCustomerMode;

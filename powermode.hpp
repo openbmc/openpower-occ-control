@@ -281,11 +281,16 @@ class PowerMode : public ModeInterface, public IpsInterface
         event(event)
 #endif
     {
-        using Mode =
-            sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
-        ModeInterface::allowedPowerModes({Mode::PowerMode::Static,
-                                          Mode::PowerMode::MaximumPerformance,
-                                          Mode::PowerMode::PowerSaving});
+        // Get power mode support from entity manager
+        if (false == getSupportedModes())
+        {
+            // Did not find them so use default customer modes
+            using Mode =
+                sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
+            ModeInterface::allowedPowerModes(
+                {Mode::PowerMode::Static, Mode::PowerMode::MaximumPerformance,
+                 Mode::PowerMode::PowerSaving});
+        }
 
         // restore Power Mode to DBus
         SysPwrMode currentMode;
@@ -404,11 +409,22 @@ class PowerMode : public ModeInterface, public IpsInterface
 
     OccPersistData persistedData;
 
-    /** @brief True when the master OCC has been established */
+    /** @brief True when the master OCC has been established **/
     bool masterOccSet;
 
-    /** @brief True when the master OCC is active */
+    /** @brief True when the master OCC is active **/
     bool masterActive;
+
+    /** @brief True when the ecoModes are supported for this system **/
+    bool ecoModeSupport = false;
+
+    /** @brief List of customer supported power modes **/
+    std::vector<SysPwrMode> customerModeList = {
+        SysPwrMode::STATIC, SysPwrMode::POWER_SAVING, SysPwrMode::MAX_PERF};
+
+    /** @brief List of OEM supported power modes **/
+    std::vector<SysPwrMode> oemModeList = {SysPwrMode::SFP, SysPwrMode::FFO,
+                                           SysPwrMode::MAX_FREQ};
 
 #ifdef POWER10
     /** @brief IPS status data filename to read */
@@ -519,6 +535,12 @@ class PowerMode : public ModeInterface, public IpsInterface
      * @return true if restore was successful
      */
     bool useDefaultIPSParms();
+
+    /** @brief Read the supported power modes
+     *
+     * @return true if data was valid
+     */
+    bool getSupportedModes();
 
 #ifdef POWER10
     /** @brief callback for the POLL IPS changed event
