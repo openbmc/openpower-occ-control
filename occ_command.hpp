@@ -60,17 +60,6 @@ enum class SysPwrMode
     MAX_PERF = 0x0C         // Maximum Performance
 };
 
-// Only some of the SysPwrModes are currently supported and allowed to be set
-#define VALID_POWER_MODE_SETTING(mode)                                         \
-    ((mode == SysPwrMode::STATIC) || (mode == SysPwrMode::POWER_SAVING) ||     \
-     (mode == SysPwrMode::BALANCED_PERF) || (mode == SysPwrMode::MAX_PERF) ||  \
-     (mode == SysPwrMode::EFF_FAVOR_POWER) ||                                  \
-     (mode == SysPwrMode::EFF_FAVOR_PERF))
-#define VALID_OEM_POWER_MODE_SETTING(mode)                                     \
-    ((mode == SysPwrMode::SFP) || (mode == SysPwrMode::FFO) ||                 \
-     (mode == SysPwrMode::MAX_FREQ) ||                                         \
-     (mode == SysPwrMode::NON_DETERMINISTIC))
-
 enum class RspStatus
 {
     SUCCESS = 0x00,

@@ -121,8 +121,13 @@ bool PassThrough::setMode(const uint8_t mode, const uint16_t modeData)
 #ifdef POWER10
     SysPwrMode newMode = SysPwrMode(mode);
 
-    if ((!VALID_POWER_MODE_SETTING(newMode)) &&
-        (!VALID_OEM_POWER_MODE_SETTING(newMode)))
+    if (!pmode)
+    {
+        log<level::ERR>("PassThrough::setMode: PowerMode is not defined!");
+        return false;
+    }
+
+    if (!pmode->isValidMode(SysPwrMode(mode)))
     {
         log<level::ERR>(
             std::format(
@@ -140,12 +145,6 @@ bool PassThrough::setMode(const uint8_t mode, const uint16_t modeData)
                 "PassThrough::setMode() Mode {} requires non-zero frequency point.",
                 newMode)
                 .c_str());
-        return false;
-    }
-
-    if (!pmode)
-    {
-        log<level::ERR>("PassThrough::setMode: PowerMode is not defined!");
         return false;
     }
 
