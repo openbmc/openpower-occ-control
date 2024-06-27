@@ -1,0 +1,107 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2820549c_5c5e86ad",
+        "filename": "pldm.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 526,
+      "author": {
+        "id": 1000000
+      },
+      "writtenOn": "2024-06-27T20:54:42Z",
+      "side": 1,
+      "message": "There is a type in libpldm for this rather than uint8_t.",
+      "range": {
+        "startLine": 526,
+        "startChar": 4,
+        "endLine": 526,
+        "endChar": 11
+      },
+      "revId": "8b2a4fc584228d7ff63b713d105d9a01a83760ef",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "96ac1d9c_69cd97c0",
+        "filename": "pldm.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 534,
+      "author": {
+        "id": 1000000
+      },
+      "writtenOn": "2024-06-27T20:54:42Z",
+      "side": 1,
+      "message": "Do we need any kind of pause here?",
+      "range": {
+        "startLine": 531,
+        "startChar": 0,
+        "endLine": 534,
+        "endChar": 9
+      },
+      "revId": "8b2a4fc584228d7ff63b713d105d9a01a83760ef",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4c3d4783_3eb4b518",
+        "filename": "pldm.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 573,
+      "author": {
+        "id": 1000000
+      },
+      "writtenOn": "2024-06-27T20:54:42Z",
+      "side": 1,
+      "message": "Why the \"or\" comment?",
+      "revId": "8b2a4fc584228d7ff63b713d105d9a01a83760ef",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8c0a389d_6c3f68e3",
+        "filename": "pldm.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 672,
+      "author": {
+        "id": 1000000
+      },
+      "writtenOn": "2024-06-27T20:54:42Z",
+      "side": 1,
+      "message": "Have you figured this out?",
+      "range": {
+        "startLine": 672,
+        "startChar": 34,
+        "endLine": 672,
+        "endChar": 47
+      },
+      "revId": "8b2a4fc584228d7ff63b713d105d9a01a83760ef",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a2fc030b_b3993b86",
+        "filename": "pldm.hpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1000000
+      },
+      "writtenOn": "2024-06-27T20:54:42Z",
+      "side": 1,
+      "message": "Should we remove this comment?  It is initialized in the constructor and released in the destructor.",
+      "revId": "8b2a4fc584228d7ff63b713d105d9a01a83760ef",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
