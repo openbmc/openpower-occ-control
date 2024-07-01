@@ -7,6 +7,7 @@
 #include <libpldm/instance-id.h>
 #include <libpldm/pldm.h>
 #include <libpldm/transport.h>
+#include <libpldm/transport/af-mctp.h>
 #include <libpldm/transport/mctp-demux.h>
 
 #include <sdbusplus/bus/match.hpp>
@@ -255,7 +256,13 @@ class Interface
     /** pldm transport instance  */
     struct pldm_transport* pldmTransport = NULL;
 
-    struct pldm_transport_mctp_demux* mctpDemux;
+    union TransportImpl
+    {
+        struct pldm_transport_mctp_demux* mctpDemux;
+        struct pldm_transport_af_mctp* afMctp;
+    };
+
+    TransportImpl impl;
 
     /** @brief The response for the PLDM request msg is received flag.
      */
@@ -358,6 +365,12 @@ class Interface
      * @return true on success, otherwise returns a negative error code
      */
     int openMctpDemuxTransport();
+
+    /** @brief Opens the MCTP AF_MCTP for sending and receiving messages.
+     *
+     * @return true on success, otherwise returns a negative error code
+     */
+    int openAfMctpTransport();
 
     /** @brief Send the PLDM request
      *
