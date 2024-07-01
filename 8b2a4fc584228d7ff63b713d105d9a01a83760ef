@@ -24,6 +24,30 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6529c432_fb14f5da",
+        "filename": "pldm.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 526,
+      "author": {
+        "id": 1001633
+      },
+      "writtenOn": "2024-07-01T19:24:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2820549c_5c5e86ad",
+      "range": {
+        "startLine": 526,
+        "startChar": 4,
+        "endLine": 526,
+        "endChar": 11
+      },
+      "revId": "8b2a4fc584228d7ff63b713d105d9a01a83760ef",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "96ac1d9c_69cd97c0",
@@ -64,6 +88,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c858ff9d_15730cb5",
+        "filename": "pldm.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 573,
+      "author": {
+        "id": 1001633
+      },
+      "writtenOn": "2024-07-01T19:24:38Z",
+      "side": 1,
+      "message": "Fixed the comment.",
+      "parentUuid": "4c3d4783_3eb4b518",
+      "revId": "8b2a4fc584228d7ff63b713d105d9a01a83760ef",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8c0a389d_6c3f68e3",
@@ -87,6 +129,30 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d92060db_0b9433f3",
+        "filename": "pldm.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 672,
+      "author": {
+        "id": 1001633
+      },
+      "writtenOn": "2024-07-01T19:24:38Z",
+      "side": 1,
+      "message": "yes, we can free the instanceId after sending the request.",
+      "parentUuid": "8c0a389d_6c3f68e3",
+      "range": {
+        "startLine": 672,
+        "startChar": 34,
+        "endLine": 672,
+        "endChar": 47
+      },
+      "revId": "8b2a4fc584228d7ff63b713d105d9a01a83760ef",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a2fc030b_b3993b86",
@@ -100,6 +166,24 @@
       "writtenOn": "2024-06-27T20:54:42Z",
       "side": 1,
       "message": "Should we remove this comment?  It is initialized in the constructor and released in the destructor.",
+      "revId": "8b2a4fc584228d7ff63b713d105d9a01a83760ef",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c5c5f4ab_f6cf7b20",
+        "filename": "pldm.hpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1001633
+      },
+      "writtenOn": "2024-07-01T19:24:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a2fc030b_b3993b86",
       "revId": "8b2a4fc584228d7ff63b713d105d9a01a83760ef",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
