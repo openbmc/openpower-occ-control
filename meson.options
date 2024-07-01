@@ -59,3 +59,10 @@ option(
     value: '/org/openpower/dump',
     description : 'Object path requesting OpenPOWER dumps'
 )
+
+option(
+    'transport-implementation',
+    type: 'combo',
+    choices: ['mctp-demux', 'af-mctp'],
+    description: 'transport via af-mctp or mctp-demux'
+)
