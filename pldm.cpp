@@ -9,6 +9,7 @@
 #include <libpldm/platform.h>
 #include <libpldm/state_set.h>
 #include <libpldm/transport.h>
+#include <libpldm/transport/af-mctp.h>
 #include <libpldm/transport/mctp-demux.h>
 #include <poll.h>
 
@@ -582,11 +583,11 @@ void Interface::freePldmInstanceId()
     }
 }
 
-int Interface::openMctpDemuxTransport()
+[[maybe_unused]] int Interface::openMctpDemuxTransport()
 {
     auto openErrno = errno;
-    mctpDemux = nullptr;
-    int rc = pldm_transport_mctp_demux_init(&mctpDemux);
+    impl.mctpDemux = nullptr;
+    int rc = pldm_transport_mctp_demux_init(&impl.mctpDemux);
     if (rc)
     {
         log<level::ERR>(
@@ -597,7 +598,7 @@ int Interface::openMctpDemuxTransport()
         return -1;
     }
 
-    if (pldm_transport_mctp_demux_map_tid(mctpDemux, mctpEid, mctpEid))
+    if (pldm_transport_mctp_demux_map_tid(impl.mctpDemux, mctpEid, mctpEid))
     {
         log<level::ERR>(
             std::format(
@@ -607,7 +608,7 @@ int Interface::openMctpDemuxTransport()
         pldmClose();
         return -1;
     }
-    pldmTransport = pldm_transport_mctp_demux_core(mctpDemux);
+    pldmTransport = pldm_transport_mctp_demux_core(impl.mctpDemux);
 
     struct pollfd pollfd;
     if (pldm_transport_mctp_demux_init_pollfd(pldmTransport, &pollfd))
@@ -630,6 +631,54 @@ int Interface::openMctpDemuxTransport()
     return 0;
 }
 
+[[maybe_unused]] int Interface::openAfMctpTransport()
+{
+    auto openErrno = errno;
+    impl.afMctp = nullptr;
+    int rc = pldm_transport_af_mctp_init(&impl.afMctp);
+    if (rc)
+    {
+        log<level::ERR>(
+            std::format(
+                "openAfMctpTransport: Failed to init af MCTP transport, errno={}/{}",
+                rc, strerror(rc))
+                .c_str());
+        return -1;
+    }
+
+    if (pldm_transport_af_mctp_map_tid(impl.afMctp, mctpEid, mctpEid))
+    {
+        log<level::ERR>(
+            std::format(
+                "openAfMctpTransport: Failed to setup tid to eid mapping, errno={}/{}",
+                openErrno, strerror(openErrno))
+                .c_str());
+        pldmClose();
+        return -1;
+    }
+    pldmTransport = pldm_transport_af_mctp_core(impl.afMctp);
+
+    struct pollfd pollfd;
+    if (pldm_transport_af_mctp_init_pollfd(pldmTransport, &pollfd))
+    {
+        log<level::ERR>(
+            std::format(
+                "openAfMctpTransport: Failed to get pollfd , errno={}/{}",
+                openErrno, strerror(openErrno))
+                .c_str());
+        pldmClose();
+        return -1;
+    }
+    pldmFd = pollfd.fd;
+    if (!throttleTraces)
+    {
+        log<level::INFO>(
+            std::format("openAfMctpTransport: pldmFd has fd={}", pldmFd)
+                 .c_str());
+    }
+    return 0;
+}
+
 int Interface::pldmOpen()
 {
     auto openErrno = errno;
@@ -643,7 +692,15 @@ int Interface::pldmOpen()
                 .c_str());
         return -1;
     }
+#if defined(PLDM_TRANSPORT_WITH_MCTP_DEMUX)
     return openMctpDemuxTransport();
+#elif defined(PLDM_TRANSPORT_WITH_AF_MCTP)
+    return openAfMctpTransport();
+#else
+    return -1;
+#endif
+
+    return 0;
 }
 
 void Interface::sendPldm(const std::vector<uint8_t>& request,
@@ -787,8 +844,13 @@ void Interface::pldmClose()
         pldmRspTimer.setEnabled(false);
     }
 
-    pldm_transport_mctp_demux_destroy(mctpDemux);
-    mctpDemux = NULL;
+#if defined(PLDM_TRANSPORT_WITH_MCTP_DEMUX)
+    pldm_transport_mctp_demux_destroy(impl.mctpDemux);
+    impl.mctpDemux = NULL;
+#elif defined(PLDM_TRANSPORT_WITH_AF_MCTP)
+    pldm_transport_af_mctp_destroy(impl.afMctp);
+    impl.afMctp = NULL;
+#endif
     pldmFd = -1;
     pldmTransport = NULL;
     eventSource.reset();
