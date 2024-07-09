@@ -95,6 +95,30 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "15887b6f_e9ab9161",
+        "filename": "pldm.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 534,
+      "author": {
+        "id": 1001633
+      },
+      "writtenOn": "2024-07-09T14:03:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8d44c522_e9a8eb11",
+      "range": {
+        "startLine": 531,
+        "startChar": 0,
+        "endLine": 534,
+        "endChar": 9
+      },
+      "revId": "8b2a4fc584228d7ff63b713d105d9a01a83760ef",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4c3d4783_3eb4b518",
