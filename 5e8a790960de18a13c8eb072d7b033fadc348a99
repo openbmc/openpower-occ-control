@@ -16,6 +16,23 @@
       "message": "Thanks for the review.",
       "revId": "5e8a790960de18a13c8eb072d7b033fadc348a99",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6f4276d4_de7bc6aa",
+        "filename": "pldm.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 714,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2024-07-10T22:56:33Z",
+      "side": 1,
+      "message": "Does the free need to happen here as well (timeout waiting for response)? and what about the case when we receive a valid response?\n\nIf free needs to happen at every pldmClose() call, maybe should be moved there.",
+      "revId": "5e8a790960de18a13c8eb072d7b033fadc348a99",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
