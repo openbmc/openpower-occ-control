@@ -16,6 +16,24 @@
       "message": "should this be removed to allow for P11",
       "revId": "970d8165e909582655bae52c10968dac6619b0c3",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b46466e5_5a177447",
+        "filename": "occ_pass_through.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2024-07-12T16:51:38Z",
+      "side": 1,
+      "message": "No. The POWER10 flag is required for all P10 and later functionality of occ-control. (adds support for setting power modes, etc)",
+      "parentUuid": "82976415_fac0b381",
+      "revId": "970d8165e909582655bae52c10968dac6619b0c3",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
