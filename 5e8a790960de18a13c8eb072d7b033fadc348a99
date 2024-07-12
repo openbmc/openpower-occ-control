@@ -51,6 +51,24 @@
       "parentUuid": "6f4276d4_de7bc6aa",
       "revId": "5e8a790960de18a13c8eb072d7b033fadc348a99",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0714503c_c9c745b9",
+        "filename": "pldm.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 714,
+      "author": {
+        "id": 1000009
+      },
+      "writtenOn": "2024-07-12T22:50:38Z",
+      "side": 1,
+      "message": "This might be some helpful background: [Motivating a New Scheme for PLDM Instance ID Management in OpenBMC](https://amboar.github.io/notes/2023/03/28/motivating-a-new-scheme-for-pldm-instance-id-management-in-openbmc.html)",
+      "parentUuid": "da83d62f_8bc925e0",
+      "revId": "5e8a790960de18a13c8eb072d7b033fadc348a99",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
