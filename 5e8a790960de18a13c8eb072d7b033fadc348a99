@@ -33,6 +33,24 @@
       "message": "Does the free need to happen here as well (timeout waiting for response)? and what about the case when we receive a valid response?\n\nIf free needs to happen at every pldmClose() call, maybe should be moved there.",
       "revId": "5e8a790960de18a13c8eb072d7b033fadc348a99",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "da83d62f_8bc925e0",
+        "filename": "pldm.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 714,
+      "author": {
+        "id": 1001633
+      },
+      "writtenOn": "2024-07-12T15:59:37Z",
+      "side": 1,
+      "message": "In the path that checks the response, we are not freeing the instance ID or closing the PLDM descriptor. I am working on fixing the code. I believe this is how the previous code worked.",
+      "parentUuid": "6f4276d4_de7bc6aa",
+      "revId": "5e8a790960de18a13c8eb072d7b033fadc348a99",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
