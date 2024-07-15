@@ -69,6 +69,24 @@
       "parentUuid": "da83d62f_8bc925e0",
       "revId": "5e8a790960de18a13c8eb072d7b033fadc348a99",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8ad2dc27_a9ab8e71",
+        "filename": "pldm.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 714,
+      "author": {
+        "id": 1001633
+      },
+      "writtenOn": "2024-07-15T18:41:37Z",
+      "side": 1,
+      "message": "Thank you Andrew!\n\nMoved the free to pldmClose() and tested.",
+      "parentUuid": "0714503c_c9c745b9",
+      "revId": "5e8a790960de18a13c8eb072d7b033fadc348a99",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
