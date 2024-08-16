@@ -378,9 +378,9 @@ class PowerMode : public ModeInterface, public IpsInterface
                                         SysPwrMode::MAX_FREQ};
 
     /** @brief IPS status data filename to read */
-    const fs::path ipsStatusFile = std::filesystem::path{OCC_HWMON_PATH} /
-                                   std::filesystem::path{OCC_MASTER_NAME} /
-                                   "occ_ips_status";
+    const fs::path ipsStatusFile =
+        std::filesystem::path{OCC_HWMON_PATH} /
+        std::filesystem::path{OCC_MASTER_NAME} / "occ_ips_status";
 
     /** @brief Current state of error watching */
     bool watching = false;

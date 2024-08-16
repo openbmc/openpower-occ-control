@@ -63,9 +63,8 @@ class Interface
         std::function<bool(open_power::occ::instanceID, bool)> callBack,
         std::function<void(open_power::occ::instanceID, bool)> sbeCallBack,
         std::function<void(bool)> safeModeCallBack, EventPtr& event) :
-        callBack(callBack),
-        sbeCallBack(sbeCallBack), safeModeCallBack(safeModeCallBack),
-        event(event),
+        callBack(callBack), sbeCallBack(sbeCallBack),
+        safeModeCallBack(safeModeCallBack), event(event),
         pldmEventSignal(
             open_power::occ::utils::getBus(),
             MatchRules::type::signal() +
@@ -135,10 +134,9 @@ class Interface
      *  @return PLDM request message to be sent to host for OCC reset or SBE
      *          HRESET, empty response in the case of failure.
      */
-    std::vector<uint8_t>
-        prepareSetEffecterReq(EffecterID effecterId,
-                              CompositeEffecterCount effecterCount,
-                              uint8_t stateIdPos, uint8_t stateSetValue);
+    std::vector<uint8_t> prepareSetEffecterReq(
+        EffecterID effecterId, CompositeEffecterCount effecterCount,
+        uint8_t stateIdPos, uint8_t stateSetValue);
 
     /** @brief Send the PLDM message to reset the OCC
      *
@@ -346,8 +344,8 @@ class Interface
      *
      *  @return request - The encoded PLDM messsage to be sent
      */
-    std::vector<uint8_t> encodeGetStateSensorRequest(uint8_t instance,
-                                                     uint16_t sensorId);
+    std::vector<uint8_t>
+        encodeGetStateSensorRequest(uint8_t instance, uint16_t sensorId);
 
     /** @brief setup PLDM transport for sending and receiving PLDM messages.
      *

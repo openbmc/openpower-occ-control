@@ -71,9 +71,9 @@ PowerMode::PowerMode(const Manager& managerRef, const char* modePath,
         using Mode =
             sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
         // Update power modes that will be allowed by the Redfish interface
-        ModeInterface::allowedPowerModes({Mode::PowerMode::Static,
-                                          Mode::PowerMode::MaximumPerformance,
-                                          Mode::PowerMode::PowerSaving});
+        ModeInterface::allowedPowerModes(
+            {Mode::PowerMode::Static, Mode::PowerMode::MaximumPerformance,
+             Mode::PowerMode::PowerSaving});
     }
 
     SysPwrMode currentMode;
@@ -136,8 +136,8 @@ void PowerMode::setMasterOcc(const std::string& masterOccPath)
                           .c_str());
     if (!occCmd)
     {
-        occCmd = std::make_unique<open_power::occ::OccCommand>(occInstance,
-                                                               path.c_str());
+        occCmd = std::make_unique<open_power::occ::OccCommand>(
+            occInstance, path.c_str());
     }
     masterOccSet = true;
 };
@@ -857,9 +857,9 @@ bool PowerMode::getDefaultMode(SysPwrMode& defaultMode)
         std::string path = "/";
         std::string service =
             utils::getServiceUsingSubTree(PMODE_DEFAULT_INTERFACE, path);
-        auto method = bus.new_method_call(service.c_str(), path.c_str(),
-                                          "org.freedesktop.DBus.Properties",
-                                          "Get");
+        auto method =
+            bus.new_method_call(service.c_str(), path.c_str(),
+                                "org.freedesktop.DBus.Properties", "Get");
         method.append(PMODE_DEFAULT_INTERFACE, "PowerMode");
         auto reply = bus.call(method);
 
@@ -867,8 +867,8 @@ bool PowerMode::getDefaultMode(SysPwrMode& defaultMode)
         reply.read(stateEntryValue);
         auto propVal = std::get<std::string>(stateEntryValue);
 
-        const std::string fullModeString = PMODE_INTERFACE + ".PowerMode."s +
-                                           propVal;
+        const std::string fullModeString =
+            PMODE_INTERFACE + ".PowerMode."s + propVal;
         defaultMode = powermode::convertStringToMode(fullModeString);
         if (!VALID_POWER_MODE_SETTING(defaultMode))
         {
@@ -914,9 +914,9 @@ bool PowerMode::getDefaultIPSParms(bool& ipsEnabled, uint8_t& enterUtil,
         std::string path = "/";
         std::string service =
             utils::getServiceUsingSubTree(PMODE_DEFAULT_INTERFACE, path);
-        auto method = bus.new_method_call(service.c_str(), path.c_str(),
-                                          "org.freedesktop.DBus.Properties",
-                                          "GetAll");
+        auto method =
+            bus.new_method_call(service.c_str(), path.c_str(),
+                                "org.freedesktop.DBus.Properties", "GetAll");
         method.append(PMODE_DEFAULT_INTERFACE);
         auto reply = bus.call(method);
         reply.read(ipsProperties);
@@ -1035,10 +1035,10 @@ bool PowerMode::openIpsFile()
     const int open_errno = errno;
     if (fd < 0)
     {
-        log<level::ERR>(std::format("openIpsFile Error({})={} : File={}",
-                                    open_errno, strerror(open_errno),
-                                    ipsStatusFile.c_str())
-                            .c_str());
+        log<level::ERR>(
+            std::format("openIpsFile Error({})={} : File={}", open_errno,
+                        strerror(open_errno), ipsStatusFile.c_str())
+                .c_str());
 
         close(fd);
 
@@ -1200,10 +1200,10 @@ void PowerMode::analyzeIpsEvent()
 
         // If the Retry did not get to "watching = true" we already have an
         // error log, just post trace.
-        log<level::ERR>(std::format("Retry on File seek Error({})={} : File={}",
-                                    open_errno, strerror(open_errno),
-                                    ipsStatusFile.c_str())
-                            .c_str());
+        log<level::ERR>(
+            std::format("Retry on File seek Error({})={} : File={}", open_errno,
+                        strerror(open_errno), ipsStatusFile.c_str())
+                .c_str());
 
         // NOTE: this will leave the system not reporting IPS active state to
         // Fan Controls, Until an APP reload, or IPL and we will attempt again.
@@ -1305,9 +1305,9 @@ bool PowerMode::getSupportedModes()
         std::string path = "/";
         std::string service =
             utils::getServiceUsingSubTree(PMODE_DEFAULT_INTERFACE, path);
-        auto method = bus.new_method_call(service.c_str(), path.c_str(),
-                                          "org.freedesktop.DBus.Properties",
-                                          "GetAll");
+        auto method =
+            bus.new_method_call(service.c_str(), path.c_str(),
+                                "org.freedesktop.DBus.Properties", "GetAll");
         method.append(PMODE_DEFAULT_INTERFACE);
         auto reply = bus.call(method);
         reply.read(powerModeProperties);
@@ -1340,8 +1340,8 @@ bool PowerMode::getSupportedModes()
         for (auto mode : modeList)
         {
             // Ensure mode is valid
-            const std::string fullModeString = PMODE_INTERFACE +
-                                               ".PowerMode."s + mode;
+            const std::string fullModeString =
+                PMODE_INTERFACE + ".PowerMode."s + mode;
             log<level::INFO>(
                 std::format("getSupportedModes(): {}", mode).c_str());
             SysPwrMode modeValue =
@@ -1385,8 +1385,8 @@ bool PowerMode::getSupportedModes()
         for (auto mode : OmodeList)
         {
             // Ensure mode is valid
-            const std::string fullModeString = PMODE_INTERFACE +
-                                               ".PowerMode."s + mode;
+            const std::string fullModeString =
+                PMODE_INTERFACE + ".PowerMode."s + mode;
             SysPwrMode modeValue =
                 powermode::convertStringToMode(fullModeString);
             if (VALID_POWER_MODE_SETTING(modeValue) ||

@@ -360,9 +360,9 @@ fs::path Status::getHwmonPath()
         }
 
         // Build the base HWMON path
-        fs::path prefixPath = fs::path{OCC_HWMON_PATH + "occ-hwmon."s +
-                                       std::to_string(instance + 1) +
-                                       "/hwmon/"s};
+        fs::path prefixPath =
+            fs::path{OCC_HWMON_PATH + "occ-hwmon."s +
+                     std::to_string(instance + 1) + "/hwmon/"s};
 
         // Get the hwmonXX directory name
         try

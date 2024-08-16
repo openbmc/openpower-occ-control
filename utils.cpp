@@ -122,9 +122,8 @@ void setProperty(const std::string& objectPath, const std::string& interface,
     }
 }
 
-std::vector<std::string>
-    getSubtreePaths(const std::vector<std::string>& interfaces,
-                    const std::string& path)
+std::vector<std::string> getSubtreePaths(
+    const std::vector<std::string>& interfaces, const std::string& path)
 {
     std::vector<std::string> paths;
 
@@ -199,9 +198,9 @@ std::string getStateValue(const std::string& intf, const std::string& objPath,
             throw std::runtime_error("getStateValue: Failed to get service");
         }
 
-        auto method = bus.new_method_call(service.c_str(), objPath.c_str(),
-                                          "org.freedesktop.DBus.Properties",
-                                          "Get");
+        auto method =
+            bus.new_method_call(service.c_str(), objPath.c_str(),
+                                "org.freedesktop.DBus.Properties", "Get");
 
         method.append(intf, state);
 

@@ -315,10 +315,9 @@ void Interface::clearData()
     }
 }
 
-void Interface::fetchEffecterInfo(uint16_t stateSetId,
-                                  InstanceToEffecter& instanceToEffecterMap,
-                                  CompositeEffecterCount& effecterCount,
-                                  uint8_t& stateIdPos)
+void Interface::fetchEffecterInfo(
+    uint16_t stateSetId, InstanceToEffecter& instanceToEffecterMap,
+    CompositeEffecterCount& effecterCount, uint8_t& stateIdPos)
 {
     PdrList pdrs{};
 
@@ -390,10 +389,9 @@ void Interface::fetchEffecterInfo(uint16_t stateSetId,
     }
 }
 
-std::vector<uint8_t>
-    Interface::prepareSetEffecterReq(EffecterID effecterId,
-                                     CompositeEffecterCount effecterCount,
-                                     uint8_t stateIdPos, uint8_t stateSetValue)
+std::vector<uint8_t> Interface::prepareSetEffecterReq(
+    EffecterID effecterId, CompositeEffecterCount effecterCount,
+    uint8_t stateIdPos, uint8_t stateSetValue)
 {
     if (!getPldmInstanceId())
     {
@@ -860,8 +858,8 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
     pldmIface->pldmInstanceID = std::nullopt;
 
     // Set pointer to autodelete
-    std::unique_ptr<uint8_t, decltype(std::free)*> responseMsgPtr{responseMsg,
-                                                                  std::free};
+    std::unique_ptr<uint8_t, decltype(std::free)*> responseMsgPtr{
+        responseMsg, std::free};
 
     auto response = reinterpret_cast<pldm_msg*>(responseMsgPtr.get());
     if (response->payload[0] != PLDM_SUCCESS)
@@ -945,8 +943,8 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
     return 0;
 };
 
-std::vector<uint8_t> Interface::encodeGetStateSensorRequest(uint8_t instance,
-                                                            uint16_t sensorId)
+std::vector<uint8_t>
+    Interface::encodeGetStateSensorRequest(uint8_t instance, uint16_t sensorId)
 {
     if (!getPldmInstanceId())
     {
@@ -956,8 +954,8 @@ std::vector<uint8_t> Interface::encodeGetStateSensorRequest(uint8_t instance,
     }
 
     bitfield8_t sRearm = {0};
-    const size_t msgSize = sizeof(pldm_msg_hdr) +
-                           PLDM_GET_STATE_SENSOR_READINGS_REQ_BYTES;
+    const size_t msgSize =
+        sizeof(pldm_msg_hdr) + PLDM_GET_STATE_SENSOR_READINGS_REQ_BYTES;
     std::vector<uint8_t> request(msgSize);
 
     auto msg = reinterpret_cast<pldm_msg*>(request.data());

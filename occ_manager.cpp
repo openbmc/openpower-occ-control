@@ -379,12 +379,13 @@ void Manager::createObjects(const std::string& occ)
 #endif
     }
 
-    passThroughObjects.emplace_back(std::make_unique<PassThrough>(path.c_str()
+    passThroughObjects.emplace_back(std::make_unique<PassThrough>(
+        path.c_str()
 #ifdef POWER10
-                                                                      ,
-                                                                  pmode
+            ,
+        pmode
 #endif
-                                                                  ));
+        ));
 }
 
 void Manager::statusCallBack(instanceID instance, bool status)
@@ -513,8 +514,8 @@ void Manager::sbeTimeout(unsigned int instance)
 {
     auto obj = std::find_if(statusObjects.begin(), statusObjects.end(),
                             [instance](const auto& obj) {
-        return instance == obj->getOccInstanceID();
-    });
+                                return instance == obj->getOccInstanceID();
+                            });
 
     if (obj != statusObjects.end() && (*obj)->occActive())
     {
@@ -532,8 +533,8 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
 {
     auto obj = std::find_if(statusObjects.begin(), statusObjects.end(),
                             [instance](const auto& obj) {
-        return instance == obj->getOccInstanceID();
-    });
+                                return instance == obj->getOccInstanceID();
+                            });
 
     const bool hostRunning = open_power::occ::utils::isHostRunning();
     if (obj != statusObjects.end())
@@ -649,8 +650,8 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
             constexpr auto interface = "xyz.openbmc_project.Dump.Create";
             constexpr auto function = "CreateDump";
 
-            std::string service = utils::getService(OP_DUMP_OBJ_PATH,
-                                                    interface);
+            std::string service =
+                utils::getService(OP_DUMP_OBJ_PATH, interface);
             auto method = bus.new_method_call(service.c_str(), OP_DUMP_OBJ_PATH,
                                               interface, function);
 
@@ -859,20 +860,20 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
             continue;
         }
 
-        std::string sensorPath = OCC_SENSORS_ROOT +
-                                 std::string("/temperature/");
+        std::string sensorPath =
+            OCC_SENSORS_ROOT + std::string("/temperature/");
 
         std::string dvfsTempPath;
 
         if (fruTypeValue == VRMVdd)
         {
-            sensorPath.append("vrm_vdd" + std::to_string(occInstance) +
-                              "_temp");
+            sensorPath.append(
+                "vrm_vdd" + std::to_string(occInstance) + "_temp");
         }
         else if (fruTypeValue == processorIoRing)
         {
-            sensorPath.append("proc" + std::to_string(occInstance) +
-                              "_ioring_temp");
+            sensorPath.append(
+                "proc" + std::to_string(occInstance) + "_ioring_temp");
             dvfsTempPath = std::string{OCC_SENSORS_ROOT} + "/temperature/proc" +
                            std::to_string(occInstance) + "_ioring_dvfs_temp";
         }
@@ -900,8 +901,8 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
                     continue;
                 }
 
-                sensorPath.append("dimm" + std::to_string(instanceID) +
-                                  iter->second);
+                sensorPath.append(
+                    "dimm" + std::to_string(instanceID) + iter->second);
 
                 dvfsTempPath = std::string{OCC_SENSORS_ROOT} + "/temperature/" +
                                dimmDVFSSensorName.at(fruTypeValue);
@@ -1145,8 +1146,8 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
         dbus::OccDBusSensors::getOccDBus().setValue(
             sensorPath, tempValue * std::pow(10, -3) * std::pow(10, -3));
 
-        dbus::OccDBusSensors::getOccDBus().setOperationalStatus(sensorPath,
-                                                                true);
+        dbus::OccDBusSensors::getOccDBus().setOperationalStatus(
+            sensorPath, true);
 
         if (existingSensors.find(sensorPath) == existingSensors.end())
         {
@@ -1168,8 +1169,8 @@ void Manager::setSensorValueToNaN(uint32_t id) const
             dbus::OccDBusSensors::getOccDBus().setValue(
                 sensorPath, std::numeric_limits<double>::quiet_NaN());
 
-            dbus::OccDBusSensors::getOccDBus().setOperationalStatus(sensorPath,
-                                                                    true);
+            dbus::OccDBusSensors::getOccDBus().setOperationalStatus(
+                sensorPath, true);
         }
     }
     return;
@@ -1184,8 +1185,8 @@ void Manager::setSensorValueToNonFunctional(uint32_t id) const
             dbus::OccDBusSensors::getOccDBus().setValue(
                 sensorPath, std::numeric_limits<double>::quiet_NaN());
 
-            dbus::OccDBusSensors::getOccDBus().setOperationalStatus(sensorPath,
-                                                                    false);
+            dbus::OccDBusSensors::getOccDBus().setOperationalStatus(
+                sensorPath, false);
         }
     }
     return;
@@ -1432,11 +1433,11 @@ void Manager::createPldmSensorPEL()
         static constexpr auto loggingObjectPath =
             "/xyz/openbmc_project/logging";
         static constexpr auto opLoggingInterface = "org.open_power.Logging.PEL";
-        std::string service = utils::getService(loggingObjectPath,
-                                                opLoggingInterface);
-        auto method = bus.new_method_call(service.c_str(), loggingObjectPath,
-                                          opLoggingInterface,
-                                          "CreatePELWithFFDCFiles");
+        std::string service =
+            utils::getService(loggingObjectPath, opLoggingInterface);
+        auto method =
+            bus.new_method_call(service.c_str(), loggingObjectPath,
+                                opLoggingInterface, "CreatePELWithFFDCFiles");
 
         // Set level to Warning (Predictive).
         auto level =

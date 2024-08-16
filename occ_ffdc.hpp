@@ -137,9 +137,8 @@ class FFDC : public Error
      *
      * @return std::unique_ptr<FFDCFile> - The file object
      */
-    static std::unique_ptr<FFDCFile>
-        addJournalEntries(FFDCFiles& fileList, const std::string& executable,
-                          unsigned int lines);
+    static std::unique_ptr<FFDCFile> addJournalEntries(
+        FFDCFiles& fileList, const std::string& executable, unsigned int lines);
 
   private:
     /** @brief OCC instance number. Ex, 0,1, etc */

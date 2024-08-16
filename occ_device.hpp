@@ -51,8 +51,8 @@ class Device
            std::unique_ptr<powermode::PowerMode>& powerModeRef,
 #endif
            unsigned int instance = 0) :
-        devPath(path),
-        instance(instance), statusObject(status), managerObject(manager),
+        devPath(path), instance(instance), statusObject(status),
+        managerObject(manager),
         error(event, path / "occ_error",
               std::bind(std::mem_fn(&Device::errorCallback), this,
                         std::placeholders::_1)),

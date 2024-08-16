@@ -75,9 +75,8 @@ void setProperty(const std::string& objectPath, const std::string& interface,
  *
  *  @throw sdbusplus::exception_t when it fails
  */
-std::vector<std::string>
-    getSubtreePaths(const std::vector<std::string>& interfaces,
-                    const std::string& path = "/");
+std::vector<std::string> getSubtreePaths(
+    const std::vector<std::string>& interfaces, const std::string& path = "/");
 
 /**
  * @brief Get the D-Bus service and object path for an interface

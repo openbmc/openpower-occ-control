@@ -51,7 +51,7 @@ class PowerCap
                 sdbusRule::argN(0, "xyz.openbmc_project.Control.Power.Cap") +
                 sdbusRule::interface("org.freedesktop.DBus.Properties"),
             std::bind(std::mem_fn(&PowerCap::pcapChanged), this,
-                      std::placeholders::_1)){};
+                      std::placeholders::_1)) {};
 
     /** @brief Return the appropriate value to write to the OCC (output/DC
      * power)
