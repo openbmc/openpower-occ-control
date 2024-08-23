@@ -211,14 +211,11 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
             const unsigned int csumIndex = response.size() - 2;
             const uint32_t rspChecksum = (response[csumIndex] << 8) +
                                          response[csumIndex + 1];
-            uint32_t calcChecksum = 0;
+            // OCC checksum is the 2 byte sum of data (ignoring overflow)
+            uint16_t calcChecksum = 0;
             for (unsigned int index = 0; index < csumIndex; ++index)
             {
                 calcChecksum += response[index];
-            }
-            while (calcChecksum > 0xFFFF)
-            {
-                calcChecksum = (calcChecksum & 0xFFFF) + (calcChecksum >> 16);
             }
             if (calcChecksum != rspChecksum)
             {

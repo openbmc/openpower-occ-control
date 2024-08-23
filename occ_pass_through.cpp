@@ -31,8 +31,7 @@ PassThrough::PassThrough(
     std::unique_ptr<open_power::occ::powermode::PowerMode>& powerModeRef
 #endif
     ) :
-    Iface(utils::getBus(), path),
-    path(path),
+    Iface(utils::getBus(), path), path(path),
 #ifdef POWER10
     pmode(powerModeRef),
 #endif
@@ -84,10 +83,37 @@ std::vector<uint8_t> PassThrough::send(std::vector<uint8_t> command)
         return response;
     }
 
-    log<level::INFO>(
-        std::format("PassThrough::send() Sending 0x{:02X} command to OCC{}",
-                    command.front(), occInstance)
-            .c_str());
+    if (command.size() >= 3)
+    {
+        const uint16_t dataLen = command[1] << 8 | command[2];
+        std::string dataString = "";
+        if (command.size() > 3)
+        {
+            // Trace first 4 bytes of command data
+            size_t index = 3;
+            dataString = "0x";
+            for (; (index < 7) && (index < command.size()); ++index)
+            {
+                dataString += std::format("{:02X}", command[index]);
+            }
+            if (index < command.size())
+            {
+                dataString += "...";
+            }
+        }
+        log<level::INFO>(
+            std::format(
+                "PassThrough::send() Sending 0x{:02X} command to OCC{} (data len={}, data={})",
+                command.front(), occInstance, dataLen, dataString)
+                .c_str());
+    }
+    else
+    {
+        log<level::INFO>(
+            std::format("PassThrough::send() Sending 0x{:02X} command to OCC{}",
+                        command.front(), occInstance)
+                .c_str());
+    }
     CmdStatus status = occCmd.send(command, response);
     if (status == CmdStatus::SUCCESS)
     {
