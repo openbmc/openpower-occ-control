@@ -560,9 +560,6 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
         }
         else
         {
-            log<level::INFO>(std::format("updateOCCActive: OCC{} active={}",
-                                         instance, status)
-                                 .c_str());
             (*obj)->setPldmSensorReceived(true);
             return (*obj)->occActive(status);
         }
@@ -731,7 +728,8 @@ void Manager::setSBEState(unsigned int instance, enum sbe_state state)
     }
     catch (const openpower::phal::exception::SbeError& e)
     {
-        log<level::ERR>("Failed to set SBE state");
+        log<level::ERR>(
+            std::format("Failed to set SBE state: {}", e.what()).c_str());
     }
 }
 
