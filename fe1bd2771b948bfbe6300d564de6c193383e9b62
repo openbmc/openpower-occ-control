@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "63eac7f6_e7116317",
+        "filename": "pldm.hpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 371,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2024-08-26T15:54:55Z",
+      "side": 1,
+      "message": "This is a int. Looks like 0 on success (instead of true)?",
+      "range": {
+        "startLine": 371,
+        "startChar": 15,
+        "endLine": 371,
+        "endChar": 19
+      },
+      "revId": "fe1bd2771b948bfbe6300d564de6c193383e9b62",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
