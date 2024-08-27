@@ -709,8 +709,11 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
     auto rc = pldmOpen();
     if (rc)
     {
-        log<level::ERR>(
-            std::format("sendPldm: pldmOpen failed rc={}", rc).c_str());
+        if (!throttleTraces)
+        {
+            log<level::ERR>(
+                std::format("sendPldm: pldmOpen failed rc={}", rc).c_str());
+        }
         freePldmInstanceId();
         return;
     }
