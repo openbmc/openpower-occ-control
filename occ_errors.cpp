@@ -32,7 +32,8 @@ void Error::openFile()
     if (fd < 0)
     {
         log<level::ERR>(
-            std::format("Error::openFile: open failed (errno={})", open_errno)
+            std::format("Error::openFile: open of {} failed (errno={})",
+                        file.c_str(), open_errno)
                 .c_str());
         elog<OpenFailure>(phosphor::logging::org::open_power::OCC::Device::
                               OpenFailure::CALLOUT_ERRNO(open_errno),
