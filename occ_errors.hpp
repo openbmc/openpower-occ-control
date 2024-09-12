@@ -20,6 +20,8 @@ constexpr auto PRESENCE_ERROR_PATH =
 constexpr auto SAFE_ERROR_PATH = "org.open_power.OCC.Device.Error.SafeState";
 constexpr auto MISSING_OCC_SENSORS_PATH =
     "org.open_power.OCC.Firmware.Error.MissingOCCSensors";
+constexpr auto OCC_COMM_ERROR_PATH =
+    "org.open_power.OCC.Device.Error.OpenFailure";
 
 /** @class Error
  *  @brief Monitors for OCC device error condition
