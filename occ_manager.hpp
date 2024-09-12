@@ -197,6 +197,13 @@ struct Manager
      */
     void statusCallBack(instanceID instance, bool status);
 
+    /** @brief Set flag that a PM Complex reset is needed (to be initiated
+     * later) */
+    void resetOccRequest(instanceID instance);
+
+    /** @brief Initiate the request to reset the PM Complex (PLDM -> HBRT) */
+    void initiateOccRequest(instanceID instance);
+
     /** @brief Sends a Heartbeat command to host control command handler */
     void sendHeartBeat();
 
@@ -253,6 +260,14 @@ struct Manager
 
     /** @brief Subscribe to ambient temperature changed events */
     sdbusplus::bus::match_t ambientPropChanged;
+
+    /** @brief Flag to indicate that a PM complex reset needs to happen */
+    bool resetRequired = false;
+    /** @brief Instance number of the OCC/processor that triggered the reset */
+    uint8_t resetInstance = 255;
+    /** @brief Set when a PM complex reset has been issued (to prevent multiple
+     * requests) */
+    bool resetInProgress = false;
 
 #ifdef I2C_OCC
     /** @brief Init Status objects for I2C OCC devices

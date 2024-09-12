@@ -132,10 +132,7 @@ class Status : public Interface
         sdpEvent(sdeventplus::Event::get_default()),
         safeStateDelayTimer(
             sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>(
-                sdpEvent, std::bind(&Status::safeStateDelayExpired, this))),
-        occReadStateFailTimer(
-            sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>(
-                sdpEvent, std::bind(&Status::occReadStateNow, this)))
+                sdpEvent, std::bind(&Status::safeStateDelayExpired, this)))
 #endif
 
 #ifdef PLDM
@@ -278,6 +275,9 @@ class Status : public Interface
     /** @brief The last state read from the OCC */
     unsigned int lastState = 0;
 
+    /** @brief The last OCC read status (0 = no error) */
+    int lastOccReadStatus = 0;
+
     /** @brief Number of retry attempts to open file and update state. */
     const unsigned int occReadRetries = 1;
 
@@ -353,14 +353,8 @@ class Status : public Interface
      * safe mode. Called to verify and then disable and reset the OCCs.
      */
     void safeStateDelayExpired();
-
-    /**
-     * @brief Timer that is started when OCC read Valid state failed.
-     */
-    sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>
-        occReadStateFailTimer;
-
 #endif // POWER10
+
     /** @brief Callback for timer that is started when OCC state
      * was not able to be read. Called to attempt another read when needed.
      */

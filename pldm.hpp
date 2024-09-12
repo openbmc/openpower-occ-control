@@ -14,6 +14,14 @@
 #include <sdeventplus/event.hpp>
 #include <sdeventplus/utility/timer.hpp>
 
+enum pldm_msg_type
+{
+    MSG_UNDEFINED = 0,
+    MSG_SENSOR_STATUS = 1,
+    MSG_OCC_RESET = 2,
+    MSG_HRESET = 3
+};
+
 namespace pldm
 {
 
@@ -57,14 +65,19 @@ class Interface
 
     /** @brief Constructs the PLDM Interface object for OCC functions
      *
-     *  @param[in] callBack - callBack handler to invoke when the OCC state
-     *                        changes.
+     *  @param[in] occActiveCallBack - callBack handler to invoke when the OCC
+     *                                 state changes.
+     *  @param[in] sbeCallBack       - callBack handler to invoke when the SBE
+     *                                 state changes.
+     *  @param[in] safeModeCallBack  - callBack handler to invoke when the
+     *                                 system is in safe mode.
      */
     explicit Interface(
-        std::function<bool(open_power::occ::instanceID, bool)> callBack,
+        std::function<bool(open_power::occ::instanceID, bool)>
+            occActiveCallBack,
         std::function<void(open_power::occ::instanceID, bool)> sbeCallBack,
         std::function<void(bool)> safeModeCallBack, EventPtr& event) :
-        callBack(callBack), sbeCallBack(sbeCallBack),
+        occActiveCallBack(occActiveCallBack), sbeCallBack(sbeCallBack),
         safeModeCallBack(safeModeCallBack), event(event),
         pldmEventSignal(
             open_power::occ::utils::getBus(),
@@ -178,7 +191,8 @@ class Interface
     /** @brief Callback handler to be invoked when the state of the OCC
      *         changes
      */
-    std::function<bool(open_power::occ::instanceID, bool)> callBack = nullptr;
+    std::function<bool(open_power::occ::instanceID, bool)> occActiveCallBack =
+        nullptr;
 
     /** @brief Callback handler to be invoked when the maintenance state of the
      *         SBE changes
@@ -256,6 +270,8 @@ class Interface
     /** pldm transport instance  */
     struct pldm_transport* pldmTransport = NULL;
 
+    static enum pldm_msg_type msgType;
+
     union TransportImpl
     {
         struct pldm_transport_mctp_demux* mctpDemux;
@@ -271,6 +287,9 @@ class Interface
     /** @brief The response for the PLDM request has timed out.
      */
     bool pldmResponseTimeout = false;
+
+    /** @brief The instance ID for the OCC/HRESET request */
+    static open_power::occ::instanceID resetInstance;
 
     /** @brief timer event */
     sdeventplus::Event sdpEvent;
@@ -396,6 +415,29 @@ class Interface
      */
     static int pldmRspCallback(sd_event_source* es, int fd, uint32_t revents,
                                void* userData);
+
+    /** @brief callback for a OCC / HRESET response event
+     *
+     *  @param[in] es       - Populated event source
+     *  @param[in] fd       - Associated File descriptor
+     *  @param[in] revents  - Type of event
+     *  @param[in] userData - User data that was passed during registration
+     *
+     *  @return             - 0 or positive number on success and negative
+     *                        errno otherwise
+     */
+    static int pldmResetCallback(sd_event_source* /*es*/,
+                                 __attribute__((unused)) int fd,
+                                 uint32_t revents, void* userData);
 };
 
 } // namespace pldm
+
+template <>
+struct std::formatter<enum pldm_msg_type> : formatter<int>
+{
+    auto format(enum pldm_msg_type m, format_context& ctx) const
+    {
+        return formatter<int>::format(std::to_underlying(m), ctx);
+    }
+};

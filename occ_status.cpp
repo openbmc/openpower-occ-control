@@ -36,14 +36,29 @@ bool Status::occActive(bool value)
             // Set the device active
             device.setActive(true);
 
-            // Update the OCC active sensor
-            Base::Status::occActive(value);
-
-            // Start watching for errors
-            addErrorWatch();
-
             // Reset last OCC state
             lastState = 0;
+
+            // Start watching for errors (throttles, etc)
+            try
+            {
+                addErrorWatch();
+            }
+            catch (const OpenFailure& e)
+            {
+                // Failed to add watch for throttle events, request reset to try
+                // to recover comm
+                log<level::ERR>(
+                    std::format(
+                        "Status::occActive: Unable to add error watch(s) for OCC{} watch: {}",
+                        instance, e.what())
+                        .c_str());
+                deviceError(Error::Descriptor(OCC_COMM_ERROR_PATH));
+                return Base::Status::occActive(false);
+            }
+
+            // Update the OCC active sensor
+            Base::Status::occActive(value);
 
             if (device.master())
             {
@@ -104,7 +119,22 @@ bool Status::occActive(bool value)
         device.setActive(true);
 
         // Add error watch again
-        addErrorWatch();
+        try
+        {
+            addErrorWatch();
+        }
+        catch (const OpenFailure& e)
+        {
+            // Failed to add watch for throttle events, request reset to try to
+            // recover comm
+            log<level::ERR>(
+                std::format(
+                    "Status::occActive: Unable to add error watch(s) again for OCC{} watch: {}",
+                    instance, e.what())
+                    .c_str());
+            deviceError(Error::Descriptor(OCC_COMM_ERROR_PATH));
+            return Base::Status::occActive(false);
+        }
     }
     else if (!value && device.active())
     {
@@ -150,6 +180,7 @@ void Status::resetOCC()
         std::format(">>Status::resetOCC() - requesting reset for OCC{}",
                     instance)
             .c_str());
+    this->occActive(false);
 #ifdef PLDM
     if (resetCallBack)
     {
@@ -206,7 +237,11 @@ void Status::hostControlEvent(sdbusplus::message_t& msg)
 // Called from Manager::pollerTimerExpired() in preperation to POLL OCC.
 void Status::readOccState()
 {
-    currentOccReadRetriesCount = occReadRetries;
+    if (stateValid)
+    {
+        // Reset retry count (since state is good)
+        currentOccReadRetriesCount = occReadRetries;
+    }
     occReadStateNow();
 }
 
@@ -318,8 +353,8 @@ CmdStatus Status::sendAmbient(const uint8_t inTemp, const uint16_t inAltitude)
 
         if (status == CmdStatus::COMM_FAILURE)
         {
-            // Disable and reset to try recovering
-            deviceError();
+            // Disable due to OCC comm failure and reset to try recovering
+            deviceError(Error::Descriptor(OCC_COMM_ERROR_PATH));
         }
     }
 
@@ -333,7 +368,7 @@ void Status::safeStateDelayExpired()
     {
         log<level::INFO>(
             std::format(
-                "safeStateDelayExpired: OCC{} is in SAFE state, requesting reset",
+                "safeStateDelayExpired: OCC{} state missing or not valid, requesting reset",
                 instance)
                 .c_str());
         // Disable and reset to try recovering
@@ -352,7 +387,7 @@ fs::path Status::getHwmonPath()
 
         if (!hwmonPath.empty())
         {
-            log<level::ERR>(
+            log<level::WARNING>(
                 std::format("Status::getHwmonPath(): path no longer exists: {}",
                             hwmonPath.c_str())
                     .c_str());
@@ -405,7 +440,7 @@ fs::path Status::getHwmonPath()
     return hwmonPath;
 }
 
-// Called to read state and upon failure to read after occReadStateFailTimer.
+// Called to read state and handle any errors
 void Status::occReadStateNow()
 {
     unsigned int state;
@@ -425,8 +460,38 @@ void Status::occReadStateNow()
     {
         goodFile = true;
         file >> state;
+        // Read the error code (if any) to check status of the read
+        std::ios_base::iostate readState = file.rdstate();
+        if (readState)
+        {
+            // There was a failure reading the file
+            if (lastOccReadStatus != -1)
+            {
+                // Trace error bits
+                std::string errorBits = "";
+                if (readState & std::ios_base::eofbit)
+                {
+                    errorBits += " EOF";
+                }
+                if (readState & std::ios_base::failbit)
+                {
+                    errorBits += " failbit";
+                }
+                if (readState & std::ios_base::badbit)
+                {
+                    errorBits += " badbit";
+                }
+                log<level::ERR>(
+                    std::format(
+                        "readOccState: Failed to read OCC{} state: Read error on I/O operation -{}",
+                        instance, errorBits)
+                        .c_str());
+                lastOccReadStatus = -1;
+            }
+            goodFile = false;
+        }
 
-        if (state != lastState)
+        if (goodFile && (state != lastState))
         {
             // Trace OCC state changes
             log<level::INFO>(
@@ -474,18 +539,22 @@ void Status::occReadStateNow()
                     safeStateDelayTimer.setEnabled(false);
                 }
             }
-            // Else not Valid state We would be in SAFE mode.
-            // This captures both SAFE mode, and 0x00, or other invalid
-            // state values.
             else
             {
+                // OCC is in SAFE or some other unsupported state
                 if (!safeStateDelayTimer.isEnabled())
                 {
+                    log<level::ERR>(
+                        std::format(
+                            "readOccState: Invalid OCC{} state of {}, starting safe state delay timer",
+                            instance, state)
+                            .c_str());
                     // start safe delay timer (before requesting reset)
                     using namespace std::literals::chrono_literals;
                     safeStateDelayTimer.restartOnce(60s);
                 }
-                // Not valid state, update sensors to Nan & not functional.
+                // Not a supported state (update sensors to NaN and not
+                // functional)
                 stateValid = false;
             }
 #else
@@ -494,6 +563,13 @@ void Status::occReadStateNow()
 #endif
         }
     }
+#ifdef POWER10
+    else
+    {
+        // Unable to read state
+        stateValid = false;
+    }
+#endif
     file.close();
 
     // if failed to Read a state or not a valid state -> Attempt retry
@@ -503,10 +579,15 @@ void Status::occReadStateNow()
         if (!goodFile)
         {
             // If not able to read, OCC may be offline
-            log<level::ERR>(
-                std::format("Status::readOccState: open failed (errno={})",
-                            openErrno)
-                    .c_str());
+            if (openErrno != lastOccReadStatus)
+            {
+                log<level::ERR>(
+                    std::format(
+                        "Status::readOccState: open/read failed trying to read OCC{} state (open errno={})",
+                        instance, openErrno)
+                        .c_str());
+                lastOccReadStatus = openErrno;
+            }
         }
         else
         {
@@ -529,26 +610,14 @@ void Status::occReadStateNow()
         if (currentOccReadRetriesCount > 0)
         {
             --currentOccReadRetriesCount;
-#ifdef POWER10
-            using namespace std::chrono_literals;
-            occReadStateFailTimer.restartOnce(1s);
-#endif
         }
         else
         {
-#ifdef POWER10
-            if (!stateValid && occActive())
-            {
-                if (!safeStateDelayTimer.isEnabled())
-                {
-                    log<level::ERR>(
-                        "Starting 60 sec delay timer before requesting a reset");
-                    // start safe delay timer (before requesting reset)
-                    using namespace std::literals::chrono_literals;
-                    safeStateDelayTimer.restartOnce(60s);
-                }
-            }
-#else
+            log<level::ERR>(
+                std::format("readOccState: failed to read OCC{} state!",
+                            instance)
+                    .c_str());
+
             // State could not be determined, set it to NO State.
             lastState = 0;
 
@@ -556,9 +625,23 @@ void Status::occReadStateNow()
             // Active again.
             stateValid = false;
 
-            // Disable and reset to try recovering
-            deviceError();
-#endif
+            // Disable due to OCC comm failure and reset to try recovering
+            deviceError(Error::Descriptor(OCC_COMM_ERROR_PATH));
+
+            // Reset retry count (for next attempt after recovery)
+            currentOccReadRetriesCount = occReadRetries;
+        }
+    }
+    else
+    {
+        if (lastOccReadStatus != 0)
+        {
+            log<level::INFO>(
+                std::format(
+                    "Status::readOccState: successfully read OCC{} state: {}",
+                    instance, state)
+                    .c_str());
+            lastOccReadStatus = 0; // no error
         }
     }
 }

@@ -105,6 +105,9 @@ class Device
      */
     inline void addErrorWatch(bool poll = true)
     {
+#ifdef POWER10
+        throttleProcTemp.addWatch(poll);
+#else
         try
         {
             throttleProcTemp.addWatch(poll);
@@ -115,6 +118,7 @@ class Device
             throttleProcTemp.setFile(devPath / "occ_dvfs_ot");
             throttleProcTemp.addWatch(poll);
         }
+#endif
 
 #ifdef POWER10
         if (master())
