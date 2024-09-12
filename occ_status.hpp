@@ -278,6 +278,9 @@ class Status : public Interface
     /** @brief The last state read from the OCC */
     unsigned int lastState = 0;
 
+    /** @brief The last OCC read status (0 = no error) */
+    int lastOccReadStatus = 0;
+
     /** @brief Number of retry attempts to open file and update state. */
     const unsigned int occReadRetries = 1;
 
