@@ -34,6 +34,8 @@ constexpr auto clockId = sdeventplus::ClockId::RealTime;
 using Clock = sdeventplus::Clock<clockId>;
 using Timer = Time<clockId>;
 bool Interface::throttleTraces = false;
+enum pldm_msg_type Interface::msgType = MSG_UNDEFINED;
+open_power::occ::instanceID Interface::resetInstance = 0;
 
 void Interface::fetchSensorInfo(uint16_t stateSetId,
                                 SensorToInstance& sensorInstanceMap,
@@ -200,8 +202,9 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
             else
             {
                 log<level::WARNING>(
-                    std::format("PLDM: Unexpected PLDM state {} for OCC{}",
-                                eventState, instance)
+                    std::format(
+                        "PLDM: Unexpected OCC Active sensor state {} for OCC{}",
+                        eventState, instance)
                         .c_str());
                 validEvent = false;
             }
@@ -212,7 +215,7 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
                     // Waiting for a response for this OCC, can stop waiting
                     pldmClose();
                 }
-                callBack(instance, isRunning);
+                occActiveCallBack(instance, isRunning);
             }
             return;
         }
@@ -232,10 +235,21 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
                 outstandingHResets.erase(match);
                 if (eventState == static_cast<EventState>(SBE_HRESET_NOT_READY))
                 {
-                    log<level::INFO>(
+                    log<level::ERR>(
                         std::format("pldm: HRESET is NOT READY (OCC{})",
                                     instance)
                             .c_str());
+                    // Stop OCC comm - OCC not usable until it becomes READY
+                    occActiveCallBack(instance, false);
+                    // Collect SBE FFDC
+                    sbeCallBack(instance, false);
+                    // Try PM Complex reset
+                    log<level::ERR>(
+                        std::format(
+                            "sensorEvent: Requesting OCC reset for OCC{}",
+                            instance)
+                            .c_str());
+                    resetOCC(resetInstance);
                 }
                 else if (eventState ==
                          static_cast<EventState>(SBE_HRESET_READY))
@@ -245,6 +259,17 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
                 else if (eventState ==
                          static_cast<EventState>(SBE_HRESET_FAILED))
                 {
+                    sbeCallBack(instance, false);
+                }
+                else
+                {
+                    if (eventState ==
+                        static_cast<EventState>(SBE_HRESET_FAILED))
+                        log<level::ERR>(
+                            std::format(
+                                "pldm: Unexpected HRESET state {} (OCC{})",
+                                eventState, instance)
+                                .c_str());
                     sbeCallBack(instance, false);
                 }
             }
@@ -284,7 +309,7 @@ void Interface::clearData()
                 std::format("clearData: OCC{} / sensorID: 0x{:04X}",
                             entry.second, entry.first)
                     .c_str());
-            callBack(entry.second, false);
+            occActiveCallBack(entry.second, false);
         }
         sensorToOCCInstance.clear();
     }
@@ -466,8 +491,10 @@ void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
             return;
         }
 
-        // Send request to reset the OCCs/PM Complex (ignore response)
-        sendPldm(request, occInstanceId, false);
+        // Send request to reset the OCCs/PM Complex (and wait for response)
+        msgType = MSG_OCC_RESET;
+        resetInstance = occInstanceId;
+        sendPldm(request, occInstanceId, true);
     }
     else
     {
@@ -510,8 +537,10 @@ void Interface::sendHRESET(open_power::occ::instanceID sbeInstanceId)
             return;
         }
 
-        // Send request to issue HRESET of SBE (ignore response)
-        sendPldm(request, sbeInstanceId, false);
+        // Send request to issue HRESET of SBE (and wait for response)
+        msgType = MSG_HRESET;
+        resetInstance = sbeInstanceId;
+        sendPldm(request, sbeInstanceId, true);
         outstandingHResets.insert(sbeInstanceId);
     }
     else
@@ -691,6 +720,10 @@ int Interface::pldmOpen()
 #elif defined(PLDM_TRANSPORT_WITH_AF_MCTP)
     return openAfMctpTransport();
 #else
+    log<level::ERR>(
+        std::format("pldmOpen: Undefined pldmTransport!, errno={}/{}", errno,
+                    strerror(errno))
+            .c_str());
     return -1;
 #endif
 
@@ -725,13 +758,20 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         // Register callback when response is available
         registerPldmRspCallback();
 
+        using namespace std::literals::chrono_literals;
+        std::chrono::duration timeout = 8s;
+        if ((msgType == MSG_OCC_RESET) || (msgType == MSG_HRESET))
+        {
+            timeout = 30s;
+        }
+
         // Send PLDM request
         if (!throttleTraces)
         {
             log<level::INFO>(
                 std::format(
-                    "sendPldm: calling pldm_transport_send_msg(OCC{}, instance:{}, {} bytes)",
-                    instance, pldmInstanceID.value(), request.size())
+                    "sendPldm: calling pldm_transport_send_msg(OCC{}, instance:{}, {} bytes, timeout {})",
+                    instance, pldmInstanceID.value(), request.size(), timeout)
                     .c_str());
         }
         pldmResponseReceived = false;
@@ -755,8 +795,7 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         }
 
         // start timer waiting for the response
-        using namespace std::literals::chrono_literals;
-        pldmRspTimer.restartOnce(8s);
+        pldmRspTimer.restartOnce(timeout);
 
         // Wait for response/timeout
     }
@@ -792,14 +831,23 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
 void Interface::registerPldmRspCallback()
 {
     decltype(eventSource.get()) sourcePtr = nullptr;
-    auto rc = sd_event_add_io(event.get(), &sourcePtr, pldmFd, EPOLLIN,
-                              pldmRspCallback, this);
+    int rc = 0;
+    if ((msgType == MSG_OCC_RESET) || (msgType == MSG_HRESET))
+    {
+        rc = sd_event_add_io(event.get(), &sourcePtr, pldmFd, EPOLLIN,
+                             pldmResetCallback, this);
+    }
+    else
+    {
+        rc = sd_event_add_io(event.get(), &sourcePtr, pldmFd, EPOLLIN,
+                             pldmRspCallback, this);
+    }
     if (rc < 0)
     {
         log<level::ERR>(
             std::format(
-                "registerPldmRspCallback: sd_event_add_io: Error({})={} : fd={}",
-                rc, strerror(-rc), pldmFd)
+                "registerPldmRspCallback: sd_event_add_io: Error({})={} : fd={} (msgType={})",
+                rc, strerror(-rc), pldmFd, msgType)
                 .c_str());
     }
     else
@@ -818,14 +866,23 @@ void Interface::pldmRspExpired()
         {
             log<level::WARNING>(
                 std::format(
-                    "pldmRspExpired: timerCallback - timeout waiting for pldm response for OCC{}",
-                    pldmResponseOcc)
+                    "pldmRspExpired: timerCallback - timeout waiting for pldm response to msg:{} for OCC{}",
+                    msgType, pldmResponseOcc)
                     .c_str());
         }
         pldmResponseTimeout = true;
         if (pldmFd)
         {
             pldmClose();
+        }
+        if (msgType == MSG_OCC_RESET)
+        {
+            // reset not acked, try again
+            log<level::ERR>(
+                std::format("pldmRspExpired: retrying reset request for OCC{}",
+                            pldmResponseOcc)
+                    .c_str());
+            resetOCC(pldmResponseOcc);
         }
     }
     return;
@@ -963,7 +1020,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
     {
         log<level::INFO>(
             std::format("pldmRspCallback: OCC{} is RUNNING", instance).c_str());
-        pldmIface->callBack(instance, true);
+        pldmIface->occActiveCallBack(instance, true);
     }
     else if (occSensorState ==
              PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_DORMANT)
@@ -977,7 +1034,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
         // Setting safe mode true
         pldmIface->safeModeCallBack(true);
 
-        pldmIface->callBack(instance, false);
+        pldmIface->occActiveCallBack(instance, false);
     }
     else if (occSensorState ==
              PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_STOPPED)
@@ -985,7 +1042,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
         log<level::INFO>(
             std::format("pldmRspCallback: OCC{} is not running", instance)
                 .c_str());
-        pldmIface->callBack(instance, false);
+        pldmIface->occActiveCallBack(instance, false);
     }
     else
     {
@@ -1006,6 +1063,114 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
 
     return 0;
 };
+
+int Interface::pldmResetCallback(sd_event_source* /*es*/,
+                                 __attribute__((unused)) int fd,
+                                 uint32_t revents, void* userData)
+{
+    if (!(revents & EPOLLIN))
+    {
+        log<level::INFO>(
+            std::format("pldmResetCallback - revents={:08X}", revents).c_str());
+        return -1;
+    }
+
+    auto pldmIface = static_cast<Interface*>(userData);
+
+    if (!pldmIface->pldmInstanceID)
+    {
+        log<level::ERR>(
+            "pldmResetCallback: No outstanding PLDM Instance ID found");
+        return -1;
+    }
+
+    uint8_t* responseMsg = nullptr;
+    size_t responseMsgSize{};
+    pldm_tid_t pldmTID = static_cast<pldm_tid_t>(mctpEid);
+
+    if (!throttleTraces)
+    {
+        log<level::INFO>(
+            std::format(
+                "pldmResetCallback: calling pldm_transport_recv_msg() instance:{}",
+                pldmIface->pldmInstanceID.value())
+                .c_str());
+    }
+    auto rc = pldm_transport_recv_msg(pldmIface->pldmTransport, &pldmTID,
+                                      (void**)&responseMsg, &responseMsgSize);
+    int lastErrno = errno;
+    if (rc)
+    {
+        if (!throttleTraces)
+        {
+            log<level::ERR>(
+                std::format(
+                    "pldmResetCallback: pldm_transport_recv_msg failed with rc={}, errno={}/{}",
+                    static_cast<
+                        std::underlying_type_t<pldm_requester_error_codes>>(rc),
+                    lastErrno, strerror(lastErrno))
+                    .c_str());
+        }
+        return -1;
+    }
+
+    // We got the response for the PLDM request msg that was sent
+    if (!throttleTraces)
+    {
+        log<level::INFO>(
+            std::format(
+                "pldmResetCallback: pldm_transport_recv_msg() rsp was {} bytes",
+                responseMsgSize)
+                .c_str());
+    }
+
+    if (pldmIface->pldmRspTimer.isEnabled())
+    {
+        // stop PLDM response timer
+        pldmIface->pldmRspTimer.setEnabled(false);
+    }
+
+    // instance ID should be freed
+    pldmIface->pldmInstanceID = std::nullopt;
+
+    // Set pointer to autodelete
+    std::unique_ptr<uint8_t, decltype(std::free)*> responseMsgPtr{
+        responseMsg, std::free};
+
+    auto response = reinterpret_cast<pldm_msg*>(responseMsgPtr.get());
+    if (response->payload[0] != PLDM_SUCCESS)
+    {
+        log<level::ERR>(
+            std::format(
+                "pldmResetCallback: Reset FAILED ({}) - payload[0] was not success: {}",
+                msgType, response->payload[0])
+                .c_str());
+        pldmIface->pldmClose();
+
+        if (msgType == MSG_OCC_RESET)
+        {
+            // Retry reset request
+            log<level::ERR>(
+                std::format(
+                    "pldmResetCallback: retrying reset request for OCC{}",
+                    resetInstance)
+                    .c_str());
+            pldmIface->resetOCC(resetInstance);
+        }
+        return -1;
+    }
+    else
+    {
+        log<level::INFO>(
+            "pldmResetCallback: Reset has been successfully started");
+    }
+
+    pldmIface->pldmClose();
+
+    pldmIface->pldmResponseReceived = true;
+
+    return 0;
+}
 
 std::vector<uint8_t>
     Interface::encodeGetStateSensorRequest(uint8_t instance, uint16_t sensorId)
@@ -1084,6 +1249,7 @@ void Interface::checkActiveSensor(uint8_t instance)
         }
 
         // Send request to PLDM and setup callback for response
+        msgType = MSG_SENSOR_STATUS;
         sendPldm(request, instance, true);
     }
     else

@@ -236,7 +236,11 @@ void Manager::checkAllActiveSensors()
 #endif
                     }
 #ifdef PLDM
-                    pldmHandle->checkActiveSensor(obj->getOccInstanceID());
+                    // Ignore active sensor check if the OCCs are being reset
+                    if (!resetInProgress)
+                    {
+                        pldmHandle->checkActiveSensor(obj->getOccInstanceID());
+                    }
 #endif
                     break;
                 }
@@ -284,6 +288,20 @@ void Manager::checkAllActiveSensors()
             log<level::INFO>(
                 "checkAllActiveSensors(): OCC Active sensors are available");
             waitingForAllOccActiveSensors = false;
+
+            if (resetRequired)
+            {
+                initiateOccRequest(resetInstance);
+
+                if (!waitForAllOccsTimer->isEnabled())
+                {
+                    log<level::WARNING>(
+                        "occsNotAllRunning: Restarting waitForAllOccTimer");
+                    // restart occ wait timer to check status after reset
+                    // completes
+                    waitForAllOccsTimer->restartOnce(60s);
+                }
+            }
         }
         queuedActiveState.clear();
         tracedSensorWait = false;
@@ -353,7 +371,9 @@ void Manager::createObjects(const std::string& occ)
                   std::placeholders::_1, std::placeholders::_2)
 #ifdef PLDM
             ,
-        std::bind(std::mem_fn(&pldm::Interface::resetOCC), pldmHandle.get(),
+        // Callback will set flag indicating reset needs to be done
+        // instead of immediately issuing a reset via PLDM.
+        std::bind(std::mem_fn(&Manager::resetOccRequest), this,
                   std::placeholders::_1)
 #endif
             ));
@@ -388,10 +408,71 @@ void Manager::createObjects(const std::string& occ)
         ));
 }
 
+// If a reset is not already outstanding, set a flag to indicate that a reset is
+// needed.
+void Manager::resetOccRequest(instanceID instance)
+{
+    if (!resetRequired)
+    {
+        resetRequired = true;
+        resetInstance = instance;
+        log<level::ERR>(
+            std::format(
+                "resetOccRequest: PM Complex reset was requested due to OCC{}",
+                instance)
+                .c_str());
+    }
+    else if (instance != resetInstance)
+    {
+        log<level::WARNING>(
+            std::format(
+                "resetOccRequest: Ignoring PM Complex reset request for OCC{}, because reset already outstanding for OCC{}",
+                instance, resetInstance)
+                .c_str());
+    }
+}
+
+// If a reset has not been started, initiate an OCC reset via PLDM
+void Manager::initiateOccRequest(instanceID instance)
+{
+    if (!resetInProgress)
+    {
+        resetInProgress = true;
+        resetInstance = instance;
+        log<level::ERR>(
+            std::format(
+                "initiateOccRequest: Initiating PM Complex reset due to OCC{}",
+                instance)
+                .c_str());
+#ifdef PLDM
+        pldmHandle->resetOCC(instance);
+#endif
+        resetRequired = false;
+    }
+    else
+    {
+        log<level::WARNING>(
+            std::format(
+                "initiateOccRequest: Ignoring PM Complex reset request for OCC{}, because reset already in process for OCC{}",
+                instance, resetInstance)
+                .c_str());
+    }
+}
+
 void Manager::statusCallBack(instanceID instance, bool status)
 {
     if (status == true)
     {
+        if (resetInProgress)
+        {
+            log<level::INFO>(
+                std::format(
+                    "statusCallBack: Ignoring OCC{} activate because a reset has been initiated due to OCC{}",
+                    instance, resetInstance)
+                    .c_str());
+            return;
+        }
+
         // OCC went active
         ++activeCount;
 
@@ -412,10 +493,29 @@ void Manager::statusCallBack(instanceID instance, bool status)
                 // stop occ wait timer
                 waitForAllOccsTimer->setEnabled(false);
             }
-#endif
 
+            // All OCCs have been found, check if we need a reset
+            if (resetRequired)
+            {
+                initiateOccRequest(resetInstance);
+
+                if (!waitForAllOccsTimer->isEnabled())
+                {
+                    log<level::WARNING>(
+                        "occsNotAllRunning: Restarting waitForAllOccTimer");
+                    // restart occ wait timer
+                    waitForAllOccsTimer->restartOnce(60s);
+                }
+            }
+            else
+            {
+                // Verify master OCC and start presence monitor
+                validateOccMaster();
+            }
+#else
             // Verify master OCC and start presence monitor
             validateOccMaster();
+#endif
         }
 
         // Start poll timer if not already started
@@ -439,7 +539,7 @@ void Manager::statusCallBack(instanceID instance, bool status)
         }
         else
         {
-            log<level::ERR>(
+            log<level::INFO>(
                 std::format("OCC{} disabled, but currently no active OCCs",
                             instance)
                     .c_str());
@@ -448,6 +548,19 @@ void Manager::statusCallBack(instanceID instance, bool status)
         if (activeCount == 0)
         {
             // No OCCs are running
+
+            if (resetInProgress)
+            {
+                // All OCC active sensors are clear (reset should be in
+                // progress)
+                log<level::INFO>(
+                    std::format(
+                        "statusCallBack: Clearing resetInProgress (activeCount={}, OCC{}, status={})",
+                        activeCount, instance, status)
+                        .c_str());
+                resetInProgress = false;
+                resetInstance = 255;
+            }
 
             // Stop OCC poll timer
             if (_pollTimer->isEnabled())
@@ -464,6 +577,14 @@ void Manager::statusCallBack(instanceID instance, bool status)
                 waitForAllOccsTimer->setEnabled(false);
             }
 #endif
+        }
+        else if (resetInProgress)
+        {
+            log<level::INFO>(
+                std::format(
+                    "statusCallBack: Skipping clear of resetInProgress (activeCount={}, OCC{}, status={})",
+                    activeCount, instance, status)
+                    .c_str());
         }
 #ifdef READ_OCC_SENSORS
         // Clear OCC sensors
@@ -680,6 +801,10 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
             }
         }
     }
+
+    // SBE Reset failed, try PM Complex reset
+    log<level::ERR>("sbeHRESETResult: Forcing PM Complex reset");
+    resetOccRequest(instance);
 }
 
 bool Manager::sbeCanDump(unsigned int instance)
@@ -767,10 +892,26 @@ void Manager::pollerTimerExpired()
 {
     if (!_pollTimer)
     {
-        log<level::ERR>(
-            "Manager::pollerTimerExpired() ERROR: Timer not defined");
+        log<level::ERR>("pollerTimerExpired() ERROR: Timer not defined");
         return;
     }
+
+#ifdef POWER10
+    if (resetRequired)
+    {
+        log<level::ERR>("pollerTimerExpired() - Initiating PM Complex reset");
+        initiateOccRequest(resetInstance);
+
+        if (!waitForAllOccsTimer->isEnabled())
+        {
+            log<level::WARNING>(
+                "pollerTimerExpired: Restarting waitForAllOccTimer");
+            // restart occ wait timer
+            waitForAllOccsTimer->restartOnce(60s);
+        }
+        return;
+    }
+#endif
 
     for (auto& obj : statusObjects)
     {
@@ -1359,6 +1500,12 @@ void Manager::getAmbientData(bool& ambientValid, uint8_t& ambientTemp,
 // After the first OCC goes active, this timer will be started (60 seconds)
 void Manager::occsNotAllRunning()
 {
+    if (resetInProgress)
+    {
+        log<level::WARNING>(
+            "occsNotAllRunning: Ignoring waitForAllOccsTimer because reset is in progress");
+        return;
+    }
     if (activeCount != statusObjects.size())
     {
         // Not all OCCs went active
@@ -1370,7 +1517,22 @@ void Manager::occsNotAllRunning()
         // Procs may be garded, so may be expected
     }
 
-    validateOccMaster();
+    if (resetRequired)
+    {
+        initiateOccRequest(resetInstance);
+
+        if (!waitForAllOccsTimer->isEnabled())
+        {
+            log<level::WARNING>(
+                "occsNotAllRunning: Restarting waitForAllOccTimer");
+            // restart occ wait timer
+            waitForAllOccsTimer->restartOnce(60s);
+        }
+    }
+    else
+    {
+        validateOccMaster();
+    }
 }
 
 #ifdef PLDM
