@@ -241,7 +241,7 @@ class OccPersistData
  *  the power mode to the OCC if the mode is changed while the occ is active.
  */
 
-class PowerMode : public ModeInterface, public IpsInterface
+class PowerMode : public ModeInterface
 {
   public:
     /** @brief PowerMode object to inform occ of changes to mode
@@ -339,6 +339,15 @@ class PowerMode : public ModeInterface, public IpsInterface
      */
     bool isValidMode(const SysPwrMode mode);
 
+    /** @brief If IPS is supported, set flag indicating need to send IPS data */
+    void needToSendIPS()
+    {
+        if (ipsObject)
+        {
+            needToSendIpsData = true;
+        }
+    }
+
   private:
     /** @brief OCC manager object */
     const Manager& manager;
@@ -384,6 +393,15 @@ class PowerMode : public ModeInterface, public IpsInterface
 
     /** @brief Current state of error watching */
     bool watching = false;
+
+    /** @brief Set at IPS object creation and cleared after sending IPS data */
+    bool needToSendIpsData = false;
+
+    /** @brief Object path for IPS on DBUS */
+    const char* ipsObjectPath;
+
+    /** @brief IPS DBUS Object */
+    std::unique_ptr<IpsInterface> ipsObject;
 
     /** @brief register for the callback from the POLL IPS changed event */
     void registerIpsStatusCallBack();
@@ -482,6 +500,12 @@ class PowerMode : public ModeInterface, public IpsInterface
      * @return true if data was found/updated
      */
     bool getSupportedModes();
+
+    /** @brief Create IPS DBUS Object */
+    void createIpsObject();
+
+    /** @brief Remove IPS DBUS Object */
+    void removeIpsObject();
 
     /** @brief callback for the POLL IPS changed event
      *
