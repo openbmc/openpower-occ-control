@@ -44,14 +44,16 @@ using NotAllowed = sdbusplus::xyz::openbmc_project::Common::Error::NotAllowed;
     ((mode == SysPwrMode::SFP) || (mode == SysPwrMode::FFO) ||                 \
      (mode == SysPwrMode::MAX_FREQ) ||                                         \
      (mode == SysPwrMode::NON_DETERMINISTIC))
+// List of all Power Modes that disable IPS
+#define IS_ECO_MODE(mode)                                                      \
+    ((mode == SysPwrMode::EFF_FAVOR_POWER) ||                                  \
+     (mode == SysPwrMode::EFF_FAVOR_PERF))
 
 // Constructor
 PowerMode::PowerMode(const Manager& managerRef, const char* modePath,
                      const char* ipsPath, EventPtr& event) :
     ModeInterface(utils::getBus(), modePath,
                   ModeInterface::action::emit_no_signals),
-    IpsInterface(utils::getBus(), ipsPath,
-                 IpsInterface::action::emit_no_signals),
     manager(managerRef),
     ipsMatch(utils::getBus(),
              sdbusplus::bus::match::rules::propertiesChanged(PIPS_PATH,
@@ -62,7 +64,8 @@ PowerMode::PowerMode(const Manager& managerRef, const char* modePath,
         sdbusplus::bus::match::rules::propertiesChangedNamespace(
             "/xyz/openbmc_project/inventory", PMODE_DEFAULT_INTERFACE),
         [this](auto& msg) { this->defaultsReady(msg); }),
-    masterOccSet(false), masterActive(false), event(event)
+    masterOccSet(false), masterActive(false), ipsObjectPath(ipsPath),
+    event(event)
 {
     // Get supported power modes from entity manager
     if (false == getSupportedModes())
@@ -84,7 +87,7 @@ PowerMode::PowerMode(const Manager& managerRef, const char* modePath,
         // Validate persisted mode is supported
         if (isValidMode(currentMode))
         {
-            // Update power mode on DBus
+            // Update power mode on DBus and create IPS object if allowed
             updateDbusMode(currentMode);
         }
         else
@@ -99,17 +102,39 @@ PowerMode::PowerMode(const Manager& managerRef, const char* modePath,
             initPersistentData();
         }
     }
-
-    uint8_t enterUtil, exitUtil;
-    uint16_t enterTime, exitTime;
-    bool ipsEnabled;
-    // Read the persisted Idle Power Saver parametres
-    if (getIPSParms(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime))
-    {
-        // Update Idle Power Saver parameters on DBus
-        updateDbusIPS(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime);
-    }
 };
+
+void PowerMode::createIpsObject()
+{
+    if (!ipsObject)
+    {
+        log<level::INFO>("createIpsObject: Creating IPS object");
+        ipsObject =
+            std::make_unique<IpsInterface>(utils::getBus(), ipsObjectPath);
+
+        uint8_t enterUtil, exitUtil;
+        uint16_t enterTime, exitTime;
+        bool ipsEnabled;
+        // Read the persisted Idle Power Saver parametres
+        if (getIPSParms(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime))
+        {
+            // Update Idle Power Saver parameters on DBus
+            updateDbusIPS(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime);
+        }
+
+        needToSendIpsData = true;
+    }
+}
+
+void PowerMode::removeIpsObject()
+{
+    if (ipsObject)
+    {
+        log<level::INFO>("removeIpsObject: Deleting IPS object");
+        ipsObject.reset(nullptr);
+    }
+    needToSendIpsData = false;
+}
 
 // Set the Master OCC
 void PowerMode::setMasterOcc(const std::string& masterOccPath)
@@ -323,7 +348,7 @@ bool PowerMode::initPersistentData()
         // Save default mode as current mode
         persistedData.updateMode(currentMode, 0);
 
-        // Write default mode to DBus
+        // Write default mode to DBus and create IPS object if allowed
         updateDbusMode(currentMode);
     }
 
@@ -356,7 +381,7 @@ bool PowerMode::getMode(SysPwrMode& currentMode, uint16_t& oemModeData)
     return true;
 }
 
-// Set the power mode on DBus
+// Set the power mode on DBus and create IPS object if allowed/needed
 bool PowerMode::updateDbusMode(const SysPwrMode newMode)
 {
     if (!isValidMode(newMode))
@@ -399,6 +424,16 @@ bool PowerMode::updateDbusMode(const SysPwrMode newMode)
     }
     // else return OEM mode
 
+    // Determine if IPS is allowed and create/remove as needed
+    if (IS_ECO_MODE(newMode))
+    {
+        removeIpsObject();
+    }
+    else
+    {
+        createIpsObject();
+    }
+
     ModeInterface::powerMode(dBusMode);
 
     return true;
@@ -409,27 +444,42 @@ CmdStatus PowerMode::sendModeChange()
 {
     CmdStatus status;
 
-    if (!masterActive || !masterOccSet)
-    {
-        // Nothing to do
-        log<level::DEBUG>("PowerMode::sendModeChange: OCC master not active");
-        return CmdStatus::SUCCESS;
-    }
-
-    if (!isPowerVM())
-    {
-        // Mode change is only supported on PowerVM systems
-        log<level::DEBUG>(
-            "PowerMode::sendModeChange: MODE CHANGE does not get sent on non-PowerVM systems");
-        return CmdStatus::SUCCESS;
-    }
-
     SysPwrMode newMode;
     uint16_t oemModeData = 0;
     getMode(newMode, oemModeData);
 
     if (isValidMode(newMode))
     {
+        if (IS_ECO_MODE(newMode))
+        {
+            // Customer no longer able to enable IPS
+            removeIpsObject();
+        }
+        else
+        {
+            // Customer now able to enable IPS
+            if (!ipsObject)
+            {
+                createIpsObject();
+            }
+        }
+
+        if (!masterActive || !masterOccSet)
+        {
+            // Nothing to do until OCC goes active
+            log<level::DEBUG>(
+                "PowerMode::sendModeChange: OCC master not active");
+            return CmdStatus::SUCCESS;
+        }
+
+        if (!isPowerVM())
+        {
+            // Mode change is only supported on PowerVM systems
+            log<level::DEBUG>(
+                "PowerMode::sendModeChange: MODE CHANGE does not get sent on non-PowerVM systems");
+            return CmdStatus::SUCCESS;
+        }
+
         std::vector<std::uint8_t> cmd, rsp;
         cmd.reserve(9);
         cmd.push_back(uint8_t(CmdType::SET_MODE_AND_STATE));
@@ -460,6 +510,13 @@ CmdStatus PowerMode::sendModeChange()
                             .c_str());
                     dump_hex(rsp);
                     status = CmdStatus::FAILURE;
+                }
+
+                if (needToSendIpsData)
+                {
+                    // Successful mode change and IPS is now allowed, so send
+                    // IPS config
+                    sendIpsData();
                 }
             }
             else
@@ -492,6 +549,7 @@ CmdStatus PowerMode::sendModeChange()
     return status;
 }
 
+// Handle IPS changed event (from GUI/Redfish)
 void PowerMode::ipsChanged(sdbusplus::message_t& msg)
 {
     bool parmsChanged = false;
@@ -505,6 +563,13 @@ void PowerMode::ipsChanged(sdbusplus::message_t& msg)
     uint8_t enterUtil, exitUtil;
     uint16_t enterTime, exitTime;
     getIPSParms(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime);
+
+    if (!ipsObject)
+    {
+        log<level::WARNING>(
+            "ipsChanged: Idle Power Saver can not be modified in an ECO power mode");
+        return;
+    }
 
     // Check for any changed data
     auto ipsEntry = ipsProperties.find(IPS_ENABLED_PROP);
@@ -628,15 +693,22 @@ bool PowerMode::updateDbusIPS(const bool enabled, const uint8_t enterUtil,
                               const uint16_t enterTime, const uint8_t exitUtil,
                               const uint16_t exitTime)
 {
-    // true = skip update signal
-    IpsInterface::setPropertyByName(IPS_ENABLED_PROP, enabled, true);
-    IpsInterface::setPropertyByName(IPS_ENTER_UTIL, enterUtil, true);
-    // Convert time from seconds to ms
-    uint64_t msTime = enterTime * 1000;
-    IpsInterface::setPropertyByName(IPS_ENTER_TIME, msTime, true);
-    IpsInterface::setPropertyByName(IPS_EXIT_UTIL, exitUtil, true);
-    msTime = exitTime * 1000;
-    IpsInterface::setPropertyByName(IPS_EXIT_TIME, msTime, true);
+    if (ipsObject)
+    {
+        // true = skip update signal
+        ipsObject->setPropertyByName(IPS_ENABLED_PROP, enabled, true);
+        ipsObject->setPropertyByName(IPS_ENTER_UTIL, enterUtil, true);
+        // Convert time from seconds to ms
+        uint64_t msTime = enterTime * 1000;
+        ipsObject->setPropertyByName(IPS_ENTER_TIME, msTime, true);
+        ipsObject->setPropertyByName(IPS_EXIT_UTIL, exitUtil, true);
+        msTime = exitTime * 1000;
+        ipsObject->setPropertyByName(IPS_EXIT_TIME, msTime, true);
+    }
+    else
+    {
+        log<level::WARNING>("updateDbusIPS: No IPS object was found");
+    }
 
     return true;
 }
@@ -655,6 +727,14 @@ CmdStatus PowerMode::sendIpsData()
         // Idle Power Saver data is only supported on PowerVM systems
         log<level::DEBUG>(
             "PowerMode::sendIpsData: SET_CFG_DATA[IPS] does not get sent on non-PowerVM systems");
+        return CmdStatus::SUCCESS;
+    }
+
+    if (!ipsObject)
+    {
+        // Idle Power Saver data is not available in Eco Modes
+        log<level::INFO>(
+            "PowerMode::sendIpsData: Skipping IPS data due to being in an ECO Power Mode");
         return CmdStatus::SUCCESS;
     }
 
@@ -690,6 +770,7 @@ CmdStatus PowerMode::sendIpsData()
     CmdStatus status = occCmd->send(cmd, rsp);
     if (status == CmdStatus::SUCCESS)
     {
+        needToSendIpsData = false;
         if (rsp.size() == 5)
         {
             if (RspStatus::SUCCESS != RspStatus(rsp[2]))
@@ -1050,7 +1131,10 @@ bool PowerMode::openIpsFile()
                 CALLOUT_DEVICE_PATH(ipsStatusFile.c_str()));
 
         // We are no longer watching the error
-        active(false);
+        if (ipsObject)
+        {
+            ipsObject->active(false);
+        }
 
         watching = false;
         rc = false;
@@ -1083,7 +1167,10 @@ void PowerMode::removeIpsWatch()
     //  matter what the 'watching' flags is set to.
 
     // We are no longer watching the error
-    active(false);
+    if (ipsObject)
+    {
+        ipsObject->active(false);
+    }
 
     watching = false;
 
@@ -1192,7 +1279,10 @@ void PowerMode::analyzeIpsEvent()
         }
 
         // This will only set IPS active dbus if different than current.
-        active(ipsState);
+        if (ipsObject)
+        {
+            ipsObject->active(ipsState);
+        }
     }
     else
     {
