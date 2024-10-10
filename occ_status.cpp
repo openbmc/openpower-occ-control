@@ -251,6 +251,10 @@ void Status::occsWentActive()
 {
     CmdStatus status = CmdStatus::SUCCESS;
 
+    // IPS data will get sent automatically after a mode change if the mode
+    // supports it.
+    pmode->needToSendIPS();
+
     status = pmode->sendModeChange();
     if (status != CmdStatus::SUCCESS)
     {
@@ -262,22 +266,6 @@ void Status::occsWentActive()
 
         // Disable and reset to try recovering
         deviceError();
-    }
-
-    status = pmode->sendIpsData();
-    if (status != CmdStatus::SUCCESS)
-    {
-        log<level::ERR>(
-            std::format(
-                "Status::occsWentActive: Sending Idle Power Save Config data failed with status {}",
-                status)
-                .c_str());
-
-        if (status == CmdStatus::COMM_FAILURE)
-        {
-            // Disable and reset to try recovering
-            deviceError();
-        }
     }
 }
 
