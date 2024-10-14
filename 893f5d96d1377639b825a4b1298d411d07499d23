@@ -18,6 +18,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "443dbebc_1903cde7",
+        "filename": "powermode.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 521,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2024-10-14T20:13:37Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aaf3057d_e568274d",
+      "revId": "893f5d96d1377639b825a4b1298d411d07499d23",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "176da099_c9fe8a04",
@@ -31,6 +49,24 @@
       "writtenOn": "2024-10-14T19:22:28Z",
       "side": 1,
       "message": "move this to after checking RspStatus for success",
+      "revId": "893f5d96d1377639b825a4b1298d411d07499d23",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e9b75d99_370f232c",
+        "filename": "powermode.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 779,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2024-10-14T20:13:37Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "176da099_c9fe8a04",
       "revId": "893f5d96d1377639b825a4b1298d411d07499d23",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
