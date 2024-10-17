@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "beb9b36f_6054ee45",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 423,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2024-10-17T15:22:03Z",
+      "side": 1,
+      "message": "if you ever have any free time you could convert all these to lg2 which is a lot less ugly.",
+      "range": {
+        "startLine": 419,
+        "startChar": 0,
+        "endLine": 423,
+        "endChar": 26
+      },
+      "revId": "f0295f52536d9e508305a0e522184157966ee2f5",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9bf3ab78_357ed111",
+        "filename": "pldm.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 774,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2024-10-17T15:22:03Z",
+      "side": 1,
+      "message": "I\u0027m impressed format handles a duration.",
+      "range": {
+        "startLine": 774,
+        "startChar": 70,
+        "endLine": 774,
+        "endChar": 77
+      },
+      "revId": "f0295f52536d9e508305a0e522184157966ee2f5",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
