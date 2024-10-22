@@ -24,6 +24,30 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f92d63b0_b2fd5013",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 423,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2024-10-22T15:22:45Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "beb9b36f_6054ee45",
+      "range": {
+        "startLine": 419,
+        "startChar": 0,
+        "endLine": 423,
+        "endChar": 26
+      },
+      "revId": "f0295f52536d9e508305a0e522184157966ee2f5",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9bf3ab78_357ed111",
@@ -37,6 +61,30 @@
       "writtenOn": "2024-10-17T15:22:03Z",
       "side": 1,
       "message": "I\u0027m impressed format handles a duration.",
+      "range": {
+        "startLine": 774,
+        "startChar": 70,
+        "endLine": 774,
+        "endChar": 77
+      },
+      "revId": "f0295f52536d9e508305a0e522184157966ee2f5",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eedb48a0_1bcaacc4",
+        "filename": "pldm.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 774,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2024-10-22T15:22:45Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "9bf3ab78_357ed111",
       "range": {
         "startLine": 774,
         "startChar": 70,
