@@ -139,9 +139,11 @@ class OccDBusSensors
 
     /** @brief Set the association to the chassis
      *
-     *  @param[in] path   - The object path
+     *  @param[in] path        - The object path
+     *  @param[in] fType       - vector of forward types
      */
-    void setChassisAssociation(const std::string& path);
+    void setChassisAssociation(const std::string& path,
+                               const std::vector<std::string>& fTypes);
 
     /** @brief Set the value of the DVFS temp sensor
      *

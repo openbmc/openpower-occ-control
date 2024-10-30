@@ -1186,7 +1186,7 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
         if (existingSensors.find(objectPath) == existingSensors.end())
         {
             dbus::OccDBusSensors::getOccDBus().setChassisAssociation(
-                objectPath);
+                objectPath, {"all_sensors"});
         }
 
         existingSensors[objectPath] = occInstance;
@@ -1290,8 +1290,15 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
 
         if (existingSensors.find(sensorPath) == existingSensors.end())
         {
+            std::vector<int> occs;
+            std::vector<std::string> fTypeList = {"all_sensors"};
+            if (iter->second == "total_power")
+            {
+                // Total system power has its own chassis association
+                fTypeList.push_back("total_power");
+            }
             dbus::OccDBusSensors::getOccDBus().setChassisAssociation(
-                sensorPath);
+                sensorPath, fTypeList);
         }
 
         existingSensors[sensorPath] = id;
