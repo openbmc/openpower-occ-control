@@ -172,7 +172,8 @@ bool OccDBusSensors::getOperationalStatus(const std::string& path) const
     throw std::invalid_argument("Failed to get OperationalStatus property.");
 }
 
-void OccDBusSensors::setChassisAssociation(const std::string& path)
+void OccDBusSensors::setChassisAssociation(
+    const std::string& path, const std::vector<std::string>& fTypes)
 {
     using AssociationsEntry = std::tuple<std::string, std::string, std::string>;
     using AssociationsProperty = std::vector<AssociationsEntry>;
@@ -184,8 +185,11 @@ void OccDBusSensors::setChassisAssociation(const std::string& path)
         chassisPath = getChassisPath();
     }
 
-    AssociationsProperty associations{
-        AssociationsEntry{"chassis", "all_sensors", chassisPath}};
+    AssociationsProperty associations;
+    for (const auto& fType : fTypes)
+    {
+        associations.emplace_back("chassis", fType, chassisPath);
+    }
     PropVariant value{std::move(associations)};
 
     std::map<std::string, PropVariant> properties;
