@@ -10,7 +10,7 @@
 #include <org/open_power/OCC/Device/error.hpp>
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/elog.hpp>
-#include <phosphor-logging/log.hpp>
+#include <phosphor-logging/lg2.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
 
 namespace open_power
@@ -46,9 +46,8 @@ void Presence::analyzeEvent()
     auto occsPresent = std::stoi(data, nullptr, 0);
     if (manager.getNumOCCs() != occsPresent)
     {
-        log<level::ERR>(std::format("OCC presence mismatch - BMC: {}, OCC: {}",
-                                    manager.getNumOCCs(), occsPresent)
-                            .c_str());
+        lg2::error("OCC presence mismatch - BMC: {BNUM}, OCC: {ONUM}", "BNUM",
+                   manager.getNumOCCs(), "ONUM", occsPresent);
         if (callBack)
         {
             callBack(occsPresent);

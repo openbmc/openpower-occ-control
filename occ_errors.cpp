@@ -8,10 +8,10 @@
 #include <org/open_power/OCC/Device/error.hpp>
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/elog.hpp>
+#include <phosphor-logging/lg2.hpp>
 #include <phosphor-logging/log.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
 
-#include <format>
 namespace open_power
 {
 namespace occ
@@ -31,10 +31,8 @@ void Error::openFile()
     const int open_errno = errno;
     if (fd < 0)
     {
-        log<level::ERR>(
-            std::format("Error::openFile: open of {} failed (errno={})",
-                        file.c_str(), open_errno)
-                .c_str());
+        lg2::error("Error::openFile: open of {FILE} failed (errno={ERR})",
+                   "FILE", file.c_str(), "ERR", open_errno);
         elog<OpenFailure>(phosphor::logging::org::open_power::OCC::Device::
                               OpenFailure::CALLOUT_ERRNO(open_errno),
                           phosphor::logging::org::open_power::OCC::Device::
@@ -52,8 +50,8 @@ void Error::registerCallBack()
 
     if (r < 0)
     {
-        log<level::ERR>("Failed to register callback handler",
-                        entry("ERROR=%s", strerror(-r)));
+        lg2::error("Failed to register callback handler: error={ERR}", "ERR",
+                   strerror(-r));
         elog<InternalFailure>();
     }
 }
@@ -172,7 +170,7 @@ std::string Error::readFile(int len) const
     auto r = lseek(fd, 0, SEEK_SET);
     if (r < 0)
     {
-        log<level::ERR>("Failure seeking error file to START");
+        lg2::error("Failure seeking error file to START");
         elog<ConfigFailure>(
             phosphor::logging::org::open_power::OCC::Device::ConfigFailure::
                 CALLOUT_ERRNO(errno),

@@ -9,12 +9,8 @@
 #endif
 
 #include <org/open_power/OCC/Device/error.hpp>
-#include <phosphor-logging/elog-errors.hpp>
-#include <phosphor-logging/elog.hpp>
-#include <phosphor-logging/log.hpp>
+#include <phosphor-logging/lg2.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
-
-using namespace phosphor::logging;
 
 using namespace sdbusplus::org::open_power::OCC::Device::Error;
 using InternalFailure =
@@ -29,7 +25,7 @@ int main(int /*argc*/, char** /*argv[]*/)
     auto r = sd_event_default(&event);
     if (r < 0)
     {
-        log<level::ERR>("Error creating a default sd_event handler");
+        lg2::error("Error creating a default sd_event handler");
         return r;
     }
     open_power::occ::EventPtr eventP{event};

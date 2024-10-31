@@ -2,9 +2,8 @@
 
 #include "utils.hpp"
 
-#include <phosphor-logging/log.hpp>
+#include <phosphor-logging/lg2.hpp>
 
-#include <format>
 #include <iostream>
 
 namespace open_power
@@ -14,7 +13,6 @@ namespace occ
 namespace dbus
 {
 
-using namespace phosphor::logging;
 using namespace std::string_literals;
 const auto defaultChassisPath =
     "/xyz/openbmc_project/inventory/system/chassis"s;
@@ -120,7 +118,7 @@ bool OccDBusSensors::setUnit(const std::string& path, const std::string& value)
     }
     catch (const std::exception& e)
     {
-        log<level::ERR>("set Unit propety failed", entry("ERROR=%s", e.what()));
+        lg2::error("set Unit propety failed: error={ERR}", "ERR", e.what());
         return false;
     }
 
@@ -137,8 +135,7 @@ std::string OccDBusSensors::getUnit(const std::string& path) const
         }
         catch (const std::exception& e)
         {
-            log<level::ERR>("get Unit propety failed",
-                            entry("ERROR=%s", e.what()));
+            lg2::error("get Unit propety failed: error={ERR}", "ERR", e.what());
         }
     }
 
@@ -217,11 +214,8 @@ std::string OccDBusSensors::getChassisPath()
         else if (std::find(paths.begin(), paths.end(), defaultChassisPath) ==
                  paths.end())
         {
-            log<level::ERR>(
-                std::format(
-                    "Could not find a chassis out of {} chassis objects",
-                    paths.size())
-                    .c_str());
+            lg2::error("Could not find a chassis out of {NUM} chassis objects",
+                       "NUM", paths.size());
             // Can't throw an exception here, the sdeventplus timer
             // just catches it.
             abort();
@@ -229,9 +223,7 @@ std::string OccDBusSensors::getChassisPath()
     }
     catch (const std::exception& e)
     {
-        log<level::ERR>(
-            std::format("Error looking up chassis objects: {}", e.what())
-                .c_str());
+        lg2::error("Error looking up chassis objects: {ERR}", "ERR", e.what());
         abort();
     }
 
