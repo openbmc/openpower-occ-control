@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "abf40c91_b3eb1776",
+        "filename": "occ_dbus.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 1000008
+      },
+      "writtenOn": "2024-10-31T15:22:19Z",
+      "side": 1,
+      "message": "this can be a little more elegant as:\n\nassocations.emplace_back(\"chassis\", fType, chassisPath)\n\nif you want",
+      "range": {
+        "startLine": 191,
+        "startChar": 21,
+        "endLine": 192,
+        "endChar": 62
+      },
+      "revId": "9201bc0a90c5c95146c7df7a6a9bda1e84351bdb",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
