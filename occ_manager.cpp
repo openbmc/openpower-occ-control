@@ -8,7 +8,7 @@
 #include "utils.hpp"
 
 #include <phosphor-logging/elog-errors.hpp>
-#include <phosphor-logging/log.hpp>
+#include <phosphor-logging/lg2.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
 
 #include <chrono>
@@ -97,11 +97,9 @@ void Manager::findAndCreateObjects()
                 // a chance to settle.
                 prevOCCSearch = occs;
 
-                log<level::INFO>(
-                    std::format(
-                        "Manager::findAndCreateObjects(): Waiting for OCCs (currently {})",
-                        occs.size())
-                        .c_str());
+                lg2::info(
+                    "Manager::findAndCreateObjects(): Waiting for OCCs (currently {QTY})",
+                    "QTY", occs.size());
 
                 discoverTimer->restartOnce(10s);
             }
@@ -112,11 +110,9 @@ void Manager::findAndCreateObjects()
                 // createObjects requires OCC0 first.
                 std::sort(occs.begin(), occs.end());
 
-                log<level::INFO>(
-                    std::format(
-                        "Manager::findAndCreateObjects(): Creating {} OCC Status Objects",
-                        occs.size())
-                        .c_str());
+                lg2::info(
+                    "Manager::findAndCreateObjects(): Creating {QTY} OCC Status Objects",
+                    "QTY", occs.size());
                 for (auto id : occs)
                 {
                     createObjects(std::string(OCC_NAME) + std::to_string(id));
@@ -139,7 +135,7 @@ void Manager::findAndCreateObjects()
             {
                 if (tracedHostWait)
                 {
-                    log<level::INFO>(
+                    lg2::info(
                         "Manager::findAndCreateObjects(): Host is running");
                     tracedHostWait = false;
                 }
@@ -149,7 +145,7 @@ void Manager::findAndCreateObjects()
             {
                 if (!tracedHostWait)
                 {
-                    log<level::INFO>(
+                    lg2::info(
                         "Manager::findAndCreateObjects(): Waiting for host to start");
                     tracedHostWait = true;
                 }
@@ -159,8 +155,7 @@ void Manager::findAndCreateObjects()
                 {
                     // Host is no longer running, disable throttle timer and
                     // make sure traces are not throttled
-                    log<level::INFO>(
-                        "findAndCreateObjects(): disabling sensor timer");
+                    lg2::info("findAndCreateObjects(): disabling sensor timer");
                     throttlePldmTraceTimer->setEnabled(false);
                     pldmHandle->setTraceThrottle(false);
                 }
@@ -170,11 +165,9 @@ void Manager::findAndCreateObjects()
     }
     else
     {
-        log<level::INFO>(
-            std::format(
-                "Manager::findAndCreateObjects(): Waiting for {} to complete...",
-                HOST_ON_FILE)
-                .c_str());
+        lg2::info(
+            "Manager::findAndCreateObjects(): Waiting for {FILE} to complete...",
+            "FILE", HOST_ON_FILE);
         discoverTimer->restartOnce(10s);
     }
 #endif
@@ -193,7 +186,7 @@ void Manager::checkAllActiveSensors()
         if (waitingForHost)
         {
             waitingForHost = false;
-            log<level::INFO>("checkAllActiveSensors(): Host is now running");
+            lg2::info("checkAllActiveSensors(): Host is now running");
         }
 
         // Start with the assumption that all are available
@@ -208,11 +201,9 @@ void Manager::checkAllActiveSensors()
                 if (match != queuedActiveState.end())
                 {
                     queuedActiveState.erase(match);
-                    log<level::INFO>(
-                        std::format(
-                            "checkAllActiveSensors(): OCC{} is ACTIVE (queued)",
-                            instance)
-                            .c_str());
+                    lg2::info(
+                        "checkAllActiveSensors(): OCC{INST} is ACTIVE (queued)",
+                        "INST", instance);
                     obj->occActive(true);
                 }
                 else
@@ -220,11 +211,9 @@ void Manager::checkAllActiveSensors()
                     allActiveSensorAvailable = false;
                     if (!tracedSensorWait)
                     {
-                        log<level::INFO>(
-                            std::format(
-                                "checkAllActiveSensors(): Waiting on OCC{} Active sensor",
-                                instance)
-                                .c_str());
+                        lg2::info(
+                            "checkAllActiveSensors(): Waiting on OCC{INST} Active sensor",
+                            "INST", instance);
                         tracedSensorWait = true;
 #ifdef PLDM
                         // Make sure PLDM traces are not throttled
@@ -252,15 +241,13 @@ void Manager::checkAllActiveSensors()
         if (!waitingForHost)
         {
             waitingForHost = true;
-            log<level::INFO>(
-                "checkAllActiveSensors(): Waiting for host to start");
+            lg2::info("checkAllActiveSensors(): Waiting for host to start");
 #ifdef PLDM
             if (throttlePldmTraceTimer->isEnabled())
             {
                 // Host is no longer running, disable throttle timer and
                 // make sure traces are not throttled
-                log<level::INFO>(
-                    "checkAllActiveSensors(): disabling sensor timer");
+                lg2::info("checkAllActiveSensors(): disabling sensor timer");
                 throttlePldmTraceTimer->setEnabled(false);
                 pldmHandle->setTraceThrottle(false);
             }
@@ -285,7 +272,7 @@ void Manager::checkAllActiveSensors()
 #endif
         if (waitingForAllOccActiveSensors)
         {
-            log<level::INFO>(
+            lg2::info(
                 "checkAllActiveSensors(): OCC Active sensors are available");
             waitingForAllOccActiveSensors = false;
 
@@ -295,7 +282,7 @@ void Manager::checkAllActiveSensors()
 
                 if (!waitForAllOccsTimer->isEnabled())
                 {
-                    log<level::WARNING>(
+                    lg2::warning(
                         "occsNotAllRunning: Restarting waitForAllOccTimer");
                     // restart occ wait timer to check status after reset
                     // completes
@@ -311,7 +298,7 @@ void Manager::checkAllActiveSensors()
         // Not all sensors were available, so keep waiting
         if (!tracedSensorWait)
         {
-            log<level::INFO>(
+            lg2::info(
                 "checkAllActiveSensors(): Waiting for OCC Active sensors to become available");
             tracedSensorWait = true;
         }
@@ -387,10 +374,8 @@ void Manager::createObjects(const std::string& occ)
 
     if (statusObjects.back()->isMasterOcc())
     {
-        log<level::INFO>(
-            std::format("Manager::createObjects(): OCC{} is the master",
-                        statusObjects.back()->getOccInstanceID())
-                .c_str());
+        lg2::info("Manager::createObjects(): OCC{INST} is the master", "INST",
+                  statusObjects.back()->getOccInstanceID());
         _pollTimer->setEnabled(false);
 
 #ifdef POWER10
@@ -416,19 +401,15 @@ void Manager::resetOccRequest(instanceID instance)
     {
         resetRequired = true;
         resetInstance = instance;
-        log<level::ERR>(
-            std::format(
-                "resetOccRequest: PM Complex reset was requested due to OCC{}",
-                instance)
-                .c_str());
+        lg2::error(
+            "resetOccRequest: PM Complex reset was requested due to OCC{INST}",
+            "INST", instance);
     }
     else if (instance != resetInstance)
     {
-        log<level::WARNING>(
-            std::format(
-                "resetOccRequest: Ignoring PM Complex reset request for OCC{}, because reset already outstanding for OCC{}",
-                instance, resetInstance)
-                .c_str());
+        lg2::warning(
+            "resetOccRequest: Ignoring PM Complex reset request for OCC{INST}, because reset already outstanding for OCC{RINST}",
+            "INST", instance, "RINST", resetInstance);
     }
 }
 
@@ -439,11 +420,9 @@ void Manager::initiateOccRequest(instanceID instance)
     {
         resetInProgress = true;
         resetInstance = instance;
-        log<level::ERR>(
-            std::format(
-                "initiateOccRequest: Initiating PM Complex reset due to OCC{}",
-                instance)
-                .c_str());
+        lg2::error(
+            "initiateOccRequest: Initiating PM Complex reset due to OCC{INST}",
+            "INST", instance);
 #ifdef PLDM
         pldmHandle->resetOCC(instance);
 #endif
@@ -451,11 +430,9 @@ void Manager::initiateOccRequest(instanceID instance)
     }
     else
     {
-        log<level::WARNING>(
-            std::format(
-                "initiateOccRequest: Ignoring PM Complex reset request for OCC{}, because reset already in process for OCC{}",
-                instance, resetInstance)
-                .c_str());
+        lg2::warning(
+            "initiateOccRequest: Ignoring PM Complex reset request for OCC{INST}, because reset already in process for OCC{RINST}",
+            "INST", instance, "RINST", resetInstance);
     }
 }
 
@@ -465,11 +442,9 @@ void Manager::statusCallBack(instanceID instance, bool status)
     {
         if (resetInProgress)
         {
-            log<level::INFO>(
-                std::format(
-                    "statusCallBack: Ignoring OCC{} activate because a reset has been initiated due to OCC{}",
-                    instance, resetInstance)
-                    .c_str());
+            lg2::info(
+                "statusCallBack: Ignoring OCC{INST} activate because a reset has been initiated due to OCC{INST}",
+                "INST", instance, "RINST", resetInstance);
             return;
         }
 
@@ -501,7 +476,7 @@ void Manager::statusCallBack(instanceID instance, bool status)
 
                 if (!waitForAllOccsTimer->isEnabled())
                 {
-                    log<level::WARNING>(
+                    lg2::warning(
                         "occsNotAllRunning: Restarting waitForAllOccTimer");
                     // restart occ wait timer
                     waitForAllOccsTimer->restartOnce(60s);
@@ -521,10 +496,8 @@ void Manager::statusCallBack(instanceID instance, bool status)
         // Start poll timer if not already started
         if (!_pollTimer->isEnabled())
         {
-            log<level::INFO>(
-                std::format("Manager: OCCs will be polled every {} seconds",
-                            pollInterval)
-                    .c_str());
+            lg2::info("Manager: OCCs will be polled every {TIME} seconds",
+                      "TIME", pollInterval);
 
             // Send poll and start OCC poll timer
             pollerTimerExpired();
@@ -539,10 +512,8 @@ void Manager::statusCallBack(instanceID instance, bool status)
         }
         else
         {
-            log<level::INFO>(
-                std::format("OCC{} disabled, but currently no active OCCs",
-                            instance)
-                    .c_str());
+            lg2::info("OCC{INST} disabled, but currently no active OCCs",
+                      "INST", instance);
         }
 
         if (activeCount == 0)
@@ -553,11 +524,9 @@ void Manager::statusCallBack(instanceID instance, bool status)
             {
                 // All OCC active sensors are clear (reset should be in
                 // progress)
-                log<level::INFO>(
-                    std::format(
-                        "statusCallBack: Clearing resetInProgress (activeCount={}, OCC{}, status={})",
-                        activeCount, instance, status)
-                        .c_str());
+                lg2::info(
+                    "statusCallBack: Clearing resetInProgress (activeCount={COUNT}, OCC{INST}, status={STATUS})",
+                    "COUNT", activeCount, "INST", instance, "STATUS", status);
                 resetInProgress = false;
                 resetInstance = 255;
             }
@@ -565,7 +534,7 @@ void Manager::statusCallBack(instanceID instance, bool status)
             // Stop OCC poll timer
             if (_pollTimer->isEnabled())
             {
-                log<level::INFO>(
+                lg2::info(
                     "Manager::statusCallBack(): OCCs are not running, stopping poll timer");
                 _pollTimer->setEnabled(false);
             }
@@ -580,11 +549,9 @@ void Manager::statusCallBack(instanceID instance, bool status)
         }
         else if (resetInProgress)
         {
-            log<level::INFO>(
-                std::format(
-                    "statusCallBack: Skipping clear of resetInProgress (activeCount={}, OCC{}, status={})",
-                    activeCount, instance, status)
-                    .c_str());
+            lg2::info(
+                "statusCallBack: Skipping clear of resetInProgress (activeCount={COUNT}, OCC{INST}, status={STATUS})",
+                "COUNT", activeCount, "INST", instance, "STATUS", status);
         }
 #ifdef READ_OCC_SENSORS
         // Clear OCC sensors
@@ -640,9 +607,8 @@ void Manager::sbeTimeout(unsigned int instance)
 
     if (obj != statusObjects.end() && (*obj)->occActive())
     {
-        log<level::INFO>(
-            std::format("SBE timeout, requesting HRESET (OCC{})", instance)
-                .c_str());
+        lg2::info("SBE timeout, requesting HRESET (OCC{INST})", "INST",
+                  instance);
 
         setSBEState(instance, SBE_STATE_NOT_USABLE);
 
@@ -662,15 +628,13 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
     {
         if (!hostRunning && (status == true))
         {
-            log<level::WARNING>(
-                std::format(
-                    "updateOCCActive: Host is not running yet (OCC{} active={}), clearing sensor received",
-                    instance, status)
-                    .c_str());
+            lg2::warning(
+                "updateOCCActive: Host is not running yet (OCC{INST} active={STAT}), clearing sensor received",
+                "INST", instance, "STAT", status);
             (*obj)->setPldmSensorReceived(false);
             if (!waitingForAllOccActiveSensors)
             {
-                log<level::INFO>(
+                lg2::info(
                     "updateOCCActive: Waiting for Host and all OCC Active Sensors");
                 waitingForAllOccActiveSensors = true;
             }
@@ -689,21 +653,17 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
     {
         if (hostRunning)
         {
-            log<level::WARNING>(
-                std::format(
-                    "updateOCCActive: No status object to update for OCC{} (active={})",
-                    instance, status)
-                    .c_str());
+            lg2::warning(
+                "updateOCCActive: No status object to update for OCC{INST} (active={STAT})",
+                "INST", instance, "STAT", status);
         }
         else
         {
             if (status == true)
             {
-                log<level::WARNING>(
-                    std::format(
-                        "updateOCCActive: No status objects and Host is not running yet (OCC{} active={})",
-                        instance, status)
-                        .c_str());
+                lg2::warning(
+                    "updateOCCActive: No status objects and Host is not running yet (OCC{INST} active={STAT})",
+                    "INST", instance, "STAT", status);
             }
         }
         if (status == true)
@@ -741,8 +701,7 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
 {
     if (success)
     {
-        log<level::INFO>(
-            std::format("HRESET succeeded (OCC{})", instance).c_str());
+        lg2::info("HRESET succeeded (OCC{INST})", "INST", instance);
 
         setSBEState(instance, SBE_STATE_BOOTED);
 
@@ -753,9 +712,8 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
 
     if (sbeCanDump(instance))
     {
-        log<level::INFO>(
-            std::format("HRESET failed (OCC{}), triggering SBE dump", instance)
-                .c_str());
+        lg2::info("HRESET failed (OCC{INST}), triggering SBE dump", "INST",
+                  instance);
 
         auto& bus = utils::getBus();
         uint32_t src6 = instance << 16;
@@ -793,17 +751,17 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
                 "xyz.openbmc_project.Dump.Create.Error.Disabled";
             if (e.name() == ERROR_DUMP_DISABLED)
             {
-                log<level::INFO>("Dump is disabled, skipping");
+                lg2::info("Dump is disabled, skipping");
             }
             else
             {
-                log<level::ERR>("Dump failed");
+                lg2::error("Dump failed");
             }
         }
     }
 
     // SBE Reset failed, try PM Complex reset
-    log<level::ERR>("sbeHRESETResult: Forcing PM Complex reset");
+    lg2::error("sbeHRESETResult: Forcing PM Complex reset");
     resetOccRequest(instance);
 }
 
@@ -831,7 +789,7 @@ bool Manager::sbeCanDump(unsigned int instance)
     }
     catch (openpower::phal::exception::SbeError& e)
     {
-        log<level::INFO>("Failed to query SBE state");
+        lg2::info("Failed to query SBE state");
     }
 
     // allow the dump in the error case
@@ -853,8 +811,7 @@ void Manager::setSBEState(unsigned int instance, enum sbe_state state)
     }
     catch (const openpower::phal::exception::SbeError& e)
     {
-        log<level::ERR>(
-            std::format("Failed to set SBE state: {}", e.what()).c_str());
+        lg2::error("Failed to set SBE state: {ERROR}", "ERROR", e.what());
     }
 }
 
@@ -869,7 +826,7 @@ struct pdbg_target* Manager::getPdbgTarget(unsigned int instance)
         }
         catch (const openpower::phal::exception::PdbgError& e)
         {
-            log<level::ERR>("pdbg initialization failed");
+            lg2::error("pdbg initialization failed");
             return nullptr;
         }
     }
@@ -883,7 +840,7 @@ struct pdbg_target* Manager::getPdbgTarget(unsigned int instance)
         }
     }
 
-    log<level::ERR>("Failed to get pdbg target");
+    lg2::error("Failed to get pdbg target");
     return nullptr;
 }
 #endif
@@ -892,20 +849,19 @@ void Manager::pollerTimerExpired()
 {
     if (!_pollTimer)
     {
-        log<level::ERR>("pollerTimerExpired() ERROR: Timer not defined");
+        lg2::error("pollerTimerExpired() ERROR: Timer not defined");
         return;
     }
 
 #ifdef POWER10
     if (resetRequired)
     {
-        log<level::ERR>("pollerTimerExpired() - Initiating PM Complex reset");
+        lg2::error("pollerTimerExpired() - Initiating PM Complex reset");
         initiateOccRequest(resetInstance);
 
         if (!waitForAllOccsTimer->isEnabled())
         {
-            log<level::WARNING>(
-                "pollerTimerExpired: Restarting waitForAllOccTimer");
+            lg2::warning("pollerTimerExpired: Restarting waitForAllOccTimer");
             // restart occ wait timer
             waitForAllOccsTimer->restartOnce(60s);
         }
@@ -942,10 +898,8 @@ void Manager::pollerTimerExpired()
     else
     {
         // No OCCs running, so poll timer will not be restarted
-        log<level::INFO>(
-            std::format(
-                "Manager::pollerTimerExpired: poll timer will not be restarted")
-                .c_str());
+        lg2::info(
+            "Manager::pollerTimerExpired: poll timer will not be restarted");
     }
 }
 
@@ -974,10 +928,9 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
         }
         catch (const std::system_error& e)
         {
-            log<level::DEBUG>(
-                std::format("readTempSensors: Failed reading {}, errno = {}",
-                            file.path().string(), e.code().value())
-                    .c_str());
+            lg2::debug(
+                "readTempSensors: Failed reading {PATH}, errno = {ERROR}",
+                "PATH", file.path().string(), "ERROR", e.code().value());
             continue;
         }
 
@@ -992,10 +945,10 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
         }
         catch (const std::system_error& e)
         {
-            log<level::DEBUG>(
-                std::format("readTempSensors: Failed reading {}, errno = {}",
-                            filePathString + fruTypeSuffix, e.code().value())
-                    .c_str());
+            lg2::debug(
+                "readTempSensors: Failed reading {PATH}, errno = {ERROR}",
+                "PATH", filePathString + fruTypeSuffix, "ERROR",
+                e.code().value());
             continue;
         }
 
@@ -1032,11 +985,9 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
                 auto iter = dimmTempSensorName.find(fruTypeValue);
                 if (iter == dimmTempSensorName.end())
                 {
-                    log<level::ERR>(
-                        std::format(
-                            "readTempSensors: Fru type error! fruTypeValue = {}) ",
-                            fruTypeValue)
-                            .c_str());
+                    lg2::error(
+                        "readTempSensors: Fru type error! fruTypeValue = {FRU}) ",
+                        "FRU", fruTypeValue);
                     continue;
                 }
 
@@ -1087,11 +1038,10 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
             }
             catch (const std::system_error& e)
             {
-                log<level::DEBUG>(
-                    std::format(
-                        "readTempSensors: Failed reading {}, errno = {}",
-                        filePathString + maxSuffix, e.code().value())
-                        .c_str());
+                lg2::debug(
+                    "readTempSensors: Failed reading {PATH}, errno = {ERROR}",
+                    "PATH", filePathString + maxSuffix, "ERROR",
+                    e.code().value());
             }
         }
 
@@ -1102,10 +1052,10 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
         }
         catch (const std::system_error& e)
         {
-            log<level::DEBUG>(
-                std::format("readTempSensors: Failed reading {}, errno = {}",
-                            filePathString + faultSuffix, e.code().value())
-                    .c_str());
+            lg2::debug(
+                "readTempSensors: Failed reading {PATH}, errno = {ERROR}",
+                "PATH", filePathString + faultSuffix, "ERROR",
+                e.code().value());
             continue;
         }
 
@@ -1124,11 +1074,10 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
             }
             catch (const std::system_error& e)
             {
-                log<level::DEBUG>(
-                    std::format(
-                        "readTempSensors: Failed reading {}, errno = {}",
-                        filePathString + inputSuffix, e.code().value())
-                        .c_str());
+                lg2::debug(
+                    "readTempSensors: Failed reading {PATH}, errno = {ERROR}",
+                    "PATH", filePathString + inputSuffix, "ERROR",
+                    e.code().value());
 
                 // if errno == EAGAIN(Resource temporarily unavailable) then set
                 // temp to 0, to avoid using old temp, and affecting FAN
@@ -1238,10 +1187,9 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
         }
         catch (const std::system_error& e)
         {
-            log<level::DEBUG>(
-                std::format("readPowerSensors: Failed reading {}, errno = {}",
-                            file.path().string(), e.code().value())
-                    .c_str());
+            lg2::debug(
+                "readPowerSensors: Failed reading {PATH}, errno = {ERROR}",
+                "PATH", file.path().string(), "ERROR", e.code().value());
             continue;
         }
 
@@ -1272,10 +1220,10 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
         }
         catch (const std::system_error& e)
         {
-            log<level::DEBUG>(
-                std::format("readPowerSensors: Failed reading {}, errno = {}",
-                            filePathString + inputSuffix, e.code().value())
-                    .c_str());
+            lg2::debug(
+                "readPowerSensors: Failed reading {PATH}, errno = {ERROR}",
+                "PATH", filePathString + inputSuffix, "ERROR",
+                e.code().value());
             continue;
         }
 
@@ -1360,11 +1308,9 @@ void Manager::getSensorValues(std::unique_ptr<Status>& occ)
     {
         if (!tracedError[id])
         {
-            log<level::ERR>(
-                std::format(
-                    "Manager::getSensorValues: OCC{} sensor path missing: {}",
-                    id, sensorPath.c_str())
-                    .c_str());
+            lg2::error(
+                "Manager::getSensorValues: OCC{INST} sensor path missing: {PATH}",
+                "INST", id, "PATH", sensorPath);
             tracedError[id] = true;
         }
     }
@@ -1395,9 +1341,8 @@ void Manager::readAltitude()
                 // Round to nearest meter
                 altitude = uint16_t(sensorVal + 0.5);
             }
-            log<level::DEBUG>(std::format("readAltitude: sensor={} ({}m)",
-                                          sensorVal, altitude)
-                                  .c_str());
+            lg2::debug("readAltitude: sensor={VALUE} ({ALT}m)", "VALUE",
+                       sensorVal, "ALT", altitude);
             traceAltitudeErr = true;
         }
         else
@@ -1405,9 +1350,7 @@ void Manager::readAltitude()
             if (traceAltitudeErr)
             {
                 traceAltitudeErr = false;
-                log<level::DEBUG>(
-                    std::format("Invalid altitude value: {}", sensorVal)
-                        .c_str());
+                lg2::debug("Invalid altitude value: {ALT}", "ALT", sensorVal);
             }
         }
     }
@@ -1416,8 +1359,7 @@ void Manager::readAltitude()
         if (traceAltitudeErr)
         {
             traceAltitudeErr = false;
-            log<level::INFO>(
-                std::format("Unable to read Altitude: {}", e.what()).c_str());
+            lg2::info("Unable to read Altitude: {ERROR}", "ERROR", e.what());
         }
         altitude = 0xFFFF; // not available
     }
@@ -1435,7 +1377,7 @@ void Manager::ambientCallback(sdbusplus::message_t& msg)
     auto valPropMap = msgData.find(AMBIENT_PROP);
     if (valPropMap == msgData.end())
     {
-        log<level::DEBUG>("ambientCallback: Unknown ambient property changed");
+        lg2::debug("ambientCallback: Unknown ambient property changed");
         return;
     }
     currentTemp = std::get<double>(valPropMap->second);
@@ -1459,10 +1401,8 @@ void Manager::ambientCallback(sdbusplus::message_t& msg)
     // If ambient changes, notify OCCs
     if (truncatedTemp != ambient)
     {
-        log<level::DEBUG>(
-            std::format("ambientCallback: Ambient change from {} to {}C",
-                        ambient, currentTemp)
-                .c_str());
+        lg2::debug("ambientCallback: Ambient change from {OLD} to {NEW}C",
+                   "OLD", ambient, "NEW", currentTemp);
 
         ambient = truncatedTemp;
         if (altitude == 0xFFFF)
@@ -1471,10 +1411,8 @@ void Manager::ambientCallback(sdbusplus::message_t& msg)
             readAltitude();
         }
 
-        log<level::DEBUG>(
-            std::format("ambientCallback: Ambient: {}C, altitude: {}m", ambient,
-                        altitude)
-                .c_str());
+        lg2::debug("ambientCallback: Ambient: {TEMP}C, altitude: {ALT}m",
+                   "TEMP", ambient, "ALT", altitude);
 #ifdef POWER10
         // Send ambient and altitude to all OCCs
         for (auto& obj : statusObjects)
@@ -1509,18 +1447,16 @@ void Manager::occsNotAllRunning()
 {
     if (resetInProgress)
     {
-        log<level::WARNING>(
+        lg2::warning(
             "occsNotAllRunning: Ignoring waitForAllOccsTimer because reset is in progress");
         return;
     }
     if (activeCount != statusObjects.size())
     {
         // Not all OCCs went active
-        log<level::WARNING>(
-            std::format(
-                "occsNotAllRunning: Active OCC count ({}) does not match expected count ({})",
-                activeCount, statusObjects.size())
-                .c_str());
+        lg2::warning(
+            "occsNotAllRunning: Active OCC count ({COUNT}) does not match expected count ({EXP})",
+            "COUNT", activeCount, "EXP", statusObjects.size());
         // Procs may be garded, so may be expected
     }
 
@@ -1530,8 +1466,7 @@ void Manager::occsNotAllRunning()
 
         if (!waitForAllOccsTimer->isEnabled())
         {
-            log<level::WARNING>(
-                "occsNotAllRunning: Restarting waitForAllOccTimer");
+            lg2::warning("occsNotAllRunning: Restarting waitForAllOccTimer");
             // restart occ wait timer
             waitForAllOccsTimer->restartOnce(60s);
         }
@@ -1561,7 +1496,7 @@ void Manager::throttlePldmTraceExpired()
         }
         else
         {
-            log<level::ERR>(
+            lg2::error(
                 "throttlePldmTraceExpired(): OCC active sensors still not available!");
             // Create PEL
             createPldmSensorPEL();
@@ -1571,7 +1506,7 @@ void Manager::throttlePldmTraceExpired()
     {
         // Make sure traces are not throttled
         pldmHandle->setTraceThrottle(false);
-        log<level::INFO>(
+        lg2::info(
             "throttlePldmTraceExpired(): host it not running ignoring sensor timer");
     }
 }
@@ -1583,10 +1518,8 @@ void Manager::createPldmSensorPEL()
 
     additionalData.emplace("_PID", std::to_string(getpid()));
 
-    log<level::INFO>(
-        std::format(
-            "createPldmSensorPEL(): Unable to find PLDM sensors for the OCCs")
-            .c_str());
+    lg2::info(
+        "createPldmSensorPEL(): Unable to find PLDM sensors for the OCCs");
 
     auto& bus = utils::getBus();
 
@@ -1617,10 +1550,8 @@ void Manager::createPldmSensorPEL()
     }
     catch (const sdbusplus::exception_t& e)
     {
-        log<level::ERR>(
-            std::format("Failed to create MISSING_OCC_SENSORS PEL: {}",
-                        e.what())
-                .c_str());
+        lg2::error("Failed to create MISSING_OCC_SENSORS PEL: {ERROR}", "ERROR",
+                   e.what());
     }
 }
 #endif // PLDM
@@ -1643,11 +1574,8 @@ void Manager::validateOccMaster()
                 if (match != queuedActiveState.end())
                 {
                     queuedActiveState.erase(match);
-                    log<level::INFO>(
-                        std::format(
-                            "validateOccMaster: OCC{} is ACTIVE (queued)",
-                            instance)
-                            .c_str());
+                    lg2::info("validateOccMaster: OCC{INST} is ACTIVE (queued)",
+                              "INST", instance);
                     obj->occActive(true);
                 }
                 else
@@ -1658,21 +1586,17 @@ void Manager::validateOccMaster()
 #endif
                     if (obj->occActive())
                     {
-                        log<level::INFO>(
-                            std::format(
-                                "validateOccMaster: OCC{} is ACTIVE after reading sensor",
-                                instance)
-                                .c_str());
+                        lg2::info(
+                            "validateOccMaster: OCC{INST} is ACTIVE after reading sensor",
+                            "INST", instance);
                     }
                 }
             }
             else
             {
-                log<level::WARNING>(
-                    std::format(
-                        "validateOccMaster: HOST is not running (OCC{})",
-                        instance)
-                        .c_str());
+                lg2::warning(
+                    "validateOccMaster: HOST is not running (OCC{INST})",
+                    "INST", instance);
                 return;
             }
         }
@@ -1688,11 +1612,9 @@ void Manager::validateOccMaster()
             }
             else
             {
-                log<level::ERR>(
-                    std::format(
-                        "validateOccMaster: Multiple OCC masters! ({} and {})",
-                        masterInstance, instance)
-                        .c_str());
+                lg2::error(
+                    "validateOccMaster: Multiple OCC masters! ({MAST1} and {MAST2})",
+                    "MAST1", masterInstance, "MAST2", instance);
                 // request reset
                 obj->deviceError(Error::Descriptor(PRESENCE_ERROR_PATH));
             }
@@ -1701,20 +1623,16 @@ void Manager::validateOccMaster()
 
     if (masterInstance < 0)
     {
-        log<level::ERR>(
-            std::format("validateOccMaster: Master OCC not found! (of {} OCCs)",
-                        statusObjects.size())
-                .c_str());
+        lg2::error("validateOccMaster: Master OCC not found! (of {NUM} OCCs)",
+                   "NUM", statusObjects.size());
         // request reset
         statusObjects.front()->deviceError(
             Error::Descriptor(PRESENCE_ERROR_PATH));
     }
     else
     {
-        log<level::INFO>(
-            std::format("validateOccMaster: OCC{} is master of {} OCCs",
-                        masterInstance, activeCount)
-                .c_str());
+        lg2::info("validateOccMaster: OCC{INST} is master of {COUNT} OCCs",
+                  "INST", masterInstance, "COUNT", activeCount);
 #ifdef POWER10
         pmode->updateDbusSafeMode(false);
 #endif

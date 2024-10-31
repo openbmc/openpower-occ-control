@@ -7,13 +7,10 @@
 #include <unistd.h>
 
 #include <org/open_power/OCC/Device/error.hpp>
-#include <phosphor-logging/elog-errors.hpp>
-#include <phosphor-logging/elog.hpp>
-#include <phosphor-logging/log.hpp>
+#include <phosphor-logging/lg2.hpp>
 
 #include <algorithm>
 #include <format>
-#include <memory>
 #include <string>
 
 // #define TRACE_PACKETS
@@ -22,8 +19,6 @@ namespace open_power
 {
 namespace occ
 {
-
-using namespace phosphor::logging;
 
 // Trace block of data in hex
 void dump_hex(const std::vector<std::uint8_t>& data,
@@ -50,7 +45,7 @@ void dump_hex(const std::vector<std::uint8_t>& data,
 
         if ((i % 16 == 15) || (i == (dump_length - 1)))
         {
-            log<level::INFO>(s.c_str());
+            lg2::info("{STRING}", "STRING", s);
             s.clear();
         }
     }
@@ -65,32 +60,27 @@ OccCommand::OccCommand(uint8_t instance, const char* path) :
         std::bind(std::mem_fn(&OccCommand::activeStatusEvent), this,
                   std::placeholders::_1))
 {
-    log<level::DEBUG>(
-        std::format("OccCommand::OccCommand(path={}, devicePath={}", this->path,
-                    devicePath)
-            .c_str());
+    lg2::debug("OccCommand::OccCommand(path={PATH}, devicePath={DEVICE}",
+               "PATH", this->path, "DEVICE", devicePath);
 }
 
 void OccCommand::openDevice()
 {
     using namespace sdbusplus::org::open_power::OCC::Device::Error;
 
-    log<level::DEBUG>(
-        std::format("OccCommand::openDevice: calling open {}", devicePath)
-            .c_str());
+    lg2::debug("OccCommand::openDevice: calling open {PATH}", "PATH",
+               devicePath);
     fd = open(devicePath.c_str(), O_RDWR | O_NONBLOCK);
     if (fd < 0)
     {
         const int openErrno = errno;
-        log<level::ERR>(
-            std::format(
-                "OccCommand::openDevice: open failed (errno={}, path={})",
-                openErrno, devicePath)
-                .c_str());
+        lg2::error(
+            "OccCommand::openDevice: open failed (errno={ERR}, path={PATH})",
+            "ERR", openErrno, "PATH", devicePath);
     }
     else
     {
-        log<level::DEBUG>("OccCommand::openDevice: open success");
+        lg2::debug("OccCommand::openDevice: open success");
     }
 
     return;
@@ -100,7 +90,7 @@ void OccCommand::closeDevice()
 {
     if (fd >= 0)
     {
-        log<level::DEBUG>("OccCommand::closeDevice: calling close()");
+        lg2::debug("OccCommand::closeDevice: calling close()");
         close(fd);
         fd = -1;
     }
@@ -114,7 +104,7 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
 
     response.clear();
 
-    log<level::DEBUG>("OccCommand::send: calling openDevice()");
+    lg2::debug("OccCommand::send: calling openDevice()");
     openDevice();
 
     if (fd < 0)
@@ -125,13 +115,12 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
 
     const uint8_t cmd_type = command[0];
 #ifdef TRACE_PACKETS
-    log<level::INFO>(
-        std::format("OCC{}: Sending 0x{:02X} command (length={}, {})",
-                    occInstance, cmd_type, command.size(), devicePath)
-            .c_str());
+    lg2::info("OCC{INST}: Sending {CMD} command (length={LEN}, {PATH})", "INST",
+              occInstance, "CMD", lg2::hex, cmd_type, "LEN", command.size(),
+              "PATH", devicePath);
     dump_hex(command);
 #else
-    log<level::DEBUG>("OccCommand::send: calling write()");
+    lg2::debug("OccCommand::send: calling write()");
 #endif
 
     int retries = 1; // Allow a retry if a command fails to get valid response
@@ -141,18 +130,17 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
         const int writeErrno = errno;
         if ((rc < 0) || (rc != (int)command.size()))
         {
-            log<level::ERR>(
-                std::format(
-                    "OccCommand::send: write(OCC{}, command:0x{:02X}) failed with errno={} (retries={})",
-                    occInstance, cmd_type, writeErrno, retries)
-                    .c_str());
+            lg2::error(
+                "OccCommand::send: write(OCC{INST}, command:{CMD}) failed with errno={ERR} (retries={RETRIES})",
+                "INST", occInstance, "CMD", lg2::hex, cmd_type, "ERR",
+                writeErrno, "RETRIES", retries);
             status = CmdStatus::COMM_FAILURE;
             // retry if available
             continue;
         }
         else
         {
-            log<level::DEBUG>("OccCommand::send: write succeeded");
+            lg2::debug("OccCommand::send: write succeeded");
         }
 
         // Now read the response. This would be the content of occ-sram
@@ -173,19 +161,17 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
             }
             else if (len == 0)
             {
-                log<level::DEBUG>("OccCommand::send: read completed");
+                lg2::debug("OccCommand::send: read completed");
                 // We have read all that we can.
                 status = CmdStatus::SUCCESS;
                 break;
             }
             else
             {
-                log<level::ERR>(
-                    std::format(
-                        "OccCommand::send: read(OCC{}, command:0x{:02X}) failed with errno={} (rspSize={}, retries={})",
-                        occInstance, cmd_type, readErrno, response.size(),
-                        retries)
-                        .c_str());
+                lg2::error(
+                    "OccCommand::send: read(OCC{INST}, command:{CMD) failed with errno={ERR} (rspSize={LEN}, retries={RETRIES})",
+                    "INST", occInstance, "CMD", lg2::hex, cmd_type, "ERR",
+                    readErrno, "LEN", response.size(), "RETRIES", retries);
                 status = CmdStatus::COMM_FAILURE;
                 break;
             }
@@ -199,11 +185,10 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
         if (response.size() > 2)
         {
 #ifdef TRACE_PACKETS
-            log<level::INFO>(
-                std::format(
-                    "OCC{}: Received 0x{:02X} response (length={} w/checksum)",
-                    occInstance, cmd_type, response.size())
-                    .c_str());
+            lg2::info(
+                "OCC{INST}: Received {CMD} response (length={LEN} w/checksum)",
+                "INST", occInstance, "CMD", lg2::hex, cmd_type, "LEN",
+                response.size());
             dump_hex(response, 64);
 #endif
 
@@ -219,11 +204,10 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
             }
             if (calcChecksum != rspChecksum)
             {
-                log<level::ERR>(
-                    std::format("OCC{}: Checksum Mismatch: response "
-                                "0x{:04X}, calculated 0x{:04X}",
-                                occInstance, rspChecksum, calcChecksum)
-                        .c_str());
+                lg2::error("OCC{INST}: Checksum Mismatch: response "
+                           "{RCVD}, calculated {EXPECT}",
+                           "INST", occInstance, "RCVD", rspChecksum, "EXPECT",
+                           calcChecksum);
                 dump_hex(response);
                 status = CmdStatus::COMM_FAILURE;
             }
@@ -241,31 +225,27 @@ CmdStatus OccCommand::send(const std::vector<uint8_t>& command,
                 }
                 else
                 {
-                    log<level::ERR>(
-                        std::format(
-                            "OccCommand::send: Response command mismatch "
-                            "(sent: "
-                            "0x{:02X}, rsp: 0x{:02X}, rsp seq#: 0x{:02X}",
-                            command[0], response[1], response[0])
-                            .c_str());
+                    lg2::error("OccCommand::send: Response command mismatch "
+                               "(sent: "
+                               "{CMD}, rsp: {STATUS}, rsp seq#: {SEQ}",
+                               "CMD", lg2::hex, command[0], "STATUS", lg2::hex,
+                               response[1], "SEQ", lg2::hex, response[0]);
                     dump_hex(response, 64);
                 }
             }
         }
         else
         {
-            log<level::ERR>(
-                std::format(
-                    "OccCommand::send: Invalid OCC{} response length: {}",
-                    occInstance, response.size())
-                    .c_str());
+            lg2::error(
+                "OccCommand::send: Invalid OCC{INST} response length: {LEN}",
+                "INST", occInstance, "LEN", response.size());
             status = CmdStatus::FAILURE;
             dump_hex(response);
         }
 
         if (retries > 0)
         {
-            log<level::ERR>("OccCommand::send: Command will be retried");
+            lg2::error("OccCommand::send: Command will be retried");
             response.clear();
         }
     } while (retries-- > 0);

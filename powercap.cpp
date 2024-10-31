@@ -1,11 +1,10 @@
 #include "occ_status.hpp"
 
-#include <phosphor-logging/log.hpp>
+#include <phosphor-logging/lg2.hpp>
 #include <powercap.hpp>
 
 #include <cassert>
 #include <filesystem>
-#include <format>
 
 namespace open_power
 {
@@ -23,7 +22,6 @@ constexpr auto POWER_CAP_SOFT_MIN = "MinSoftPowerCapValue";
 constexpr auto POWER_CAP_HARD_MIN = "MinPowerCapValue";
 constexpr auto POWER_CAP_MAX = "MaxPowerCapValue";
 
-using namespace phosphor::logging;
 namespace fs = std::filesystem;
 
 void PowerCap::updatePcapBounds()
@@ -50,11 +48,9 @@ void PowerCap::updatePcapBounds()
     }
     else
     {
-        log<level::ERR>(
-            std::format(
-                "updatePcapBounds: unable to find pcap_min_soft file: {} (errno={})",
-                pcapBasePathname.c_str(), errno)
-                .c_str());
+        lg2::error(
+            "updatePcapBounds: unable to find pcap_min_soft file: {FILE} (errno={ERR})",
+            "FILE", pcapBasePathname, "ERR", errno);
     }
 
     std::ifstream minFile(minName, std::ios::in);
@@ -67,11 +63,9 @@ void PowerCap::updatePcapBounds()
     }
     else
     {
-        log<level::ERR>(
-            std::format(
-                "updatePcapBounds: unable to find cap_min file: {} (errno={})",
-                pcapBasePathname.c_str(), errno)
-                .c_str());
+        lg2::error(
+            "updatePcapBounds: unable to find cap_min file: {FILE} (errno={ERR})",
+            "FILE", pcapBasePathname, "ERR", errno);
     }
 
     std::ifstream maxFile(maxName, std::ios::in);
@@ -84,11 +78,9 @@ void PowerCap::updatePcapBounds()
     }
     else
     {
-        log<level::ERR>(
-            std::format(
-                "updatePcapBounds: unable to find cap_max file: {} (errno={})",
-                pcapBasePathname.c_str(), errno)
-                .c_str());
+        lg2::error(
+            "updatePcapBounds: unable to find cap_max file: {FILE} (errno={ERR})",
+            "FILE", pcapBasePathname, "ERR", errno);
     }
 
     // Save the power cap bounds to dbus
@@ -106,11 +98,9 @@ void PowerCap::updatePcapBounds()
             if ((hwmonUserCap != 0) && (dbusUserCap != hwmonUserCap))
             {
                 // User power cap is enabled, but does not match dbus
-                log<level::ERR>(
-                    std::format(
-                        "updatePcapBounds: user powercap mismatch (hwmon:{}W, bdus:{}W) - using dbus",
-                        hwmonUserCap, dbusUserCap)
-                        .c_str());
+                lg2::error(
+                    "updatePcapBounds: user powercap mismatch (hwmon:{HCAP}W, bdus:{DCAP}W) - using dbus",
+                    "HCAP", hwmonUserCap, "DCAP", dbusUserCap);
                 auto occInput = getOccInput(dbusUserCap, pcapEnabled);
                 writeOcc(occInput);
             }
@@ -123,19 +113,16 @@ void PowerCap::updatePcapBounds()
             {
                 newCap = capSoftMin;
             }
-            log<level::ERR>(
-                std::format(
-                    "updatePcapBounds: user powercap {}W is outside bounds "
-                    "(soft min:{}, min:{}, max:{})",
-                    dbusUserCap, capSoftMin, capHardMin, capMax)
-                    .c_str());
+            lg2::error(
+                "updatePcapBounds: user powercap {CAP}W is outside bounds "
+                "(soft min:{SMIN}, min:{MIN}, max:{MAX})",
+                "CAP", dbusUserCap, "SMIN", capSoftMin, "MIN", capHardMin,
+                "MAX", capMax);
             try
             {
-                log<level::INFO>(
-                    std::format(
-                        "updatePcapBounds: Updating user powercap from {} to {}W",
-                        hwmonUserCap, newCap)
-                        .c_str());
+                lg2::info(
+                    "updatePcapBounds: Updating user powercap from {OLD} to {NEW}W",
+                    "OLD", hwmonUserCap, "NEW", newCap);
                 utils::setProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_PROP,
                                    newCap);
                 auto occInput = getOccInput(newCap, pcapEnabled);
@@ -143,11 +130,9 @@ void PowerCap::updatePcapBounds()
             }
             catch (const sdbusplus::exception_t& e)
             {
-                log<level::ERR>(
-                    std::format(
-                        "updatePcapBounds: Failed to update user powercap due to ",
-                        e.what())
-                        .c_str());
+                lg2::error(
+                    "updatePcapBounds: Failed to update user powercap due to {ERR}",
+                    "ERR", e.what());
             }
         }
     }
@@ -178,9 +163,8 @@ uint32_t PowerCap::getPcap()
     }
     catch (const sdbusplus::exception_t& e)
     {
-        log<level::ERR>("Failed to get PowerCap property",
-                        entry("ERROR=%s", e.what()),
-                        entry("PATH=%s", PCAP_PATH));
+        lg2::error("Failed to get PowerCap property: path={PATH}: {ERR}",
+                   "PATH", PCAP_PATH, "ERR", e.what());
 
         return 0;
     }
@@ -198,9 +182,8 @@ bool PowerCap::getPcapEnabled()
     }
     catch (const sdbusplus::exception_t& e)
     {
-        log<level::ERR>("Failed to get PowerCapEnable property",
-                        entry("ERROR=%s", e.what()),
-                        entry("PATH=%s", PCAP_PATH));
+        lg2::error("Failed to get PowerCapEnable property: path={PATH}: {ERR}",
+                   "PATH", PCAP_PATH, "ERR", e.what());
 
         return false;
     }
@@ -227,9 +210,8 @@ fs::path PowerCap::getPcapFilename(const std::regex& expr)
     }
     else
     {
-        log<level::ERR>(std::format("Power Cap base filename not found: {}",
-                                    pcapBasePathname.c_str())
-                            .c_str());
+        lg2::error("Power Cap base filename not found: {FILE}", "FILE",
+                   pcapBasePathname);
     }
 
     // return empty path
@@ -250,10 +232,8 @@ void PowerCap::writeOcc(uint32_t pcapValue)
     fs::path fileName = getPcapFilename(std::regex{"power\\d+_cap_user$"});
     if (fileName.empty())
     {
-        log<level::ERR>(
-            std::format("Could not find a power cap file to write to: {})",
-                        pcapBasePathname.c_str())
-                .c_str());
+        lg2::error("Could not find a power cap file to write to: {FILE})",
+                   "FILE", pcapBasePathname);
         return;
     }
 
@@ -265,17 +245,15 @@ void PowerCap::writeOcc(uint32_t pcapValue)
     std::ofstream file(fileName, std::ios::out);
     if (file)
     {
-        log<level::INFO>(std::format("Writing {}uW to {}", pcapString.c_str(),
-                                     fileName.c_str())
-                             .c_str());
+        lg2::info("Writing {CAP}uW to {FILE}", "CAP", pcapString, "FILE",
+                  fileName);
         file << pcapString;
         file.close();
     }
     else
     {
-        log<level::ERR>(std::format("Failed writing {}uW to {} (errno={})",
-                                    microWatts, fileName.c_str(), errno)
-                            .c_str());
+        lg2::error("Failed writing {CAP}uW to {FILE} (errno={ERR})", "CAP",
+                   microWatts, "FILE", fileName, "ERR", errno);
     }
 
     return;
@@ -290,11 +268,9 @@ uint32_t PowerCap::readUserCapHwmon()
     fs::path userCapName = getPcapFilename(std::regex{"power\\d+_cap_user$"});
     if (userCapName.empty())
     {
-        log<level::ERR>(
-            std::format(
-                "readUserCapHwmon: Could not find a power cap file to read: {})",
-                pcapBasePathname.c_str())
-                .c_str());
+        lg2::error(
+            "readUserCapHwmon: Could not find a power cap file to read: {FILE})",
+            "FILE", pcapBasePathname);
         return 0;
     }
 
@@ -310,10 +286,8 @@ uint32_t PowerCap::readUserCapHwmon()
     }
     else
     {
-        log<level::ERR>(
-            std::format("readUserCapHwmon: Failed reading {} (errno={})",
-                        userCapName.c_str(), errno)
-                .c_str());
+        lg2::error("readUserCapHwmon: Failed reading {FILE} (errno={ERR})",
+                   "FILE", userCapName, "ERR", errno);
     }
 
     return userCap;
@@ -352,11 +326,9 @@ void PowerCap::pcapChanged(sdbusplus::message_t& msg)
         else
         {
             // Ignore other properties
-            log<level::DEBUG>(
-                std::format(
-                    "pcapChanged: Unknown power cap property changed {} to {}",
-                    prop.c_str(), std::get<uint32_t>(value))
-                    .c_str());
+            lg2::debug(
+                "pcapChanged: Unknown power cap property changed {PROP} to {VAL}",
+                "PROP", prop, "VAL", std::get<uint32_t>(value));
         }
     }
 
@@ -365,32 +337,26 @@ void PowerCap::pcapChanged(sdbusplus::message_t& msg)
     readDbusPcapLimits(capSoftMin, capHardMin, capMax);
     if (((pcap > 0) && (pcap < capSoftMin)) || ((pcap == 0) && (pcapEnabled)))
     {
-        log<level::ERR>(
-            std::format(
-                "pcapChanged: Power cap of {}W is lower than allowed (soft min:{}, min:{}) - using soft min",
-                pcap, capSoftMin, capHardMin)
-                .c_str());
+        lg2::error(
+            "pcapChanged: Power cap of {CAP}W is lower than allowed (soft min:{SMIN}, min:{MIN}) - using soft min",
+            "CAP", pcap, "SMIN", capSoftMin, "MIN", capHardMin);
         pcap = capSoftMin;
         utils::setProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_PROP, pcap);
     }
     else if (pcap > capMax)
     {
-        log<level::ERR>(
-            std::format(
-                "pcapChanged: Power cap of {}W is higher than allowed (max:{}) - using max",
-                pcap, capSoftMin, capHardMin)
-                .c_str());
+        lg2::error(
+            "pcapChanged: Power cap of {CAP}W is higher than allowed (max:{MAX}) - using max",
+            "CAP", pcap, "MAX", capMax);
         pcap = capMax;
         utils::setProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_PROP, pcap);
     }
 
     if (changeFound)
     {
-        log<level::INFO>(
-            std::format(
-                "Power Cap Property Change (cap={}W (input), enabled={})", pcap,
-                pcapEnabled ? 'y' : 'n')
-                .c_str());
+        lg2::info(
+            "Power Cap Property Change (cap={CAP}W (input), enabled={ENABLE})",
+            "CAP", pcap, "ENABLE", pcapEnabled);
 
         // Determine desired action to write to occ
         auto occInput = getOccInput(pcap, pcapEnabled);
@@ -414,11 +380,9 @@ bool PowerCap::updateDbusPcapLimits(uint32_t softMin, uint32_t hardMin,
     }
     catch (const sdbusplus::exception_t& e)
     {
-        log<level::ERR>(
-            std::format(
-                "updateDbusPcapLimits: Failed to set SOFT PCAP to {}W due to {}",
-                softMin, e.what())
-                .c_str());
+        lg2::error(
+            "updateDbusPcapLimits: Failed to set SOFT PCAP to {MIN}W due to {ERR}",
+            "MIN", softMin, "ERR", e.what());
         complete = false;
     }
 
@@ -429,11 +393,9 @@ bool PowerCap::updateDbusPcapLimits(uint32_t softMin, uint32_t hardMin,
     }
     catch (const sdbusplus::exception_t& e)
     {
-        log<level::ERR>(
-            std::format(
-                "updateDbusPcapLimits: Failed to set HARD PCAP to {}W due to {}",
-                hardMin, e.what())
-                .c_str());
+        lg2::error(
+            "updateDbusPcapLimits: Failed to set HARD PCAP to {MIN}W due to {ERR}",
+            "MIN", hardMin, "ERR", e.what());
         complete = false;
     }
 
@@ -443,11 +405,9 @@ bool PowerCap::updateDbusPcapLimits(uint32_t softMin, uint32_t hardMin,
     }
     catch (const sdbusplus::exception_t& e)
     {
-        log<level::ERR>(
-            std::format(
-                "updateDbusPcapLimits: Failed to set MAX PCAP to {}W due to {}",
-                max, e.what())
-                .c_str());
+        lg2::error(
+            "updateDbusPcapLimits: Failed to set MAX PCAP to {MAX}W due to {ERR}",
+            "MAX", max, "ERR", e.what());
         complete = false;
     }
 
@@ -469,10 +429,8 @@ bool PowerCap::readDbusPcapLimits(uint32_t& softMin, uint32_t& hardMin,
     }
     catch (const sdbusplus::exception_t& e)
     {
-        log<level::ERR>(
-            std::format("readDbusPcapLimits: Failed to get SOFT PCAP due to {}",
-                        e.what())
-                .c_str());
+        lg2::error("readDbusPcapLimits: Failed to get SOFT PCAP due to {ERR}",
+                   "ERR", e.what());
         softMin = 0;
         complete = false;
     }
@@ -485,10 +443,8 @@ bool PowerCap::readDbusPcapLimits(uint32_t& softMin, uint32_t& hardMin,
     }
     catch (const sdbusplus::exception_t& e)
     {
-        log<level::ERR>(
-            std::format("readDbusPcapLimits: Failed to get HARD PCAP due to {}",
-                        e.what())
-                .c_str());
+        lg2::error("readDbusPcapLimits: Failed to get HARD PCAP due to {ERR}",
+                   "ERR", e.what());
         hardMin = 0;
         complete = false;
     }
@@ -500,10 +456,8 @@ bool PowerCap::readDbusPcapLimits(uint32_t& softMin, uint32_t& hardMin,
     }
     catch (const sdbusplus::exception_t& e)
     {
-        log<level::ERR>(
-            std::format("readDbusPcapLimits: Failed to get MAX PCAP due to {}",
-                        e.what())
-                .c_str());
+        lg2::error("readDbusPcapLimits: Failed to get MAX PCAP due to {ERR}",
+                   "ERR", e.what());
         max = INT_MAX;
         complete = false;
     }

@@ -7,12 +7,9 @@
 #include <unistd.h>
 
 #include <org/open_power/OCC/Device/error.hpp>
-#include <phosphor-logging/elog-errors.hpp>
-#include <phosphor-logging/elog.hpp>
-#include <phosphor-logging/log.hpp>
+#include <phosphor-logging/lg2.hpp>
 
 #include <algorithm>
-#include <format>
 #include <memory>
 #include <string>
 
@@ -75,11 +72,9 @@ std::vector<uint8_t> PassThrough::send(std::vector<uint8_t> command)
 
     if (!occActive)
     {
-        log<level::ERR>(
-            std::format(
-                "PassThrough::send() - OCC{} not active, command not sent",
-                occInstance)
-                .c_str());
+        lg2::error(
+            "PassThrough::send() - OCC{INST} not active, command not sent",
+            "INST", occInstance);
         return response;
     }
 
@@ -101,42 +96,35 @@ std::vector<uint8_t> PassThrough::send(std::vector<uint8_t> command)
                 dataString += "...";
             }
         }
-        log<level::INFO>(
-            std::format(
-                "PassThrough::send() Sending 0x{:02X} command to OCC{} (data len={}, data={})",
-                command.front(), occInstance, dataLen, dataString)
-                .c_str());
+        lg2::info(
+            "PassThrough::send() Sending {CMD} command to OCC{INST} (data len={LEN}, data={DATA})",
+            "CMD", lg2::hex, command.front(), "INST", occInstance, "LEN",
+            dataLen, "DATA", dataString);
     }
     else
     {
-        log<level::INFO>(
-            std::format("PassThrough::send() Sending 0x{:02X} command to OCC{}",
-                        command.front(), occInstance)
-                .c_str());
+        lg2::info("PassThrough::send() Sending {CMD} command to OCC{INST}",
+                  "CMD", command.front(), "INST", occInstance);
     }
     CmdStatus status = occCmd.send(command, response);
     if (status == CmdStatus::SUCCESS)
     {
         if (response.size() >= 5)
         {
-            log<level::DEBUG>(
-                std::format("PassThrough::send() response had {} bytes",
-                            response.size())
-                    .c_str());
+            lg2::debug("PassThrough::send() response had {LEN} bytes", "LEN",
+                       response.size());
         }
         else
         {
-            log<level::ERR>("PassThrough::send() Invalid OCC response");
+            lg2::error("PassThrough::send() Invalid OCC response");
             dump_hex(response);
         }
     }
     else
     {
-        log<level::ERR>(
-            std::format(
-                "PassThrough::send(): OCC command failed with status {}",
-                uint32_t(status))
-                .c_str());
+        lg2::error(
+            "PassThrough::send(): OCC command failed with status {STATUS}",
+            "STATUS", status);
     }
 
     return response;
@@ -149,42 +137,34 @@ bool PassThrough::setMode(const uint8_t mode, const uint16_t modeData)
 
     if (!pmode)
     {
-        log<level::ERR>("PassThrough::setMode: PowerMode is not defined!");
+        lg2::error("PassThrough::setMode: PowerMode is not defined!");
         return false;
     }
 
     if (!pmode->isValidMode(SysPwrMode(mode)))
     {
-        log<level::ERR>(
-            std::format(
-                "PassThrough::setMode() Unsupported mode {} requested (0x{:04X})",
-                newMode, modeData)
-                .c_str());
+        lg2::error(
+            "PassThrough::setMode() Unsupported mode {MODE} requested ({DATA})",
+            "MODE", newMode, "DATA", modeData);
         return false;
     }
 
     if (((newMode == SysPwrMode::FFO) || (newMode == SysPwrMode::SFP)) &&
         (modeData == 0))
     {
-        log<level::ERR>(
-            std::format(
-                "PassThrough::setMode() Mode {} requires non-zero frequency point.",
-                newMode)
-                .c_str());
+        lg2::error(
+            "PassThrough::setMode() Mode {MODE} requires non-zero frequency point.",
+            "MODE", newMode);
         return false;
     }
 
-    log<level::INFO>(
-        std::format("PassThrough::setMode() Setting Power Mode {} (data: {})",
-                    newMode, modeData)
-            .c_str());
+    lg2::info("PassThrough::setMode() Setting Power Mode {MODE} (data: {DATA})",
+              "MODE", uint8_t(newMode), "DATA", modeData);
     return pmode->setMode(newMode, modeData);
 #else
-    log<level::DEBUG>(
-        std::format(
-            "PassThrough::setMode() No support to setting Power Mode {} (data: {})",
-            mode, modeData)
-            .c_str());
+    lg2::debug(
+        "PassThrough::setMode() No support to setting Power Mode {MODE} (data: {DATA})",
+        "MODE", mode, "DATA", modeData);
     return false;
 #endif
 }

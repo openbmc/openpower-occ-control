@@ -4,12 +4,12 @@
 #include <unistd.h>
 
 #include <phosphor-logging/elog-errors.hpp>
+#include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/bus.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
 #include <xyz/openbmc_project/State/Boot/Progress/server.hpp>
 #include <xyz/openbmc_project/State/Host/server.hpp>
 
-#include <format>
 #include <string>
 namespace open_power
 {
@@ -42,9 +42,8 @@ const std::string getService(const std::string& path,
     mapperResponseMsg.read(mapperResponse);
     if (mapperResponse.empty())
     {
-        log<level::ERR>("ERROR reading mapper response",
-                        entry("PATH=%s", path.c_str()),
-                        entry("INTERFACE=%s", interface.c_str()));
+        lg2::error("ERROR reading mapper response: path={PATH}, I/F={INTF}",
+                   "PATH", path, "INTF", interface);
 
         elog<InternalFailure>();
     }
@@ -106,19 +105,15 @@ void setProperty(const std::string& objectPath, const std::string& interface,
         auto reply = bus.call(method);
         if (reply.is_method_error())
         {
-            log<level::ERR>(
-                std::format("util::setProperty: Failed to set property {}",
-                            propertyName)
-                    .c_str());
+            lg2::error("util::setProperty: Failed to set property {PROP}",
+                       "PROP", propertyName);
         }
     }
     catch (const std::exception& e)
     {
         auto error = errno;
-        log<level::ERR>(
-            std::format("setProperty: failed to Set {}, errno={}, what={}",
-                        propertyName.c_str(), error, e.what())
-                .c_str());
+        lg2::error("setProperty: failed to Set {PROP}, errno={ERR}, what={MSG}",
+                   "PROP", propertyName, "ERR", error, "PROP", e.what());
     }
 }
 
@@ -159,11 +154,9 @@ std::string getServiceUsingSubTree(const std::string& interface,
     mapperResponseMsg.read(rspObjects);
     if (rspObjects.empty())
     {
-        log<level::ERR>(
-            std::format(
-                "util::getServiceUsingSubTree: Failed getSubTree({},0,{})",
-                path.c_str(), interface)
-                .c_str());
+        lg2::error(
+            "util::getServiceUsingSubTree: Failed getSubTree({PATH},0,{INTF})",
+            "PATH", path, "INTF", interface);
     }
     else
     {
@@ -174,11 +167,9 @@ std::string getServiceUsingSubTree(const std::string& interface,
         }
         else
         {
-            log<level::ERR>(
-                std::format(
-                    "getServiceUsingSubTree: service not found for interface {} (path={})",
-                    interface, path.c_str())
-                    .c_str());
+            lg2::error(
+                "getServiceUsingSubTree: service not found for interface {INTF} (path={PATH})",
+                "INTF", interface, "PATH", path);
         }
     }
 
@@ -214,19 +205,18 @@ std::string getStateValue(const std::string& intf, const std::string& objPath,
     }
     catch (const sdbusplus::exception_t& e)
     {
-        log<level::ERR>(std::format("D-Bus call exception, OBJPATH({}), "
-                                    "INTERFACE({}), PROPERTY({}) EXCEPTION({})",
-                                    objPath, intf, state, e.what())
-                            .c_str());
+        lg2::error("D-Bus call exception, OBJPATH({PATH}), "
+                   "INTERFACE({INTF}), PROPERTY({PROP}) EXCEPTION({ERR})",
+                   "PATH", objPath, "INTF", intf, "PROP", state, "ERR",
+                   e.what());
         throw std::runtime_error("Failed to get host state property");
     }
     catch (const std::bad_variant_access& e)
     {
-        log<level::ERR>(
-            std::format("Exception raised while read host state({}) property "
-                        "value,  OBJPATH({}), INTERFACE({}), EXCEPTION({})",
-                        state, objPath, intf, e.what())
-                .c_str());
+        lg2::error(
+            "Exception raised while read host state({STATE}) property "
+            "value,  OBJPATH({PATH}), INTERFACE({INTF}), EXCEPTION({ERR})",
+            "STATE", state, "PATH", objPath, "INTF", intf, "ERR", e.what());
         throw std::runtime_error("Failed to get host state property");
     }
 
