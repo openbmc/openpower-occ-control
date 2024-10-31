@@ -5,10 +5,9 @@
 #include "powermode.hpp"
 #include "utils.hpp"
 
-#include <phosphor-logging/log.hpp>
+#include <phosphor-logging/lg2.hpp>
 
 #include <filesystem>
-#include <format>
 
 namespace open_power
 {
@@ -25,9 +24,8 @@ bool Status::occActive(bool value)
 {
     if (value != this->occActive())
     {
-        log<level::INFO>(std::format("Status::occActive OCC{} changed to {}",
-                                     instance, value)
-                             .c_str());
+        lg2::info("Status::occActive OCC{INST} changed to {STATE}", "INST",
+                  instance, "STATE", value);
         if (value)
         {
             // Clear prior throttle reason (before setting device active)
@@ -48,11 +46,9 @@ bool Status::occActive(bool value)
             {
                 // Failed to add watch for throttle events, request reset to try
                 // to recover comm
-                log<level::ERR>(
-                    std::format(
-                        "Status::occActive: Unable to add error watch(s) for OCC{} watch: {}",
-                        instance, e.what())
-                        .c_str());
+                lg2::error(
+                    "Status::occActive: Unable to add error watch(s) for OCC{INST} watch: {ERROR}",
+                    "INST", instance, "ERROR", e.what());
                 deviceError(Error::Descriptor(OCC_COMM_ERROR_PATH));
                 return Base::Status::occActive(false);
             }
@@ -127,11 +123,9 @@ bool Status::occActive(bool value)
         {
             // Failed to add watch for throttle events, request reset to try to
             // recover comm
-            log<level::ERR>(
-                std::format(
-                    "Status::occActive: Unable to add error watch(s) again for OCC{} watch: {}",
-                    instance, e.what())
-                    .c_str());
+            lg2::error(
+                "Status::occActive: Unable to add error watch(s) again for OCC{INST} watch: {ERROR}",
+                "INST", instance, "ERROR", e.what());
             deviceError(Error::Descriptor(OCC_COMM_ERROR_PATH));
             return Base::Status::occActive(false);
         }
@@ -176,10 +170,8 @@ void Status::deviceError(Error::Descriptor d)
 // Sends message to host control command handler to reset OCC
 void Status::resetOCC()
 {
-    log<level::INFO>(
-        std::format(">>Status::resetOCC() - requesting reset for OCC{}",
-                    instance)
-            .c_str());
+    lg2::info(">>Status::resetOCC() - requesting reset for OCC{INST}", "INST",
+              instance);
     this->occActive(false);
 #ifdef PLDM
     if (resetCallBack)
@@ -215,9 +207,8 @@ void Status::hostControlEvent(sdbusplus::message_t& msg)
 
     msg.read(cmdCompleted, cmdStatus);
 
-    log<level::DEBUG>("Host control signal values",
-                      entry("COMMAND=%s", cmdCompleted.c_str()),
-                      entry("STATUS=%s", cmdStatus.c_str()));
+    lg2::debug("Host control signal values: command={CMD}, status={STATUS}",
+               "CMD", cmdCompleted, "STATUS", cmdStatus);
 
     if (Control::Host::convertResultFromString(cmdStatus) !=
         Control::Host::Result::Success)
@@ -226,9 +217,9 @@ void Status::hostControlEvent(sdbusplus::message_t& msg)
             Control::Host::Command::OCCReset)
         {
             // Must be a Timeout. Log an Error trace
-            log<level::ERR>(
-                "Error resetting the OCC.", entry("PATH=%s", path.c_str()),
-                entry("SENSORID=0x%X", std::get<0>(sensorMap.at(instance))));
+            lg2::error(
+                "Error resetting the OCC: path={PATH}, sensorid={SENSOR}",
+                "PATH", path, "SENSOR", std::get<0>(sensorMap.at(instance)));
         }
     }
     return;
@@ -258,11 +249,9 @@ void Status::occsWentActive()
     status = pmode->sendModeChange();
     if (status != CmdStatus::SUCCESS)
     {
-        log<level::ERR>(
-            std::format(
-                "Status::occsWentActive: OCC mode change failed with status {}",
-                status)
-                .c_str());
+        lg2::error(
+            "Status::occsWentActive: OCC mode change failed with status {STATUS}",
+            "STATUS", status);
 
         // Disable and reset to try recovering
         deviceError();
@@ -281,10 +270,9 @@ CmdStatus Status::sendAmbient(const uint8_t inTemp, const uint16_t inAltitude)
     {
         // Get latest readings from manager
         manager.getAmbientData(ambientValid, ambientTemp, altitude);
-        log<level::DEBUG>(
-            std::format("sendAmbient: valid: {}, Ambient: {}C, altitude: {}m",
-                        ambientValid, ambientTemp, altitude)
-                .c_str());
+        lg2::debug(
+            "sendAmbient: valid: {VALID}, Ambient: {TEMP}C, altitude: {ALT}m",
+            "VALID", ambientValid, "TEMP", ambientTemp, "ALT", altitude);
     }
 
     std::vector<std::uint8_t> cmd, rsp;
@@ -300,10 +288,9 @@ CmdStatus Status::sendAmbient(const uint8_t inTemp, const uint16_t inAltitude)
     cmd.push_back(0x00);                    // Reserved (3 bytes)
     cmd.push_back(0x00);
     cmd.push_back(0x00);
-    log<level::DEBUG>(std::format("sendAmbient: SEND_AMBIENT "
-                                  "command to OCC{} ({} bytes)",
-                                  instance, cmd.size())
-                          .c_str());
+    lg2::debug("sendAmbient: SEND_AMBIENT "
+               "command to OCC{INST} ({SIZE} bytes)",
+               "INST", instance, "SIZE", cmd.size());
     status = occCmd.send(cmd, rsp);
     if (status == CmdStatus::SUCCESS)
     {
@@ -311,33 +298,26 @@ CmdStatus Status::sendAmbient(const uint8_t inTemp, const uint16_t inAltitude)
         {
             if (RspStatus::SUCCESS != RspStatus(rsp[2]))
             {
-                log<level::ERR>(
-                    std::format(
-                        "sendAmbient: SEND_AMBIENT failed with rspStatus 0x{:02X}",
-                        rsp[2])
-                        .c_str());
+                lg2::error(
+                    "sendAmbient: SEND_AMBIENT failed with rspStatus {STATUS}",
+                    "STATUS", lg2::hex, rsp[2]);
                 dump_hex(rsp);
                 status = CmdStatus::FAILURE;
             }
         }
         else
         {
-            log<level::ERR>(
-                std::format(
-                    "sendAmbient: INVALID SEND_AMBIENT response length:{}",
-                    rsp.size())
-                    .c_str());
+            lg2::error(
+                "sendAmbient: INVALID SEND_AMBIENT response length:{SIZE}",
+                "SIZE", rsp.size());
             dump_hex(rsp);
             status = CmdStatus::FAILURE;
         }
     }
     else
     {
-        log<level::ERR>(
-            std::format(
-                "sendAmbient: SEND_AMBIENT FAILED! with status 0x{:02X}",
-                status)
-                .c_str());
+        lg2::error("sendAmbient: SEND_AMBIENT FAILED! with status {STATUS}",
+                   "STATUS", lg2::hex, uint8_t(status));
 
         if (status == CmdStatus::COMM_FAILURE)
         {
@@ -354,11 +334,9 @@ void Status::safeStateDelayExpired()
 {
     if (this->occActive())
     {
-        log<level::INFO>(
-            std::format(
-                "safeStateDelayExpired: OCC{} state missing or not valid, requesting reset",
-                instance)
-                .c_str());
+        lg2::info(
+            "safeStateDelayExpired: OCC{INST} state missing or not valid, requesting reset",
+            "INST", instance);
         // Disable and reset to try recovering
         deviceError(Error::Descriptor(SAFE_ERROR_PATH));
     }
@@ -375,10 +353,9 @@ fs::path Status::getHwmonPath()
 
         if (!hwmonPath.empty())
         {
-            log<level::WARNING>(
-                std::format("Status::getHwmonPath(): path no longer exists: {}",
-                            hwmonPath.c_str())
-                    .c_str());
+            lg2::warning(
+                "Status::getHwmonPath(): path no longer exists: {PATH}", "PATH",
+                hwmonPath);
             hwmonPath.clear();
         }
 
@@ -402,11 +379,9 @@ fs::path Status::getHwmonPath()
             {
                 if (!tracedFail[instance])
                 {
-                    log<level::ERR>(
-                        std::format(
-                            "Status::getHwmonPath(): Found multiple ({}) hwmon paths!",
-                            numDirs)
-                            .c_str());
+                    lg2::error(
+                        "Status::getHwmonPath(): Found multiple ({NUM}) hwmon paths!",
+                        "NUM", numDirs);
                     tracedFail[instance] = true;
                 }
             }
@@ -415,11 +390,9 @@ fs::path Status::getHwmonPath()
         {
             if (!tracedFail[instance])
             {
-                log<level::ERR>(
-                    std::format(
-                        "Status::getHwmonPath(): error accessing {}: {}",
-                        prefixPath.c_str(), e.what())
-                        .c_str());
+                lg2::error(
+                    "Status::getHwmonPath(): error accessing {PATH}: {ERROR}",
+                    "PATH", prefixPath, "ERROR", e.what());
                 tracedFail[instance] = true;
             }
         }
@@ -469,11 +442,9 @@ void Status::occReadStateNow()
                 {
                     errorBits += " badbit";
                 }
-                log<level::ERR>(
-                    std::format(
-                        "readOccState: Failed to read OCC{} state: Read error on I/O operation -{}",
-                        instance, errorBits)
-                        .c_str());
+                lg2::error(
+                    "readOccState: Failed to read OCC{INST} state: Read error on I/O operation - {ERROR}",
+                    "INST", instance, "ERROR", errorBits);
                 lastOccReadStatus = -1;
             }
             goodFile = false;
@@ -482,11 +453,10 @@ void Status::occReadStateNow()
         if (goodFile && (state != lastState))
         {
             // Trace OCC state changes
-            log<level::INFO>(
-                std::format(
-                    "Status::readOccState: OCC{} state 0x{:02X} (lastState: 0x{:02X})",
-                    instance, state, lastState)
-                    .c_str());
+            lg2::info(
+                "Status::readOccState: OCC{INST} state {STATE} (lastState: {PRIOR})",
+                "INST", instance, "STATE", lg2::hex, state, "PRIOR", lg2::hex,
+                lastState);
             lastState = state;
 #ifdef POWER10
             if (OccState(state) == OccState::ACTIVE)
@@ -505,11 +475,9 @@ void Status::occReadStateNow()
                 CmdStatus status = sendAmbient();
                 if (status != CmdStatus::SUCCESS)
                 {
-                    log<level::ERR>(
-                        std::format(
-                            "readOccState: Sending Ambient failed with status {}",
-                            status)
-                            .c_str());
+                    lg2::error(
+                        "readOccState: Sending Ambient failed with status {STATUS}",
+                        "STATUS", status);
                 }
             }
 
@@ -532,11 +500,9 @@ void Status::occReadStateNow()
                 // OCC is in SAFE or some other unsupported state
                 if (!safeStateDelayTimer.isEnabled())
                 {
-                    log<level::ERR>(
-                        std::format(
-                            "readOccState: Invalid OCC{} state of {}, starting safe state delay timer",
-                            instance, state)
-                            .c_str());
+                    lg2::error(
+                        "readOccState: Invalid OCC{INST} state of {STATE}, starting safe state delay timer",
+                        "INST", instance, "STATE", state);
                     // start safe delay timer (before requesting reset)
                     using namespace std::literals::chrono_literals;
                     safeStateDelayTimer.restartOnce(60s);
@@ -569,11 +535,9 @@ void Status::occReadStateNow()
             // If not able to read, OCC may be offline
             if (openErrno != lastOccReadStatus)
             {
-                log<level::ERR>(
-                    std::format(
-                        "Status::readOccState: open/read failed trying to read OCC{} state (open errno={})",
-                        instance, openErrno)
-                        .c_str());
+                lg2::error(
+                    "Status::readOccState: open/read failed trying to read OCC{INST} state (open errno={ERROR})",
+                    "INST", instance, "ERROR", openErrno);
                 lastOccReadStatus = openErrno;
             }
         }
@@ -582,11 +546,10 @@ void Status::occReadStateNow()
             // else this failed due to state not valid.
             if (state != lastState)
             {
-                log<level::ERR>(
-                    std::format(
-                        "Status::readOccState: OCC{} Invalid state 0x{:02X} (last state: 0x{:02X})",
-                        instance, state, lastState)
-                        .c_str());
+                lg2::error(
+                    "Status::readOccState: OCC{INST} Invalid state {STATE} (last state: {PRIOR})",
+                    "INST", instance, "STATE", lg2::hex, state, "PRIOR",
+                    lg2::hex, lastState);
             }
         }
 
@@ -601,10 +564,8 @@ void Status::occReadStateNow()
         }
         else
         {
-            log<level::ERR>(
-                std::format("readOccState: failed to read OCC{} state!",
-                            instance)
-                    .c_str());
+            lg2::error("readOccState: failed to read OCC{INST} state!", "INST",
+                       instance);
 
             // State could not be determined, set it to NO State.
             lastState = 0;
@@ -624,11 +585,9 @@ void Status::occReadStateNow()
     {
         if (lastOccReadStatus != 0)
         {
-            log<level::INFO>(
-                std::format(
-                    "Status::readOccState: successfully read OCC{} state: {}",
-                    instance, state)
-                    .c_str());
+            lg2::info(
+                "Status::readOccState: successfully read OCC{INST} state: {STATE}",
+                "INST", instance, "STATE", state);
             lastOccReadStatus = 0; // no error
         }
     }
@@ -667,22 +626,19 @@ void Status::updateThrottle(const bool isThrottled, const uint8_t newReason)
     {
         if (newThrottleCause == THROTTLED_NONE)
         {
-            log<level::DEBUG>(
-                std::format(
-                    "updateThrottle: OCC{} no longer throttled (prior reason: {})",
-                    instance, throttleCause)
-                    .c_str());
+            lg2::debug(
+                "updateThrottle: OCC{INST} no longer throttled (prior reason: {REASON})",
+                "INST", instance, "REASON", throttleCause);
             throttleCause = THROTTLED_NONE;
             throttleHandle->throttled(false);
             throttleHandle->throttleCauses({});
         }
         else
         {
-            log<level::DEBUG>(
-                std::format(
-                    "updateThrottle: OCC{} is throttled with reason {} (prior reason: {})",
-                    instance, newThrottleCause, throttleCause)
-                    .c_str());
+            lg2::debug(
+                "updateThrottle: OCC{INST} is throttled with reason {REASON} (prior reason: {PRIOR})",
+                "INST", instance, "REASON", newThrottleCause, "PRIOR",
+                throttleCause);
             throttleCause = newThrottleCause;
 
             std::vector<ThrottleObj::ThrottleReasons> updatedCauses;
@@ -712,10 +668,8 @@ void Status::updateThrottle(const bool isThrottled, const uint8_t newReason)
 void Status::readProcAssociation()
 {
     std::string managingPath = path + "/power_managing";
-    log<level::DEBUG>(
-        std::format("readProcAssociation: getting endpoints for {} ({})",
-                    managingPath, path)
-            .c_str());
+    lg2::debug("readProcAssociation: getting endpoints for {MANAGE} ({PATH})",
+               "MANAGE", managingPath, "PATH", path);
     try
     {
         utils::PropertyValue procPathProperty{};
@@ -725,27 +679,21 @@ void Status::readProcAssociation()
         if (result.size() > 0)
         {
             procPath = result[0];
-            log<level::INFO>(
-                std::format("readProcAssociation: OCC{} has proc={}", instance,
-                            procPath.c_str())
-                    .c_str());
+            lg2::info("readProcAssociation: OCC{INST} has proc={PATH}", "INST",
+                      instance, "PATH", procPath);
         }
         else
         {
-            log<level::ERR>(
-                std::format(
-                    "readProcAssociation: No processor associated with OCC{} / {}",
-                    instance, path)
-                    .c_str());
+            lg2::error(
+                "readProcAssociation: No processor associated with OCC{INST} / {PATH}",
+                "INST", instance, "PATH", path);
         }
     }
     catch (const sdbusplus::exception_t& e)
     {
-        log<level::ERR>(
-            std::format(
-                "readProcAssociation: Unable to get proc assocated with {} - {}",
-                path, e.what())
-                .c_str());
+        lg2::error(
+            "readProcAssociation: Unable to get proc assocated with {PATH} - {ERROR}",
+            "PATH", path, "ERROR", e.what());
         procPath = {};
     }
 }

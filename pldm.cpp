@@ -13,7 +13,7 @@
 #include <libpldm/transport/mctp-demux.h>
 #include <poll.h>
 
-#include <phosphor-logging/log.hpp>
+#include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdeventplus/clock.hpp>
 #include <sdeventplus/exception.hpp>
@@ -21,12 +21,9 @@
 #include <sdeventplus/source/time.hpp>
 
 #include <algorithm>
-#include <format>
 
 namespace pldm
 {
-
-using namespace phosphor::logging;
 
 using namespace sdeventplus;
 using namespace sdeventplus::source;
@@ -59,11 +56,9 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
     {
         if (!tracedError)
         {
-            log<level::ERR>(
-                std::format(
-                    "fetchSensorInfo: Failed to find stateSetID:{} PDR: {}",
-                    stateSetId, e.what())
-                    .c_str());
+            lg2::error(
+                "fetchSensorInfo: Failed to find stateSetID:{ID} PDR: {ERR}",
+                "ID", stateSetId, "ERR", e.what());
             tracedError = true;
         }
     }
@@ -72,11 +67,8 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
     {
         if (!tracedError)
         {
-            log<level::ERR>(
-                std::format(
-                    "fetchSensorInfo: state sensor PDRs ({}) not present",
-                    stateSetId)
-                    .c_str());
+            lg2::error("fetchSensorInfo: state sensor PDRs ({ID}) not present",
+                       "ID", stateSetId);
             tracedError = true;
         }
         return;
@@ -85,8 +77,7 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
     // Found PDR
     if (tracedError)
     {
-        log<level::INFO>(
-            std::format("fetchSensorInfo: found {} PDRs", pdrs.size()).c_str());
+        lg2::info("fetchSensorInfo: found {NUM} PDRs", "NUM", pdrs.size());
         tracedError = false;
     }
 
@@ -114,7 +105,7 @@ void Interface::fetchSensorInfo(uint16_t stateSetId,
 
     if (!offsetFound)
     {
-        log<level::ERR>("pldm: state sensor PDR not found");
+        lg2::error("pldm: state sensor PDR not found");
         return;
     }
 
@@ -174,38 +165,31 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
                 static_cast<EventState>(
                     PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_IN_SERVICE))
             {
-                log<level::INFO>(
-                    std::format("PLDM: OCC{} is RUNNING", instance).c_str());
+                lg2::info("PLDM: OCC{INST} is RUNNING", "INST", instance);
                 isRunning = true;
             }
             else if (eventState ==
                      static_cast<EventState>(
                          PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_STOPPED))
             {
-                log<level::INFO>(
-                    std::format("PLDM: OCC{} has now STOPPED", instance)
-                        .c_str());
+                lg2::info("PLDM: OCC{INST} has now STOPPED", "INST", instance);
             }
             else if (eventState ==
                      static_cast<EventState>(
                          PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_DORMANT))
             {
-                log<level::ERR>(
-                    std::format(
-                        "PLDM: OCC{} has now STOPPED and system is in SAFE MODE",
-                        instance)
-                        .c_str());
+                lg2::error(
+                    "PLDM: OCC{INST} has now STOPPED and system is in SAFE MODE",
+                    "INST", instance);
 
                 // Setting safe mode true
                 safeModeCallBack(true);
             }
             else
             {
-                log<level::WARNING>(
-                    std::format(
-                        "PLDM: Unexpected OCC Active sensor state {} for OCC{}",
-                        eventState, instance)
-                        .c_str());
+                lg2::warning(
+                    "PLDM: Unexpected OCC Active sensor state {STATE} for OCC{INST}",
+                    "STATE", eventState, "INST", instance);
                 validEvent = false;
             }
             if (validEvent)
@@ -235,20 +219,16 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
                 outstandingHResets.erase(match);
                 if (eventState == static_cast<EventState>(SBE_HRESET_NOT_READY))
                 {
-                    log<level::ERR>(
-                        std::format("pldm: HRESET is NOT READY (OCC{})",
-                                    instance)
-                            .c_str());
+                    lg2::error("pldm: HRESET is NOT READY (OCC{INST})", "INST",
+                               instance);
                     // Stop OCC comm - OCC not usable until it becomes READY
                     occActiveCallBack(instance, false);
                     // Collect SBE FFDC
                     sbeCallBack(instance, false);
                     // Try PM Complex reset
-                    log<level::ERR>(
-                        std::format(
-                            "sensorEvent: Requesting OCC reset for OCC{}",
-                            instance)
-                            .c_str());
+                    lg2::error(
+                        "sensorEvent: Requesting OCC reset for OCC{INST}",
+                        "INST", instance);
                     resetOCC(resetInstance);
                 }
                 else if (eventState ==
@@ -265,11 +245,9 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
                 {
                     if (eventState ==
                         static_cast<EventState>(SBE_HRESET_FAILED))
-                        log<level::ERR>(
-                            std::format(
-                                "pldm: Unexpected HRESET state {} (OCC{})",
-                                eventState, instance)
-                                .c_str());
+                        lg2::error(
+                            "pldm: Unexpected HRESET state {STATE} (OCC{INST})",
+                            "STATE", eventState, "INST", instance);
                     sbeCallBack(instance, false);
                 }
             }
@@ -299,44 +277,32 @@ void Interface::clearData()
 {
     if (!sensorToOCCInstance.empty())
     {
-        log<level::INFO>(
-            std::format("clearData: Clearing sensorToOCCInstance ({} entries)",
-                        sensorToOCCInstance.size())
-                .c_str());
+        lg2::info("clearData: Clearing sensorToOCCInstance ({NUM} entries)",
+                  "NUM", sensorToOCCInstance.size());
         for (auto entry : sensorToOCCInstance)
         {
-            log<level::INFO>(
-                std::format("clearData: OCC{} / sensorID: 0x{:04X}",
-                            entry.second, entry.first)
-                    .c_str());
+            lg2::info("clearData: OCC{INST} / sensorID: {ID}", "INST",
+                      entry.second, "ID", lg2::hex, entry.first);
             occActiveCallBack(entry.second, false);
         }
         sensorToOCCInstance.clear();
     }
     if (!occInstanceToEffecter.empty())
     {
-        log<level::DEBUG>(
-            std::format(
-                "clearData: Clearing occInstanceToEffecter ({} entries)",
-                occInstanceToEffecter.size())
-                .c_str());
+        lg2::debug("clearData: Clearing occInstanceToEffecter ({NUM} entries)",
+                   "NUM", occInstanceToEffecter.size());
         occInstanceToEffecter.clear();
     }
     if (!sensorToSBEInstance.empty())
     {
-        log<level::DEBUG>(
-            std::format("clearData: Clearing sensorToSBEInstance ({} entries)",
-                        sensorToSBEInstance.size())
-                .c_str());
+        lg2::debug("clearData: Clearing sensorToSBEInstance ({NUM} entries)",
+                   "NUM", sensorToSBEInstance.size());
         sensorToSBEInstance.clear();
     }
     if (!sbeInstanceToEffecter.empty())
     {
-        log<level::DEBUG>(
-            std::format(
-                "clearData: Clearing sbeInstanceToEffecter ({} entries)",
-                sbeInstanceToEffecter.size())
-                .c_str());
+        lg2::debug("clearData: Clearing sbeInstanceToEffecter ({NUM} entries)",
+                   "NUM", sbeInstanceToEffecter.size());
         sbeInstanceToEffecter.clear();
     }
 }
@@ -360,13 +326,13 @@ void Interface::fetchEffecterInfo(
     }
     catch (const sdbusplus::exception_t& e)
     {
-        log<level::ERR>("pldm: Failed to fetch the state effecter PDRs",
-                        entry("ERROR=%s", e.what()));
+        lg2::error("pldm: Failed to fetch the state effecter PDRs: {ERR}",
+                   "ERR", e.what());
     }
 
     if (!pdrs.size())
     {
-        log<level::ERR>("pldm: state effecter PDRs not present");
+        lg2::error("pldm: state effecter PDRs not present");
         return;
     }
 
@@ -448,8 +414,8 @@ std::vector<uint8_t> Interface::prepareSetEffecterReq(
         requestMsg);
     if (rc != PLDM_SUCCESS)
     {
-        log<level::ERR>("encode set effecter states request returned error ",
-                        entry("RC=%d", rc));
+        lg2::error("encode set effecter states request returned error rc={RC}",
+                   "RC", rc);
         request.clear();
     }
     return request;
@@ -470,11 +436,9 @@ void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
         auto effecterEntry = occInstanceToEffecter.find(occInstanceId);
         if (effecterEntry == occInstanceToEffecter.end())
         {
-            log<level::ERR>(
-                std::format(
-                    "pldm: Failed to find a matching effecter for OCC instance {}",
-                    occInstanceId)
-                    .c_str());
+            lg2::error(
+                "pldm: Failed to find a matching effecter for OCC instance {INST}",
+                "INST", occInstanceId);
 
             return;
         }
@@ -486,8 +450,7 @@ void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
 
         if (request.empty())
         {
-            log<level::ERR>(
-                "pldm: SetStateEffecterStates OCC reset request empty");
+            lg2::error("pldm: SetStateEffecterStates OCC reset request empty");
             return;
         }
 
@@ -498,9 +461,8 @@ void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
     }
     else
     {
-        log<level::ERR>(
-            std::format("resetOCC: HOST is not running (OCC{})", occInstanceId)
-                .c_str());
+        lg2::error("resetOCC: HOST is not running (OCC{INST})", "INST",
+                   occInstanceId);
         clearData();
     }
 }
@@ -519,9 +481,9 @@ void Interface::sendHRESET(open_power::occ::instanceID sbeInstanceId)
         auto effecterEntry = sbeInstanceToEffecter.find(sbeInstanceId);
         if (effecterEntry == sbeInstanceToEffecter.end())
         {
-            log<level::ERR>(
-                "pldm: Failed to find a matching effecter for SBE instance",
-                entry("SBE=%d", sbeInstanceId));
+            lg2::error(
+                "pldm: Failed to find a matching effecter for SBE instance {INST}",
+                "INST", sbeInstanceId);
             return;
         }
 
@@ -532,8 +494,7 @@ void Interface::sendHRESET(open_power::occ::instanceID sbeInstanceId)
 
         if (request.empty())
         {
-            log<level::ERR>(
-                "pldm: SetStateEffecterStates HRESET request empty");
+            lg2::error("pldm: SetStateEffecterStates HRESET request empty");
             return;
         }
 
@@ -545,9 +506,8 @@ void Interface::sendHRESET(open_power::occ::instanceID sbeInstanceId)
     }
     else
     {
-        log<level::ERR>(std::format("sendHRESET: HOST is not running (OCC{})",
-                                    sbeInstanceId)
-                            .c_str());
+        lg2::error("sendHRESET: HOST is not running (OCC{INST})", "INST",
+                   sbeInstanceId);
         clearData();
     }
 }
@@ -567,20 +527,16 @@ bool Interface::getPldmInstanceId()
 
         if (rc)
         {
-            log<level::ERR>(
-                std::format(
-                    "getPldmInstanceId: Failed to alloc ID for TID {}. RC{}",
-                    tid, rc)
-                    .c_str());
+            lg2::error(
+                "getPldmInstanceId: Failed to alloc ID for TID {TID}. RC{RC}",
+                "TID", tid, "RC", rc);
             return false;
         }
         pldmInstanceID.emplace(id);
         if (!throttleTraces)
         {
-            log<level::INFO>(
-                std::format("got id {} and set PldmInstanceId to {}", id,
-                            pldmInstanceID.value())
-                    .c_str());
+            lg2::info("got id {ID} and set PldmInstanceId to {INST}", "ID", id,
+                      "INST", pldmInstanceID.value());
         }
     }
     return true;
@@ -594,18 +550,15 @@ void Interface::freePldmInstanceId()
                                        pldmInstanceID.value());
         if (rc)
         {
-            log<level::ERR>(
-                std::format(
-                    "freePldmInstanceId: Failed to free ID {} for TID {}. RC{}",
-                    pldmInstanceID.value(), tid, rc)
-                    .c_str());
+            lg2::error(
+                "freePldmInstanceId: Failed to free ID {ID} for TID {TID}. RC{RC}",
+                "ID", pldmInstanceID.value(), "TID", tid, "RC", rc);
             return;
         }
         if (!throttleTraces)
         {
-            log<level::INFO>(
-                std::format("Freed PLDM instance ID {}", pldmInstanceID.value())
-                    .c_str());
+            lg2::info("Freed PLDM instance ID {ID}", "ID",
+                      pldmInstanceID.value());
         }
         pldmInstanceID = std::nullopt;
     }
@@ -617,21 +570,17 @@ void Interface::freePldmInstanceId()
     int rc = pldm_transport_mctp_demux_init(&impl.mctpDemux);
     if (rc)
     {
-        log<level::ERR>(
-            std::format(
-                "openMctpDemuxTransport: Failed to init MCTP demux transport, errno={}/{}",
-                rc, strerror(rc))
-                .c_str());
+        lg2::error(
+            "openMctpDemuxTransport: Failed to init MCTP demux transport, errno={ERR}/{STR}",
+            "ERR", rc, "STR", strerror(rc));
         return -1;
     }
 
     if (pldm_transport_mctp_demux_map_tid(impl.mctpDemux, mctpEid, mctpEid))
     {
-        log<level::ERR>(
-            std::format(
-                "openMctpDemuxTransport: Failed to setup tid to eid mapping, errno={}/{}",
-                errno, strerror(errno))
-                .c_str());
+        lg2::error(
+            "openMctpDemuxTransport: Failed to setup tid to eid mapping, errno={ERR}/{STR}",
+            "ERR", errno, "STR", strerror(errno));
         pldmClose();
         return -1;
     }
@@ -640,20 +589,16 @@ void Interface::freePldmInstanceId()
     struct pollfd pollfd;
     if (pldm_transport_mctp_demux_init_pollfd(pldmTransport, &pollfd))
     {
-        log<level::ERR>(
-            std::format(
-                "openMctpDemuxTransport: Failed to get pollfd , errno={}/{}",
-                errno, strerror(errno))
-                .c_str());
+        lg2::error(
+            "openMctpDemuxTransport: Failed to get pollfd , errno={ERR}/{STR}",
+            "ERR", errno, "STR", strerror(errno));
         pldmClose();
         return -1;
     }
     pldmFd = pollfd.fd;
     if (!throttleTraces)
     {
-        log<level::INFO>(
-            std::format("openMctpDemuxTransport: pldmFd has fd={}", pldmFd)
-                .c_str());
+        lg2::info("openMctpDemuxTransport: pldmFd has fd={FD}", "FD", pldmFd);
     }
     return 0;
 }
@@ -664,21 +609,17 @@ void Interface::freePldmInstanceId()
     int rc = pldm_transport_af_mctp_init(&impl.afMctp);
     if (rc)
     {
-        log<level::ERR>(
-            std::format(
-                "openAfMctpTransport: Failed to init af MCTP transport, errno={}/{}",
-                rc, strerror(rc))
-                .c_str());
+        lg2::error(
+            "openAfMctpTransport: Failed to init af MCTP transport, errno={ERR}/{STR}",
+            "ERR", rc, "STR", strerror(rc));
         return -1;
     }
 
     if (pldm_transport_af_mctp_map_tid(impl.afMctp, mctpEid, mctpEid))
     {
-        log<level::ERR>(
-            std::format(
-                "openAfMctpTransport: Failed to setup tid to eid mapping, errno={}/{}",
-                errno, strerror(errno))
-                .c_str());
+        lg2::error(
+            "openAfMctpTransport: Failed to setup tid to eid mapping, errno={ERR}/{STR}",
+            "ERR", errno, "STR", strerror(errno));
         pldmClose();
         return -1;
     }
@@ -687,20 +628,16 @@ void Interface::freePldmInstanceId()
     struct pollfd pollfd;
     if (pldm_transport_af_mctp_init_pollfd(pldmTransport, &pollfd))
     {
-        log<level::ERR>(
-            std::format(
-                "openAfMctpTransport: Failed to get pollfd , errno={}/{}",
-                errno, strerror(errno))
-                .c_str());
+        lg2::error(
+            "openAfMctpTransport: Failed to get pollfd , errno={ERR}/{STR}",
+            "ERR", errno, "STR", strerror(errno));
         pldmClose();
         return -1;
     }
     pldmFd = pollfd.fd;
     if (!throttleTraces)
     {
-        log<level::INFO>(
-            std::format("openAfMctpTransport: pldmFd has fd={}", pldmFd)
-                .c_str());
+        lg2::info("openAfMctpTransport: pldmFd has fd={FD}", "FD", pldmFd);
     }
     return 0;
 }
@@ -709,10 +646,8 @@ int Interface::pldmOpen()
 {
     if (pldmTransport)
     {
-        log<level::ERR>(
-            std::format("pldmOpen: pldmTransport already setup!, errno={}/{}",
-                        errno, strerror(errno))
-                .c_str());
+        lg2::error("pldmOpen: pldmTransport already setup!, errno={ERR}/{STR}",
+                   "ERR", errno, "STR", strerror(errno));
         return -1;
     }
 #if defined(PLDM_TRANSPORT_WITH_MCTP_DEMUX)
@@ -720,10 +655,8 @@ int Interface::pldmOpen()
 #elif defined(PLDM_TRANSPORT_WITH_AF_MCTP)
     return openAfMctpTransport();
 #else
-    log<level::ERR>(
-        std::format("pldmOpen: Undefined pldmTransport!, errno={}/{}", errno,
-                    strerror(errno))
-            .c_str());
+    lg2::error("pldmOpen: Undefined pldmTransport!, errno={ERR}/{STR}", "ERR",
+               errno, "STR", strerror(errno));
     return -1;
 #endif
 
@@ -735,7 +668,7 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
 {
     if (!pldmInstanceID)
     {
-        log<level::ERR>("sendPldm: No PLDM Instance ID found!");
+        lg2::error("sendPldm: No PLDM Instance ID found!");
         return;
     }
 
@@ -744,8 +677,7 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
     {
         if (!throttleTraces)
         {
-            log<level::ERR>(
-                std::format("sendPldm: pldmOpen failed rc={}", rc).c_str());
+            lg2::error("sendPldm: pldmOpen failed rc={RC}", "RC", rc);
         }
         freePldmInstanceId();
         return;
@@ -768,11 +700,10 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         // Send PLDM request
         if (!throttleTraces)
         {
-            log<level::INFO>(
-                std::format(
-                    "sendPldm: calling pldm_transport_send_msg(OCC{}, instance:{}, {} bytes, timeout {})",
-                    instance, pldmInstanceID.value(), request.size(), timeout)
-                    .c_str());
+            lg2::info("sendPldm: calling pldm_transport_send_msg(OCC{INST}, "
+                      "instance:{ID}, {LEN} bytes, timeout {TO})",
+                      "INST", instance, "ID", pldmInstanceID.value(), "LEN",
+                      request.size(), "TO", timeout.count());
         }
         pldmResponseReceived = false;
         pldmResponseTimeout = false;
@@ -782,14 +713,12 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
         auto sendErrno = errno;
         if (pldmRc != PLDM_REQUESTER_SUCCESS)
         {
-            log<level::ERR>(
-                std::format(
-                    "sendPldm: pldm_transport_send_msg failed with rc={} and errno={}/{}",
-                    static_cast<
-                        std::underlying_type_t<pldm_requester_error_codes>>(
-                        pldmRc),
-                    sendErrno, strerror(sendErrno))
-                    .c_str());
+            lg2::error(
+                "sendPldm: pldm_transport_send_msg failed with rc={RC} and errno={ERR}/{STR}",
+                "RC",
+                static_cast<std::underlying_type_t<pldm_requester_error_codes>>(
+                    pldmRc),
+                "ERR", sendErrno, "STR", strerror(sendErrno));
             pldmClose();
             return;
         }
@@ -803,25 +732,24 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
     {
         if (!throttleTraces)
         {
-            log<level::INFO>(
-                std::format(
-                    "sendPldm: calling pldm_transport_send_msg(mctpID:{}, fd:{}, {} bytes) for OCC{}",
-                    mctpEid, pldmFd, request.size(), instance)
-                    .c_str());
+            lg2::info(
+                "sendPldm: calling pldm_transport_send_msg(mctpID:{ID}, fd:{FD}, "
+                "{LEN} bytes) for OCC{INST}",
+                "ID", mctpEid, "FD", pldmFd, "LEN", request.size(), "INST",
+                instance);
         }
         auto rc = pldm_transport_send_msg(pldmTransport, pldmTID,
                                           request.data(), request.size());
         auto sendErrno = errno;
         if (rc)
         {
-            log<level::ERR>(
-                std::format(
-                    "sendPldm: pldm_transport_send_msg(mctpID:{}, fd:{}, {} bytes) failed with rc={} and errno={}/{}",
-                    mctpEid, pldmFd, request.size(),
-                    static_cast<
-                        std::underlying_type_t<pldm_requester_error_codes>>(rc),
-                    sendErrno, strerror(sendErrno))
-                    .c_str());
+            lg2::error(
+                "sendPldm: pldm_transport_send_msg(mctpID:{ID}, fd:{FD}, {LEN} bytes) "
+                "failed with rc={RC} and errno={ERR}/{STR}",
+                "ID", mctpEid, "FD", pldmFd, "LEN", request.size(), "RC",
+                static_cast<std::underlying_type_t<pldm_requester_error_codes>>(
+                    rc),
+                "ERR", sendErrno, "STR", strerror(sendErrno));
         }
         pldmClose();
     }
@@ -844,11 +772,9 @@ void Interface::registerPldmRspCallback()
     }
     if (rc < 0)
     {
-        log<level::ERR>(
-            std::format(
-                "registerPldmRspCallback: sd_event_add_io: Error({})={} : fd={} (msgType={})",
-                rc, strerror(-rc), pldmFd, msgType)
-                .c_str());
+        lg2::error(
+            "registerPldmRspCallback: sd_event_add_io: Error({ERR})={STR} : fd={FD} (msgType={MSG})",
+            "ERR", rc, "STR", strerror(-rc), "FD", pldmFd, "MSG", msgType);
     }
     else
     {
@@ -864,11 +790,10 @@ void Interface::pldmRspExpired()
     {
         if (!throttleTraces)
         {
-            log<level::WARNING>(
-                std::format(
-                    "pldmRspExpired: timerCallback - timeout waiting for pldm response to msg:{} for OCC{}",
-                    msgType, pldmResponseOcc)
-                    .c_str());
+            lg2::warning(
+                "pldmRspExpired: timerCallback - timeout waiting for pldm "
+                "response to msg:{MSG} for OCC{INST}",
+                "MSG", msgType, "INST", pldmResponseOcc);
         }
         pldmResponseTimeout = true;
         if (pldmFd)
@@ -878,10 +803,8 @@ void Interface::pldmRspExpired()
         if (msgType == MSG_OCC_RESET)
         {
             // reset not acked, try again
-            log<level::ERR>(
-                std::format("pldmRspExpired: retrying reset request for OCC{}",
-                            pldmResponseOcc)
-                    .c_str());
+            lg2::error("pldmRspExpired: retrying reset request for OCC{INST}",
+                       "INST", pldmResponseOcc);
             resetOCC(pldmResponseOcc);
         }
     }
@@ -915,8 +838,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
 {
     if (!(revents & EPOLLIN))
     {
-        log<level::INFO>(
-            std::format("pldmRspCallback - revents={:08X}", revents).c_str());
+        lg2::info("pldmRspCallback - revents={NUM}", "NUM", lg2::hex, revents);
         return -1;
     }
 
@@ -924,8 +846,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
 
     if (!pldmIface->pldmInstanceID)
     {
-        log<level::ERR>(
-            "pldmRspCallback: No outstanding PLDM Instance ID found");
+        lg2::error("pldmRspCallback: No outstanding PLDM Instance ID found");
         return -1;
     }
 
@@ -935,11 +856,9 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
 
     if (!throttleTraces)
     {
-        log<level::INFO>(
-            std::format(
-                "pldmRspCallback: calling pldm_transport_recv_msg() instance:{}",
-                pldmIface->pldmInstanceID.value())
-                .c_str());
+        lg2::info(
+            "pldmRspCallback: calling pldm_transport_recv_msg() instance:{INST}",
+            "INST", pldmIface->pldmInstanceID.value());
     }
     auto rc = pldm_transport_recv_msg(pldmIface->pldmTransport, &pldmTID,
                                       (void**)&responseMsg, &responseMsgSize);
@@ -948,13 +867,12 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
     {
         if (!throttleTraces)
         {
-            log<level::ERR>(
-                std::format(
-                    "pldmRspCallback: pldm_transport_recv_msg failed with rc={}, errno={}/{}",
-                    static_cast<
-                        std::underlying_type_t<pldm_requester_error_codes>>(rc),
-                    lastErrno, strerror(lastErrno))
-                    .c_str());
+            lg2::error(
+                "pldmRspCallback: pldm_transport_recv_msg failed with rc={RC}, errno={ERR}/{STR}",
+                "RC",
+                static_cast<std::underlying_type_t<pldm_requester_error_codes>>(
+                    rc),
+                "ERR", lastErrno, "STR", strerror(lastErrno));
         }
         return -1;
     }
@@ -962,11 +880,9 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
     // We got the response for the PLDM request msg that was sent
     if (!throttleTraces)
     {
-        log<level::INFO>(
-            std::format(
-                "pldmRspCallback: pldm_transport_recv_msg() rsp was {} bytes",
-                responseMsgSize)
-                .c_str());
+        lg2::info(
+            "pldmRspCallback: pldm_transport_recv_msg() rsp was {LEN} bytes",
+            "LEN", responseMsgSize);
     }
 
     if (pldmIface->pldmRspTimer.isEnabled())
@@ -985,10 +901,8 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
     auto response = reinterpret_cast<pldm_msg*>(responseMsgPtr.get());
     if (response->payload[0] != PLDM_SUCCESS)
     {
-        log<level::ERR>(
-            std::format("pldmRspCallback: payload[0] was not success: {}",
-                        response->payload[0])
-                .c_str());
+        lg2::error("pldmRspCallback: payload[0] was not success: {STATUS}",
+                   "STATUS", response->payload[0]);
         pldmIface->pldmClose();
         return -1;
     }
@@ -1001,11 +915,9 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
         response, responseMsgSize, &compCode, &sensorCount, field);
     if ((msgRc != PLDM_SUCCESS) || (compCode != PLDM_SUCCESS))
     {
-        log<level::ERR>(
-            std::format(
-                "pldmRspCallback: decode_get_state_sensor_readings failed with rc={} and compCode={}",
-                msgRc, compCode)
-                .c_str());
+        lg2::error(
+            "pldmRspCallback: decode_get_state_sensor_readings failed with rc={RC} and compCode={CC}",
+            "RC", msgRc, "CC", compCode);
         pldmIface->pldmClose();
         return -1;
     }
@@ -1018,18 +930,15 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
 
     if (occSensorState == PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_IN_SERVICE)
     {
-        log<level::INFO>(
-            std::format("pldmRspCallback: OCC{} is RUNNING", instance).c_str());
+        lg2::info("pldmRspCallback: OCC{INST} is RUNNING", "INST", instance);
         pldmIface->occActiveCallBack(instance, true);
     }
     else if (occSensorState ==
              PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_DORMANT)
     {
-        log<level::ERR>(
-            std::format(
-                "pldmRspCallback: OCC{} has now STOPPED and system is in SAFE MODE",
-                instance)
-                .c_str());
+        lg2::error(
+            "pldmRspCallback: OCC{INST} has now STOPPED and system is in SAFE MODE",
+            "INST", instance);
 
         // Setting safe mode true
         pldmIface->safeModeCallBack(true);
@@ -1039,9 +948,8 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
     else if (occSensorState ==
              PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS_STOPPED)
     {
-        log<level::INFO>(
-            std::format("pldmRspCallback: OCC{} is not running", instance)
-                .c_str());
+        lg2::info("pldmRspCallback: OCC{INST} is not running", "INST",
+                  instance);
         pldmIface->occActiveCallBack(instance, false);
     }
     else
@@ -1052,11 +960,10 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
                rspLength);
         if (!throttleTraces)
         {
-            log<level::WARNING>(
-                std::format(
-                    "pldmRspCallback: Unexpected State: {} - PLDM response ({} bytes) for OCC{}:",
-                    occSensorState, rspLength, instance)
-                    .c_str());
+            lg2::warning(
+                "pldmRspCallback: Unexpected State: {STATE} - PLDM response "
+                "({LEN} bytes) for OCC{INST}:",
+                "STATE", occSensorState, "LEN", rspLength, "INST", instance);
             dump_hex(pldmResponse);
         }
     }
@@ -1070,8 +977,8 @@ int Interface::pldmResetCallback(sd_event_source* /*es*/,
 {
     if (!(revents & EPOLLIN))
     {
-        log<level::INFO>(
-            std::format("pldmResetCallback - revents={:08X}", revents).c_str());
+        lg2::info("pldmResetCallback - revents={NUM}", "NUM", lg2::hex,
+                  revents);
         return -1;
     }
 
@@ -1079,8 +986,7 @@ int Interface::pldmResetCallback(sd_event_source* /*es*/,
 
     if (!pldmIface->pldmInstanceID)
     {
-        log<level::ERR>(
-            "pldmResetCallback: No outstanding PLDM Instance ID found");
+        lg2::error("pldmResetCallback: No outstanding PLDM Instance ID found");
         return -1;
     }
 
@@ -1090,11 +996,9 @@ int Interface::pldmResetCallback(sd_event_source* /*es*/,
 
     if (!throttleTraces)
     {
-        log<level::INFO>(
-            std::format(
-                "pldmResetCallback: calling pldm_transport_recv_msg() instance:{}",
-                pldmIface->pldmInstanceID.value())
-                .c_str());
+        lg2::info(
+            "pldmResetCallback: calling pldm_transport_recv_msg() instance:{ID}",
+            "ID", pldmIface->pldmInstanceID.value());
     }
     auto rc = pldm_transport_recv_msg(pldmIface->pldmTransport, &pldmTID,
                                       (void**)&responseMsg, &responseMsgSize);
@@ -1103,13 +1007,12 @@ int Interface::pldmResetCallback(sd_event_source* /*es*/,
     {
         if (!throttleTraces)
         {
-            log<level::ERR>(
-                std::format(
-                    "pldmResetCallback: pldm_transport_recv_msg failed with rc={}, errno={}/{}",
-                    static_cast<
-                        std::underlying_type_t<pldm_requester_error_codes>>(rc),
-                    lastErrno, strerror(lastErrno))
-                    .c_str());
+            lg2::error(
+                "pldmResetCallback: pldm_transport_recv_msg failed with rc={RC}, errno={ERR}/{STR}",
+                "RC",
+                static_cast<std::underlying_type_t<pldm_requester_error_codes>>(
+                    rc),
+                "ERR", lastErrno, "STR", strerror(lastErrno));
         }
         return -1;
     }
@@ -1117,11 +1020,9 @@ int Interface::pldmResetCallback(sd_event_source* /*es*/,
     // We got the response for the PLDM request msg that was sent
     if (!throttleTraces)
     {
-        log<level::INFO>(
-            std::format(
-                "pldmResetCallback: pldm_transport_recv_msg() rsp was {} bytes",
-                responseMsgSize)
-                .c_str());
+        lg2::info(
+            "pldmResetCallback: pldm_transport_recv_msg() rsp was {LEN} bytes",
+            "LEN", responseMsgSize);
     }
 
     if (pldmIface->pldmRspTimer.isEnabled())
@@ -1140,29 +1041,24 @@ int Interface::pldmResetCallback(sd_event_source* /*es*/,
     auto response = reinterpret_cast<pldm_msg*>(responseMsgPtr.get());
     if (response->payload[0] != PLDM_SUCCESS)
     {
-        log<level::ERR>(
-            std::format(
-                "pldmResetCallback: Reset FAILED ({}) - payload[0] was not success: {}",
-                msgType, response->payload[0])
-                .c_str());
+        lg2::error(
+            "pldmResetCallback: Reset FAILED ({MSG}) - payload[0] was not success: {STATUS}",
+            "MSG", msgType, "STATUS", response->payload[0]);
         pldmIface->pldmClose();
 
         if (msgType == MSG_OCC_RESET)
         {
             // Retry reset request
-            log<level::ERR>(
-                std::format(
-                    "pldmResetCallback: retrying reset request for OCC{}",
-                    resetInstance)
-                    .c_str());
+            lg2::error(
+                "pldmResetCallback: retrying reset request for OCC{INST}",
+                "INST", resetInstance);
             pldmIface->resetOCC(resetInstance);
         }
         return -1;
     }
     else
     {
-        log<level::INFO>(
-            "pldmResetCallback: Reset has been successfully started");
+        lg2::info("pldmResetCallback: Reset has been successfully started");
     }
 
     pldmIface->pldmClose();
@@ -1177,8 +1073,7 @@ std::vector<uint8_t>
 {
     if (!getPldmInstanceId())
     {
-        log<level::ERR>(
-            "encodeGetStateSensorRequest: failed to getPldmInstanceId");
+        lg2::error("encodeGetStateSensorRequest: failed to getPldmInstanceId");
         return std::vector<uint8_t>();
     }
 
@@ -1192,11 +1087,9 @@ std::vector<uint8_t>
                                                       sensorId, sRearm, 0, msg);
     if (msgRc != PLDM_SUCCESS)
     {
-        log<level::ERR>(
-            std::format(
-                "encodeGetStateSensorRequest: Failed to encode sensorId:0x{:08X} for OCC{} (rc={})",
-                sensorId, instance, msgRc)
-                .c_str());
+        lg2::error(
+            "encodeGetStateSensorRequest: Failed to encode sensorId:{ID} for OCC{INST} (rc={RC})",
+            "ID", lg2::hex, sensorId, "INST", instance, "RC", msgRc);
     }
     return request;
 }
@@ -1209,11 +1102,9 @@ void Interface::checkActiveSensor(uint8_t instance)
     {
         if (!throttleTraces && !tracedOnce)
         {
-            log<level::WARNING>(
-                std::format(
-                    "checkActiveSensor: already waiting on OCC{} (fd={})",
-                    pldmResponseOcc, pldmFd)
-                    .c_str());
+            lg2::warning(
+                "checkActiveSensor: already waiting on OCC{INST} (fd={FD})",
+                "INST", pldmResponseOcc, "FD", pldmFd);
             tracedOnce = true;
         }
         return;
@@ -1235,10 +1126,8 @@ void Interface::checkActiveSensor(uint8_t instance)
         // Query the OCC Active Sensor state for this instance
         if (!throttleTraces)
         {
-            log<level::INFO>(
-                std::format("checkActiveSensor: OCC{} / sensorID: 0x{:04X}",
-                            instance, entry->first)
-                    .c_str());
+            lg2::info("checkActiveSensor: OCC{INST} / sensorID: {ID}", "INST",
+                      instance, "ID", lg2::hex, entry->first);
         }
 
         // Encode GetStateSensorReadings PLDM message
@@ -1256,12 +1145,10 @@ void Interface::checkActiveSensor(uint8_t instance)
     {
         if (!throttleTraces)
         {
-            log<level::ERR>(
-                std::format(
-                    "checkActiveSensor: Unable to find PLDM sensor for OCC{}",
-                    instance)
-                    .c_str());
-            log<level::INFO>(
+            lg2::error(
+                "checkActiveSensor: Unable to find PLDM sensor for OCC{INST}",
+                "INST", instance);
+            lg2::info(
                 "checkActiveSensor: fetching STATE_SET_OPERATIONAL_RUNNING_STATUS");
         }
         fetchSensorInfo(PLDM_STATE_SET_OPERATIONAL_RUNNING_STATUS,
@@ -1275,11 +1162,11 @@ void Interface::setTraceThrottle(const bool throttle)
     {
         if (throttle)
         {
-            log<level::WARNING>("PLDM traces being throttled");
+            lg2::warning("PLDM traces being throttled");
         }
         else
         {
-            log<level::INFO>("PLDM traces no longer being throttled");
+            lg2::info("PLDM traces no longer being throttled");
         }
         throttleTraces = throttle;
     }

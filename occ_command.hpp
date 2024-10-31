@@ -80,7 +80,7 @@ enum class CmdStatus
     COMM_FAILURE = 0x03
 };
 
-/** @brief Trace block of data in hex with log<level:INFO>
+/** @brief Trace block of data in hex with lg2:info()
  *
  *  @param[in] data - vector containing data to trace
  *  @param[in] data_len - optional number of bytes to trace

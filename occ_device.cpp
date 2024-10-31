@@ -3,7 +3,7 @@
 #include "occ_manager.hpp"
 #include "occ_status.hpp"
 
-#include <phosphor-logging/log.hpp>
+#include <phosphor-logging/lg2.hpp>
 
 #include <filesystem>
 #include <iostream>
@@ -12,8 +12,6 @@ namespace open_power
 {
 namespace occ
 {
-
-using namespace phosphor::logging;
 
 void Device::setActive(bool active)
 {
@@ -25,9 +23,8 @@ void Device::setActive(bool active)
     }
     catch (const std::exception& e)
     {
-        log<level::ERR>(std::format("Failed to set {} active: {}",
-                                    devPath.c_str(), e.what())
-                            .c_str());
+        lg2::error("Failed to set {DEVICE} active: {ERROR}", "DEVICE", devPath,
+                   "ERROR", e.what());
     }
 }
 
@@ -151,10 +148,8 @@ fs::path Device::getFilenameByRegex(fs::path basePath,
     }
     catch (const fs::filesystem_error& e)
     {
-        log<level::ERR>(
-            std::format("getFilenameByRegex: Failed to get filename: {}",
-                        e.what())
-                .c_str());
+        lg2::error("getFilenameByRegex: Failed to get filename: {ERROR}",
+                   "ERROR", e.what());
     }
 
     // Return empty path

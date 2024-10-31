@@ -12,11 +12,10 @@
 #include <org/open_power/OCC/Device/error.hpp>
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/elog.hpp>
+#include <phosphor-logging/lg2.hpp>
 #include <phosphor-logging/log.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
 #include <xyz/openbmc_project/Logging/Create/server.hpp>
-
-#include <format>
 
 namespace open_power
 {
@@ -43,10 +42,8 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
         uint8_t, uint8_t, sdbusplus::message::unix_fd>>
         pelFFDCInfo;
 
-    log<level::INFO>(
-        std::format("Creating PEL for OCC{} with SBE FFDC: {} - SRC6: 0x{:08X}",
-                    src6 >> 16, path, src6)
-            .c_str());
+    lg2::info("Creating PEL for OCC{INST} with SBE FFDC: {PATH} - SRC6: {SRC}",
+              "INST", src6 >> 16, "PATH", path, "SRC", lg2::hex, src6);
 
     if (fd > 0)
     {
@@ -92,8 +89,7 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
     }
     catch (const sdbusplus::exception_t& e)
     {
-        log<level::ERR>(
-            std::format("Failed to create PEL: {}", e.what()).c_str());
+        lg2::error("Failed to create PEL: {ERR}", "ERR", e.what());
     }
 
     return plid;
@@ -118,9 +114,8 @@ void FFDC::createOCCResetPEL(unsigned int instance, const char* path, int err,
 
     additionalData.emplace("OCC", std::to_string(instance));
 
-    log<level::INFO>(
-        std::format("Creating OCC Reset PEL for OCC{}: {}", instance, path)
-            .c_str());
+    lg2::info("Creating OCC Reset PEL for OCC{INST}: {PATH}", "INST", instance,
+              "PATH", path);
 
     auto& bus = utils::getBus();
 
@@ -150,9 +145,7 @@ void FFDC::createOCCResetPEL(unsigned int instance, const char* path, int err,
     }
     catch (const sdbusplus::exception_t& e)
     {
-        log<level::ERR>(
-            std::format("Failed to create OCC Reset PEL: {}", e.what())
-                .c_str());
+        lg2::error("Failed to create OCC Reset PEL: {ERR}", "ERR", e.what());
     }
 }
 
@@ -200,7 +193,7 @@ void FFDC::analyzeEvent()
         tfd = mkostemp(templateString.data(), O_RDWR);
         if (tfd < 0)
         {
-            log<level::ERR>("Couldn't create temporary FFDC file");
+            lg2::error("Couldn't create temporary FFDC file");
         }
         else
         {
@@ -215,7 +208,7 @@ void FFDC::analyzeEvent()
                     fs::remove(temporaryFiles.back().first);
                     temporaryFiles.pop_back();
                     tfd = -1;
-                    log<level::ERR>("Couldn't write temporary FFDC file");
+                    lg2::error("Couldn't write temporary FFDC file");
                     break;
                 }
                 if (!r)
@@ -238,20 +231,15 @@ std::unique_ptr<FFDCFile> FFDC::addJournalEntries(
     auto journalFile = makeJsonFFDCFile(getJournalEntries(lines, executable));
     if (journalFile && journalFile->fd() != -1)
     {
-        log<level::DEBUG>(
-            std::format(
-                "addJournalEntries: Added up to {} journal entries for {}",
-                lines, executable)
-                .c_str());
+        lg2::debug(
+            "addJournalEntries: Added up to {NUM} journal entries for {APP}",
+            "NUM", lines, "APP", executable);
         fileList.emplace_back(FFDCFormat::JSON, 0x01, 0x01, journalFile->fd());
     }
     else
     {
-        log<level::ERR>(
-            std::format(
-                "addJournalEntries: Failed to add journal entries for {}",
-                executable)
-                .c_str());
+        lg2::error("addJournalEntries: Failed to add journal entries for {APP}",
+                   "APP", executable);
     }
     return journalFile;
 }
@@ -274,20 +262,16 @@ std::unique_ptr<FFDCFile> FFDC::makeJsonFFDCFile(const nlohmann::json& ffdcData)
         else
         {
             auto e = errno;
-            log<level::ERR>(
-                std::format(
-                    "makeJsonFFDCFile: Failed call to write JSON FFDC file, errno={}",
-                    e)
-                    .c_str());
+            lg2::error(
+                "makeJsonFFDCFile: Failed call to write JSON FFDC file, errno={ERR}",
+                "ERR", e);
         }
     }
     else
     {
         auto e = errno;
-        log<level::ERR>(
-            std::format("makeJsonFFDCFile: Failed called to mkostemp, errno={}",
-                        e)
-                .c_str());
+        lg2::error("makeJsonFFDCFile: Failed called to mkostemp, errno={ERR}",
+                   "ERR", e);
     }
     return nullptr;
 }
@@ -428,10 +412,8 @@ FFDCFile::FFDCFile(const fs::path& name) :
     if (_fd() == -1)
     {
         auto e = errno;
-        log<level::ERR>(
-            std::format("FFDCFile: Could not open FFDC file {}. errno {}",
-                        _name.string(), e)
-                .c_str());
+        lg2::error("FFDCFile: Could not open FFDC file {FILE}. errno {ERR}",
+                   "FILE", _name.string(), "ERR", e);
     }
 }
 
