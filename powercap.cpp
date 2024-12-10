@@ -79,13 +79,17 @@ void OccPersistCapData::load()
         PowerCapData newCapData;
         std::ifstream stream{ipath.c_str(), std::ios_base::binary};
         stream.read((char*)&newCapData, sizeof(newCapData));
-        if (newCapData.version != PCAPDATA_FILE_VERSION)
+        if (newCapData.version == PCAPDATA_FILE_VERSION)
         {
-            lg2::warning(
+            memcpy(&capData, &newCapData, sizeof(capData));
+        }
+        else
+        {
+            lg2::error(
                 "OccPersistCapData::load() file version was {VER} (expected {EXP})",
                 "VER", newCapData.version, "EXP", PCAPDATA_FILE_VERSION);
+            capData.initialized = false;
         }
-        memcpy(&capData, &newCapData, sizeof(capData));
     }
     catch (const std::exception& e)
     {
