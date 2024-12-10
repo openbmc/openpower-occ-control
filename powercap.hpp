@@ -103,7 +103,7 @@ class OccPersistCapData
 
   private:
     /** @brief Power Mode data filename to store persistent data */
-    static constexpr auto powerCapFilename = "powerCapData";
+    static constexpr auto powerCapFilename = "powerCapLimitData";
 
     /** @brief Power Mode data object to be persisted */
     PowerCapData capData;
