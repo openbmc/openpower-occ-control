@@ -5,7 +5,9 @@
 #ifdef PLDM
 #include "pldm.hpp"
 
+#ifdef PHAL_SUPPORT
 #include <libphal.H>
+#endif
 #endif
 #include "powercap.hpp"
 #include "utils.hpp"
@@ -88,17 +90,6 @@ struct Manager
                 sdbusRule::argN(0, AMBIENT_INTERFACE) +
                 sdbusRule::interface("org.freedesktop.DBus.Properties"),
             std::bind(&Manager::ambientCallback, this, std::placeholders::_1))
-#ifdef PLDM
-        ,
-        pldmHandle(std::make_unique<pldm::Interface>(
-            std::bind(std::mem_fn(&Manager::updateOCCActive), this,
-                      std::placeholders::_1, std::placeholders::_2),
-            std::bind(std::mem_fn(&Manager::sbeHRESETResult), this,
-                      std::placeholders::_1, std::placeholders::_2),
-            std::bind(std::mem_fn(&Manager::updateOccSafeMode), this,
-                      std::placeholders::_1),
-            event))
-#endif
 #ifdef POWER10
         ,
         discoverTimer(
@@ -126,6 +117,8 @@ struct Manager
 #endif
         readAltitude();
     }
+
+    void createPldmHandle();
 
     /** @brief Return the number of bound OCCs */
     inline auto getNumOCCs() const
@@ -305,6 +298,7 @@ struct Manager
      */
     void sbeHRESETResult(instanceID instance, bool success);
 
+#ifdef PHAL_SUPPORT
     /** @brief Helper function to check whether an SBE dump should be collected
      *         now.
      *
@@ -332,6 +326,7 @@ struct Manager
 
     /** @brief Whether pdbg_targets_init has been called */
     bool pdbgInitialized = false;
+#endif
 
     std::unique_ptr<pldm::Interface> pldmHandle = nullptr;
 #endif

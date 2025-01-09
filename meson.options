@@ -15,7 +15,7 @@ option(
     'read-occ-sensors',
     type : 'feature',
     description : 'Enable read occ sensors support',
-    value: 'disabled'
+    value: 'enabled'
 )
 
 option(
@@ -37,14 +37,15 @@ option(
 option(
     'with-host-communication-protocol',
     type : 'string',
-    description : 'To specify the host communication protocol'
+    description : 'To specify the host communication protocol',
+    value: 'pldm'
 )
 
 option(
     'power10-support',
     type : 'feature',
     description : 'Enable Power10 support',
-    value: 'disabled'
+    value: 'enabled'
 )
 
 option(
@@ -66,3 +67,11 @@ option(
     choices: ['mctp-demux', 'af-mctp'],
     description: 'transport via af-mctp or mctp-demux'
 )
+
+option(
+    'phal-support',
+    type : 'feature',
+    description : 'Enable PHAL support',
+    value: 'disabled'
+)
+

@@ -42,6 +42,7 @@ conf_data.set('I2C_OCC', get_option('i2c-occ').allowed())
 conf_data.set('READ_OCC_SENSORS', get_option('read-occ-sensors').allowed())
 conf_data.set('PLDM', get_option('with-host-communication-protocol')=='pldm')
 conf_data.set('POWER10', get_option('power10-support').allowed())
+conf_data.set('PHAL_SUPPORT', get_option('phal-support').allowed())
 
 if get_option('transport-implementation') == 'mctp-demux'
     conf_data.set('PLDM_TRANSPORT_WITH_MCTP_DEMUX', 1)
@@ -124,18 +125,28 @@ sources += [
 if get_option('with-host-communication-protocol')=='pldm'
     libpldm_dep = dependency('libpldm')
     deps += [
-        libpldm_dep,
-        cxx.find_library('pdbg'),
-        cxx.find_library('phal'),
+        libpldm_dep
     ]
     sources += [
-        'pldm.cpp',
+        'pldm.cpp'
     ]
 endif
 
 if get_option('power10-support').allowed()
+    libpldm_dep = dependency('libpldm')
+    deps += [
+        libpldm_dep
+    ]
     sources += [
+        'pldm.cpp',
         'powermode.cpp',
+    ]
+endif
+
+if get_option('phal-support').allowed()
+    deps += [
+        cxx.find_library('pdbg'),
+        cxx.find_library('phal')
     ]
 endif
 
