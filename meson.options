@@ -66,3 +66,11 @@ option(
     choices: ['mctp-demux', 'af-mctp'],
     description: 'transport via af-mctp or mctp-demux'
 )
+
+option(
+    'phal-support',
+    type : 'feature',
+    description : 'Enable PHAL support',
+    value: 'disabled'
+)
+

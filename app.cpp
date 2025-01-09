@@ -46,6 +46,7 @@ int main(int /*argc*/, char** /*argv[]*/)
     sdbusplus::server::manager_t objManagerXyzInventory(
         bus, "/xyz/openbmc_project/inventory");
     open_power::occ::Manager mgr(eventP);
+    mgr.createPldmHandle();
 
     // Claim the bus since all the house keeping is done now
     bus.request_name(OCC_CONTROL_BUSNAME);

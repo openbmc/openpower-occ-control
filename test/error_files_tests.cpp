@@ -105,15 +105,13 @@ TEST_F(ErrorFiles, AddDeviceErrorWatch)
     occDevice.removeErrorWatch();
 }
 
+// legacy OCC devices not supported on POWER10
+#ifndef POWER10
 TEST_F(ErrorFiles, AddLegacyDeviceErrorWatch)
 {
-    Device legacyOccDevice(pEvent, legacyDevicePath, manager, status
-#ifdef POWER10
-                           ,
-                           powerMode
-#endif
-    );
+    Device legacyOccDevice(pEvent, legacyDevicePath, manager, status);
 
     legacyOccDevice.addErrorWatch(false);
     legacyOccDevice.removeErrorWatch();
 }
+#endif

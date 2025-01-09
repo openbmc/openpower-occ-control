@@ -56,6 +56,20 @@ T readFile(const std::string& path)
     return data;
 }
 
+void Manager::createPldmHandle()
+{
+#ifdef PLDM
+    pldmHandle = std::make_unique<pldm::Interface>(
+        std::bind(std::mem_fn(&Manager::updateOCCActive), this,
+                  std::placeholders::_1, std::placeholders::_2),
+        std::bind(std::mem_fn(&Manager::sbeHRESETResult), this,
+                  std::placeholders::_1, std::placeholders::_2),
+        std::bind(std::mem_fn(&Manager::updateOccSafeMode), this,
+                  std::placeholders::_1),
+        event);
+#endif
+}
+
 // findAndCreateObjects():
 // Takes care of getting the required objects created and
 // finds the available devices/processors.
@@ -610,7 +624,9 @@ void Manager::sbeTimeout(unsigned int instance)
         lg2::info("SBE timeout, requesting HRESET (OCC{INST})", "INST",
                   instance);
 
+#ifdef PHAL_SUPPORT
         setSBEState(instance, SBE_STATE_NOT_USABLE);
+#endif
 
         pldmHandle->sendHRESET(instance);
     }
@@ -703,11 +719,14 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
     {
         lg2::info("HRESET succeeded (OCC{INST})", "INST", instance);
 
+#ifdef PHAL_SUPPORT
         setSBEState(instance, SBE_STATE_BOOTED);
+#endif
 
         return;
     }
 
+#ifdef PHAL_SUPPORT
     setSBEState(instance, SBE_STATE_FAILED);
 
     if (sbeCanDump(instance))
@@ -759,12 +778,14 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
             }
         }
     }
+#endif
 
     // SBE Reset failed, try PM Complex reset
     lg2::error("sbeHRESETResult: Forcing PM Complex reset");
     resetOccRequest(instance);
 }
 
+#ifdef PHAL_SUPPORT
 bool Manager::sbeCanDump(unsigned int instance)
 {
     struct pdbg_target* proc = getPdbgTarget(instance);
@@ -843,6 +864,7 @@ struct pdbg_target* Manager::getPdbgTarget(unsigned int instance)
     lg2::error("Failed to get pdbg target");
     return nullptr;
 }
+#endif
 #endif
 
 void Manager::pollerTimerExpired()
