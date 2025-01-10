@@ -157,7 +157,8 @@ void Status::deviceError(Error::Descriptor d)
 
     if (d.log)
     {
-        FFDC::createOCCResetPEL(instance, d.path, d.err, d.callout);
+        FFDC::createOCCResetPEL(instance, d.path, d.err, d.callout,
+                                d.isInventoryCallout);
     }
 
     // This would deem OCC inactive
@@ -575,7 +576,9 @@ void Status::occReadStateNow()
             stateValid = false;
 
             // Disable due to OCC comm failure and reset to try recovering
-            deviceError(Error::Descriptor(OCC_COMM_ERROR_PATH));
+            // (processor callout will be added)
+            deviceError(Error::Descriptor(OCC_COMM_ERROR_PATH, ECOMM,
+                                          procPath.c_str(), true));
 
             // Reset retry count (for next attempt after recovery)
             currentOccReadRetriesCount = occReadRetries;

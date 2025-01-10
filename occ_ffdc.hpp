@@ -123,9 +123,12 @@ class FFDC : public Error
      * @param[in] path - the DBus error path
      * @param[in] err - the error return code
      * @param[in] callout - the PEL callout path
+     * @param[in] isInventoryCallout - true if the callout is an inventory path
+     * or false if it is a device path
      */
     static void createOCCResetPEL(unsigned int instance, const char* path,
-                                  int err, const char* callout);
+                                  int err, const char* deviceCallout,
+                                  const bool isInventoryCallout);
 
     /**
      * @brief Create a file containing the latest journal traces for the

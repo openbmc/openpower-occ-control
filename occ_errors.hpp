@@ -74,16 +74,20 @@ class Error
          *  @param[in] path - the DBus error path
          *  @param[in] err - Optional error return code
          *  @param[in] callout - Optional PEL callout path
+         *  @param[in] isInventory - true if the callout path is an
+         * inventory path, false if it is a device path
          */
-        Descriptor(const char* path, int err = 0,
-                   const char* callout = nullptr) :
-            log(true), err(err), callout(callout), path(path)
+        Descriptor(const char* path, int err = 0, const char* callout = nullptr,
+                   const bool isInventory = false) :
+            log(true), err(err), callout(callout), path(path),
+            isInventoryCallout(isInventory)
         {}
 
         bool log;
         int err;
         const char* callout;
         const char* path;
+        bool isInventoryCallout;
     };
 
     /** @brief Starts to monitor for error conditions

@@ -96,7 +96,7 @@ uint32_t FFDC::createPEL(const char* path, uint32_t src6, const char* msg,
 }
 
 void FFDC::createOCCResetPEL(unsigned int instance, const char* path, int err,
-                             const char* callout)
+                             const char* callout, const bool isInventoryCallout)
 {
     std::map<std::string, std::string> additionalData;
 
@@ -107,15 +107,27 @@ void FFDC::createOCCResetPEL(unsigned int instance, const char* path, int err,
         additionalData.emplace("CALLOUT_ERRNO", std::to_string(-err));
     }
 
+    lg2::info("Creating OCC Reset PEL for OCC{INST}: {PATH}", "INST", instance,
+              "PATH", path);
+
     if (callout)
     {
-        additionalData.emplace("CALLOUT_DEVICE_PATH", std::string(callout));
+        if (isInventoryCallout)
+        {
+            lg2::info("adding inventory callout path {COPATH}", "COPATH",
+                      std::string(callout));
+            additionalData.emplace("CALLOUT_INVENTORY_PATH",
+                                   std::string(callout));
+        }
+        else
+        {
+            lg2::info("adding device callout path {COPATH}, errno:{ERRNO}",
+                      "COPATH", std::string(callout), "ERRNO", err);
+            additionalData.emplace("CALLOUT_DEVICE_PATH", std::string(callout));
+        }
     }
 
     additionalData.emplace("OCC", std::to_string(instance));
-
-    lg2::info("Creating OCC Reset PEL for OCC{INST}: {PATH}", "INST", instance,
-              "PATH", path);
 
     auto& bus = utils::getBus();
 
