@@ -1212,11 +1212,14 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
         }
         sensorPath.append(iter->second);
 
-        double tempValue{0};
+        double powerReading{0};
 
         try
         {
-            tempValue = readFile<double>(filePathString + inputSuffix);
+            powerReading = readFile<double>(filePathString + inputSuffix);
+            // Convert output/DC power to input/AC power in Watts (round up)
+            powerReading = std::round(
+                ((powerReading / (PS_DERATING_FACTOR / 100.0)) / 1000000));
         }
         catch (const std::system_error& e)
         {
@@ -1230,8 +1233,7 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
         dbus::OccDBusSensors::getOccDBus().setUnit(
             sensorPath, "xyz.openbmc_project.Sensor.Value.Unit.Watts");
 
-        dbus::OccDBusSensors::getOccDBus().setValue(
-            sensorPath, tempValue * std::pow(10, -3) * std::pow(10, -3));
+        dbus::OccDBusSensors::getOccDBus().setValue(sensorPath, powerReading);
 
         dbus::OccDBusSensors::getOccDBus().setOperationalStatus(
             sensorPath, true);
