@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xyz/openbmc_project/Association/Definitions/server.hpp>
+#include <xyz/openbmc_project/Sensor/Purpose/server.hpp>
 #include <xyz/openbmc_project/Sensor/Value/server.hpp>
 #include <xyz/openbmc_project/State/Decorator/OperationalStatus/server.hpp>
 
@@ -18,6 +19,8 @@ using SensorIntf = sdbusplus::server::object_t<
 using OperationalStatusIntf =
     sdbusplus::server::object_t<sdbusplus::xyz::openbmc_project::State::
                                     Decorator::server::OperationalStatus>;
+using PurposeIntf = sdbusplus::server::object_t<
+    sdbusplus::xyz::openbmc_project::Sensor::server::Purpose>;
 
 // Note: Not using object<> so the PropertiesVariant ctor is available.
 using AssociationIntf =
@@ -159,8 +162,18 @@ class OccDBusSensors
      */
     bool hasDvfsTemp(const std::string& path) const;
 
+    /** @brief Set the purpose of the Sensor
+     *
+     *  @param[in] path  - The object path
+     *  @param[in] value - The value of the Purpose property
+     *
+     *  @return true or false
+     */
+    bool setPurpose(const std::string& path, const std::string& value);
+
   private:
     std::map<ObjectPath, std::unique_ptr<SensorIntf>> sensors;
+    std::map<ObjectPath, std::unique_ptr<PurposeIntf>> purposes;
 
     std::map<ObjectPath, std::unique_ptr<OperationalStatusIntf>>
         operationalStatus;
