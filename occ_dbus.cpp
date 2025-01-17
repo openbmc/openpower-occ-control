@@ -242,6 +242,38 @@ void OccDBusSensors::setDvfsTemp(const std::string& path, double value)
     dvfsTemps[path]->value(value);
 }
 
+bool OccDBusSensors::setPurpose(const std::string& path,
+                                const std::string& value)
+{
+    if (path.empty())
+    {
+        return false;
+    }
+
+    if (!purposes.contains(path))
+    {
+        purposes.emplace(
+            path, std::make_unique<PurposeIntf>(utils::getBus(), path.c_str()));
+        try
+        {
+            std::set<sdbusplus::common::xyz::openbmc_project::sensor::Purpose::
+                         SensorPurpose>
+                pSet{sdbusplus::common::xyz::openbmc_project::sensor::Purpose::
+                         convertSensorPurposeFromString(value)};
+            purposes.at(path)->purpose(pSet);
+        }
+        catch (const std::exception& e)
+        {
+            lg2::error(
+                "set SensorPurpose propety failed for {PATH}: error={ERR}",
+                "PATH", path, "ERR", e.what());
+            return false;
+        }
+    }
+
+    return true;
+}
+
 } // namespace dbus
 } // namespace occ
 } // namespace open_power
