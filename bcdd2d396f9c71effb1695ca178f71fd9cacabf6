@@ -16,6 +16,24 @@
       "message": "Should you remove this association since the PDI change wasn\u0027t accepted upstream?",
       "revId": "bcdd2d396f9c71effb1695ca178f71fd9cacabf6",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8d1030ca_74711eab",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1247,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2025-01-22T16:02:11Z",
+      "side": 1,
+      "message": "Good point. I will remove",
+      "parentUuid": "a3bba38c_48b827c6",
+      "revId": "bcdd2d396f9c71effb1695ca178f71fd9cacabf6",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
