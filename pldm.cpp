@@ -1068,8 +1068,8 @@ int Interface::pldmResetCallback(sd_event_source* /*es*/,
     return 0;
 }
 
-std::vector<uint8_t>
-    Interface::encodeGetStateSensorRequest(uint8_t instance, uint16_t sensorId)
+std::vector<uint8_t> Interface::encodeGetStateSensorRequest(uint8_t instance,
+                                                            uint16_t sensorId)
 {
     if (!getPldmInstanceId())
     {
