@@ -1,13 +1,14 @@
 project(
-    'openpower-occ-control', 'cpp',
-    version : '1.0.0',
+    'openpower-occ-control',
+    'cpp',
+    version: '1.0.0',
     meson_version: '>=1.1.1',
     default_options: [
         'warning_level=3',
         'werror=true',
         'cpp_std=c++23',
-        'buildtype=debugoptimized'
-    ]
+        'buildtype=debugoptimized',
+    ],
 )
 
 cxx = meson.get_compiler('cpp')
@@ -20,8 +21,14 @@ conf_data.set_quoted('CPU_NAME', 'cpu')
 conf_data.set_quoted('OCC_NAME', 'occ')
 conf_data.set_quoted('OCC_MASTER_NAME', 'occ-hwmon.1')
 conf_data.set_quoted('OCC_DEV_PATH', '/dev/occ')
-conf_data.set_quoted('CPU_SUBPATH', '/xyz/openbmc_project/inventory/system/chassis/motherboard')
-conf_data.set_quoted('OCC_CONTROL_PERSIST_PATH', '/var/lib/openpower-occ-control')
+conf_data.set_quoted(
+    'CPU_SUBPATH',
+    '/xyz/openbmc_project/inventory/system/chassis/motherboard',
+)
+conf_data.set_quoted(
+    'OCC_CONTROL_PERSIST_PATH',
+    '/var/lib/openpower-occ-control',
+)
 conf_data.set_quoted('OP_DUMP_OBJ_PATH', get_option('op_dump_obj_path'))
 
 conf_data.set('MAX_CPUS', get_option('max-cpus'))
@@ -34,13 +41,16 @@ if get_option('i2c-occ').allowed()
     conf_data.set_quoted('DEV_PATH', '/sys/bus/i2c/devices')
     conf_data.set_quoted('I2C_OCC_DEVICE_NAME', 'p8-occ-hwmon')
 else
-    conf_data.set_quoted('OCC_HWMON_PATH', '/sys/bus/platform/drivers/occ-hwmon/')
+    conf_data.set_quoted(
+        'OCC_HWMON_PATH',
+        '/sys/bus/platform/drivers/occ-hwmon/',
+    )
     conf_data.set_quoted('DEV_PATH', '/sys/bus/platform/devices/')
 endif
 
 conf_data.set('I2C_OCC', get_option('i2c-occ').allowed())
 conf_data.set('READ_OCC_SENSORS', get_option('read-occ-sensors').allowed())
-conf_data.set('PLDM', get_option('with-host-communication-protocol')=='pldm')
+conf_data.set('PLDM', get_option('with-host-communication-protocol') == 'pldm')
 conf_data.set('POWER10', get_option('power10-support').allowed())
 conf_data.set('PHAL_SUPPORT', get_option('phal-support').allowed())
 
@@ -54,18 +64,16 @@ if cxx.has_header('poll.h')
     conf_data.set('PLDM_HAS_POLL', 1)
 endif
 
-configure_file(output: 'config.h',
-    configuration: conf_data
-)
+configure_file(output: 'config.h', configuration: conf_data)
 
-install_data('occ-active.sh',
+install_data(
+    'occ-active.sh',
     install_mode: 'rwxr-xr-x',
-    install_dir: get_option('bindir')
+    install_dir: get_option('bindir'),
 )
 
 systemd = dependency('systemd')
-systemd_system_unit_dir = systemd.get_variable(
-    'systemdsystemunitdir')
+systemd_system_unit_dir = systemd.get_variable('systemdsystemunitdir')
 subdir('service_files')
 
 sdbusplus_dep = dependency('sdbusplus')
@@ -80,14 +88,16 @@ has_cereal = cxx.has_header_symbol(
     'cereal/cereal.hpp',
     'cereal::specialize',
     dependencies: cereal_dep,
-    required: false)
+    required: false,
+)
 if not has_cereal
     cereal_opts = import('cmake').subproject_options()
     cereal_opts.add_cmake_defines({'BUILD_TESTS': 'OFF'})
     cereal_proj = import('cmake').subproject(
         'cereal',
         options: cereal_opts,
-        required: false)
+        required: false,
+    )
     assert(cereal_proj.found(), 'cereal is required')
     cereal_dep = cereal_proj.dependency('cereal')
 endif
@@ -122,32 +132,20 @@ sources += [
     'utils.cpp',
 ]
 
-if get_option('with-host-communication-protocol')=='pldm'
+if get_option('with-host-communication-protocol') == 'pldm'
     libpldm_dep = dependency('libpldm')
-    deps += [
-        libpldm_dep
-    ]
-    sources += [
-        'pldm.cpp'
-    ]
+    deps += [libpldm_dep]
+    sources += ['pldm.cpp']
 endif
 
 if get_option('power10-support').allowed()
     libpldm_dep = dependency('libpldm')
-    deps += [
-        libpldm_dep
-    ]
-    sources += [
-        'pldm.cpp',
-        'powermode.cpp',
-    ]
+    deps += [libpldm_dep]
+    sources += ['pldm.cpp', 'powermode.cpp']
 endif
 
 if get_option('phal-support').allowed()
-    deps += [
-        cxx.find_library('pdbg'),
-        cxx.find_library('phal')
-    ]
+    deps += [cxx.find_library('pdbg'), cxx.find_library('phal')]
 endif
 
 yamldir = get_option('yamldir')
@@ -158,24 +156,26 @@ endif
 # Generate occ-sensor.hpp.
 occ_sensor_hpp = custom_target(
     'occ-sensor.hpp',
-    command : [
+    command: [
         python_prog,
         meson.project_source_root() + '/sensor_gen.py',
-        '-i', yamldir,
+        '-i',
+        yamldir,
     ],
-    output : 'occ-sensor.hpp')
-    sources += [occ_sensor_hpp]
+    output: 'occ-sensor.hpp',
+)
+sources += [occ_sensor_hpp]
 
-    executable(
-        'openpower-occ-control',
-        sources,
-        include_directories: '.',
-        implicit_include_directories: true,
-        dependencies: deps,
-        install: true,
-        install_dir: get_option('bindir')
-    )
+executable(
+    'openpower-occ-control',
+    sources,
+    include_directories: '.',
+    implicit_include_directories: true,
+    dependencies: deps,
+    install: true,
+    install_dir: get_option('bindir'),
+)
 
 if get_option('tests').allowed()
-  subdir('test')
+    subdir('test')
 endif
