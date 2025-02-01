@@ -434,8 +434,8 @@ struct Manager
      *  @param[in] value - the value of the `powerX_label` file.
      *  @returns FunctionID of the power sensors.
      */
-    std::optional<std::string>
-        getPowerLabelFunctionID(const std::string& value);
+    std::optional<std::string> getPowerLabelFunctionID(
+        const std::string& value);
 
     /** @brief The power sensor names map */
     const std::map<std::string, std::string> powerSensorName = {

@@ -370,8 +370,8 @@ class Interface
      *
      *  @return request - The encoded PLDM messsage to be sent
      */
-    std::vector<uint8_t>
-        encodeGetStateSensorRequest(uint8_t instance, uint16_t sensorId);
+    std::vector<uint8_t> encodeGetStateSensorRequest(uint8_t instance,
+                                                     uint16_t sensorId);
 
     /** @brief setup PLDM transport for sending and receiving PLDM messages.
      *

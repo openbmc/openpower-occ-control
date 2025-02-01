@@ -1164,8 +1164,8 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
     }
 }
 
-std::optional<std::string>
-    Manager::getPowerLabelFunctionID(const std::string& value)
+std::optional<std::string> Manager::getPowerLabelFunctionID(
+    const std::string& value)
 {
     // If the value is "system", then the FunctionID is "system".
     if (value == "system")

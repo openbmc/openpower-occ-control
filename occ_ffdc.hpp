@@ -166,8 +166,8 @@ class FFDC : public Error
      *
      * @return std::unique_ptr<FFDCFile> - The file object
      */
-    static std::unique_ptr<FFDCFile>
-        makeJsonFFDCFile(const nlohmann::json& ffdcData);
+    static std::unique_ptr<FFDCFile> makeJsonFFDCFile(
+        const nlohmann::json& ffdcData);
 
     /**
      * @brief Returns a JSON structure containing the previous N journal
