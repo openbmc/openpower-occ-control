@@ -1,77 +1,75 @@
-option(
-    'tests',
-    type : 'feature',
-    description : 'Build tests'
-)
+option('tests', type: 'feature', description: 'Build tests')
 
 option(
     'i2c-occ',
-    type : 'feature',
-    description : 'Enable I2C OCC support',
-    value: 'disabled'
+    type: 'feature',
+    description: 'Enable I2C OCC support',
+    value: 'disabled',
 )
 
 option(
     'read-occ-sensors',
-    type : 'feature',
-    description : 'Enable read occ sensors support',
-    value: 'enabled'
+    type: 'feature',
+    description: 'Enable read occ sensors support',
+    value: 'enabled',
 )
 
 option(
     'max-cpus',
-    type : 'integer',
-    min:0, max:255,
-    description : 'Maximum number of CPUs',
-    value: 2
+    type: 'integer',
+    min: 0,
+    max: 255,
+    description: 'Maximum number of CPUs',
+    value: 2,
 )
 
 option(
     'ps-derating-factor',
-    type : 'integer',
-    min:0, max:100,
-    description : 'Power supply derating factor',
-    value: 90
+    type: 'integer',
+    min: 0,
+    max: 100,
+    description: 'Power supply derating factor',
+    value: 90,
 )
 
 option(
     'with-host-communication-protocol',
-    type : 'string',
-    description : 'To specify the host communication protocol',
-    value: 'pldm'
+    type: 'string',
+    description: 'To specify the host communication protocol',
+    value: 'pldm',
 )
 
 option(
     'power10-support',
-    type : 'feature',
-    description : 'Enable Power10 support',
-    value: 'enabled'
+    type: 'feature',
+    description: 'Enable Power10 support',
+    value: 'enabled',
 )
 
 option(
     'yamldir',
-    type : 'string',
-    description : 'The path to the yaml config files'
+    type: 'string',
+    description: 'The path to the yaml config files',
 )
 
 option(
     'op_dump_obj_path',
     type: 'string',
     value: '/org/openpower/dump',
-    description : 'Object path requesting OpenPOWER dumps'
+    description: 'Object path requesting OpenPOWER dumps',
 )
 
 option(
     'transport-implementation',
     type: 'combo',
     choices: ['mctp-demux', 'af-mctp'],
-    description: 'transport via af-mctp or mctp-demux'
+    description: 'transport via af-mctp or mctp-demux',
 )
 
 option(
     'phal-support',
-    type : 'feature',
-    description : 'Enable PHAL support',
-    value: 'disabled'
+    type: 'feature',
+    description: 'Enable PHAL support',
+    value: 'disabled',
 )
 
