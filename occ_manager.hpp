@@ -58,6 +58,9 @@ constexpr auto ALTITUDE_PATH = "/xyz/openbmc_project/sensors/altitude/Altitude";
 constexpr auto ALTITUDE_INTERFACE = "xyz.openbmc_project.Sensor.Value";
 constexpr auto ALTITUDE_PROP = "Value";
 
+constexpr auto EXTN_LABEL_PWRM_MEMORY_POWER = "5057524d";
+constexpr auto EXTN_LABEL_PWRP_PROCESSOR_POWER = "50575250";
+
 /** @class Manager
  *  @brief Builds and manages OCC objects
  */
@@ -419,6 +422,13 @@ struct Manager
      * @param[in] id - Id of the OCC.
      * */
     void readTempSensors(const fs::path& path, uint32_t id);
+
+    /**
+     * @brief Trigger OCC driver to read the extended sensors.
+     * @param[in] path - path of the OCC sensors.
+     * @param[in] id - Id of the OCC.
+     * */
+    void readExtnSensors(const fs::path& path, uint32_t id);
 
     /**
      * @brief Trigger OCC driver to read the power sensors.
