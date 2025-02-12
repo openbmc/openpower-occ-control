@@ -58,6 +58,9 @@ constexpr auto ALTITUDE_PATH = "/xyz/openbmc_project/sensors/altitude/Altitude";
 constexpr auto ALTITUDE_INTERFACE = "xyz.openbmc_project.Sensor.Value";
 constexpr auto ALTITUDE_PROP = "Value";
 
+constexpr auto EXTN_LABEL_PWRM_MEMORY_POWER = "5057524d";
+constexpr auto EXTN_LABEL_PWRP_MEMORY_POWER = "50575250";
+
 /** @class Manager
  *  @brief Builds and manages OCC objects
  */
@@ -421,6 +424,13 @@ struct Manager
     void readTempSensors(const fs::path& path, uint32_t id);
 
     /**
+     * @brief Trigger OCC driver to read the extended sensors.
+     * @param[in] path - path of the OCC sensors.
+     * @param[in] id - Id of the OCC.
+     * */
+    void readExtnSensors(const fs::path& path, uint32_t id);
+
+    /**
      * @brief Trigger OCC driver to read the power sensors.
      * @param[in] path - path of the OCC sensors.
      * @param[in] id - Id of the OCC.
@@ -439,22 +449,22 @@ struct Manager
 
     /** @brief The power sensor names map */
     const std::map<std::string, std::string> powerSensorName = {
-        {"system", "total_power"}, {"1", "p0_mem_power"},
-        {"2", "p1_mem_power"},     {"3", "p2_mem_power"},
-        {"4", "p3_mem_power"},     {"5", "p0_power"},
-        {"6", "p1_power"},         {"7", "p2_power"},
-        {"8", "p3_power"},         {"9", "p0_cache_power"},
-        {"10", "p1_cache_power"},  {"11", "p2_cache_power"},
-        {"12", "p3_cache_power"},  {"13", "io_a_power"},
-        {"14", "io_b_power"},      {"15", "io_c_power"},
-        {"16", "fans_a_power"},    {"17", "fans_b_power"},
-        {"18", "storage_a_power"}, {"19", "storage_b_power"},
-        {"23", "mem_cache_power"}, {"25", "p0_mem_0_power"},
-        {"26", "p0_mem_1_power"},  {"27", "p0_mem_2_power"},
-        {"35", "pcie_dcm0_power"}, {"36", "pcie_dcm1_power"},
-        {"37", "pcie_dcm2_power"}, {"38", "pcie_dcm3_power"},
-        {"39", "io_dcm0_power"},   {"40", "io_dcm1_power"},
-        {"41", "io_dcm2_power"},   {"42", "io_dcm3_power"},
+        {"system", "total_power"},  {"1", "p0_mem_power"},
+        {"2", "p1_mem_power"},      {"3", "p2_mem_power"},
+        {"4", "p3_mem_power"},      {"5", "p0_power"},
+        {"6", "p1_power"},          {"7", "p2_power"},
+        {"8", "p3_power"},          {"9", "p0_cache_power"},
+        {"10", "p1_cache_power"},   {"11", "p2_cache_power"},
+        {"12", "p3_cache_power"},   {"13", "io_a_power"},
+        {"14", "io_b_power"},       {"15", "io_c_power"},
+        {"16", "fans_a_power"},     {"17", "fans_b_power"},
+        {"18", "storage_a_power"},  {"19", "storage_b_power"},
+        {"23", "mem_cache_power"},  {"25", "p0_mem_0_power"},
+        {"26", "p0_mem_1_power"},   {"27", "p0_mem_2_power"},
+        {"35", "pcie_dcm0_power"},  {"36", "pcie_dcm1_power"},
+        {"37", "pcie_dcm2_power"},  {"38", "pcie_dcm3_power"},
+        {"39", "io_dcm0_power"},    {"40", "io_dcm1_power"},
+        {"41", "io_dcm2_power"},    {"42", "io_dcm3_power"},
         {"43", "avdd_total_power"}};
 
     /** @brief The dimm temperature sensor names map  */
