@@ -1276,6 +1276,124 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
     return;
 }
 
+void Manager::readExtnSensors(const fs::path& path, uint32_t id)
+{
+    std::regex expr{"extn\\d+_label$"}; // Example: extn5_label
+    for (auto& file : fs::directory_iterator(path))
+    {
+
+        if (!std::regex_search(file.path().string(), expr))
+        {
+            continue;
+        }
+
+        // Read in Label value of the sensor from file.
+        std::string labelValue;
+        try
+        {
+            labelValue = readFile<std::string>(file.path());
+        }
+        catch (const std::system_error& e)
+        {
+            log<level::DEBUG>(
+                std::format("readExtnSensors: Failed reading {}, errno = {}",
+                            file.path().string(), e.code().value())
+                    .c_str());
+            continue;
+        }
+        const std::string& tempLabel = "label";
+        const std::string filePathString = file.path().string().substr(
+            0, file.path().string().length() - tempLabel.length());
+
+        std::string sensorPath = OCC_SENSORS_ROOT + std::string("/power/");
+
+        // Grab 1 hex byte from labelValue string at a time and convert to
+        //    ascii string. add that to the end of the sensor path.
+        std::string asciiLabelString;
+        for (size_t i = 0; i < labelValue.length(); i += 2)
+        {
+            std::istringstream iss(labelValue.substr(i, 2));
+            int charCode;
+            iss >> std::hex >> charCode;
+            asciiLabelString += static_cast<char>(charCode);
+        }
+
+        // Read in data value of the sensor from file.
+        // Read in as string due to different format of data in sensors.
+        std::string extnValue;
+        try
+        {
+            extnValue = readFile<std::string>(filePathString + inputSuffix);
+        }
+        catch (const std::system_error& e)
+        {
+            log<level::DEBUG>(
+                std::format("readPowerSensors: Failed reading {}, errno = {}",
+                            filePathString + inputSuffix, e.code().value())
+                    .c_str());
+            continue;
+        }
+
+        // Labels of EXTN sections from OCC interface Document
+        //     have different formats.
+        // 0x464d494e : FMIN            0x46444953 : FDIS
+        // 0x46424153 : FBAS            0x46555400 : FUT
+        // 0x464d4158 : FMAX            0x434c4950 : CLIP
+        // 0x4d4f4445 : MODE            0x574f4643 : WOFC
+        // 0x574f4649 : WOFI            0x5057524d : PWRM
+        // 0x50575250 : PWRP            0x45525248 : ERRH
+        // Label indicating byte 5 and 6 is the current (mem,proc) power in
+        //      Watts.
+        if (("PWRM" == asciiLabelString) || ("PWRP" == asciiLabelString))
+        {
+            // Build the dbus String for this chiplet power asset.
+            auto iter = powerSensorName.find(asciiLabelString);
+            if (iter == powerSensorName.end())
+            {
+                continue;
+            }
+            sensorPath.append("chiplet" + std::to_string(id) + iter->second);
+
+            // For Power field, Convert last 4 bytes of hex string into number
+            //   value.
+            std::stringstream ssData;
+            ssData << std::hex << extnValue.substr(extnValue.length() - 4);
+            uint16_t MyHexNumber;
+            ssData >> MyHexNumber;
+
+            // Convert output/DC power to input/AC power in Watts (round up)
+            MyHexNumber =
+                std::round(((MyHexNumber / (PS_DERATING_FACTOR / 100.0))));
+            log<level::ERR>(
+                std::format("OCC{}:{} @ FILE:{} -- {} AC Watts", id,
+                            asciiLabelString,  filePathString + inputSuffix,
+                            MyHexNumber)
+                    .c_str());
+
+            dbus::OccDBusSensors::getOccDBus().setUnit(
+                sensorPath, "xyz.openbmc_project.Sensor.Value.Unit.Watts");
+
+            dbus::OccDBusSensors::getOccDBus().setValue(sensorPath,
+                                                        MyHexNumber);
+
+            dbus::OccDBusSensors::getOccDBus().setOperationalStatus(
+                sensorPath, true);
+
+            if (existingSensors.find(sensorPath) == existingSensors.end())
+            {
+                dbus::OccDBusSensors::getOccDBus().setChassisAssociation(
+                    sensorPath, {"all_sensors"});
+            }
+
+        } // End Extended Power Sensors.
+        // else put in other label formats here to dbus.
+
+        existingSensors[sensorPath] = id;
+
+    } // End For loop on files for Extended Sensors.
+    return;
+}
+
 void Manager::setSensorValueToNaN(uint32_t id) const
 {
     for (const auto& [sensorPath, occId] : existingSensors)
@@ -1318,6 +1436,7 @@ void Manager::getSensorValues(std::unique_ptr<Status>& occ)
     {
         // Read temperature sensors
         readTempSensors(sensorPath, id);
+        readExtnSensors(sensorPath, id);
 
         if (occ->isMasterOcc())
         {
