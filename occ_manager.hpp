@@ -421,6 +421,13 @@ struct Manager
     void readTempSensors(const fs::path& path, uint32_t id);
 
     /**
+     * @brief Trigger OCC driver to read the extended sensors.
+     * @param[in] path - path of the OCC sensors.
+     * @param[in] id - Id of the OCC.
+     * */
+    void readExtnSensors(const fs::path& path, uint32_t id);//SHELDON:
+
+    /**
      * @brief Trigger OCC driver to read the power sensors.
      * @param[in] path - path of the OCC sensors.
      * @param[in] id - Id of the OCC.
@@ -455,7 +462,8 @@ struct Manager
         {"37", "pcie_dcm2_power"}, {"38", "pcie_dcm3_power"},
         {"39", "io_dcm0_power"},   {"40", "io_dcm1_power"},
         {"41", "io_dcm2_power"},   {"42", "io_dcm3_power"},
-        {"43", "avdd_total_power"}};
+        {"43", "avdd_total_power"}, {"PWRM", "_mem_power"},//SHELDON:
+        {"PWRP", "_power"}};//SHELDON:
 
     /** @brief The dimm temperature sensor names map  */
     const std::map<uint32_t, std::string> dimmTempSensorName = {
