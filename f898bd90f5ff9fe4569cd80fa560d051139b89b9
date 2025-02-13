@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3e462327_a014eb56",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2025-02-13T19:38:47Z",
+      "side": 1,
+      "message": "Please fix the traces (log -\u003e lg2). The other comments are recommended, but not required.",
+      "revId": "f898bd90f5ff9fe4569cd80fa560d051139b89b9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7cfcbc24_0fe88324",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1297,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2025-02-13T19:38:47Z",
+      "side": 1,
+      "message": "This is the old trace format and they have all been converted to using lg2 (due to efficiency and readability)\nChange all of them to lg2::debug(), lg2::error(), etc...",
+      "revId": "f898bd90f5ff9fe4569cd80fa560d051139b89b9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eb433cd4_ffb0e0ab",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1312,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2025-02-13T19:38:47Z",
+      "side": 1,
+      "message": "Instead of doing this conversion on the fly for every section, you could just read and use the value directly and assign constants to use in your check.\n\nconstexpr auto EXTN_LABEL_PWRM_MEMORY_POWER \u003d \"5057524d\";\n\nif (labelValue \u003d\u003d EXTN_LABEL_PWRM_MEMORY_POWER) ...",
+      "revId": "f898bd90f5ff9fe4569cd80fa560d051139b89b9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a179df5b_453b5cf3",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1325,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2025-02-13T19:38:47Z",
+      "side": 1,
+      "message": "This file read will be done for every EXTN section, but only needed if it matches one of the two strings you want, so I would move it in the check.",
+      "revId": "f898bd90f5ff9fe4569cd80fa560d051139b89b9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b7007418_337d35ef",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1359,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2025-02-13T19:38:47Z",
+      "side": 1,
+      "message": "Can you read the extnValue as an integer (in line 1325) instead of having to do string conversion here?",
+      "revId": "f898bd90f5ff9fe4569cd80fa560d051139b89b9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
