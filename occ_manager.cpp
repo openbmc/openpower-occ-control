@@ -457,7 +457,7 @@ void Manager::statusCallBack(instanceID instance, bool status)
         if (resetInProgress)
         {
             lg2::info(
-                "statusCallBack: Ignoring OCC{INST} activate because a reset has been initiated due to OCC{INST}",
+                "statusCallBack: Ignoring OCC{INST} activate because a reset has been initiated due to OCC{RINST}",
                 "INST", instance, "RINST", resetInstance);
             return;
         }
@@ -628,6 +628,9 @@ void Manager::sbeTimeout(unsigned int instance)
         setSBEState(instance, SBE_STATE_NOT_USABLE);
 #endif
 
+        // Stop communication with this OCC
+        (*obj)->occActive(false);
+
         pldmHandle->sendHRESET(instance);
     }
 }
@@ -722,6 +725,16 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
 #ifdef PHAL_SUPPORT
         setSBEState(instance, SBE_STATE_BOOTED);
 #endif
+
+        // Re-enable communication with this OCC
+        auto obj = std::find_if(statusObjects.begin(), statusObjects.end(),
+                                [instance](const auto& obj) {
+                                    return instance == obj->getOccInstanceID();
+                                });
+        if (obj != statusObjects.end() && (!(*obj)->occActive()))
+        {
+            (*obj)->occActive(true);
+        }
 
         return;
     }
