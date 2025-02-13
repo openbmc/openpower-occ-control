@@ -216,42 +216,45 @@ void Interface::sensorEvent(sdbusplus::message_t& msg)
                                    outstandingHResets.end(), instance);
             if (match != outstandingHResets.end())
             {
-                outstandingHResets.erase(match);
                 if (eventState == static_cast<EventState>(SBE_HRESET_NOT_READY))
                 {
-                    lg2::error("pldm: HRESET is NOT READY (OCC{INST})", "INST",
-                               instance);
-                    // Stop OCC comm - OCC not usable until it becomes READY
-                    occActiveCallBack(instance, false);
-                    // Collect SBE FFDC
-                    sbeCallBack(instance, false);
-                    // Try PM Complex reset
-                    lg2::error(
-                        "sensorEvent: Requesting OCC reset for OCC{INST}",
-                        "INST", instance);
-                    resetOCC(resetInstance);
+                    lg2::warning("pldm: HRESET is NOT READY (OCC{INST})",
+                                 "INST", instance);
+                    // Keep waiting for status from HRESET
                 }
                 else if (eventState ==
                          static_cast<EventState>(SBE_HRESET_READY))
                 {
+                    // Reset success, clear reset request
+                    outstandingHResets.erase(match);
                     sbeCallBack(instance, true);
                 }
                 else if (eventState ==
                          static_cast<EventState>(SBE_HRESET_FAILED))
                 {
+                    // Reset failed, clear reset request and collect SBE dump
+                    outstandingHResets.erase(match);
                     sbeCallBack(instance, false);
                 }
                 else
                 {
-                    if (eventState ==
-                        static_cast<EventState>(SBE_HRESET_FAILED))
-                        lg2::error(
-                            "pldm: Unexpected HRESET state {STATE} (OCC{INST})",
-                            "STATE", eventState, "INST", instance);
-                    sbeCallBack(instance, false);
+                    lg2::warning(
+                        "pldm: Unexpected HRESET state {STATE} (OCC{INST})",
+                        "STATE", eventState, "INST", instance);
                 }
             }
-            // else request was not from us
+            else // request was not due to our HRESET request
+            {
+                if (eventState == static_cast<EventState>(SBE_HRESET_FAILED))
+                {
+                    lg2::error(
+                        "pldm: Unexpected HRESET state {FAILED} (OCC{INST}) when HRESET not outstanding",
+                        "INST", instance);
+
+                    // No recovery from failed state, so ensure comm was stopped
+                    occActiveCallBack(instance, false);
+                }
+            }
         }
     }
 }
@@ -891,8 +894,7 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
         pldmIface->pldmRspTimer.setEnabled(false);
     }
 
-    // instance ID should be freed
-    pldmIface->pldmInstanceID = std::nullopt;
+    // instance ID will get freed on pldmClose()
 
     // Set pointer to autodelete
     std::unique_ptr<uint8_t, decltype(std::free)*> responseMsgPtr{
@@ -1031,8 +1033,7 @@ int Interface::pldmResetCallback(sd_event_source* /*es*/,
         pldmIface->pldmRspTimer.setEnabled(false);
     }
 
-    // instance ID should be freed
-    pldmIface->pldmInstanceID = std::nullopt;
+    // instance ID will get freed on pldmClose()
 
     // Set pointer to autodelete
     std::unique_ptr<uint8_t, decltype(std::free)*> responseMsgPtr{
