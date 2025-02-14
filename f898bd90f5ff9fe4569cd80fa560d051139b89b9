@@ -35,6 +35,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "46393e15_47ea40ed",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1297,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2025-02-14T18:20:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7cfcbc24_0fe88324",
+      "revId": "f898bd90f5ff9fe4569cd80fa560d051139b89b9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "eb433cd4_ffb0e0ab",
@@ -48,6 +66,24 @@
       "writtenOn": "2025-02-13T19:38:47Z",
       "side": 1,
       "message": "Instead of doing this conversion on the fly for every section, you could just read and use the value directly and assign constants to use in your check.\n\nconstexpr auto EXTN_LABEL_PWRM_MEMORY_POWER \u003d \"5057524d\";\n\nif (labelValue \u003d\u003d EXTN_LABEL_PWRM_MEMORY_POWER) ...",
+      "revId": "f898bd90f5ff9fe4569cd80fa560d051139b89b9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e6acf7fa_829ea609",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1312,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2025-02-14T18:20:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "eb433cd4_ffb0e0ab",
       "revId": "f898bd90f5ff9fe4569cd80fa560d051139b89b9",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
@@ -69,6 +105,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "358eb4b2_a662b09c",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1325,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2025-02-14T18:20:58Z",
+      "side": 1,
+      "message": "Left out to allow other data to be done later if needed.\nagreed if this is the only data we wanted, then inside the check.",
+      "parentUuid": "a179df5b_453b5cf3",
+      "revId": "f898bd90f5ff9fe4569cd80fa560d051139b89b9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b7007418_337d35ef",
@@ -82,6 +136,24 @@
       "writtenOn": "2025-02-13T19:38:47Z",
       "side": 1,
       "message": "Can you read the extnValue as an integer (in line 1325) instead of having to do string conversion here?",
+      "revId": "f898bd90f5ff9fe4569cd80fa560d051139b89b9",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2df3e4f7_ab8ccede",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1359,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2025-02-14T18:20:58Z",
+      "side": 1,
+      "message": "The file has hex characters in it, Last 4 hex characters are needed.\nspec byte 5 and 6 is the current (mem,proc) power, unlike other sensors \nthat read in one number.\nWhen I tried to read in as integer, then convert to hex to grab the last 4 digits was more work.",
+      "parentUuid": "b7007418_337d35ef",
       "revId": "f898bd90f5ff9fe4569cd80fa560d051139b89b9",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
