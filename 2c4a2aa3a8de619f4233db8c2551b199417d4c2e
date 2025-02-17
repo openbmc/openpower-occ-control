@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7ed51d45_4e06af5b",
+        "filename": "occ_manager.hpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2025-02-17T16:12:14Z",
+      "side": 1,
+      "message": "Should be PROCESSOR",
+      "range": {
+        "startLine": 62,
+        "startChar": 31,
+        "endLine": 62,
+        "endChar": 38
+      },
+      "revId": "2c4a2aa3a8de619f4233db8c2551b199417d4c2e",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
