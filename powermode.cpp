@@ -454,6 +454,14 @@ CmdStatus PowerMode::sendModeChange()
             {
                 createIpsObject();
             }
+            else
+            {
+                if (!watching)
+                {
+                    // Starts watching for IPS state changes.
+                    addIpsWatch(true);
+                }
+            }
         }
 
         if (!masterActive || !masterOccSet)
