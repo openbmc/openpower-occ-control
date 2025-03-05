@@ -1161,8 +1161,8 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
     // Now publish the values on D-Bus.
     for (const auto& [objectPath, value] : sensorData)
     {
-        dbus::OccDBusSensors::getOccDBus().setValue(objectPath,
-                                                    value * std::pow(10, -3));
+        dbus::OccDBusSensors::getOccDBus().setValue(
+            objectPath, value * std::pow(10, -3));
 
         dbus::OccDBusSensors::getOccDBus().setOperationalStatus(
             objectPath, !std::isnan(value));
@@ -1172,9 +1172,9 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
             dbus::OccDBusSensors::getOccDBus().setChassisAssociation(
                 objectPath, {"all_sensors"});
         }
-
         existingSensors[objectPath] = occInstance;
     }
+    return;
 }
 
 std::optional<std::string> Manager::getPowerLabelFunctionID(
@@ -1273,14 +1273,14 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
 
         if (existingSensors.find(sensorPath) == existingSensors.end())
         {
+            std::vector<int> occs;
             std::vector<std::string> fTypeList = {"all_sensors"};
             if (iter->second == "total_power")
             {
-                // Set sensor purpose as TotalPower
-                dbus::OccDBusSensors::getOccDBus().setPurpose(
-                    sensorPath,
-                    "xyz.openbmc_project.Sensor.Purpose.SensorPurpose.TotalPower");
+                // Total system power has its own chassis association
+                fTypeList.push_back("total_power");
             }
+
             dbus::OccDBusSensors::getOccDBus().setChassisAssociation(
                 sensorPath, fTypeList);
         }
@@ -1370,10 +1370,6 @@ void Manager::readExtnSensors(const fs::path& path, uint32_t id)
             MyHexNumber =
                 std::round(((MyHexNumber / (PS_DERATING_FACTOR / 100.0))));
 
-            lg2::debug("OCC{ID}: FILE:{FILE} -- {ACWATTS} AC Watts", "ID", id,
-                       "FILE", filePathString + inputSuffix, "ACWATTS",
-                       MyHexNumber);
-
             dbus::OccDBusSensors::getOccDBus().setUnit(
                 sensorPath, "xyz.openbmc_project.Sensor.Value.Unit.Watts");
 
@@ -1389,11 +1385,10 @@ void Manager::readExtnSensors(const fs::path& path, uint32_t id)
                     sensorPath, {"all_sensors"});
             }
 
+            existingSensors[sensorPath] = id;
         } // End Extended Power Sensors.
-        // else put in other label formats here to dbus.
 
-        existingSensors[sensorPath] = id;
-
+        // existingSensors[sensorPath] = id;//SHELDON: remove
     } // End For loop on files for Extended Sensors.
     return;
 }
@@ -1436,10 +1431,13 @@ void Manager::getSensorValues(std::unique_ptr<Status>& occ)
     const fs::path sensorPath = occ->getHwmonPath();
     const uint32_t id = occ->getOccInstanceID();
 
+    lg2::error("SHELDON:A2:Manager::getSensorValues: OCC{INST}", "INST", id);
+
     if (fs::exists(sensorPath))
     {
         // Read temperature sensors
         readTempSensors(sensorPath, id);
+        // Read Extended sensors
         readExtnSensors(sensorPath, id);
 
         if (occ->isMasterOcc())
