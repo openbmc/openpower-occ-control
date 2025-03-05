@@ -526,7 +526,7 @@ void Manager::statusCallBack(instanceID instance, bool status)
         }
         else
         {
-            lg2::info("OCC{INST} disabled, but currently no active OCCs",
+            lg2::info("OCC{INST} disabled, and no other OCCs are active",
                       "INST", instance);
         }
 
@@ -1172,7 +1172,6 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
             dbus::OccDBusSensors::getOccDBus().setChassisAssociation(
                 objectPath, {"all_sensors"});
         }
-
         existingSensors[objectPath] = occInstance;
     }
 }
@@ -1284,7 +1283,6 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
             dbus::OccDBusSensors::getOccDBus().setChassisAssociation(
                 sensorPath, fTypeList);
         }
-
         existingSensors[sensorPath] = id;
     }
     return;
@@ -1370,10 +1368,6 @@ void Manager::readExtnSensors(const fs::path& path, uint32_t id)
             MyHexNumber =
                 std::round(((MyHexNumber / (PS_DERATING_FACTOR / 100.0))));
 
-            lg2::debug("OCC{ID}: FILE:{FILE} -- {ACWATTS} AC Watts", "ID", id,
-                       "FILE", filePathString + inputSuffix, "ACWATTS",
-                       MyHexNumber);
-
             dbus::OccDBusSensors::getOccDBus().setUnit(
                 sensorPath, "xyz.openbmc_project.Sensor.Value.Unit.Watts");
 
@@ -1389,11 +1383,8 @@ void Manager::readExtnSensors(const fs::path& path, uint32_t id)
                     sensorPath, {"all_sensors"});
             }
 
+            existingSensors[sensorPath] = id;
         } // End Extended Power Sensors.
-        // else put in other label formats here to dbus.
-
-        existingSensors[sensorPath] = id;
-
     } // End For loop on files for Extended Sensors.
     return;
 }
@@ -1440,6 +1431,7 @@ void Manager::getSensorValues(std::unique_ptr<Status>& occ)
     {
         // Read temperature sensors
         readTempSensors(sensorPath, id);
+        // Read Extended sensors
         readExtnSensors(sensorPath, id);
 
         if (occ->isMasterOcc())
