@@ -24,6 +24,30 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f10e7a37_fd224a0f",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 529,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2025-03-05T19:40:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9d62cb3e_85c3f874",
+      "range": {
+        "startLine": 529,
+        "startChar": 33,
+        "endLine": 529,
+        "endChar": 71
+      },
+      "revId": "dd8152ca12e5c58f791f6a2f37e9faa0f6feb2de",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "94c0cfdf_cb319f65",
@@ -41,6 +65,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c6ebecf4_3146324e",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 1177,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2025-03-05T19:40:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "94c0cfdf_cb319f65",
+      "revId": "dd8152ca12e5c58f791f6a2f37e9faa0f6feb2de",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e0821b55_5ff12ee1",
@@ -54,6 +96,24 @@
       "writtenOn": "2025-03-05T19:27:52Z",
       "side": 1,
       "message": "You are using older version of this (use master)",
+      "revId": "dd8152ca12e5c58f791f6a2f37e9faa0f6feb2de",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6471d43d_23c49830",
+        "filename": "occ_manager.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 1280,
+      "author": {
+        "id": 1001035
+      },
+      "writtenOn": "2025-03-05T19:40:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e0821b55_5ff12ee1",
       "revId": "dd8152ca12e5c58f791f6a2f37e9faa0f6feb2de",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
