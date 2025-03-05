@@ -1161,20 +1161,33 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
     // Now publish the values on D-Bus.
     for (const auto& [objectPath, value] : sensorData)
     {
-        dbus::OccDBusSensors::getOccDBus().setValue(objectPath,
-                                                    value * std::pow(10, -3));
-
-        dbus::OccDBusSensors::getOccDBus().setOperationalStatus(
-            objectPath, !std::isnan(value));
-
-        if (existingSensors.find(objectPath) == existingSensors.end())
+        try
         {
-            dbus::OccDBusSensors::getOccDBus().setChassisAssociation(
-                objectPath, {"all_sensors"});
+            dbus::OccDBusSensors::getOccDBus().setValue(objectPath,
+                value * std::pow(10, -3));
+
+            dbus::OccDBusSensors::getOccDBus().setOperationalStatus(
+                objectPath, !std::isnan(value));
+
+            if (existingSensors.find(objectPath) == existingSensors.end())
+            {
+                dbus::OccDBusSensors::getOccDBus().setChassisAssociation(
+                    objectPath, {"all_sensors"});
+            }
+
+            existingSensors[objectPath] = occInstance;
+
+        }
+        catch(const std::exception& e)
+        {
+            lg2::debug(
+                "readTempSensors: Failed OccDBusSensors {PATH}, errno = {ERROR}",
+                "PATH", objectPath, "ERROR", e.what());
+            // continue; would this be needed ??????
         }
 
-        existingSensors[objectPath] = occInstance;
     }
+    return;
 }
 
 std::optional<std::string> Manager::getPowerLabelFunctionID(
@@ -1262,30 +1275,40 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
             continue;
         }
 
-        dbus::OccDBusSensors::getOccDBus().setUnit(
-            sensorPath, "xyz.openbmc_project.Sensor.Value.Unit.Watts");
-
-        dbus::OccDBusSensors::getOccDBus().setValue(
-            sensorPath, tempValue * std::pow(10, -3) * std::pow(10, -3));
-
-        dbus::OccDBusSensors::getOccDBus().setOperationalStatus(
-            sensorPath, true);
-
-        if (existingSensors.find(sensorPath) == existingSensors.end())
+        try
         {
-            std::vector<std::string> fTypeList = {"all_sensors"};
-            if (iter->second == "total_power")
+            dbus::OccDBusSensors::getOccDBus().setUnit(
+                sensorPath, "xyz.openbmc_project.Sensor.Value.Unit.Watts");
+
+            dbus::OccDBusSensors::getOccDBus().setValue(
+                sensorPath, tempValue * std::pow(10, -3) * std::pow(10, -3));
+
+            dbus::OccDBusSensors::getOccDBus().setOperationalStatus(
+                sensorPath, true);
+
+            if (existingSensors.find(sensorPath) == existingSensors.end())
             {
-                // Set sensor purpose as TotalPower
-                dbus::OccDBusSensors::getOccDBus().setPurpose(
-                    sensorPath,
-                    "xyz.openbmc_project.Sensor.Purpose.SensorPurpose.TotalPower");
+                std::vector<int> occs;
+                std::vector<std::string> fTypeList = {"all_sensors"};
+                if (iter->second == "total_power")
+                {
+                    // Total system power has its own chassis association
+                    fTypeList.push_back("total_power");
+                }
+
+                dbus::OccDBusSensors::getOccDBus().setChassisAssociation(
+                    sensorPath, fTypeList);
             }
-            dbus::OccDBusSensors::getOccDBus().setChassisAssociation(
-                sensorPath, fTypeList);
+
+            existingSensors[sensorPath] = id;
+        }
+        catch(const std::exception& e)
+        {
+            lg2::debug(
+                "readPowerSensors: Failed OccDBusSensors {PATH}, errno = {ERROR}",
+                "PATH", sensorPath, "ERROR", e.what());
         }
 
-        existingSensors[sensorPath] = id;
     }
     return;
 }
@@ -1370,29 +1393,34 @@ void Manager::readExtnSensors(const fs::path& path, uint32_t id)
             MyHexNumber =
                 std::round(((MyHexNumber / (PS_DERATING_FACTOR / 100.0))));
 
-            lg2::debug("OCC{ID}: FILE:{FILE} -- {ACWATTS} AC Watts", "ID", id,
-                       "FILE", filePathString + inputSuffix, "ACWATTS",
-                       MyHexNumber);
-
-            dbus::OccDBusSensors::getOccDBus().setUnit(
-                sensorPath, "xyz.openbmc_project.Sensor.Value.Unit.Watts");
-
-            dbus::OccDBusSensors::getOccDBus().setValue(sensorPath,
-                                                        MyHexNumber);
-
-            dbus::OccDBusSensors::getOccDBus().setOperationalStatus(
-                sensorPath, true);
-
-            if (existingSensors.find(sensorPath) == existingSensors.end())
+            try
             {
-                dbus::OccDBusSensors::getOccDBus().setChassisAssociation(
-                    sensorPath, {"all_sensors"});
+                dbus::OccDBusSensors::getOccDBus().setUnit(
+                    sensorPath, "xyz.openbmc_project.Sensor.Value.Unit.Watts");
+
+                dbus::OccDBusSensors::getOccDBus().setValue(sensorPath,
+                                                            MyHexNumber);
+
+                dbus::OccDBusSensors::getOccDBus().setOperationalStatus(
+                    sensorPath, true);
+
+                if (existingSensors.find(sensorPath) == existingSensors.end())
+                {
+                    dbus::OccDBusSensors::getOccDBus().setChassisAssociation(
+                        sensorPath, {"all_sensors"});
+                }
+
+                existingSensors[sensorPath] = id;
+
+            }
+            catch(const std::exception& e)
+            {
+                lg2::debug(
+                    "readExtnSensors: Failed OccDBusSensors {PATH}, errno = {ERROR}",
+                    "PATH", sensorPath, "ERROR", e.what());
             }
 
         } // End Extended Power Sensors.
-        // else put in other label formats here to dbus.
-
-        existingSensors[sensorPath] = id;
 
     } // End For loop on files for Extended Sensors.
     return;
