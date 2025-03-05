@@ -1,0 +1,8 @@
+Code-Review+2: Chris Cain <cjcain@us.ibm.com>
+Verified+1: OpenBMC CI <openbmcbump-ci@yahoo.com>
+Submitted-by: Sheldon Bailey <baileysh@us.ibm.com>
+Submitted-at: Wed, 05 Mar 2025 20:30:59 +0000
+Reviewed-on: https://gerrit.openbmc.org/c/openbmc/openpower-occ-control/+/78671
+Comments-Total: 7
+Project: openbmc/openpower-occ-control
+Branch: refs/heads/master
