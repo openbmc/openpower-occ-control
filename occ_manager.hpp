@@ -162,6 +162,10 @@ struct Manager
      */
     void setSensorValueToNonFunctional(uint32_t id) const;
 
+    /** @brief Clear any state flags that need to be reset when the host state
+     * is off */
+    void hostPoweredOff();
+
   private:
     /** @brief Creates the OCC D-Bus objects.
      */
@@ -358,8 +362,8 @@ struct Manager
 #ifdef PLDM
     /**
      * @brief Timer used to throttle PLDM traces when there are problems
-              determining the OCC status via pldm. Used to prevent excessive
-              journal traces.
+     determining the OCC status via pldm. Used to prevent excessive
+     journal traces.
      */
     std::unique_ptr<
         sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>

@@ -272,6 +272,8 @@ void Interface::hostStateEvent(sdbusplus::message_t& msg)
         if (propVal == "xyz.openbmc_project.State.Host.HostState.Off")
         {
             clearData();
+            // Notify manager that host is now off
+            poweredOffCallBack();
         }
     }
 }
@@ -307,6 +309,12 @@ void Interface::clearData()
         lg2::debug("clearData: Clearing sbeInstanceToEffecter ({NUM} entries)",
                    "NUM", sbeInstanceToEffecter.size());
         sbeInstanceToEffecter.clear();
+    }
+    if (!outstandingHResets.empty())
+    {
+        lg2::info("clearData: clearing {NUM} outstanding HRESET requests",
+                  "NUM", outstandingHResets.size());
+        outstandingHResets.clear();
     }
 }
 
