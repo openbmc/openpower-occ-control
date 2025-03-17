@@ -66,7 +66,7 @@ void Manager::createPldmHandle()
                   std::placeholders::_1, std::placeholders::_2),
         std::bind(std::mem_fn(&Manager::updateOccSafeMode), this,
                   std::placeholders::_1),
-        event);
+        std::bind(std::mem_fn(&Manager::hostPoweredOff), this), event);
 #endif
 }
 
@@ -1782,6 +1782,25 @@ void Manager::updatePcapBounds() const
     {
         pcap->updatePcapBounds();
     }
+}
+
+// Called upon pldm event To set powermode Safe Mode State for system.
+void Manager::hostPoweredOff()
+{
+    lg2::info("hostPoweredOff: The host state is off");
+    if (resetRequired)
+    {
+        lg2::info("hostPoweredOff: Clearing resetRequired for OCC{INST}",
+                  "INST", resetInstance);
+        resetRequired = false;
+    }
+    if (resetInProgress)
+    {
+        lg2::info("hostPoweredOff: Clearing resetInProgress for OCC{INST}",
+                  "INST", resetInstance);
+        resetInProgress = false;
+    }
+    resetInstance = 255;
 }
 
 } // namespace occ
