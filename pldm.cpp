@@ -734,6 +734,10 @@ void Interface::sendPldm(const std::vector<uint8_t>& request,
             return;
         }
 
+        // Save header to confirm response matches
+        auto requestPtr = reinterpret_cast<const pldm_msg*>(&request[0]);
+        memcpy(&_requestHeader, requestPtr, sizeof(pldm_msg_hdr));
+
         // start timer waiting for the response
         pldmRspTimer.restartOnce(timeout);
 
@@ -874,6 +878,14 @@ int Interface::pldmRspCallback(sd_event_source* /*es*/,
     auto rc = pldm_transport_recv_msg(pldmIface->pldmTransport, &pldmTID,
                                       (void**)&responseMsg, &responseMsgSize);
     int lastErrno = errno;
+    // Verify the response header matches our request
+    struct pldm_msg_hdr* hdr = (struct pldm_msg_hdr*)responseMsg;
+    if ((pldmTID != mctpEid) ||
+        !pldm_msg_hdr_correlate_response(&pldmIface->_requestHeader, hdr))
+    {
+        // We got a response to someone else's message. Ignore it.
+        return 0;
+    }
     if (rc)
     {
         if (!throttleTraces)
@@ -1013,6 +1025,14 @@ int Interface::pldmResetCallback(sd_event_source* /*es*/,
     auto rc = pldm_transport_recv_msg(pldmIface->pldmTransport, &pldmTID,
                                       (void**)&responseMsg, &responseMsgSize);
     int lastErrno = errno;
+    // Verify the response header matches our request
+    struct pldm_msg_hdr* hdr = (struct pldm_msg_hdr*)responseMsg;
+    if ((pldmTID != mctpEid) ||
+        !pldm_msg_hdr_correlate_response(&pldmIface->_requestHeader, hdr))
+    {
+        // We got a response to someone else's message. Ignore it.
+        return 0;
+    }
     if (rc)
     {
         if (!throttleTraces)
