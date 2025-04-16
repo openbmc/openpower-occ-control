@@ -287,6 +287,11 @@ class Status : public Interface
     /** @brief The Trigger to indicate OCC State is valid or not. */
     bool stateValid = false;
 
+#ifdef POWER10
+    /** @brief The Trigger to indicate OCC sensors are valid or not. */
+    bool sensorsValid = false;
+#endif
+
     /** @brief OCC instance to Sensor definitions mapping */
     static const std::map<instanceID, sensorDefs> sensorMap;
 
