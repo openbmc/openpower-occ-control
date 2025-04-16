@@ -287,6 +287,11 @@ class Interface
 
     TransportImpl impl;
 
+    /**
+     * @brief The header for the most recent request.
+     */
+    pldm_msg_hdr _requestHeader{};
+
     /** @brief The response for the PLDM request msg is received flag.
      */
     bool pldmResponseReceived = false;
