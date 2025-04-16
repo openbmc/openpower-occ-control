@@ -437,6 +437,16 @@ void Manager::initiateOccRequest(instanceID instance)
         lg2::error(
             "initiateOccRequest: Initiating PM Complex reset due to OCC{INST}",
             "INST", instance);
+
+        // Make sure ALL OCC comm stops to all OCCs before the reset
+        for (auto& obj : statusObjects)
+        {
+            if (obj->occActive())
+            {
+                obj->occActive(false);
+            }
+        }
+
 #ifdef PLDM
         pldmHandle->resetOCC(instance);
 #endif
@@ -507,9 +517,20 @@ void Manager::statusCallBack(instanceID instance, bool status)
 #endif
         }
 
-        // Start poll timer if not already started
+        // Start poll timer if not already started (since at least one OCC is
+        // running)
         if (!_pollTimer->isEnabled())
         {
+            // An OCC just went active, PM Complex is just coming online so
+            // clear any outstanding reset requests
+            if (resetRequired)
+            {
+                resetRequired = false;
+                lg2::error(
+                    "statusCallBack: clearing resetRequired (since OCC{INST} went active, resetInProgress={RIP})",
+                    "INST", instance, "RIP", resetInProgress);
+            }
+
             lg2::info("Manager: OCCs will be polled every {TIME} seconds",
                       "TIME", pollInterval);
 

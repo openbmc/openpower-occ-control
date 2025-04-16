@@ -28,6 +28,7 @@ bool Status::occActive(bool value)
                   instance, "STATE", value);
         if (value)
         {
+            // OCC is active
             // Clear prior throttle reason (before setting device active)
             updateThrottle(false, THROTTLED_ALL);
 
@@ -70,7 +71,15 @@ bool Status::occActive(bool value)
         }
         else
         {
+            // OCC is no longer active
 #ifdef POWER10
+            if (sensorsValid)
+            {
+                sensorsValid = false;
+                // Sensors not supported (update to NaN and not functional)
+                manager.setSensorValueToNaN(instance);
+            }
+
             if (pmode && device.master())
             {
                 // Prevent mode changes
@@ -411,7 +420,7 @@ void Status::occReadStateNow()
         fs::path(sysfsName + "." + std::to_string(instance + 1)) / "occ_state";
 
     std::ifstream file;
-    bool goodFile = false;
+    bool stateWasRead = false;
 
     // open file.
     file.open(filename, std::ios::in);
@@ -420,7 +429,7 @@ void Status::occReadStateNow()
     // File is open and state can be used.
     if (file.is_open() && file.good())
     {
-        goodFile = true;
+        stateWasRead = true;
         file >> state;
         // Read the error code (if any) to check status of the read
         std::ios_base::iostate readState = file.rdstate();
@@ -448,10 +457,10 @@ void Status::occReadStateNow()
                     "INST", instance, "ERROR", errorBits);
                 lastOccReadStatus = -1;
             }
-            goodFile = false;
+            stateWasRead = false;
         }
 
-        if (goodFile && (state != lastState))
+        if (stateWasRead && (state != lastState))
         {
             // Trace OCC state changes
             lg2::info(
@@ -489,6 +498,7 @@ void Status::occReadStateNow()
             {
                 // Good OCC State then sensors valid again
                 stateValid = true;
+                sensorsValid = true;
 
                 if (safeStateDelayTimer.isEnabled())
                 {
@@ -502,15 +512,20 @@ void Status::occReadStateNow()
                 if (!safeStateDelayTimer.isEnabled())
                 {
                     lg2::error(
-                        "readOccState: Invalid OCC{INST} state of {STATE}, starting safe state delay timer",
-                        "INST", instance, "STATE", state);
+                        "readOccState: Invalid OCC{INST} state of {STATE} (last state: {PRIOR}), starting safe state delay timer",
+                        "INST", instance, "STATE", lg2::hex, state, "PRIOR",
+                        lg2::hex, lastState);
                     // start safe delay timer (before requesting reset)
                     using namespace std::literals::chrono_literals;
                     safeStateDelayTimer.restartOnce(60s);
                 }
-                // Not a supported state (update sensors to NaN and not
-                // functional)
-                stateValid = false;
+
+                if (sensorsValid)
+                {
+                    sensorsValid = false;
+                    // Sensors not supported (update to NaN and not functional)
+                    manager.setSensorValueToNaN(instance);
+                }
             }
 #else
             // Before P10 state not checked, only used good file open.
@@ -527,36 +542,25 @@ void Status::occReadStateNow()
 #endif
     file.close();
 
-    // if failed to Read a state or not a valid state -> Attempt retry
-    // after 1 Second delay if allowed.
-    if ((!goodFile) || (!stateValid))
+    // if failed to read the OCC state -> Attempt retry
+    if (!stateWasRead)
     {
-        if (!goodFile)
-        {
-            // If not able to read, OCC may be offline
-            if (openErrno != lastOccReadStatus)
-            {
-                lg2::error(
-                    "Status::readOccState: open/read failed trying to read OCC{INST} state (open errno={ERROR})",
-                    "INST", instance, "ERROR", openErrno);
-                lastOccReadStatus = openErrno;
-            }
-        }
-        else
-        {
-            // else this failed due to state not valid.
-            if (state != lastState)
-            {
-                lg2::error(
-                    "Status::readOccState: OCC{INST} Invalid state {STATE} (last state: {PRIOR})",
-                    "INST", instance, "STATE", lg2::hex, state, "PRIOR",
-                    lg2::hex, lastState);
-            }
-        }
-
 #ifdef READ_OCC_SENSORS
-        manager.setSensorValueToNaN(instance);
+        if (sensorsValid)
+        {
+            sensorsValid = false;
+            manager.setSensorValueToNaN(instance);
+        }
 #endif
+
+        // If not able to read, OCC may be offline
+        if (openErrno != lastOccReadStatus)
+        {
+            lg2::error(
+                "Status::readOccState: open/read failed trying to read OCC{INST} state (open errno={ERROR})",
+                "INST", instance, "ERROR", openErrno);
+            lastOccReadStatus = openErrno;
+        }
 
         // See occReadRetries for number of retry attempts.
         if (currentOccReadRetriesCount > 0)
@@ -565,8 +569,9 @@ void Status::occReadStateNow()
         }
         else
         {
-            lg2::error("readOccState: failed to read OCC{INST} state!", "INST",
-                       instance);
+            lg2::error(
+                "readOccState: failed to read OCC{INST} state! (last state: {PRIOR})",
+                "INST", instance, "PRIOR", lg2::hex, lastState);
 
             // State could not be determined, set it to NO State.
             lastState = 0;
@@ -584,15 +589,11 @@ void Status::occReadStateNow()
             currentOccReadRetriesCount = occReadRetries;
         }
     }
-    else
+    else if (lastOccReadStatus != 0)
     {
-        if (lastOccReadStatus != 0)
-        {
-            lg2::info(
-                "Status::readOccState: successfully read OCC{INST} state: {STATE}",
-                "INST", instance, "STATE", state);
-            lastOccReadStatus = 0; // no error
-        }
+        lg2::info("readOccState: successfully read OCC{INST} state: {STATE}",
+                  "INST", instance, "STATE", state);
+        lastOccReadStatus = 0; // no error
     }
 }
 
