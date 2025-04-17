@@ -18,6 +18,24 @@
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a8bb8055_ccd93afe",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2025-04-17T19:10:22Z",
+      "side": 1,
+      "message": "Opps! Done",
+      "parentUuid": "590e67c0_e2f386fb",
+      "revId": "8bbe2f4d99f9893555e02781c0fbdc46647e55bf",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c1a22763_6acc9c12",
@@ -31,6 +49,24 @@
       "writtenOn": "2025-04-17T18:38:25Z",
       "side": 1,
       "message": "you\u0027ll need to make sure pldm_transport_recv_msg returned success before calling this, or correlate_response could crash by trying to use a nullptr.\n\nSee https://github.com/openbmc/phosphor-logging/blob/master/extensions/openpower-pels/pldm_interface.cpp#L296",
+      "revId": "8bbe2f4d99f9893555e02781c0fbdc46647e55bf",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "aebb8602_3fd4e3aa",
+        "filename": "pldm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 883,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2025-04-17T19:10:22Z",
+      "side": 1,
+      "message": "ok. I took code from https://gerrit.openbmc.org/c/openbmc/phosphor-logging/+/78100",
+      "parentUuid": "c1a22763_6acc9c12",
       "revId": "8bbe2f4d99f9893555e02781c0fbdc46647e55bf",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
