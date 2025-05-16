@@ -49,8 +49,8 @@ else
 endif
 
 conf_data.set('I2C_OCC', get_option('i2c-occ').allowed())
-conf_data.set('READ_OCC_SENSORS', get_option('read-occ-sensors').allowed())
-conf_data.set('PLDM', get_option('with-host-communication-protocol') == 'pldm')
+
+
 conf_data.set('POWER10', get_option('power10-support').allowed())
 conf_data.set('PHAL_SUPPORT', get_option('phal-support').allowed())
 
@@ -118,10 +118,6 @@ deps += [
 
 sources += [
     'app.cpp',
-    'occ_pass_through.cpp',
-    'occ_manager.cpp',
-    'occ_status.cpp',
-    'occ_device.cpp',
     'occ_errors.cpp',
     'occ_ffdc.cpp',
     'occ_presence.cpp',
@@ -132,16 +128,24 @@ sources += [
     'utils.cpp',
 ]
 
-if get_option('with-host-communication-protocol') == 'pldm'
-    libpldm_dep = dependency('libpldm')
-    deps += [libpldm_dep]
-    sources += ['pldm.cpp']
-endif
-
 if get_option('power10-support').allowed()
     libpldm_dep = dependency('libpldm')
     deps += [libpldm_dep]
-    sources += ['pldm.cpp', 'powermode.cpp']
+    sources += [
+        'pldm.cpp',
+        'powermode.cpp',
+        'occ_manager.cpp',
+        'occ_status.cpp',
+        'occ_device.cpp',
+        'occ_pass_through.cpp',
+    ]
+else
+    sources += [
+        'legacy/occ_manager_legacy.cpp',
+        'legacy/occ_status_legacy.cpp',
+        'legacy/occ_device_legacy.cpp',
+        'legacy/occ_pass_through_legacy.cpp',
+    ]
 endif
 
 if get_option('phal-support').allowed()
