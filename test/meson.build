@@ -20,10 +20,6 @@ if not gtest_dep.found() or not gmock_dep.found()
 endif
 
 test_sources = [
-    '../occ_pass_through.cpp',
-    '../occ_manager.cpp',
-    '../occ_status.cpp',
-    '../occ_device.cpp',
     '../occ_errors.cpp',
     '../occ_ffdc.cpp',
     '../occ_presence.cpp',
@@ -35,12 +31,22 @@ test_sources = [
     occ_sensor_hpp,
 ]
 
-if get_option('with-host-communication-protocol') == 'pldm'
-    test_sources += ['../pldm.cpp']
-endif
-
 if get_option('power10-support').allowed()
-    test_sources += ['../powermode.cpp']
+    test_sources += [
+        '../pldm.cpp']
+        '../powermode.cpp'
+        '../occ_pass_through.cpp',
+        '../occ_manager.cpp',
+        '../occ_status.cpp',
+        '../occ_device.cpp',
+    ]
+else
+    test_sources += [
+        '../legacy/occ_pass_through.cpp',
+        '../legacy/occ_manager.cpp',
+        '../legacy/occ_status.cpp',
+        '../legacy/occ_device.cpp',
+    ]
 endif
 
 tests = [
