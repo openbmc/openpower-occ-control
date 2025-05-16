@@ -5,7 +5,7 @@
 
 #ifdef POWERVM_CHECK
 #include <com/ibm/Host/Target/server.hpp>
-#endif
+#endif // POWERVM_CHECK
 #include <org/open_power/OCC/Device/error.hpp>
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/lg2.hpp>
@@ -319,7 +319,7 @@ bool isPowerVM()
     }
 
     lg2::debug("isPowerVM returning {VAL}", "VAL", powerVmTarget);
-#endif
+#endif // POWERVM_CHECK
 
     return powerVmTarget;
 }
