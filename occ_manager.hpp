@@ -1,19 +1,17 @@
 #pragma once
 
-#include "occ_pass_through.hpp"
+#include "occ_pass_through.hpp" //SHELDON: PUT BACK
 #include "occ_status.hpp"
-#ifdef PLDM
+#include "powercap.hpp"
+#include "utils.hpp"
+
 #include "pldm.hpp"
 
 #ifdef PHAL_SUPPORT
 #include <libphal.H>
-#endif
-#endif
-#include "powercap.hpp"
-#include "utils.hpp"
-#ifdef POWER10
+#endif // PHAL_SUPPORT
+
 #include "powermode.hpp"
-#endif
 
 #include <sdbusplus/bus.hpp>
 #include <sdeventplus/event.hpp>
@@ -29,7 +27,6 @@ namespace open_power
 namespace occ
 {
 
-#ifdef READ_OCC_SENSORS
 enum occFruType
 {
     processorCore = 0,
@@ -41,14 +38,11 @@ enum occFruType
     memCtlrExSensor = 8,
     processorIoRing = 9
 };
-#endif
 
 /** @brief Default time, in seconds, between OCC poll commands */
-#ifndef POWER10
-constexpr unsigned int defaultPollingInterval = 1;
-#else
 constexpr unsigned int defaultPollingInterval = 5;
-#endif
+
+/** @brief Default time, in seconds, between OCC poll commands */
 
 constexpr auto AMBIENT_PATH =
     "/xyz/openbmc_project/sensors/temperature/Ambient_Virtual_Temp";
@@ -79,13 +73,9 @@ struct Manager
      *
      *  @param[in] event - Unique ptr reference to sd_event
      */
-    explicit Manager(EventPtr& event) :
+    explicit Manager(EventPtr& event) :                                         // SHELDON: BASE, Inherited P10-11 ++
         event(event), pollInterval(defaultPollingInterval),
         sdpEvent(sdeventplus::Event::get_default()),
-        _pollTimer(
-            std::make_unique<
-                sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
-                sdpEvent, std::bind(&Manager::pollerTimerExpired, this))),
         ambientPropChanged(
             utils::getBus(),
             sdbusRule::member("PropertiesChanged") +
@@ -93,50 +83,30 @@ struct Manager
                 sdbusRule::argN(0, AMBIENT_INTERFACE) +
                 sdbusRule::interface("org.freedesktop.DBus.Properties"),
             std::bind(&Manager::ambientCallback, this, std::placeholders::_1))
-#ifdef POWER10
-        ,
-        discoverTimer(
-            std::make_unique<
-                sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
-                sdpEvent, std::bind(&Manager::findAndCreateObjects, this))),
-        waitForAllOccsTimer(
-            std::make_unique<
-                sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
-                sdpEvent, std::bind(&Manager::occsNotAllRunning, this)))
-#ifdef PLDM
-        ,
-        throttlePldmTraceTimer(
-            std::make_unique<
-                sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
-                sdpEvent, std::bind(&Manager::throttlePldmTraceExpired, this)))
-#endif
-#endif // POWER10
     {
-#ifdef I2C_OCC
-        // I2C OCC status objects are initialized directly
-        initStatusObjects();
-#else
+
+        initTimerObjects();
+
         findAndCreateObjects();
-#endif
+
         readAltitude();
+
+        createPldmHandle();
+
     }
 
-    void createPldmHandle();
-
     /** @brief Return the number of bound OCCs */
-    inline auto getNumOCCs() const
+    inline auto getNumOCCs() const                                              // SHELDON: BASE
     {
         return activeCount;
     }
 
-#ifdef PLDM
     /** @brief Called by a Device to report that the SBE timed out
      *         and appropriate action should be taken
      *
      * @param[in] instance - the OCC instance id
      */
-    void sbeTimeout(unsigned int instance);
-#endif
+    void sbeTimeout(unsigned int instance);                                     // SHELDON: NEW P10-11 ++
 
     /** @brief Return the latest ambient and altitude readings
      *
@@ -144,32 +114,32 @@ struct Manager
      *  @param[out] ambient - ambient temperature in degrees C
      *  @param[out] altitude - altitude in meters
      */
-    void getAmbientData(bool& ambientValid, uint8_t& ambientTemp,
+    void getAmbientData(bool& ambientValid, uint8_t& ambientTemp,               // SHELDON: BASE
                         uint16_t& altitude) const;
 
     /** @brief Notify pcap object to update bounds */
-    void updatePcapBounds() const;
+    void updatePcapBounds() const;                                              // SHELDON: BASE
 
     /**
      * @brief Set all sensor values of this OCC to NaN.
      * @param[in] id - Id of the OCC.
      * */
-    void setSensorValueToNaN(uint32_t id) const;
+    void setSensorValueToNaN(uint32_t id) const;                                // SHELDON: NEW P10-11 ++
 
     /** @brief Set all sensor values of this OCC to NaN and non functional.
      *
      *  @param[in] id - Id of the OCC.
      */
-    void setSensorValueToNonFunctional(uint32_t id) const;
+    void setSensorValueToNonFunctional(uint32_t id) const;                      // SHELDON: NEW P10-11 ++
 
     /** @brief Clear any state flags that need to be reset when the host state
      * is off */
-    void hostPoweredOff();
+    void hostPoweredOff();                                                      // SHELDON: BASE
 
   private:
     /** @brief Creates the OCC D-Bus objects.
      */
-    void findAndCreateObjects();
+    void findAndCreateObjects();                                                // SHELDON: Inherited to P8,P9,P10-11,P12?
 
     /** @brief Callback that responds to cpu creation in the inventory -
      *         by creating the needed objects.
@@ -178,13 +148,13 @@ struct Manager
      *
      *  @returns 0 to indicate success
      */
-    int cpuCreated(sdbusplus::message_t& msg);
+    int cpuCreated(sdbusplus::message_t& msg);                                  // SHELDON: BASE
 
     /** @brief Create child OCC objects.
      *
      *  @param[in] occ - the occ name, such as occ0.
      */
-    void createObjects(const std::string& occ);
+    void createObjects(const std::string& occ);                                 // SHELDON: BASE, Inherited P10-11 ++
 
     /** @brief Callback handler invoked by Status object when the OccActive
      *         property is changed. This is needed to make sure that the
@@ -195,14 +165,14 @@ struct Manager
      *
      *  @param[in] status - OccActive status
      */
-    void statusCallBack(instanceID instance, bool status);
+    void statusCallBack(instanceID instance, bool status);                      // SHELDON: BASE Inherited P10-11 ++
 
     /** @brief Set flag that a PM Complex reset is needed (to be initiated
      * later) */
-    void resetOccRequest(instanceID instance);
+    void resetOccRequest(instanceID instance);                                  // SHELDON: BASE
 
     /** @brief Initiate the request to reset the PM Complex (PLDM -> HBRT) */
-    void initiateOccRequest(instanceID instance);
+    void initiateOccRequest(instanceID instance);                               // SHELDON: BASE Inherited P10-11 ++
 
     /** @brief Sends a Heartbeat command to host control command handler */
     void sendHeartBeat();
@@ -218,11 +188,6 @@ struct Manager
 
     /** @brief Power cap monitor and occ notification object */
     std::unique_ptr<open_power::occ::powercap::PowerCap> pcap;
-
-#ifdef POWER10
-    /** @brief Power mode monitor and notification object */
-    std::unique_ptr<open_power::occ::powermode::PowerMode> pmode;
-#endif
 
     /** @brief sbdbusplus match objects */
     std::vector<sdbusplus::bus::match_t> cpuMatches;
@@ -269,16 +234,17 @@ struct Manager
      * requests) */
     bool resetInProgress = false;
 
-#ifdef I2C_OCC
-    /** @brief Init Status objects for I2C OCC devices
+    /** @brief Init timer objects
      *
-     * It iterates in /sys/bus/i2c/devices, finds all occ hwmon devices
-     * and creates status objects.
+     * It creates timer objects used to get callbacks.
      */
-    void initStatusObjects();
-#endif
+    void initTimerObjects();                                                    // SHELDON: BASE Inherited P10-11 ++
 
-#ifdef PLDM
+    void createPldmHandle();                                                    // SHELDON: NEW P10-11 ++
+
+    /** @brief Power mode monitor and notification object */
+    std::unique_ptr<open_power::occ::powermode::PowerMode> pmode;               // SHELDON: HERE
+
     /** @brief Callback handler invoked by the PLDM event handler when state of
      *         the OCC is toggled by the host. The caller passes the instance
      *         of the OCC and state of the OCC.
@@ -290,12 +256,12 @@ struct Manager
      *  @return true if setting the state of OCC is successful and false if it
      *          fails.
      */
-    bool updateOCCActive(instanceID instance, bool status);
+    bool updateOCCActive(instanceID instance, bool status);                     // SHELDON: NEW P10-11 ++
 
     /** @brief Callback handler invoked by the PLDM event handler when mode of
      *         the OCC SAFE MODE is inacted or cleared.
      */
-    void updateOccSafeMode(bool safeState);
+    void updateOccSafeMode(bool safeState);                                     // SHELDON: NEW P10-11 ++
 
     /** @brief Callback handler invoked by PLDM sensor change when
      *         the HRESET succeeds or fails.
@@ -303,7 +269,7 @@ struct Manager
      *  @param[in] instance - the SBE instance id
      *  @param[in] success - true if the HRESET succeeded, otherwise false
      */
-    void sbeHRESETResult(instanceID instance, bool success);
+    void sbeHRESETResult(instanceID instance, bool success);                    // SHELDON: NEW P10-11 ++    ?? Quesiton the PHAL_SUPPORT on which driver.
 
 #ifdef PHAL_SUPPORT
     /** @brief Helper function to check whether an SBE dump should be collected
@@ -313,7 +279,7 @@ struct Manager
      *
      *  @return true if an SBE dump should be collected and false if not
      */
-    bool sbeCanDump(unsigned int instance);
+    bool sbeCanDump(unsigned int instance);                                     // SHELDON: NEW P10-11 ++  ???? PHAL_SUPPORT ONLY
 
     /** @brief Helper function to set the SBE state through PDBG/PHAL
      *
@@ -321,7 +287,7 @@ struct Manager
      * @param[in] state - the state to which the SBE should be set
      *
      */
-    void setSBEState(unsigned int instance, enum sbe_state state);
+    void setSBEState(unsigned int instance, enum sbe_state state);              // SHELDON: NEW P10-11 ++  ???? PHAL_SUPPORT ONLY
 
     /** @brief Helper function to get the SBE instance PDBG processor target
      *
@@ -329,16 +295,14 @@ struct Manager
      *
      * @return a pointer to the PDBG target
      */
-    struct pdbg_target* getPdbgTarget(unsigned int instance);
+    struct pdbg_target* getPdbgTarget(unsigned int instance);                   // SHELDON: NEW P10-11 ++  ???? PHAL_SUPPORT ONLY
 
     /** @brief Whether pdbg_targets_init has been called */
     bool pdbgInitialized = false;
-#endif
+#endif // PHAL_SUPPORT
 
     std::unique_ptr<pldm::Interface> pldmHandle = nullptr;
-#endif
 
-#ifdef POWER10
     /**
      * @brief Timer used when discovering OCCs in /dev.
      */
@@ -359,7 +323,6 @@ struct Manager
         sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>
         waitForAllOccsTimer;
 
-#ifdef PLDM
     /**
      * @brief Timer used to throttle PLDM traces when there are problems
      determining the OCC status via pldm. Used to prevent excessive
@@ -380,79 +343,63 @@ struct Manager
     /** @brief Check if all of the OCC Active sensors are available and if not
      * restart the discoverTimer
      */
-    void throttlePldmTraceExpired();
+    void throttlePldmTraceExpired();                                            // SHELDON: NEW P10-11 ++
 
     /** @brief Create a PEL when the code is not able to obtain the OCC PDRs
      * via PLDM. This is called when the throttlePldmTraceTimer expires.
      */
-    void createPldmSensorPEL();
-#endif
+    void createPldmSensorPEL();                                                 // SHELDON: NEW P10-11 ++
 
     /** @brief Called when code times out waiting for all OCCs to be running or
      *         after the app is restarted (Status does not callback into
      * Manager).
      */
-    void occsNotAllRunning();
+    void occsNotAllRunning();                                                   // SHELDON: NEW P10-11 ++
 
     /** @brief Check if all of the OCC Active sensors are available and if not
      * restart the discoverTimer
      */
-    void checkAllActiveSensors();
-#endif // POWER10
+    void checkAllActiveSensors();                                               // SHELDON: NEW P10-11 ++
 
-    /**
-     * @brief Called when poll timer expires and forces a POLL command to the
-     * OCC. The poll timer will then be restarted.
-     * */
-    void pollerTimerExpired();
-
-    /**
-     * @brief Finds the OCC devices in /dev
-     *
-     * @return The IDs of the OCCs - 0, 1, etc.
-     */
-    std::vector<int> findOCCsInDev();
-
-#ifdef READ_OCC_SENSORS
     /**
      * @brief Gets the occ sensor values.
      * @param[in] occ - pointer to OCCs Status object
      * */
-    void getSensorValues(std::unique_ptr<Status>& occ);
+    void getSensorValues(std::unique_ptr<Status>& occ);                         // SHELDON: NEW P10-11 ++
 
     /**
      * @brief Trigger OCC driver to read the temperature sensors.
      * @param[in] path - path of the OCC sensors.
      * @param[in] id - Id of the OCC.
      * */
-    void readTempSensors(const fs::path& path, uint32_t id);
+    void readTempSensors(const fs::path& path, uint32_t id);                    // SHELDON: NEW P10-11 ++
 
     /**
      * @brief Trigger OCC driver to read the extended sensors.
      * @param[in] path - path of the OCC sensors.
      * @param[in] id - Id of the OCC.
      * */
-    void readExtnSensors(const fs::path& path, uint32_t id);
+    void readExtnSensors(const fs::path& path, uint32_t id);                    // SHELDON: NEW P10-11 ++
 
     /**
      * @brief Trigger OCC driver to read the power sensors.
      * @param[in] path - path of the OCC sensors.
      * @param[in] id - Id of the OCC.
      * */
-    void readPowerSensors(const fs::path& path, uint32_t id);
+    void readPowerSensors(const fs::path& path, uint32_t id);                   // SHELDON: NEW P10-11 ++
 
     /** @brief Store the existing OCC sensors on D-BUS */
-    std::map<std::string, uint32_t> existingSensors;
+    std::map<std::string, uint32_t> existingSensors;                            // SHELDON: NEW P10-11 ++
 
     /** @brief Get FunctionID from the `powerX_label` file.
      *  @param[in] value - the value of the `powerX_label` file.
      *  @returns FunctionID of the power sensors.
      */
-    std::optional<std::string> getPowerLabelFunctionID(
+    std::optional<std::string> getPowerLabelFunctionID(                         // SHELDON: NEW P10-11 ++
         const std::string& value);
 
     /** @brief The power sensor names map */
-    const std::map<std::string, std::string> powerSensorName = {
+    const std::map<std::string, std::string> powerSensorName = {                // SHELDON: NEW P10-11 ++
         {"system", "total_power"}, {"1", "p0_mem_power"},
         {"2", "p1_mem_power"},     {"3", "p2_mem_power"},
         {"4", "p3_mem_power"},     {"5", "p0_power"},
@@ -472,7 +419,7 @@ struct Manager
         {"43", "avdd_total_power"}};
 
     /** @brief The dimm temperature sensor names map  */
-    const std::map<uint32_t, std::string> dimmTempSensorName = {
+    const std::map<uint32_t, std::string> dimmTempSensorName = {                // SHELDON: NEW P10-11 ++
         {internalMemCtlr, "_intmb_temp"},
         {dimm, "_dram_temp"},
         {memCtrlAndDimm, "_dram_extmb_temp"},
@@ -480,27 +427,39 @@ struct Manager
         {memCtlrExSensor, "_extmb_temp"}};
 
     /** @brief The dimm DVFS temperature sensor names map  */
-    const std::map<uint32_t, std::string> dimmDVFSSensorName = {
+    const std::map<uint32_t, std::string> dimmDVFSSensorName = {                // SHELDON: NEW P10-11 ++
         {internalMemCtlr, "dimm_intmb_dvfs_temp"},
         {dimm, "dimm_dram_dvfs_temp"},
         {memCtrlAndDimm, "dimm_dram_extmb_dvfs_temp"},
         {PMIC, "dimm_pmic_dvfs_temp"},
         {memCtlrExSensor, "dimm_extmb_dvfs_temp"}};
-#endif
+
+    /**
+     * @brief Called when poll timer expires and forces a POLL command to the
+     * OCC. The poll timer will then be restarted.
+     * */
+    void pollerTimerExpired();                                                  // SHELDON: NEW P10-11 ++
+
+    /**
+     * @brief Finds the OCC devices in /dev
+     *
+     * @return The IDs of the OCCs - 0, 1, etc.
+     */
+    std::vector<int> findOCCsInDev();                                           // SHELDON: BASE
 
     /** @brief Read the altitude from DBus */
-    void readAltitude();
+    void readAltitude();                                                        // SHELDON: BASE
 
     /** @brief Callback function when ambient temperature changes
      *
      *  @param[in]  msg - Data associated with subscribed signal
      */
-    void ambientCallback(sdbusplus::message_t& msg);
+    void ambientCallback(sdbusplus::message_t& msg);                            // SHELDON: BASE, Inherited P10-11 ++
 
     /** @brief Confirm that a single OCC master was found and start presence
      * monitoring
      */
-    void validateOccMaster();
+    void validateOccMaster();                                                   // SHELDON: BASE, Inherited P10-11 ++
 };
 
 } // namespace occ

@@ -1,12 +1,16 @@
 #include "config.h"
 
 #include "occ_events.hpp"
-#include "occ_manager.hpp"
-#include "utils.hpp"
 
 #ifdef POWER10
-#include "powermode.hpp"
+#include "occ_manager.hpp"
+#else
+#include "occ_manager_legacy.hpp"
 #endif
+
+#include "utils.hpp"
+
+#include "powermode.hpp" //SHELDON: removed POWER10 wrapped since .h has it wrapped.
 
 #include <org/open_power/OCC/Device/error.hpp>
 #include <phosphor-logging/lg2.hpp>
@@ -36,17 +40,17 @@ int main(int /*argc*/, char** /*argv[]*/)
 
     // Add object manager interfaces (for mapper)
     sdbusplus::server::manager_t objManager(bus, OCC_CONTROL_ROOT);
-#ifdef READ_OCC_SENSORS
-    sdbusplus::server::manager_t objManagerXyz(bus, OCC_SENSORS_ROOT);
-#endif
+
 #ifdef POWER10
+    sdbusplus::server::manager_t objManagerXyz(bus, OCC_SENSORS_ROOT);
+
     sdbusplus::server::manager_t objManagerXyzControl(
         bus, "/xyz/openbmc_project/control");
-#endif
+#endif // POWER10
     sdbusplus::server::manager_t objManagerXyzInventory(
         bus, "/xyz/openbmc_project/inventory");
+
     open_power::occ::Manager mgr(eventP);
-    mgr.createPldmHandle();
 
     // Claim the bus since all the house keeping is done now
     bus.request_name(OCC_CONTROL_BUSNAME);
