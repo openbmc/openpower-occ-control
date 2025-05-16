@@ -1,4 +1,8 @@
+// #ifdef POWER10 // SHELDON: FIX
 #include "occ_manager.hpp"
+// #else
+// #include "legacy/occ_manager_legacy.hpp"
+// #endif
 
 #include <stdlib.h>
 
@@ -25,12 +29,11 @@ class ErrorFiles : public ::testing::Test
   public:
     ErrorFiles() :
         rc(sd_event_default(&event)), pEvent(event), manager(pEvent),
-        status(pEvent, "/dummy1", manager
 #ifdef POWER10
-               ,
-               powerMode
+        status(pEvent, "/dummy1", manager, powerMode)
+#else
+        status(pEvent, "/dummy1", manager)
 #endif
-        )
     {
         EXPECT_GE(rc, 0);
         event = nullptr;
@@ -92,14 +95,13 @@ class ErrorFiles : public ::testing::Test
     fs::path occPath;
 };
 
-TEST_F(ErrorFiles, AddDeviceErrorWatch)
+TEST_F(ErrorFiles, AddDeviceErrorWatch) // SHELDON: FIX
 {
-    Device occDevice(pEvent, devicePath, manager, status
 #ifdef POWER10
-                     ,
-                     powerMode
+    Device occDevice(pEvent, devicePath, manager, status, powerMode);
+#else
+    Device occDevice(pEvent, devicePath, manager, status);
 #endif
-    );
 
     occDevice.addErrorWatch(false);
     occDevice.removeErrorWatch();

@@ -46,8 +46,7 @@ class Device
      *  @param[in] instance - OCC instance number
      */
     Device(EventPtr& event, const fs::path& path, Manager& manager,
-           Status& status, std::unique_ptr<powermode::PowerMode>& powerModeRef,
-           unsigned int instance = 0) :
+           Status& status, unsigned int instance = 0) :
         devPath(path), instance(instance), statusObject(status),
         managerObject(manager),
         error(event, path / "occ_error",
@@ -57,8 +56,7 @@ class Device
                 path /
                     fs::path("../../sbefifo" + std::to_string(instance + 1)) /
                     "timeout",
-                std::bind(std::mem_fn(&Device::timeoutCallback), this,
-                          std::placeholders::_1)),
+                nullptr),
         ffdc(event, path / "ffdc", instance),
         presence(event, path / "occs_present", manager,
                  std::bind(std::mem_fn(&Device::errorCallback), this,
@@ -73,8 +71,7 @@ class Device
                       std::placeholders::_1)),
         throttleMemTemp(event, path / "occ_mem_throttle",
                         std::bind(std::mem_fn(&Device::throttleMemTempCallback),
-                                  this, std::placeholders::_1)),
-        pmode(powerModeRef)
+                                  this, std::placeholders::_1))
     {
         // Nothing to do here
     }
@@ -94,11 +91,15 @@ class Device
      */
     inline void addErrorWatch(bool poll = true)
     {
-        throttleProcTemp.addWatch(poll);
-        std::cout << "SHELDON:addErrorWatch:enter \n";
-        if (master())
+        try
         {
-            pmode->addIpsWatch(poll);
+            throttleProcTemp.addWatch(poll);
+        }
+        catch (const OpenFailure& e)
+        {
+            // try the old kernel version
+            throttleProcTemp.setFile(devPath / "occ_dvfs_ot");
+            throttleProcTemp.addWatch(poll);
         }
 
         throttleProcPower.addWatch(poll);
@@ -110,7 +111,6 @@ class Device
         }
         catch (const OpenFailure& e)
         {
-            std::cout << "SHELDON:addErrorWatch:ffdc.addWatch \n";
             // nothing to do if there is no FFDC file
         }
 
@@ -120,7 +120,6 @@ class Device
         }
         catch (const std::exception& e)
         {
-            std::cout << "SHELDON:addErrorWatch:timeout.addWatch \n";
             // nothing to do if there is no SBE timeout file
         }
 
@@ -138,11 +137,6 @@ class Device
         throttleMemTemp.removeWatch();
         throttleProcPower.removeWatch();
         throttleProcTemp.removeWatch();
-
-        if (master())
-        {
-            pmode->removeIpsWatch();
-        }
     }
 
     /** @brief Starts to watch how many OCCs are present on the master */
@@ -231,21 +225,6 @@ class Device
      * response
      */
     void presenceCallback(int occsPresent);
-
-    /** @brief OCC PowerMode object */
-    std::unique_ptr<powermode::PowerMode>& pmode;
-
-    /** @brief callback for SBE timeout monitoring
-     *
-     * @param[in] error - True if an error is reported, false otherwise
-     */
-    void timeoutCallback(int error);
-    // {
-    //     if (error)
-    //     {
-    //         managerObject.sbeTimeout(instance);
-    //     }
-    // }
 
     /** @brief callback for the proc temp throttle event
      *
