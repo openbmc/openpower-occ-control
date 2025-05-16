@@ -102,4 +102,4 @@ std::string getI2cDeviceName(const std::string& dbusPath)
 
 } // namespace i2c_occ
 
-#endif
+#endif // I2C_OCC

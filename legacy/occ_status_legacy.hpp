@@ -1,8 +1,11 @@
 #pragma once
 #include "config.h"
 
+#include "i2c_occ.hpp"
 #include "occ_command.hpp"
-#include "occ_device.hpp"
+
+#include "legacy/occ_device_legacy.hpp"
+
 #include "occ_events.hpp"
 #include "powercap.hpp"
 #include "powermode.hpp"
@@ -12,10 +15,6 @@
 #include <org/open_power/OCC/Status/server.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
-
-#include <sdeventplus/event.hpp>
-#include <sdeventplus/utility/timer.hpp>
-
 #include <xyz/openbmc_project/Control/Power/Throttle/server.hpp>
 
 #include <functional>
@@ -85,20 +84,20 @@ class Status : public Interface
      *                             protocol
      */
     Status(EventPtr& event, const char* path, Manager& managerRef,
-           std::unique_ptr<powermode::PowerMode>& powerModeRef,
-           std::function<void(instanceID, bool)> callBack = nullptr,
-           std::function<void(instanceID)> resetCallBack = nullptr) :
+           std::function<void(instanceID, bool)> callBack = nullptr) :
 
         Interface(utils::getBus(), getDbusPath(path).c_str(),
                   Interface::action::defer_emit),
         path(path), managerCallBack(callBack), instance(getInstance(path)),
         manager(managerRef),
-        pmode(powerModeRef),
         device(event,
+#ifdef I2C_OCC
+               fs::path(DEV_PATH) / i2c_occ::getI2cDeviceName(path),
+#else // NOT I2C_OCC
                fs::path(DEV_PATH) /
                    fs::path(sysfsName + "." + std::to_string(instance + 1)),
+#endif // I2C_OCC
                managerRef, *this,
-               powerModeRef,
                instance),
         hostControlSignal(
             utils::getBus(),
@@ -111,12 +110,7 @@ class Status : public Interface
                       std::placeholders::_1)),
         occCmd(instance, (fs::path(OCC_CONTROL_ROOT) /
                           (std::string(OCC_NAME) + std::to_string(instance)))
-                             .c_str()),
-        sdpEvent(sdeventplus::Event::get_default()),
-        safeStateDelayTimer(
-            sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>(
-                sdpEvent, std::bind(&Status::safeStateDelayExpired, this))),
-        resetCallBack(resetCallBack)
+                             .c_str())
     {
         // Announce that we are ready
         this->emit_object_added();
@@ -175,38 +169,6 @@ class Status : public Interface
      */
     void deviceError(Error::Descriptor d = Error::Descriptor());
 
-    /** @brief Handle additional tasks when the OCCs reach active state */
-    void occsWentActive();
-
-    /** @brief Send Ambient & Altitude data to OCC
-     *
-     *  @param[in] ambient - temperature to send (0xFF will force read
-     *                       of current temperature and altitude)
-     *  @param[in] altitude - altitude to send (0xFFFF = unavailable)
-     *
-     *  @return SUCCESS on success
-     */
-    CmdStatus sendAmbient(const uint8_t ambient = 0xFF,
-                          const uint16_t altitude = 0xFFFF);
-
-    /** @brief Set flag indicating if PLDM sensor has been received
-     *
-     *  @param[in] wasReceived - true if PLDM sensor was read
-     */
-    void setPldmSensorReceived(const bool wasReceived)
-    {
-        pldmSensorStateReceived = wasReceived;
-    }
-
-    /** @brief Read flag indicating if PLDM sensor has been read
-     *
-     *  @return true if sensor has been read
-     */
-    bool getPldmSensorReceived()
-    {
-        return pldmSensorStateReceived;
-    }
-
     /** @brief Return the HWMON path for this OCC
      *
      *  @return path or empty path if not found
@@ -263,17 +225,11 @@ class Status : public Interface
     /** @brief The Trigger to indicate OCC State is valid or not. */
     bool stateValid = false;
 
-    /** @brief The Trigger to indicate OCC sensors are valid or not. */
-    bool sensorsValid = false;
-
     /** @brief OCC instance to Sensor definitions mapping */
     static const std::map<instanceID, sensorDefs> sensorMap;
 
     /** @brief OCC manager object */
     const Manager& manager;
-
-    /** @brief OCC PowerMode object */
-    std::unique_ptr<powermode::PowerMode>& pmode;
 
     /** @brief OCC device object to do bind and unbind */
     Device device;
@@ -288,9 +244,6 @@ class Status : public Interface
 
     /** @brief Command object to send commands to the OCC */
     OccCommand occCmd;
-
-    /** @brief timer event */
-    sdeventplus::Event sdpEvent;
 
     /** @brief hwmon path for this OCC */
     fs::path hwmonPath;
@@ -317,16 +270,6 @@ class Status : public Interface
         return (path.empty() ? 0 : path.back() - '0');
     }
 
-    /**
-     * @brief Timer that is started when OCC is detected to be in safe mode
-     */
-    sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>
-        safeStateDelayTimer;
-
-    /** @brief Callback for timer that is started when OCC was detected to be in
-     * safe mode. Called to verify and then disable and reset the OCCs.
-     */
-    void safeStateDelayExpired();
 
     /** @brief Callback for timer that is started when OCC state
      * was not able to be read. Called to attempt another read when needed.
@@ -356,7 +299,6 @@ class Status : public Interface
 
         return estimatedPath;
     }
-    std::function<void(instanceID)> resetCallBack = nullptr;
 
     /** @brief Current throttle reason(s) for this processor */
     uint8_t throttleCause = THROTTLED_NONE;

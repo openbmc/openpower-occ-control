@@ -34,7 +34,7 @@ using namespace phosphor::logging;
 using namespace std::literals::chrono_literals;
 
 template <typename T>
-T readFile(const std::string& path)
+T readFile(const std::string& path)                                             // SHELDON: BASE     //NOTE: could this be standard utility?
 {
     std::ifstream ifs;
     ifs.exceptions(std::ifstream::failbit | std::ifstream::badbit |
@@ -56,9 +56,8 @@ T readFile(const std::string& path)
     return data;
 }
 
-void Manager::createPldmHandle()
+void Manager::createPldmHandle()                                                // SHELDON: NEW P10-11 ++
 {
-#ifdef PLDM
     pldmHandle = std::make_unique<pldm::Interface>(
         std::bind(std::mem_fn(&Manager::updateOCCActive), this,
                   std::placeholders::_1, std::placeholders::_2),
@@ -67,7 +66,6 @@ void Manager::createPldmHandle()
         std::bind(std::mem_fn(&Manager::updateOccSafeMode), this,
                   std::placeholders::_1),
         std::bind(std::mem_fn(&Manager::hostPoweredOff), this), event);
-#endif
 }
 
 // findAndCreateObjects():
@@ -78,16 +76,8 @@ void Manager::createPldmHandle()
 // - create statusObjects for each OCC device found
 // - waits for OCC Active sensors PDRs to become available
 // - restart discoverTimer if all data is not available yet
-void Manager::findAndCreateObjects()
+void Manager::findAndCreateObjects()                                            //SHELDON: Inherited to P8,P9,P10-11,P12?
 {
-#ifndef POWER10
-    for (auto id = 0; id < MAX_CPUS; ++id)
-    {
-        // Create one occ per cpu
-        auto occ = std::string(OCC_NAME) + std::to_string(id);
-        createObjects(occ);
-    }
-#else
     if (!pmode)
     {
         // Create the power mode object
@@ -164,7 +154,7 @@ void Manager::findAndCreateObjects()
                     tracedHostWait = true;
                 }
                 discoverTimer->restartOnce(30s);
-#ifdef PLDM
+
                 if (throttlePldmTraceTimer->isEnabled())
                 {
                     // Host is no longer running, disable throttle timer and
@@ -173,7 +163,6 @@ void Manager::findAndCreateObjects()
                     throttlePldmTraceTimer->setEnabled(false);
                     pldmHandle->setTraceThrottle(false);
                 }
-#endif
             }
         }
     }
@@ -184,12 +173,10 @@ void Manager::findAndCreateObjects()
             "FILE", HOST_ON_FILE);
         discoverTimer->restartOnce(10s);
     }
-#endif
 }
 
-#ifdef POWER10
 // Check if all occActive sensors are available
-void Manager::checkAllActiveSensors()
+void Manager::checkAllActiveSensors()                                           // SHELDON: NEW P10-11 ++
 {
     static bool allActiveSensorAvailable = false;
     static bool tracedSensorWait = false;
@@ -229,22 +216,21 @@ void Manager::checkAllActiveSensors()
                             "checkAllActiveSensors(): Waiting on OCC{INST} Active sensor",
                             "INST", instance);
                         tracedSensorWait = true;
-#ifdef PLDM
+
                         // Make sure PLDM traces are not throttled
                         pldmHandle->setTraceThrottle(false);
                         // Start timer to throttle PLDM traces when timer
                         // expires
                         onPldmTimeoutCreatePel = false;
                         throttlePldmTraceTimer->restartOnce(5min);
-#endif
                     }
-#ifdef PLDM
+
                     // Ignore active sensor check if the OCCs are being reset
                     if (!resetInProgress)
                     {
                         pldmHandle->checkActiveSensor(obj->getOccInstanceID());
                     }
-#endif
+
                     break;
                 }
             }
@@ -256,7 +242,7 @@ void Manager::checkAllActiveSensors()
         {
             waitingForHost = true;
             lg2::info("checkAllActiveSensors(): Waiting for host to start");
-#ifdef PLDM
+
             if (throttlePldmTraceTimer->isEnabled())
             {
                 // Host is no longer running, disable throttle timer and
@@ -265,7 +251,6 @@ void Manager::checkAllActiveSensors()
                 throttlePldmTraceTimer->setEnabled(false);
                 pldmHandle->setTraceThrottle(false);
             }
-#endif
         }
     }
 
@@ -276,14 +261,14 @@ void Manager::checkAllActiveSensors()
         {
             discoverTimer->setEnabled(false);
         }
-#ifdef PLDM
+
         if (throttlePldmTraceTimer->isEnabled())
         {
             // Disable throttle timer and make sure traces are not throttled
             throttlePldmTraceTimer->setEnabled(false);
             pldmHandle->setTraceThrottle(false);
         }
-#endif
+
         if (waitingForAllOccActiveSensors)
         {
             lg2::info(
@@ -319,9 +304,8 @@ void Manager::checkAllActiveSensors()
         discoverTimer->restartOnce(10s);
     }
 }
-#endif
 
-std::vector<int> Manager::findOCCsInDev()
+std::vector<int> Manager::findOCCsInDev()                                       // SHELDON: BASE
 {
     std::vector<int> occs;
     std::regex expr{R"(occ(\d+)$)"};
@@ -342,7 +326,7 @@ std::vector<int> Manager::findOCCsInDev()
     return occs;
 }
 
-int Manager::cpuCreated(sdbusplus::message_t& msg)
+int Manager::cpuCreated(sdbusplus::message_t& msg)                              // SHELDON: BASE
 {
     namespace fs = std::filesystem;
 
@@ -359,25 +343,19 @@ int Manager::cpuCreated(sdbusplus::message_t& msg)
     return 0;
 }
 
-void Manager::createObjects(const std::string& occ)
+void Manager::createObjects(const std::string& occ)                             // SHELDON: BASE, Inherited P10-11 ++
 {
     auto path = fs::path(OCC_CONTROL_ROOT) / occ;
 
     statusObjects.emplace_back(std::make_unique<Status>(
         event, path.c_str(), *this,
-#ifdef POWER10
         pmode,
-#endif
         std::bind(std::mem_fn(&Manager::statusCallBack), this,
-                  std::placeholders::_1, std::placeholders::_2)
-#ifdef PLDM
-            ,
+                  std::placeholders::_1, std::placeholders::_2),
         // Callback will set flag indicating reset needs to be done
         // instead of immediately issuing a reset via PLDM.
         std::bind(std::mem_fn(&Manager::resetOccRequest), this,
-                  std::placeholders::_1)
-#endif
-            ));
+                  std::placeholders::_1)));
 
     // Create the power cap monitor object
     if (!pcap)
@@ -392,24 +370,17 @@ void Manager::createObjects(const std::string& occ)
                   statusObjects.back()->getOccInstanceID());
         _pollTimer->setEnabled(false);
 
-#ifdef POWER10
         // Set the master OCC on the PowerMode object
         pmode->setMasterOcc(path);
-#endif
     }
 
     passThroughObjects.emplace_back(std::make_unique<PassThrough>(
-        path.c_str()
-#ifdef POWER10
-            ,
-        pmode
-#endif
-        ));
+        path.c_str(), pmode));
 }
 
 // If a reset is not already outstanding, set a flag to indicate that a reset is
 // needed.
-void Manager::resetOccRequest(instanceID instance)
+void Manager::resetOccRequest(instanceID instance)                              // SHELDON: BASE
 {
     if (!resetRequired)
     {
@@ -428,7 +399,7 @@ void Manager::resetOccRequest(instanceID instance)
 }
 
 // If a reset has not been started, initiate an OCC reset via PLDM
-void Manager::initiateOccRequest(instanceID instance)
+void Manager::initiateOccRequest(instanceID instance)                           // SHELDON: BASE Inherited P10-11 ++
 {
     if (!resetInProgress)
     {
@@ -446,10 +417,7 @@ void Manager::initiateOccRequest(instanceID instance)
                 obj->occActive(false);
             }
         }
-
-#ifdef PLDM
         pldmHandle->resetOCC(instance);
-#endif
         resetRequired = false;
     }
     else
@@ -460,7 +428,7 @@ void Manager::initiateOccRequest(instanceID instance)
     }
 }
 
-void Manager::statusCallBack(instanceID instance, bool status)
+void Manager::statusCallBack(instanceID instance, bool status)                  // SHELDON: BASE Inherited P10-11 ++
 {
     if (status == true)
     {
@@ -475,17 +443,14 @@ void Manager::statusCallBack(instanceID instance, bool status)
         // OCC went active
         ++activeCount;
 
-#ifdef POWER10
         if (activeCount == 1)
         {
             // First OCC went active (allow some time for all OCCs to go active)
             waitForAllOccsTimer->restartOnce(60s);
         }
-#endif
 
         if (activeCount == statusObjects.size())
         {
-#ifdef POWER10
             // All OCCs are now running
             if (waitForAllOccsTimer->isEnabled())
             {
@@ -511,10 +476,6 @@ void Manager::statusCallBack(instanceID instance, bool status)
                 // Verify master OCC and start presence monitor
                 validateOccMaster();
             }
-#else
-            // Verify master OCC and start presence monitor
-            validateOccMaster();
-#endif
         }
 
         // Start poll timer if not already started (since at least one OCC is
@@ -574,13 +535,11 @@ void Manager::statusCallBack(instanceID instance, bool status)
                 _pollTimer->setEnabled(false);
             }
 
-#ifdef POWER10
             // stop wait timer
             if (waitForAllOccsTimer->isEnabled())
             {
                 waitForAllOccsTimer->setEnabled(false);
             }
-#endif
         }
         else if (resetInProgress)
         {
@@ -588,13 +547,10 @@ void Manager::statusCallBack(instanceID instance, bool status)
                 "statusCallBack: Skipping clear of resetInProgress (activeCount={COUNT}, OCC{INST}, status={STATUS})",
                 "COUNT", activeCount, "INST", instance, "STATUS", status);
         }
-#ifdef READ_OCC_SENSORS
         // Clear OCC sensors
         setSensorValueToNaN(instance);
-#endif
     }
 
-#ifdef POWER10
     if (waitingForAllOccActiveSensors)
     {
         if (utils::isHostRunning())
@@ -602,38 +558,34 @@ void Manager::statusCallBack(instanceID instance, bool status)
             checkAllActiveSensors();
         }
     }
-#endif
 }
 
-#ifdef I2C_OCC
-void Manager::initStatusObjects()
+
+void Manager::initTimerObjects()                                                // SHELDON: BASE Inherited P10-11 ++
 {
-    // Make sure we have a valid path string
-    static_assert(sizeof(DEV_PATH) != 0);
+    _pollTimer =
+        std::make_unique<
+            sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
+            sdpEvent, std::bind(&Manager::pollerTimerExpired, this));
 
-    auto deviceNames = i2c_occ::getOccHwmonDevices(DEV_PATH);
-    for (auto& name : deviceNames)
-    {
-        i2c_occ::i2cToDbus(name);
-        name = std::string(OCC_NAME) + '_' + name;
-        auto path = fs::path(OCC_CONTROL_ROOT) / name;
-        statusObjects.emplace_back(
-            std::make_unique<Status>(event, path.c_str(), *this));
-    }
-    // The first device is master occ
-    pcap = std::make_unique<open_power::occ::powercap::PowerCap>(
-        *statusObjects.front());
-#ifdef POWER10
-    pmode = std::make_unique<powermode::PowerMode>(*this, powermode::PMODE_PATH,
-                                                   powermode::PIPS_PATH);
-    // Set the master OCC on the PowerMode object
-    pmode->setMasterOcc(path);
-#endif
+    discoverTimer =
+        std::make_unique<
+            sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
+            sdpEvent, std::bind(&Manager::findAndCreateObjects, this));
+
+    waitForAllOccsTimer =
+        std::make_unique<
+            sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
+            sdpEvent, std::bind(&Manager::occsNotAllRunning, this));
+
+    throttlePldmTraceTimer =
+        std::make_unique<
+            sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
+            sdpEvent, std::bind(&Manager::throttlePldmTraceExpired, this));
 }
-#endif
 
-#ifdef PLDM
-void Manager::sbeTimeout(unsigned int instance)
+
+void Manager::sbeTimeout(unsigned int instance)                                 // SHELDON: NEW P10-11 ++
 {
     auto obj = std::find_if(statusObjects.begin(), statusObjects.end(),
                             [instance](const auto& obj) {
@@ -647,7 +599,7 @@ void Manager::sbeTimeout(unsigned int instance)
 
 #ifdef PHAL_SUPPORT
         setSBEState(instance, SBE_STATE_NOT_USABLE);
-#endif
+#endif // PHAL_SUPPORT
 
         // Stop communication with this OCC
         (*obj)->occActive(false);
@@ -656,7 +608,7 @@ void Manager::sbeTimeout(unsigned int instance)
     }
 }
 
-bool Manager::updateOCCActive(instanceID instance, bool status)
+bool Manager::updateOCCActive(instanceID instance, bool status)                 // SHELDON: NEW P10-11 ++
 {
     auto obj = std::find_if(statusObjects.begin(), statusObjects.end(),
                             [instance](const auto& obj) {
@@ -678,9 +630,9 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
                     "updateOCCActive: Waiting for Host and all OCC Active Sensors");
                 waitingForAllOccActiveSensors = true;
             }
-#ifdef POWER10
+
             discoverTimer->restartOnce(30s);
-#endif
+
             return false;
         }
         else
@@ -725,11 +677,10 @@ bool Manager::updateOCCActive(instanceID instance, bool status)
 }
 
 // Called upon pldm event To set powermode Safe Mode State for system.
-void Manager::updateOccSafeMode(bool safeMode)
+void Manager::updateOccSafeMode(bool safeMode)                                  // SHELDON: NEW P10-11 ++
 {
-#ifdef POWER10
     pmode->updateDbusSafeMode(safeMode);
-#endif
+
     // Update the processor throttle status on dbus
     for (auto& obj : statusObjects)
     {
@@ -737,7 +688,7 @@ void Manager::updateOccSafeMode(bool safeMode)
     }
 }
 
-void Manager::sbeHRESETResult(instanceID instance, bool success)
+void Manager::sbeHRESETResult(instanceID instance, bool success)                // SHELDON: NEW P10-11 ++    ?? Quesiton the PHAL_SUPPORT on which driver.
 {
     if (success)
     {
@@ -745,7 +696,7 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
 
 #ifdef PHAL_SUPPORT
         setSBEState(instance, SBE_STATE_BOOTED);
-#endif
+#endif // PHAL_SUPPORT
 
         // Re-enable communication with this OCC
         auto obj = std::find_if(statusObjects.begin(), statusObjects.end(),
@@ -812,7 +763,7 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
             }
         }
     }
-#endif
+#endif // PHAL_SUPPORT
 
     // SBE Reset failed, try PM Complex reset
     lg2::error("sbeHRESETResult: Forcing PM Complex reset");
@@ -820,7 +771,7 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
 }
 
 #ifdef PHAL_SUPPORT
-bool Manager::sbeCanDump(unsigned int instance)
+bool Manager::sbeCanDump(unsigned int instance)                                 // SHELDON: NEW P10-11 ++  ???? PHAL_SUPPORT ONLY
 {
     struct pdbg_target* proc = getPdbgTarget(instance);
 
@@ -851,7 +802,7 @@ bool Manager::sbeCanDump(unsigned int instance)
     return true;
 }
 
-void Manager::setSBEState(unsigned int instance, enum sbe_state state)
+void Manager::setSBEState(unsigned int instance, enum sbe_state state)          // SHELDON: NEW P10-11 ++  ???? PHAL_SUPPORT ONLY
 {
     struct pdbg_target* proc = getPdbgTarget(instance);
 
@@ -870,7 +821,7 @@ void Manager::setSBEState(unsigned int instance, enum sbe_state state)
     }
 }
 
-struct pdbg_target* Manager::getPdbgTarget(unsigned int instance)
+struct pdbg_target* Manager::getPdbgTarget(unsigned int instance)               // SHELDON: NEW P10-11 ++  ???? PHAL_SUPPORT ONLY
 {
     if (!pdbgInitialized)
     {
@@ -898,10 +849,9 @@ struct pdbg_target* Manager::getPdbgTarget(unsigned int instance)
     lg2::error("Failed to get pdbg target");
     return nullptr;
 }
-#endif
-#endif
+#endif // PHAL_SUPPORT
 
-void Manager::pollerTimerExpired()
+void Manager::pollerTimerExpired()                                              // SHELDON: NEW P10-11 ++
 {
     if (!_pollTimer)
     {
@@ -909,7 +859,6 @@ void Manager::pollerTimerExpired()
         return;
     }
 
-#ifdef POWER10
     if (resetRequired)
     {
         lg2::error("pollerTimerExpired() - Initiating PM Complex reset");
@@ -923,27 +872,22 @@ void Manager::pollerTimerExpired()
         }
         return;
     }
-#endif
 
     for (auto& obj : statusObjects)
     {
         if (!obj->occActive())
         {
             // OCC is not running yet
-#ifdef READ_OCC_SENSORS
             auto id = obj->getOccInstanceID();
             setSensorValueToNaN(id);
-#endif
             continue;
         }
 
         // Read sysfs to force kernel to poll OCC
         obj->readOccState();
 
-#ifdef READ_OCC_SENSORS
         // Read occ sensor values
         getSensorValues(obj);
-#endif
     }
 
     if (activeCount > 0)
@@ -959,8 +903,7 @@ void Manager::pollerTimerExpired()
     }
 }
 
-#ifdef READ_OCC_SENSORS
-void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
+void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)       // SHELDON: NEW P10-11 ++
 {
     // There may be more than one sensor with the same FRU type
     // and label so make two passes: the first to read the temps
@@ -1197,7 +1140,7 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
     }
 }
 
-std::optional<std::string> Manager::getPowerLabelFunctionID(
+std::optional<std::string> Manager::getPowerLabelFunctionID(                    // SHELDON: NEW P10-11 ++
     const std::string& value)
 {
     // If the value is "system", then the FunctionID is "system".
@@ -1225,7 +1168,7 @@ std::optional<std::string> Manager::getPowerLabelFunctionID(
     return powerLabelValue.substr(0, powerLabelValue.find("_"));
 }
 
-void Manager::readPowerSensors(const fs::path& path, uint32_t id)
+void Manager::readPowerSensors(const fs::path& path, uint32_t id)               // SHELDON: NEW P10-11 ++
 {
     std::regex expr{"power\\d+_label$"}; // Example: power5_label
     for (auto& file : fs::directory_iterator(path))
@@ -1309,7 +1252,7 @@ void Manager::readPowerSensors(const fs::path& path, uint32_t id)
     return;
 }
 
-void Manager::readExtnSensors(const fs::path& path, uint32_t id)
+void Manager::readExtnSensors(const fs::path& path, uint32_t id)                // SHELDON: NEW P10-11 ++
 {
     std::regex expr{"extn\\d+_label$"}; // Example: extn5_label
     for (auto& file : fs::directory_iterator(path))
@@ -1410,7 +1353,7 @@ void Manager::readExtnSensors(const fs::path& path, uint32_t id)
     return;
 }
 
-void Manager::setSensorValueToNaN(uint32_t id) const
+void Manager::setSensorValueToNaN(uint32_t id) const                            // SHELDON: NEW P10-11 ++
 {
     for (const auto& [sensorPath, occId] : existingSensors)
     {
@@ -1426,7 +1369,7 @@ void Manager::setSensorValueToNaN(uint32_t id) const
     return;
 }
 
-void Manager::setSensorValueToNonFunctional(uint32_t id) const
+void Manager::setSensorValueToNonFunctional(uint32_t id) const                  // SHELDON: NEW P10-11 ++
 {
     for (const auto& [sensorPath, occId] : existingSensors)
     {
@@ -1442,7 +1385,7 @@ void Manager::setSensorValueToNonFunctional(uint32_t id) const
     return;
 }
 
-void Manager::getSensorValues(std::unique_ptr<Status>& occ)
+void Manager::getSensorValues(std::unique_ptr<Status>& occ)                     // SHELDON: NEW P10-11 ++
 {
     static bool tracedError[8] = {0};
     const fs::path sensorPath = occ->getHwmonPath();
@@ -1475,10 +1418,9 @@ void Manager::getSensorValues(std::unique_ptr<Status>& occ)
 
     return;
 }
-#endif
 
 // Read the altitude from DBus
-void Manager::readAltitude()
+void Manager::readAltitude()                                                    // SHELDON: BASE
 {
     static bool traceAltitudeErr = true;
 
@@ -1524,7 +1466,7 @@ void Manager::readAltitude()
 }
 
 // Callback function when ambient temperature changes
-void Manager::ambientCallback(sdbusplus::message_t& msg)
+void Manager::ambientCallback(sdbusplus::message_t& msg)                        // SHELDON: BASE, Inherited P10-11 ++
 {
     double currentTemp = 0;
     uint8_t truncatedTemp = 0xFF;
@@ -1571,7 +1513,6 @@ void Manager::ambientCallback(sdbusplus::message_t& msg)
 
         lg2::debug("ambientCallback: Ambient: {TEMP}C, altitude: {ALT}m",
                    "TEMP", ambient, "ALT", altitude);
-#ifdef POWER10
         // Send ambient and altitude to all OCCs
         for (auto& obj : statusObjects)
         {
@@ -1580,12 +1521,11 @@ void Manager::ambientCallback(sdbusplus::message_t& msg)
                 obj->sendAmbient(ambient, altitude);
             }
         }
-#endif // POWER10
     }
 }
 
 // return the current ambient and altitude readings
-void Manager::getAmbientData(bool& ambientValid, uint8_t& ambientTemp,
+void Manager::getAmbientData(bool& ambientValid, uint8_t& ambientTemp,          // SHELDON: BASE
                              uint16_t& altitudeValue) const
 {
     ambientValid = true;
@@ -1598,10 +1538,9 @@ void Manager::getAmbientData(bool& ambientValid, uint8_t& ambientTemp,
     }
 }
 
-#ifdef POWER10
 // Called when waitForAllOccsTimer expires
 // After the first OCC goes active, this timer will be started (60 seconds)
-void Manager::occsNotAllRunning()
+void Manager::occsNotAllRunning()                                               // SHELDON: NEW P10-11 ++
 {
     if (resetInProgress)
     {
@@ -1635,12 +1574,11 @@ void Manager::occsNotAllRunning()
     }
 }
 
-#ifdef PLDM
 // Called when throttlePldmTraceTimer expires.
 // If this timer expires, that indicates there are no OCC active sensor PDRs
 // found which will trigger pldm traces to be throttled.
 // The second time this timer expires, a PEL will get created.
-void Manager::throttlePldmTraceExpired()
+void Manager::throttlePldmTraceExpired()                                        // SHELDON: NEW P10-11 ++
 {
     if (utils::isHostRunning())
     {
@@ -1669,7 +1607,7 @@ void Manager::throttlePldmTraceExpired()
     }
 }
 
-void Manager::createPldmSensorPEL()
+void Manager::createPldmSensorPEL()                                             // SHELDON: NEW P10-11 ++
 {
     Error::Descriptor d = Error::Descriptor(MISSING_OCC_SENSORS_PATH);
     std::map<std::string, std::string> additionalData;
@@ -1712,17 +1650,14 @@ void Manager::createPldmSensorPEL()
                    e.what());
     }
 }
-#endif // PLDM
-#endif // POWER10
 
 // Verify single master OCC and start presence monitor
-void Manager::validateOccMaster()
+void Manager::validateOccMaster()                                               // SHELDON: BASE, Inherited P10-11 ++
 {
     int masterInstance = -1;
     for (auto& obj : statusObjects)
     {
         auto instance = obj->getOccInstanceID();
-#ifdef POWER10
         if (!obj->occActive())
         {
             if (utils::isHostRunning())
@@ -1739,9 +1674,7 @@ void Manager::validateOccMaster()
                 else
                 {
                     // OCC does not appear to be active yet, check active sensor
-#ifdef PLDM
                     pldmHandle->checkActiveSensor(instance);
-#endif
                     if (obj->occActive())
                     {
                         lg2::info(
@@ -1758,7 +1691,6 @@ void Manager::validateOccMaster()
                 return;
             }
         }
-#endif // POWER10
 
         if (obj->isMasterOcc())
         {
@@ -1791,13 +1723,11 @@ void Manager::validateOccMaster()
     {
         lg2::info("validateOccMaster: OCC{INST} is master of {COUNT} OCCs",
                   "INST", masterInstance, "COUNT", activeCount);
-#ifdef POWER10
         pmode->updateDbusSafeMode(false);
-#endif
     }
 }
 
-void Manager::updatePcapBounds() const
+void Manager::updatePcapBounds() const                                          // SHELDON: BASE
 {
     if (pcap)
     {
@@ -1807,7 +1737,7 @@ void Manager::updatePcapBounds() const
 
 // Clean up any variables since the OCC is no longer running.
 // Called when pldm receives an event indicating host is powered off.
-void Manager::hostPoweredOff()
+void Manager::hostPoweredOff()                                                  // SHELDON: BASE
 {
     if (resetRequired)
     {
