@@ -1,3 +1,4 @@
+
 #include "occ_manager.hpp"
 
 #include <stdlib.h>
@@ -25,12 +26,11 @@ class ErrorFiles : public ::testing::Test
   public:
     ErrorFiles() :
         rc(sd_event_default(&event)), pEvent(event), manager(pEvent),
-        status(pEvent, "/dummy1", manager
 #ifdef POWER10
-               ,
-               powerMode
+        status(pEvent, "/dummy1", manager, powerMode)
+#else
+        status(pEvent, "/dummy1", manager)
 #endif
-        )
     {
         EXPECT_GE(rc, 0);
         event = nullptr;
