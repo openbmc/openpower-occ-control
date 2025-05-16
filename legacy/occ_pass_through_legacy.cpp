@@ -1,6 +1,6 @@
 #include "config.h"
 
-#include "occ_pass_through.hpp"
+#include "legacy/occ_pass_through_legacy.hpp"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -21,11 +21,8 @@ namespace occ
 using namespace phosphor::logging;
 using namespace sdbusplus::org::open_power::OCC::Device::Error;
 
-PassThrough::PassThrough(
-    const char* path,
-    std::unique_ptr<open_power::occ::powermode::PowerMode>& powerModeRef) :
+PassThrough::PassThrough(const char* path) :
     Iface(utils::getBus(), path), path(path),
-    pmode(powerModeRef),
     devicePath(OCC_DEV_PATH + std::to_string((this->path.back() - '0') + 1)),
     occInstance(this->path.back() - '0'),
     activeStatusSignal(
@@ -126,34 +123,10 @@ std::vector<uint8_t> PassThrough::send(std::vector<uint8_t> command)
 
 bool PassThrough::setMode(const uint8_t mode, const uint16_t modeData)
 {
-    SysPwrMode newMode = SysPwrMode(mode);
-
-    if (!pmode)
-    {
-        lg2::error("PassThrough::setMode: PowerMode is not defined!");
-        return false;
-    }
-
-    if (!pmode->isValidMode(SysPwrMode(mode)))
-    {
-        lg2::error(
-            "PassThrough::setMode() Unsupported mode {MODE} requested ({DATA})",
-            "MODE", newMode, "DATA", modeData);
-        return false;
-    }
-
-    if (((newMode == SysPwrMode::FFO) || (newMode == SysPwrMode::SFP)) &&
-        (modeData == 0))
-    {
-        lg2::error(
-            "PassThrough::setMode() Mode {MODE} requires non-zero frequency point.",
-            "MODE", newMode);
-        return false;
-    }
-
-    lg2::info("PassThrough::setMode() Setting Power Mode {MODE} (data: {DATA})",
-              "MODE", uint8_t(newMode), "DATA", modeData);
-    return pmode->setMode(newMode, modeData);
+    lg2::debug(
+        "PassThrough::setMode() No support to setting Power Mode {MODE} (data: {DATA})",
+        "MODE", mode, "DATA", modeData);
+    return false;
 }
 
 // Called at OCC Status change signal
