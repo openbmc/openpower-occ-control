@@ -1,4 +1,9 @@
+#ifdef POWER10 // SHELDON: FIX
 #include "occ_manager.hpp"
+#else
+#include "legacy/occ_manager_legacy.hpp"
+#include "legacy/occ_status_legacy.hpp"
+#endif
 
 #include <stdlib.h>
 
