@@ -1,12 +1,11 @@
-#include "occ_status.hpp"
+#include "legacy/occ_status_legacy.hpp"
 
-#include "occ_manager.hpp"
+#include "legacy/occ_manager_legacy.hpp"
 #include "occ_sensor.hpp"
 #include "powermode.hpp"
 #include "utils.hpp"
 
 #include <phosphor-logging/lg2.hpp>
-
 #include <filesystem>
 
 namespace open_power
@@ -72,24 +71,6 @@ bool Status::occActive(bool value)
         else
         {
             // OCC is no longer active
-            if (sensorsValid)
-            {
-                sensorsValid = false;
-                // Sensors not supported (update to NaN and not functional)
-                manager.setSensorValueToNaN(instance);
-            }
-
-            if (pmode && device.master())
-            {
-                // Prevent mode changes
-                pmode->setMasterActive(false);
-            }
-            if (safeStateDelayTimer.isEnabled())
-            {
-                // stop safe delay timer
-                safeStateDelayTimer.setEnabled(false);
-            }
-
             // Call into Manager to let know that we will unbind.
             if (this->managerCallBack)
             {
@@ -155,12 +136,6 @@ bool Status::occActive(bool value)
 // Callback handler when a device error is reported.
 void Status::deviceError(Error::Descriptor d)
 {
-    if (pmode && device.master())
-    {
-        // Prevent mode changes
-        pmode->setMasterActive(false);
-    }
-
     if (d.log)
     {
         FFDC::createOCCResetPEL(instance, d.path, d.err, d.callout,
@@ -180,11 +155,22 @@ void Status::resetOCC()
     lg2::info(">>Status::resetOCC() - requesting reset for OCC{INST}", "INST",
               instance);
     this->occActive(false);
+    constexpr auto CONTROL_HOST_PATH = "/org/open_power/control/host0";
+    constexpr auto CONTROL_HOST_INTF = "org.open_power.Control.Host";
 
-    if (resetCallBack)
-    {
-        this->resetCallBack(instance);
-    }
+    // This will throw exception on failure
+    auto service = utils::getService(CONTROL_HOST_PATH, CONTROL_HOST_INTF);
+
+    auto& bus = utils::getBus();
+    auto method = bus.new_method_call(service.c_str(), CONTROL_HOST_PATH,
+                                      CONTROL_HOST_INTF, "Execute");
+    // OCC Reset control command
+    method.append(convertForMessage(Control::Host::Command::OCCReset).c_str());
+
+    // OCC Sensor ID for callout reasons
+    method.append(std::variant<uint8_t>(std::get<0>(sensorMap.at(instance))));
+    bus.call_noreply(method);
+    return;
 }
 
 // Handler called by Host control command handler to convey the
@@ -223,111 +209,6 @@ void Status::readOccState()
         currentOccReadRetriesCount = occReadRetries;
     }
     occReadStateNow();
-}
-
-// Special processing that needs to happen once the OCCs change to ACTIVE state
-void Status::occsWentActive()
-{
-    CmdStatus status = CmdStatus::SUCCESS;
-
-    // IPS data will get sent automatically after a mode change if the mode
-    // supports it.
-    pmode->needToSendIPS();
-
-    status = pmode->sendModeChange();
-    if (status != CmdStatus::SUCCESS)
-    {
-        lg2::error(
-            "Status::occsWentActive: OCC mode change failed with status {STATUS}",
-            "STATUS", status);
-
-        // Disable and reset to try recovering
-        deviceError();
-    }
-}
-
-// Send Ambient and Altitude to the OCC
-CmdStatus Status::sendAmbient(const uint8_t inTemp, const uint16_t inAltitude)
-{
-    CmdStatus status = CmdStatus::FAILURE;
-    bool ambientValid = true;
-    uint8_t ambientTemp = inTemp;
-    uint16_t altitude = inAltitude;
-
-    if (ambientTemp == 0xFF)
-    {
-        // Get latest readings from manager
-        manager.getAmbientData(ambientValid, ambientTemp, altitude);
-        lg2::debug(
-            "sendAmbient: valid: {VALID}, Ambient: {TEMP}C, altitude: {ALT}m",
-            "VALID", ambientValid, "TEMP", ambientTemp, "ALT", altitude);
-    }
-
-    std::vector<std::uint8_t> cmd, rsp;
-    cmd.reserve(11);
-    cmd.push_back(uint8_t(CmdType::SEND_AMBIENT));
-    cmd.push_back(0x00);                    // Data Length (2 bytes)
-    cmd.push_back(0x08);                    //
-    cmd.push_back(0x00);                    // Version
-    cmd.push_back(ambientValid ? 0 : 0xFF); // Ambient Status
-    cmd.push_back(ambientTemp);             // Ambient Temperature
-    cmd.push_back(altitude >> 8);           // Altitude in meters (2 bytes)
-    cmd.push_back(altitude & 0xFF);         //
-    cmd.push_back(0x00);                    // Reserved (3 bytes)
-    cmd.push_back(0x00);
-    cmd.push_back(0x00);
-    lg2::debug("sendAmbient: SEND_AMBIENT "
-               "command to OCC{INST} ({SIZE} bytes)",
-               "INST", instance, "SIZE", cmd.size());
-    status = occCmd.send(cmd, rsp);
-    if (status == CmdStatus::SUCCESS)
-    {
-        if (rsp.size() == 5)
-        {
-            if (RspStatus::SUCCESS != RspStatus(rsp[2]))
-            {
-                lg2::error(
-                    "sendAmbient: SEND_AMBIENT failed with rspStatus {STATUS}",
-                    "STATUS", lg2::hex, rsp[2]);
-                dump_hex(rsp);
-                status = CmdStatus::FAILURE;
-            }
-        }
-        else
-        {
-            lg2::error(
-                "sendAmbient: INVALID SEND_AMBIENT response length:{SIZE}",
-                "SIZE", rsp.size());
-            dump_hex(rsp);
-            status = CmdStatus::FAILURE;
-        }
-    }
-    else
-    {
-        lg2::error("sendAmbient: SEND_AMBIENT FAILED! with status {STATUS}",
-                   "STATUS", lg2::hex, uint8_t(status));
-
-        if (status == CmdStatus::COMM_FAILURE)
-        {
-            // Disable due to OCC comm failure and reset to try recovering
-            deviceError(Error::Descriptor(OCC_COMM_ERROR_PATH));
-        }
-    }
-
-    return status;
-}
-
-// Called when safe timer expires to determine if OCCs need to be reset
-void Status::safeStateDelayExpired()
-{
-    if (this->occActive())
-    {
-        lg2::info(
-            "safeStateDelayExpired: OCC{INST} state missing or not valid, requesting reset",
-            "INST", instance);
-        // Disable and reset to try recovering
-        deviceError(Error::Descriptor(SAFE_ERROR_PATH));
-    }
 }
 
 fs::path Status::getHwmonPath()
@@ -445,71 +326,9 @@ void Status::occReadStateNow()
                 "INST", instance, "STATE", lg2::hex, state, "PRIOR", lg2::hex,
                 lastState);
             lastState = state;
-
-            if (OccState(state) == OccState::ACTIVE)
-            {
-                if (pmode && device.master())
-                {
-                    // Set the master OCC on the PowerMode object
-                    pmode->setMasterOcc(path);
-                    // Enable mode changes
-                    pmode->setMasterActive();
-
-                    // Special processing by master OCC when it goes active
-                    occsWentActive();
-                }
-
-                CmdStatus status = sendAmbient();
-                if (status != CmdStatus::SUCCESS)
-                {
-                    lg2::error(
-                        "readOccState: Sending Ambient failed with status {STATUS}",
-                        "STATUS", status);
-                }
-            }
-
-            // If OCC in known Good State.
-            if ((OccState(state) == OccState::ACTIVE) ||
-                (OccState(state) == OccState::CHARACTERIZATION) ||
-                (OccState(state) == OccState::OBSERVATION))
-            {
-                // Good OCC State then sensors valid again
-                stateValid = true;
-                sensorsValid = true;
-
-                if (safeStateDelayTimer.isEnabled())
-                {
-                    // stop safe delay timer (no longer in SAFE state)
-                    safeStateDelayTimer.setEnabled(false);
-                }
-            }
-            else
-            {
-                // OCC is in SAFE or some other unsupported state
-                if (!safeStateDelayTimer.isEnabled())
-                {
-                    lg2::error(
-                        "readOccState: Invalid OCC{INST} state of {STATE} (last state: {PRIOR}), starting safe state delay timer",
-                        "INST", instance, "STATE", lg2::hex, state, "PRIOR",
-                        lg2::hex, lastState);
-                    // start safe delay timer (before requesting reset)
-                    using namespace std::literals::chrono_literals;
-                    safeStateDelayTimer.restartOnce(60s);
-                }
-
-                if (sensorsValid)
-                {
-                    sensorsValid = false;
-                    // Sensors not supported (update to NaN and not functional)
-                    manager.setSensorValueToNaN(instance);
-                }
-            }
+            // Before P10 state not checked, only used good file open.
+            stateValid = true;
         }
-    }
-    else
-    {
-        // Unable to read state
-        stateValid = false;
     }
 
     file.close();
@@ -517,12 +336,6 @@ void Status::occReadStateNow()
     // if failed to read the OCC state -> Attempt retry
     if (!stateWasRead)
     {
-        if (sensorsValid)
-        {
-            sensorsValid = false;
-            manager.setSensorValueToNaN(instance);
-        }
-
         // If not able to read, OCC may be offline
         if (openErrno != lastOccReadStatus)
         {

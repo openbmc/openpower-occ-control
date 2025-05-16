@@ -1,11 +1,9 @@
+#include "legacy/occ_device_legacy.hpp"
 
-#include "occ_device.hpp"
-
-#include "occ_manager.hpp"
-#include "occ_status.hpp"
+#include "legacy/occ_manager_legacy.hpp"
+#include "legacy/occ_status_legacy.hpp"
 
 #include <phosphor-logging/lg2.hpp>
-
 #include <filesystem>
 #include <iostream>
 
@@ -102,14 +100,6 @@ void Device::errorCallback(int error)
 void Device::presenceCallback(int)
 {
     statusObject.deviceError(Error::Descriptor(PRESENCE_ERROR_PATH));
-}
-
-void Device::timeoutCallback(int error)
-{
-    if (error)
-    {
-        managerObject.sbeTimeout(instance);
-    }
 }
 
 void Device::throttleProcTempCallback(int error)
