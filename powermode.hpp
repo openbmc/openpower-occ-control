@@ -2,7 +2,6 @@
 
 #include "config.h"
 
-#ifdef POWER10
 #include "occ_command.hpp"
 
 #include <cereal/archives/json.hpp>
@@ -539,4 +538,3 @@ class PowerMode : public ModeInterface
 } // namespace occ
 
 } // namespace open_power
-#endif
