@@ -47,9 +47,9 @@ class Device
      */
     Device(EventPtr& event, const fs::path& path, Manager& manager,
            Status& status,
-#ifdef POWER10
+
            std::unique_ptr<powermode::PowerMode>& powerModeRef,
-#endif
+
            unsigned int instance = 0) :
         devPath(path), instance(instance), statusObject(status),
         managerObject(manager),
@@ -60,13 +60,8 @@ class Device
                 path /
                     fs::path("../../sbefifo" + std::to_string(instance + 1)) /
                     "timeout",
-#ifdef PLDM
                 std::bind(std::mem_fn(&Device::timeoutCallback), this,
-                          std::placeholders::_1)
-#else
-                nullptr
-#endif
-                    ),
+                          std::placeholders::_1)),
         ffdc(event, path / "ffdc", instance),
         presence(event, path / "occs_present", manager,
                  std::bind(std::mem_fn(&Device::errorCallback), this,
@@ -81,11 +76,8 @@ class Device
                       std::placeholders::_1)),
         throttleMemTemp(event, path / "occ_mem_throttle",
                         std::bind(std::mem_fn(&Device::throttleMemTempCallback),
-                                  this, std::placeholders::_1))
-#ifdef POWER10
-        ,
+                                  this, std::placeholders::_1)),
         pmode(powerModeRef)
-#endif
     {
         // Nothing to do here
     }
@@ -105,27 +97,12 @@ class Device
      */
     inline void addErrorWatch(bool poll = true)
     {
-#ifdef POWER10
         throttleProcTemp.addWatch(poll);
-#else
-        try
-        {
-            throttleProcTemp.addWatch(poll);
-        }
-        catch (const OpenFailure& e)
-        {
-            // try the old kernel version
-            throttleProcTemp.setFile(devPath / "occ_dvfs_ot");
-            throttleProcTemp.addWatch(poll);
-        }
-#endif
 
-#ifdef POWER10
         if (master())
         {
             pmode->addIpsWatch(poll);
         }
-#endif
 
         throttleProcPower.addWatch(poll);
         throttleMemTemp.addWatch(poll);
@@ -162,12 +139,11 @@ class Device
         throttleMemTemp.removeWatch();
         throttleProcPower.removeWatch();
         throttleProcTemp.removeWatch();
-#ifdef POWER10
+
         if (master())
         {
             pmode->removeIpsWatch();
         }
-#endif
     }
 
     /** @brief Starts to watch how many OCCs are present on the master */
@@ -222,10 +198,8 @@ class Device
     Error throttleProcPower;
     Error throttleMemTemp;
 
-#ifdef POWER10
     /** @brief OCC PowerMode object */
     std::unique_ptr<powermode::PowerMode>& pmode;
-#endif
 
     /** @brief file reader to read a binary string ("1" or "0")
      *
@@ -262,13 +236,11 @@ class Device
      */
     void presenceCallback(int occsPresent);
 
-#ifdef PLDM
     /** @brief callback for SBE timeout monitoring
      *
      * @param[in] error - True if an error is reported, false otherwise
      */
     void timeoutCallback(int error);
-#endif
 
     /** @brief callback for the proc temp throttle event
      *
