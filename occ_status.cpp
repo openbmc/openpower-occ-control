@@ -72,7 +72,6 @@ bool Status::occActive(bool value)
         else
         {
             // OCC is no longer active
-#ifdef POWER10
             if (sensorsValid)
             {
                 sensorsValid = false;
@@ -90,7 +89,7 @@ bool Status::occActive(bool value)
                 // stop safe delay timer
                 safeStateDelayTimer.setEnabled(false);
             }
-#endif
+
             // Call into Manager to let know that we will unbind.
             if (this->managerCallBack)
             {
@@ -156,13 +155,11 @@ bool Status::occActive(bool value)
 // Callback handler when a device error is reported.
 void Status::deviceError(Error::Descriptor d)
 {
-#ifdef POWER10
     if (pmode && device.master())
     {
         // Prevent mode changes
         pmode->setMasterActive(false);
     }
-#endif
 
     if (d.log)
     {
@@ -183,29 +180,10 @@ void Status::resetOCC()
     lg2::info(">>Status::resetOCC() - requesting reset for OCC{INST}", "INST",
               instance);
     this->occActive(false);
-#ifdef PLDM
     if (resetCallBack)
     {
         this->resetCallBack(instance);
     }
-#else
-    constexpr auto CONTROL_HOST_PATH = "/org/open_power/control/host0";
-    constexpr auto CONTROL_HOST_INTF = "org.open_power.Control.Host";
-
-    // This will throw exception on failure
-    auto service = utils::getService(CONTROL_HOST_PATH, CONTROL_HOST_INTF);
-
-    auto& bus = utils::getBus();
-    auto method = bus.new_method_call(service.c_str(), CONTROL_HOST_PATH,
-                                      CONTROL_HOST_INTF, "Execute");
-    // OCC Reset control command
-    method.append(convertForMessage(Control::Host::Command::OCCReset).c_str());
-
-    // OCC Sensor ID for callout reasons
-    method.append(std::variant<uint8_t>(std::get<0>(sensorMap.at(instance))));
-    bus.call_noreply(method);
-    return;
-#endif
 }
 
 // Handler called by Host control command handler to convey the
@@ -246,7 +224,6 @@ void Status::readOccState()
     occReadStateNow();
 }
 
-#ifdef POWER10
 // Special processing that needs to happen once the OCCs change to ACTIVE state
 void Status::occsWentActive()
 {
@@ -351,7 +328,6 @@ void Status::safeStateDelayExpired()
         deviceError(Error::Descriptor(SAFE_ERROR_PATH));
     }
 }
-#endif // POWER10
 
 fs::path Status::getHwmonPath()
 {
@@ -468,7 +444,7 @@ void Status::occReadStateNow()
                 "INST", instance, "STATE", lg2::hex, state, "PRIOR", lg2::hex,
                 lastState);
             lastState = state;
-#ifdef POWER10
+
             if (OccState(state) == OccState::ACTIVE)
             {
                 if (pmode && device.master())
@@ -527,31 +503,24 @@ void Status::occReadStateNow()
                     manager.setSensorValueToNaN(instance);
                 }
             }
-#else
-            // Before P10 state not checked, only used good file open.
-            stateValid = true;
-#endif
         }
     }
-#ifdef POWER10
     else
     {
         // Unable to read state
         stateValid = false;
     }
-#endif
+
     file.close();
 
     // if failed to read the OCC state -> Attempt retry
     if (!stateWasRead)
     {
-#ifdef READ_OCC_SENSORS
         if (sensorsValid)
         {
             sensorsValid = false;
             manager.setSensorValueToNaN(instance);
         }
-#endif
 
         // If not able to read, OCC may be offline
         if (openErrno != lastOccReadStatus)

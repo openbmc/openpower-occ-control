@@ -22,16 +22,9 @@ using namespace phosphor::logging;
 using namespace sdbusplus::org::open_power::OCC::Device::Error;
 
 PassThrough::PassThrough(
-    const char* path
-#ifdef POWER10
-    ,
-    std::unique_ptr<open_power::occ::powermode::PowerMode>& powerModeRef
-#endif
-    ) :
-    Iface(utils::getBus(), path), path(path),
-#ifdef POWER10
-    pmode(powerModeRef),
-#endif
+    const char* path,
+    std::unique_ptr<open_power::occ::powermode::PowerMode>& powerModeRef) :
+    Iface(utils::getBus(), path), path(path), pmode(powerModeRef),
     devicePath(OCC_DEV_PATH + std::to_string((this->path.back() - '0') + 1)),
     occInstance(this->path.back() - '0'),
     activeStatusSignal(
@@ -132,7 +125,6 @@ std::vector<uint8_t> PassThrough::send(std::vector<uint8_t> command)
 
 bool PassThrough::setMode(const uint8_t mode, const uint16_t modeData)
 {
-#ifdef POWER10
     SysPwrMode newMode = SysPwrMode(mode);
 
     if (!pmode)
@@ -161,12 +153,6 @@ bool PassThrough::setMode(const uint8_t mode, const uint16_t modeData)
     lg2::info("PassThrough::setMode() Setting Power Mode {MODE} (data: {DATA})",
               "MODE", uint8_t(newMode), "DATA", modeData);
     return pmode->setMode(newMode, modeData);
-#else
-    lg2::debug(
-        "PassThrough::setMode() No support to setting Power Mode {MODE} (data: {DATA})",
-        "MODE", mode, "DATA", modeData);
-    return false;
-#endif
 }
 
 // Called at OCC Status change signal
