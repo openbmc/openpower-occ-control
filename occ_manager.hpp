@@ -2,18 +2,14 @@
 
 #include "occ_pass_through.hpp"
 #include "occ_status.hpp"
-#ifdef PLDM
 #include "pldm.hpp"
 
 #ifdef PHAL_SUPPORT
 #include <libphal.H>
 #endif
-#endif
 #include "powercap.hpp"
-#include "utils.hpp"
-#ifdef POWER10
 #include "powermode.hpp"
-#endif
+#include "utils.hpp"
 
 #include <sdbusplus/bus.hpp>
 #include <sdeventplus/event.hpp>
@@ -29,7 +25,6 @@ namespace open_power
 namespace occ
 {
 
-#ifdef READ_OCC_SENSORS
 enum occFruType
 {
     processorCore = 0,
@@ -41,14 +36,9 @@ enum occFruType
     memCtlrExSensor = 8,
     processorIoRing = 9
 };
-#endif
 
 /** @brief Default time, in seconds, between OCC poll commands */
-#ifndef POWER10
-constexpr unsigned int defaultPollingInterval = 1;
-#else
 constexpr unsigned int defaultPollingInterval = 5;
-#endif
 
 constexpr auto AMBIENT_PATH =
     "/xyz/openbmc_project/sensors/temperature/Ambient_Virtual_Temp";
@@ -92,9 +82,7 @@ struct Manager
                 sdbusRule::path(AMBIENT_PATH) +
                 sdbusRule::argN(0, AMBIENT_INTERFACE) +
                 sdbusRule::interface("org.freedesktop.DBus.Properties"),
-            std::bind(&Manager::ambientCallback, this, std::placeholders::_1))
-#ifdef POWER10
-        ,
+            std::bind(&Manager::ambientCallback, this, std::placeholders::_1)),
         discoverTimer(
             std::make_unique<
                 sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
@@ -102,22 +90,14 @@ struct Manager
         waitForAllOccsTimer(
             std::make_unique<
                 sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
-                sdpEvent, std::bind(&Manager::occsNotAllRunning, this)))
-#ifdef PLDM
-        ,
+                sdpEvent, std::bind(&Manager::occsNotAllRunning, this))),
         throttlePldmTraceTimer(
             std::make_unique<
                 sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
                 sdpEvent, std::bind(&Manager::throttlePldmTraceExpired, this)))
-#endif
-#endif // POWER10
     {
-#ifdef I2C_OCC
-        // I2C OCC status objects are initialized directly
-        initStatusObjects();
-#else
         findAndCreateObjects();
-#endif
+
         readAltitude();
     }
 
@@ -129,14 +109,12 @@ struct Manager
         return activeCount;
     }
 
-#ifdef PLDM
     /** @brief Called by a Device to report that the SBE timed out
      *         and appropriate action should be taken
      *
      * @param[in] instance - the OCC instance id
      */
     void sbeTimeout(unsigned int instance);
-#endif
 
     /** @brief Return the latest ambient and altitude readings
      *
@@ -219,10 +197,8 @@ struct Manager
     /** @brief Power cap monitor and occ notification object */
     std::unique_ptr<open_power::occ::powercap::PowerCap> pcap;
 
-#ifdef POWER10
     /** @brief Power mode monitor and notification object */
     std::unique_ptr<open_power::occ::powermode::PowerMode> pmode;
-#endif
 
     /** @brief sbdbusplus match objects */
     std::vector<sdbusplus::bus::match_t> cpuMatches;
@@ -269,16 +245,6 @@ struct Manager
      * requests) */
     bool resetInProgress = false;
 
-#ifdef I2C_OCC
-    /** @brief Init Status objects for I2C OCC devices
-     *
-     * It iterates in /sys/bus/i2c/devices, finds all occ hwmon devices
-     * and creates status objects.
-     */
-    void initStatusObjects();
-#endif
-
-#ifdef PLDM
     /** @brief Callback handler invoked by the PLDM event handler when state of
      *         the OCC is toggled by the host. The caller passes the instance
      *         of the OCC and state of the OCC.
@@ -336,9 +302,7 @@ struct Manager
 #endif
 
     std::unique_ptr<pldm::Interface> pldmHandle = nullptr;
-#endif
 
-#ifdef POWER10
     /**
      * @brief Timer used when discovering OCCs in /dev.
      */
@@ -359,7 +323,6 @@ struct Manager
         sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>
         waitForAllOccsTimer;
 
-#ifdef PLDM
     /**
      * @brief Timer used to throttle PLDM traces when there are problems
      determining the OCC status via pldm. Used to prevent excessive
@@ -386,7 +349,6 @@ struct Manager
      * via PLDM. This is called when the throttlePldmTraceTimer expires.
      */
     void createPldmSensorPEL();
-#endif
 
     /** @brief Called when code times out waiting for all OCCs to be running or
      *         after the app is restarted (Status does not callback into
@@ -398,7 +360,6 @@ struct Manager
      * restart the discoverTimer
      */
     void checkAllActiveSensors();
-#endif // POWER10
 
     /**
      * @brief Called when poll timer expires and forces a POLL command to the
@@ -413,7 +374,6 @@ struct Manager
      */
     std::vector<int> findOCCsInDev();
 
-#ifdef READ_OCC_SENSORS
     /**
      * @brief Gets the occ sensor values.
      * @param[in] occ - pointer to OCCs Status object
@@ -486,7 +446,6 @@ struct Manager
         {memCtrlAndDimm, "dimm_dram_extmb_dvfs_temp"},
         {PMIC, "dimm_pmic_dvfs_temp"},
         {memCtlrExSensor, "dimm_extmb_dvfs_temp"}};
-#endif
 
     /** @brief Read the altitude from DBus */
     void readAltitude();
