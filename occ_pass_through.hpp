@@ -40,12 +40,8 @@ class PassThrough : public Iface
      *  @param[in] path - Path to attach at
      */
     explicit PassThrough(
-        const char* path
-#ifdef POWER10
-        ,
-        std::unique_ptr<open_power::occ::powermode::PowerMode>& powerModeRef
-#endif
-    );
+        const char* path,
+        std::unique_ptr<open_power::occ::powermode::PowerMode>& powerModeRef);
 
     /** @brief Pass through command to OCC from dbus
      *  @param[in] command - command to pass-through
@@ -72,10 +68,8 @@ class PassThrough : public Iface
     /** @brief Pass-through occ path on the bus */
     std::string path;
 
-#ifdef POWER10
     /** @brief OCC PowerMode object */
     std::unique_ptr<open_power::occ::powermode::PowerMode>& pmode;
-#endif
 
     /** @brief OCC device path
      *  For now, here is the hard-coded mapping until
