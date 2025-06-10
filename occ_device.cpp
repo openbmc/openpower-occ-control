@@ -103,7 +103,6 @@ void Device::presenceCallback(int)
     statusObject.deviceError(Error::Descriptor(PRESENCE_ERROR_PATH));
 }
 
-#ifdef PLDM
 void Device::timeoutCallback(int error)
 {
     if (error)
@@ -111,7 +110,6 @@ void Device::timeoutCallback(int error)
         managerObject.sbeTimeout(instance);
     }
 }
-#endif
 
 void Device::throttleProcTempCallback(int error)
 {

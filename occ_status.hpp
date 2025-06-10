@@ -1,7 +1,6 @@
 #pragma once
 #include "config.h"
 
-#include "i2c_occ.hpp"
 #include "occ_command.hpp"
 #include "occ_device.hpp"
 #include "occ_events.hpp"
@@ -13,10 +12,8 @@
 #include <org/open_power/OCC/Status/server.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/server/object.hpp>
-#ifdef POWER10
 #include <sdeventplus/event.hpp>
 #include <sdeventplus/utility/timer.hpp>
-#endif
 #include <xyz/openbmc_project/Control/Power/Throttle/server.hpp>
 
 #include <functional>
@@ -86,35 +83,17 @@ class Status : public Interface
      *                             protocol
      */
     Status(EventPtr& event, const char* path, Manager& managerRef,
-#ifdef POWER10
            std::unique_ptr<powermode::PowerMode>& powerModeRef,
-#endif
-           std::function<void(instanceID, bool)> callBack = nullptr
-#ifdef PLDM
-           ,
-           std::function<void(instanceID)> resetCallBack = nullptr
-#endif
-           ) :
-
+           std::function<void(instanceID, bool)> callBack = nullptr,
+           std::function<void(instanceID)> resetCallBack = nullptr) :
         Interface(utils::getBus(), getDbusPath(path).c_str(),
                   Interface::action::defer_emit),
         path(path), managerCallBack(callBack), instance(getInstance(path)),
-        manager(managerRef),
-#ifdef POWER10
-        pmode(powerModeRef),
-#endif
+        manager(managerRef), pmode(powerModeRef),
         device(event,
-#ifdef I2C_OCC
-               fs::path(DEV_PATH) / i2c_occ::getI2cDeviceName(path),
-#else
                fs::path(DEV_PATH) /
                    fs::path(sysfsName + "." + std::to_string(instance + 1)),
-#endif
-               managerRef, *this,
-#ifdef POWER10
-               powerModeRef,
-#endif
-               instance),
+               managerRef, *this, powerModeRef, instance),
         hostControlSignal(
             utils::getBus(),
             sdbusRule::type::signal() + sdbusRule::member("CommandComplete") +
@@ -126,19 +105,12 @@ class Status : public Interface
                       std::placeholders::_1)),
         occCmd(instance, (fs::path(OCC_CONTROL_ROOT) /
                           (std::string(OCC_NAME) + std::to_string(instance)))
-                             .c_str())
-#ifdef POWER10
-        ,
+                             .c_str()),
         sdpEvent(sdeventplus::Event::get_default()),
         safeStateDelayTimer(
             sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>(
-                sdpEvent, std::bind(&Status::safeStateDelayExpired, this)))
-#endif
-
-#ifdef PLDM
-        ,
+                sdpEvent, std::bind(&Status::safeStateDelayExpired, this))),
         resetCallBack(resetCallBack)
-#endif
     {
         // Announce that we are ready
         this->emit_object_added();
@@ -197,7 +169,6 @@ class Status : public Interface
      */
     void deviceError(Error::Descriptor d = Error::Descriptor());
 
-#ifdef POWER10
     /** @brief Handle additional tasks when the OCCs reach active state */
     void occsWentActive();
 
@@ -229,7 +200,6 @@ class Status : public Interface
     {
         return pldmSensorStateReceived;
     }
-#endif // POWER10
 
     /** @brief Return the HWMON path for this OCC
      *
@@ -287,10 +257,8 @@ class Status : public Interface
     /** @brief The Trigger to indicate OCC State is valid or not. */
     bool stateValid = false;
 
-#ifdef POWER10
     /** @brief The Trigger to indicate OCC sensors are valid or not. */
     bool sensorsValid = false;
-#endif
 
     /** @brief OCC instance to Sensor definitions mapping */
     static const std::map<instanceID, sensorDefs> sensorMap;
@@ -298,10 +266,8 @@ class Status : public Interface
     /** @brief OCC manager object */
     const Manager& manager;
 
-#ifdef POWER10
     /** @brief OCC PowerMode object */
     std::unique_ptr<powermode::PowerMode>& pmode;
-#endif
 
     /** @brief OCC device object to do bind and unbind */
     Device device;
@@ -317,10 +283,8 @@ class Status : public Interface
     /** @brief Command object to send commands to the OCC */
     OccCommand occCmd;
 
-#ifdef POWER10
     /** @brief timer event */
     sdeventplus::Event sdpEvent;
-#endif
 
     /** @brief hwmon path for this OCC */
     fs::path hwmonPath;
@@ -347,7 +311,6 @@ class Status : public Interface
         return (path.empty() ? 0 : path.back() - '0');
     }
 
-#ifdef POWER10
     /**
      * @brief Timer that is started when OCC is detected to be in safe mode
      */
@@ -358,7 +321,6 @@ class Status : public Interface
      * safe mode. Called to verify and then disable and reset the OCCs.
      */
     void safeStateDelayExpired();
-#endif // POWER10
 
     /** @brief Callback for timer that is started when OCC state
      * was not able to be read. Called to attempt another read when needed.
@@ -388,9 +350,8 @@ class Status : public Interface
 
         return estimatedPath;
     }
-#ifdef PLDM
+
     std::function<void(instanceID)> resetCallBack = nullptr;
-#endif
 
     /** @brief Current throttle reason(s) for this processor */
     uint8_t throttleCause = THROTTLED_NONE;
