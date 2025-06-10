@@ -36,22 +36,9 @@ conf_data.set('OCC_CPU_TEMP_SENSOR_TYPE', 0xC0)
 conf_data.set('OCC_DIMM_TEMP_SENSOR_TYPE', 0xD0)
 conf_data.set('PS_DERATING_FACTOR', get_option('ps-derating-factor'))
 
-if get_option('i2c-occ').allowed()
-    conf_data.set_quoted('OCC_HWMON_PATH', '/sys/bus/i2c/drivers/occ-hwmon/')
-    conf_data.set_quoted('DEV_PATH', '/sys/bus/i2c/devices')
-    conf_data.set_quoted('I2C_OCC_DEVICE_NAME', 'p8-occ-hwmon')
-else
-    conf_data.set_quoted(
-        'OCC_HWMON_PATH',
-        '/sys/bus/platform/drivers/occ-hwmon/',
-    )
-    conf_data.set_quoted('DEV_PATH', '/sys/bus/platform/devices/')
-endif
+conf_data.set_quoted('OCC_HWMON_PATH', '/sys/bus/platform/drivers/occ-hwmon/')
+conf_data.set_quoted('DEV_PATH', '/sys/bus/platform/devices/')
 
-conf_data.set('I2C_OCC', get_option('i2c-occ').allowed())
-conf_data.set('READ_OCC_SENSORS', get_option('read-occ-sensors').allowed())
-conf_data.set('PLDM', get_option('with-host-communication-protocol') == 'pldm')
-conf_data.set('POWER10', get_option('power10-support').allowed())
 conf_data.set('PHAL_SUPPORT', get_option('phal-support').allowed())
 
 if get_option('transport-implementation') == 'mctp-demux'
@@ -106,6 +93,7 @@ nlohmann_json_dep = dependency('nlohmann_json', include_type: 'system')
 phosphor_dbus_interfaces_dep = dependency('phosphor-dbus-interfaces')
 phosphor_logging_dep = dependency('phosphor-logging')
 sdeventplus_dep = dependency('sdeventplus')
+libpldm_dep = dependency('libpldm')
 
 deps += [
     cereal_dep,
@@ -114,6 +102,7 @@ deps += [
     phosphor_logging_dep,
     sdbusplus_dep,
     sdeventplus_dep,
+    libpldm_dep,
 ]
 
 sources += [
@@ -128,21 +117,10 @@ sources += [
     'occ_command.cpp',
     'occ_dbus.cpp',
     'powercap.cpp',
-    'i2c_occ.cpp',
+    'powermode.cpp',
+    'pldm.cpp',
     'utils.cpp',
 ]
-
-if get_option('with-host-communication-protocol') == 'pldm'
-    libpldm_dep = dependency('libpldm')
-    deps += [libpldm_dep]
-    sources += ['pldm.cpp']
-endif
-
-if get_option('power10-support').allowed()
-    libpldm_dep = dependency('libpldm')
-    deps += [libpldm_dep]
-    sources += ['pldm.cpp', 'powermode.cpp']
-endif
 
 if get_option('phal-support').allowed()
     deps += [cxx.find_library('pdbg'), cxx.find_library('phal')]
