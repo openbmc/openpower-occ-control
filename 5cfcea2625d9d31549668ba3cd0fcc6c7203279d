@@ -16,6 +16,23 @@
       "message": "Finished visual look.\nMoving to HW test.",
       "revId": "5cfcea2625d9d31549668ba3cd0fcc6c7203279d",
       "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9326d099_7a715b2c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2025-06-11T22:41:01Z",
+      "side": 1,
+      "message": "Looks good, but I would like the commit message tweaked a bit to emphasize the changes. Something like:\n\nRemove support for P8 and P9 processors\n\nStarting with this commit, occ-control will no longer support the following:\n- P8 Processors (uses I2C communication with the OCCs)\n- P9 Processors (uses SBEFIFO for communication with the OCCs)\n\nThis commit has no changes to occ-control functionality for P10 and newer processors.\nThis change cleans up the code and removes redundant compiler flags.",
+      "revId": "5cfcea2625d9d31549668ba3cd0fcc6c7203279d",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
     }
   ]
 }
