@@ -96,6 +96,17 @@ std::string getServiceUsingSubTree(const std::string& interface,
  */
 bool isHostRunning();
 
+/**
+ * @brief Convert vector to hex dump string
+ *
+ * @param[in] data       - vector of uint8_ data
+ * @param[in] path       - length of data to use (0 = all data)
+ *
+ * @return vector of strings
+ */
+std::vector<std::string> hex_dump(const std::vector<std::uint8_t>& data,
+                                  const unsigned int data_len = 0);
+
 } // namespace utils
 } // namespace occ
 } // namespace open_power

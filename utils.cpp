@@ -247,6 +247,39 @@ bool isHostRunning()
     return false;
 }
 
+// Convert vector to hex dump string
+std::vector<std::string> hex_dump(const std::vector<std::uint8_t>& data,
+                                  const unsigned int data_len)
+{
+    unsigned int dump_length = data.size();
+    if ((data_len > 0) && (data_len < dump_length))
+    {
+        dump_length = data_len;
+    }
+    std::vector<std::string> dumpString;
+    std::string s;
+    for (uint32_t i = 0; i < dump_length; i++)
+    {
+        if (i % 16 == 0)
+        {
+            s += std::format("{:04X}: ", i);
+        }
+        else if (i % 4 == 0)
+        {
+            s += " ";
+        }
+
+        s += std::format("{:02X}", data.at(i));
+
+        if ((i % 16 == 15) || (i == (dump_length - 1)))
+        {
+            dumpString.push_back(s);
+            s.clear();
+        }
+    }
+    return dumpString;
+}
+
 } // namespace utils
 } // namespace occ
 } // namespace open_power

@@ -13,7 +13,9 @@
 
 #include <sdbusplus/bus.hpp>
 #include <sdeventplus/event.hpp>
+#include <sdeventplus/source/signal.hpp>
 #include <sdeventplus/utility/timer.hpp>
+#include <stdplus/signal.hpp>
 
 #include <cstring>
 #include <functional>
@@ -143,6 +145,15 @@ struct Manager
     /** @brief Clear any state flags that need to be reset when the host state
      * is off */
     void hostPoweredOff();
+
+    /** @brief Collect data to include in BMC dumps
+     *         This will get called when app receives a SIGUSR1 signal
+     */
+    void collectDumpData(sdeventplus::source::Signal&,
+                         const struct signalfd_siginfo*);
+
+    /** @brief Name of file to put the occ-control dump data */
+    static const std::string dumpFile;
 
   private:
     /** @brief Creates the OCC D-Bus objects.

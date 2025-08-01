@@ -6,6 +6,7 @@
 #include "occ_errors.hpp"
 #include "utils.hpp"
 
+#include <nlohmann/json.hpp>
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/lg2.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
@@ -28,9 +29,11 @@ constexpr auto inputSuffix = "input";
 constexpr auto maxSuffix = "max";
 
 const auto HOST_ON_FILE = "/run/openbmc/host@0-on";
+const std::string Manager::dumpFile = "/tmp/occ_control_dump.json";
 
 using namespace phosphor::logging;
 using namespace std::literals::chrono_literals;
+using json = nlohmann::json;
 
 template <typename T>
 T readFile(const std::string& path)
@@ -1720,6 +1723,92 @@ void Manager::hostPoweredOff()
         resetInProgress = false;
     }
     resetInstance = 255;
+}
+
+void Manager::collectDumpData(sdeventplus::source::Signal&,
+                              const struct signalfd_siginfo*)
+{
+    json data;
+    lg2::info("collectDumpData()");
+    data["objectCount"] = std::to_string(statusObjects.size()) + " OCC objects";
+    if (statusObjects.size() > 0)
+    {
+        try
+        {
+            for (auto& occ : statusObjects)
+            {
+                json occData;
+                auto instance = occ->getOccInstanceID();
+                std::string occName = "occ" + std::to_string(instance);
+
+                if (occ->occActive())
+                {
+                    // OCC General Info
+                    occData["occState"] = "ACTIVE";
+                    occData["occRole"] =
+                        occ->isMasterOcc() ? "MASTER" : "SECONDARY";
+                    occData["occHwmonPath"] =
+                        occ->getHwmonPath().generic_string();
+
+                    // OCC Poll Response
+                    std::vector<std::uint8_t> cmd = {0x00, 0x00, 0x01, 0x20};
+                    std::vector<std::uint8_t> rsp;
+                    std::vector<std::string> rspHex;
+                    rsp = passThroughObjects[instance]->send(cmd);
+                    if (rsp.size() > 5)
+                    {
+                        rsp.erase(rsp.begin(),
+                                  rsp.begin() + 5); // Strip rsp header
+                        rspHex = utils::hex_dump(rsp);
+                        occData["pollResponse"] = rspHex;
+                    }
+
+                    // Debug Data: WOF Dynamic Data
+                    cmd = {0x40, 0x00, 0x01, 0x01};
+                    rsp = passThroughObjects[instance]->send(cmd);
+                    if (rsp.size() > 5)
+                    {
+                        rsp.erase(rsp.begin(),
+                                  rsp.begin() + 5); // Strip rsp header
+                        rspHex = utils::hex_dump(rsp);
+                        occData["wofDataDynamic"] = rspHex;
+                    }
+
+                    // Debug Data: WOF Dynamic Data
+                    cmd = {0x40, 0x00, 0x01, 0x0A};
+                    rsp = passThroughObjects[instance]->send(cmd);
+                    if (rsp.size() > 5)
+                    {
+                        rsp.erase(rsp.begin(),
+                                  rsp.begin() + 5); // Strip rsp header
+                        rspHex = utils::hex_dump(rsp);
+                        occData["wofDataStatic"] = rspHex;
+                    }
+                }
+                else
+                {
+                    occData["occState"] = "NOT ACTIVE";
+                }
+
+                data[occName] = occData;
+            }
+        }
+        catch (const std::exception& e)
+        {
+            lg2::error("Failed to collect OCC dump data: {ERR}", "ERR",
+                       e.what());
+        }
+    }
+
+    std::ofstream file{Manager::dumpFile};
+    if (!file)
+    {
+        lg2::error("Failed to open {FILE} for occ-control data", "FILE",
+                   Manager::dumpFile);
+        return;
+    }
+
+    file << std::setw(4) << data;
 }
 
 } // namespace occ
