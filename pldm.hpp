@@ -159,9 +159,11 @@ class Interface
     /** @brief Send the PLDM message to reset the OCC
      *
      *  @param[in] instanceId - OCC instance to reset
+     *  @param[in] exitSafe   - Attempt to exit safe mode
      *
      */
-    void resetOCC(open_power::occ::instanceID occInstanceId);
+    void resetOCC(open_power::occ::instanceID occInstanceId,
+                  bool exitSafe = false);
 
     /** @brief Send the PLDM message to perform the HRESET
      *

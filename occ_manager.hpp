@@ -190,8 +190,9 @@ struct Manager
      * later) */
     void resetOccRequest(instanceID instance);
 
-    /** @brief Initiate the request to reset the PM Complex (PLDM -> HBRT) */
-    void initiateOccRequest(instanceID instance);
+    /** @brief Initiate the request to reset the PM Complex (to HBRT vis PLDM)
+     */
+    void initiateOccRequest(instanceID instance, bool exitSafe = false);
 
     /** @brief Sends a Heartbeat command to host control command handler */
     void sendHeartBeat();
