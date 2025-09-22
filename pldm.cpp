@@ -432,7 +432,7 @@ std::vector<uint8_t> Interface::prepareSetEffecterReq(
     return request;
 }
 
-void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
+void Interface::resetOCC(open_power::occ::instanceID occInstanceId, bool exitSafe)
 {
     if (open_power::occ::utils::isHostRunning())
     {
@@ -455,9 +455,16 @@ void Interface::resetOCC(open_power::occ::instanceID occInstanceId)
         }
 
         // Prepare the SetStateEffecterStates request to reset the OCC
-        auto request = prepareSetEffecterReq(
-            effecterEntry->second, OCCEffecterCount, bootRestartPosition,
-            PLDM_STATE_SET_BOOT_RESTART_CAUSE_WARM_RESET);
+
+        pldm_state_set_boot_restart_cause_values restartCause =
+            PLDM_STATE_SET_BOOT_RESTART_CAUSE_WARM_RESET;
+        if (exitSafe)
+        {
+            restartCause = PLDM_STATE_SET_BOOT_RESTART_CAUSE_MANUAL_WARM_RESET;
+        }
+        auto request =
+            prepareSetEffecterReq(effecterEntry->second, OCCEffecterCount,
+                                  bootRestartPosition, restartCause);
 
         if (request.empty())
         {

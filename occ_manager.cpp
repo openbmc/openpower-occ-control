@@ -394,7 +394,7 @@ void Manager::resetOccRequest(instanceID instance)
 }
 
 // If a reset has not been started, initiate an OCC reset via PLDM
-void Manager::initiateOccRequest(instanceID instance)
+void Manager::initiateOccRequest(instanceID instance, bool exitSafe)
 {
     if (!resetInProgress)
     {
@@ -413,7 +413,7 @@ void Manager::initiateOccRequest(instanceID instance)
             }
         }
 
-        pldmHandle->resetOCC(instance);
+        pldmHandle->resetOCC(instance, exitSafe);
         resetRequired = false;
     }
     else
@@ -654,6 +654,10 @@ void Manager::updateOccSafeMode(bool safeMode)
     {
         obj->updateThrottle(safeMode, THROTTLED_SAFE);
     }
+
+    lg2::info("CJC: updateOccSafeMode - attemting to exit safe mode");
+    sleep(15);
+    initiateOccRequest(resetInstance, true);
 }
 
 void Manager::sbeHRESETResult(instanceID instance, bool success)
