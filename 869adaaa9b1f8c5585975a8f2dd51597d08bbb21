@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8a80ec8e_284dd9de",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000238
+      },
+      "writtenOn": "2025-09-23T13:47:14Z",
+      "side": 1,
+      "message": "This is potential code that could be used to trigger exit from safe mode. HTMGT changes also required to recognize the new MANUAL state.",
+      "revId": "869adaaa9b1f8c5585975a8f2dd51597d08bbb21",
+      "serverId": "adbd0a64-1f21-4d83-b585-671fe73cb6e4"
+    }
+  ]
+}
