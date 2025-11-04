@@ -1374,6 +1374,7 @@ bool PowerMode::getSupportedModes()
     using PMode = sdbusplus::xyz::openbmc_project::Control::Power::server::Mode;
     std::set<PMode::PowerMode> modesToAllow;
     auto custList = powerModeProperties.find("CustomerModes");
+    const std::string POWERMODE_STRING = ".PowerMode.";
     if (custList != powerModeProperties.end())
     {
         auto modeList = std::get<std::vector<std::string>>(custList->second);
@@ -1381,7 +1382,7 @@ bool PowerMode::getSupportedModes()
         {
             // Ensure mode is valid
             const std::string fullModeString =
-                PMODE_INTERFACE + ".PowerMode."s + mode;
+                PMODE_INTERFACE + POWERMODE_STRING + mode;
             lg2::info("getSupportedModes(): {MODE}", "MODE", mode);
             SysPwrMode modeValue =
                 powermode::convertStringToMode(fullModeString);
@@ -1423,7 +1424,7 @@ bool PowerMode::getSupportedModes()
         {
             // Ensure mode is valid
             const std::string fullModeString =
-                PMODE_INTERFACE + ".PowerMode."s + mode;
+                PMODE_INTERFACE + POWERMODE_STRING + mode;
             SysPwrMode modeValue =
                 powermode::convertStringToMode(fullModeString);
             if (VALID_POWER_MODE_SETTING(modeValue) ||
