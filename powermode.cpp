@@ -309,8 +309,8 @@ bool isPowerVM()
     method.append(HYPE_INTERFACE, HYPE_PROP);
     auto reply = bus.call(method);
 
-    std::variant<std::string> hyperEntryValue;
-    reply.read(hyperEntryValue);
+    auto hyperEntryValue = reply.unpack<std::variant<std::string>>();
+
     auto propVal = std::get<std::string>(hyperEntryValue);
     if (Hyper::Target::convertHypervisorFromString(propVal) ==
         Hyper::Target::Hypervisor::PowerVM)
@@ -915,8 +915,8 @@ bool PowerMode::getDefaultMode(SysPwrMode& defaultMode)
         method.append(PMODE_DEFAULT_INTERFACE, "PowerMode");
         auto reply = bus.call(method);
 
-        std::variant<std::string> stateEntryValue;
-        reply.read(stateEntryValue);
+        auto stateEntryValue = reply.unpack<std::variant<std::string>>();
+
         auto propVal = std::get<std::string>(stateEntryValue);
 
         const std::string fullModeString =

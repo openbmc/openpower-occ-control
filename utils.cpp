@@ -192,9 +192,7 @@ std::string getStateValue(const std::string& intf, const std::string& objPath,
 
         auto reply = bus.call(method);
 
-        std::variant<std::string> propertyVal;
-
-        reply.read(propertyVal);
+        auto propertyVal = reply.unpack<std::variant<std::string>>();
 
         stateVal = std::get<std::string>(propertyVal);
     }

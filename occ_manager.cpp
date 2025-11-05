@@ -326,8 +326,8 @@ int Manager::cpuCreated(sdbusplus::message_t& msg)
 {
     namespace fs = std::filesystem;
 
-    sdbusplus::message::object_path o;
-    msg.read(o);
+    auto o = msg.unpack<sdbusplus::message::object_path>();
+
     fs::path cpuPath(std::string(std::move(o)));
 
     auto name = cpuPath.filename().string();
