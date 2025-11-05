@@ -102,18 +102,13 @@ void setProperty(const std::string& objectPath, const std::string& interface,
                                           DBUS_PROPERTY_IFACE, "Set");
         method.append(interface, propertyName, varValue);
 
-        auto reply = bus.call(method);
-        if (reply.is_method_error())
-        {
-            lg2::error("util::setProperty: Failed to set property {PROP}",
-                       "PROP", propertyName);
-        }
+        bus.call(method);
     }
     catch (const std::exception& e)
     {
         auto error = errno;
         lg2::error("setProperty: failed to Set {PROP}, errno={ERR}, what={MSG}",
-                   "PROP", propertyName, "ERR", error, "PROP", e.what());
+                   "PROP", propertyName, "ERR", error, "MSG", e);
     }
 }
 
