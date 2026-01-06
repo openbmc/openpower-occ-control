@@ -1,0 +1,7 @@
+Code-Review+2: Chris Cain <cjcain@us.ibm.com>
+Verified+1: OpenBMC CI <openbmcbump-ci@yahoo.com>
+Submitted-by: Jayanth Othayoth <ojayanth@gmail.com>
+Submitted-at: Tue, 06 Jan 2026 01:59:43 +0000
+Reviewed-on: https://gerrit.openbmc.org/c/openbmc/openpower-occ-control/+/86305
+Project: openbmc/openpower-occ-control
+Branch: refs/heads/master
