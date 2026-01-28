@@ -1075,33 +1075,40 @@ bool PowerMode::useDefaultIPSParms()
 bool PowerMode::openIpsFile()
 {
     bool rc = true;
-    fd = open(ipsStatusFile.c_str(), O_RDONLY | O_NONBLOCK);
-    const int open_errno = errno;
-    if (fd < 0)
+    if (std::filesystem::exists(ipsStatusFile))
     {
-        lg2::error("openIpsFile Error({ERR})={STR} : File={FILE}", "ERR",
-                   open_errno, "STR", strerror(open_errno), "FILE",
-                   ipsStatusFile);
-
-        close(fd);
-
-        using namespace sdbusplus::org::open_power::OCC::Device::Error;
-        report<OpenFailure>(
-            phosphor::logging::org::open_power::OCC::Device::OpenFailure::
-                CALLOUT_ERRNO(open_errno),
-            phosphor::logging::org::open_power::OCC::Device::OpenFailure::
-                CALLOUT_DEVICE_PATH(ipsStatusFile.c_str()));
-
-        // We are no longer watching the error
-        if (ipsObject)
+        fd = open(ipsStatusFile.c_str(), O_RDONLY | O_NONBLOCK);
+        const int open_errno = errno;
+        if (fd < 0)
         {
-            ipsObject->active(false);
-        }
+            lg2::error("openIpsFile Error({ERR})={STR} : File={FILE}", "ERR",
+                    open_errno, "STR", strerror(open_errno), "FILE",
+                    ipsStatusFile);
 
+            close(fd);
+
+            using namespace sdbusplus::org::open_power::OCC::Device::Error;
+            report<OpenFailure>(
+                phosphor::logging::org::open_power::OCC::Device::OpenFailure::
+                    CALLOUT_ERRNO(open_errno),
+                phosphor::logging::org::open_power::OCC::Device::OpenFailure::
+                    CALLOUT_DEVICE_PATH(ipsStatusFile.c_str()));
+
+            // We are no longer watching the error
+            if (ipsObject)
+            {
+                ipsObject->active(false);
+            }
+
+            watching = false;
+            rc = false;
+        }
+    }
+    else
+    {
+        // Not watching for IPS state changes yet
         watching = false;
         rc = false;
-        // NOTE: this will leave the system not reporting IPS active state to
-        // Fan Controls, Until an APP reload, or IPL and we will attempt again.
     }
     return rc;
 }
