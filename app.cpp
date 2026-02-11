@@ -17,6 +17,9 @@ using InternalFailure =
 
 int main(int /*argc*/, char** /*argv[]*/)
 {
+    // Block SIGUSR1 untill the handler is ready
+    stdplus::signal::block(SIGUSR1);
+
     auto& bus = open_power::occ::utils::getBus();
 
     // Need sd_event to watch for OCC device errors
@@ -49,7 +52,6 @@ int main(int /*argc*/, char** /*argv[]*/)
     try
     {
         // Enable SIGUSR1 handling to collect data on dump request
-        stdplus::signal::block(SIGUSR1);
         sdeventplus::source::Signal sigUsr1(
             eventP.get(), SIGUSR1,
             std::bind(&open_power::occ::Manager::collectDumpData, &mgr,
