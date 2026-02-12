@@ -9,6 +9,8 @@
 #include <xyz/openbmc_project/Control/Power/CapLimits/server.hpp>
 
 #include <filesystem>
+#include <functional>
+#include <optional>
 #include <regex>
 
 namespace open_power
@@ -90,7 +92,7 @@ class OccPersistCapData
     }
 
     /** @brief Return true if the power cap limits are available */
-    bool limitsAvailable()
+    bool limitsAvailable() const
     {
         return (capData.initialized);
     }
@@ -128,13 +130,10 @@ class PowerCap : public CapLimitsInterface
      * This object will monitor for changes to the power cap setting and
      * power cap enable properties.  If a change is detected, and the occ
      * is active, then this object will notify the OCC of the change.
-     *
-     * @param[in] occStatus - The occ status object
      */
-    explicit PowerCap(Status& occStatus) :
+    explicit PowerCap() :
         CapLimitsInterface(utils::getBus(), PCAPLIMITS_PATH,
                            CapLimitsInterface::action::defer_emit),
-        occStatus(occStatus),
         pcapMatch(
             utils::getBus(),
             sdbusRule::member("PropertiesChanged") +
@@ -166,6 +165,12 @@ class PowerCap : public CapLimitsInterface
 
     /** @brief Read the power cap bounds from sysfs and update DBus */
     void updatePcapBounds();
+
+    /** @brief Link object to the master OCC for sending the cap */
+    void setMasterOccObj(Status& masterStatusObj)
+    {
+        masterOccObj = std::ref(masterStatusObj);
+    };
 
   private:
     /** @brief Persisted power cap limits */
@@ -216,8 +221,8 @@ class PowerCap : public CapLimitsInterface
      */
     fs::path getPcapFilename(const std::regex& expr);
 
-    /* @brief OCC Status object */
-    Status& occStatus;
+    /* @brief Link to the master OCC */
+    std::optional<std::reference_wrapper<Status>> masterOccObj;
 
     /** @brief Used to subscribe to dbus pcap property changes **/
     sdbusplus::bus::match_t pcapMatch;

@@ -56,7 +56,7 @@ void OccPersistCapData::save()
     {
         auto error = errno;
         lg2::error(
-            "OccPersistCapData::save: failed to read {PATH}, errno={ERRNO}, err={ERR}",
+            "OccPersistCapData::save: failed to write {PATH}, errno={ERRNO}, err={ERR}",
             "PATH", opath, "ERRNO", error, "ERR", e);
         capData.initialized = false;
     }
@@ -176,6 +176,7 @@ void PowerCap::updatePcapBounds()
     const bool pcapEnabled = getPcapEnabled();
     if (pcapEnabled && (dbusUserCap != 0))
     {
+        // Read current user cap (as input/AC power)
         const uint32_t hwmonUserCap = readUserCapHwmon();
         if ((dbusUserCap >= capSoftMin) && (dbusUserCap <= capMax))
         {
@@ -184,7 +185,7 @@ void PowerCap::updatePcapBounds()
             {
                 // User power cap is enabled, but does not match dbus
                 lg2::error(
-                    "updatePcapBounds: user powercap mismatch (hwmon:{HCAP}W, bdus:{DCAP}W) - using dbus",
+                    "updatePcapBounds: user powercap mismatch (hwmon:{HCAP}W, dbus:{DCAP}W) - using dbus",
                     "HCAP", hwmonUserCap, "DCAP", dbusUserCap);
                 auto occInput = getOccInput(dbusUserCap, pcapEnabled);
                 writeOcc(occInput);
@@ -276,27 +277,30 @@ bool PowerCap::getPcapEnabled()
 
 fs::path PowerCap::getPcapFilename(const std::regex& expr)
 {
-    if (pcapBasePathname.empty())
+    if (masterOccObj.has_value())
     {
-        pcapBasePathname = occStatus.getHwmonPath();
-    }
-
-    if (fs::exists(pcapBasePathname))
-    {
-        // Search for pcap file based on the supplied expr
-        for (auto& file : fs::directory_iterator(pcapBasePathname))
+        if (pcapBasePathname.empty())
         {
-            if (std::regex_search(file.path().string(), expr))
+            pcapBasePathname = masterOccObj->get().getHwmonPath();
+        }
+
+        if (fs::exists(pcapBasePathname))
+        {
+            // Search for pcap file based on the supplied expr
+            for (auto& file : fs::directory_iterator(pcapBasePathname))
             {
-                // Found match
-                return file;
+                if (std::regex_search(file.path().string(), expr))
+                {
+                    // Found match
+                    return file;
+                }
             }
         }
-    }
-    else
-    {
-        lg2::error("Power Cap base filename not found: {FILE}", "FILE",
-                   pcapBasePathname);
+        else
+        {
+            lg2::error("Power Cap base filename not found: {FILE}", "FILE",
+                       pcapBasePathname);
+        }
     }
 
     // return empty path
@@ -307,7 +311,7 @@ fs::path PowerCap::getPcapFilename(const std::regex& expr)
 // This will trigger the driver to send the cap to the OCC
 void PowerCap::writeOcc(uint32_t pcapValue)
 {
-    if (!occStatus.occActive())
+    if (!masterOccObj.has_value() || !masterOccObj->get().occActive())
     {
         // OCC not running, skip update
         return;
@@ -380,12 +384,6 @@ uint32_t PowerCap::readUserCapHwmon()
 
 void PowerCap::pcapChanged(sdbusplus::message_t& msg)
 {
-    if (!occStatus.occActive())
-    {
-        // Nothing to do
-        return;
-    }
-
     uint32_t pcap = 0;
     bool pcapEnabled = false;
 
@@ -408,44 +406,38 @@ void PowerCap::pcapChanged(sdbusplus::message_t& msg)
             pcap = getPcap();
             changeFound = true;
         }
-        else
-        {
-            // Ignore other properties
-            lg2::debug(
-                "pcapChanged: Unknown power cap property changed {PROP} to {VAL}",
-                "PROP", prop, "VAL", std::get<uint32_t>(value));
-        }
-    }
-
-    // Validate the cap is within supported range
-    uint32_t capSoftMin, capHardMin, capMax;
-    persistedData.getCapLimits(capSoftMin, capHardMin, capMax);
-    if (((pcap > 0) && (pcap < capSoftMin)) || ((pcap == 0) && (pcapEnabled)))
-    {
-        lg2::error(
-            "pcapChanged: Power cap of {CAP}W is lower than allowed (soft min:{SMIN}, min:{MIN}) - using soft min",
-            "CAP", pcap, "SMIN", capSoftMin, "MIN", capHardMin);
-        pcap = capSoftMin;
-        utils::setProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_PROP, pcap);
-    }
-    else if (pcap > capMax)
-    {
-        lg2::error(
-            "pcapChanged: Power cap of {CAP}W is higher than allowed (max:{MAX}) - using max",
-            "CAP", pcap, "MAX", capMax);
-        pcap = capMax;
-        utils::setProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_PROP, pcap);
+        // Ignore other properties
     }
 
     if (changeFound)
     {
+        // Validate the cap is within supported range and update DBUS
+        uint32_t capSoftMin, capHardMin, capMax;
+        persistedData.getCapLimits(capSoftMin, capHardMin, capMax);
+        if (((pcap > 0) && (pcap < capSoftMin)) ||
+            ((pcap == 0) && (pcapEnabled)))
+        {
+            lg2::error(
+                "pcapChanged: Power cap of {CAP}W is lower than allowed (soft min:{SMIN}, min:{MIN}) - using soft min",
+                "CAP", pcap, "SMIN", capSoftMin, "MIN", capHardMin);
+            pcap = capSoftMin;
+            utils::setProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_PROP, pcap);
+        }
+        else if (pcap > capMax)
+        {
+            lg2::error(
+                "pcapChanged: Power cap of {CAP}W is higher than allowed (max:{MAX}) - using max",
+                "CAP", pcap, "MAX", capMax);
+            pcap = capMax;
+            utils::setProperty(PCAP_PATH, PCAP_INTERFACE, POWER_CAP_PROP, pcap);
+        }
+
         lg2::info(
             "Power Cap Property Change (cap={CAP}W (input), enabled={ENABLE})",
             "CAP", pcap, "ENABLE", pcapEnabled);
 
-        // Determine desired action to write to occ
+        // Send the pcap/enabled to the master OCC
         auto occInput = getOccInput(pcap, pcapEnabled);
-        // Write action to occ
         writeOcc(occInput);
     }
 
