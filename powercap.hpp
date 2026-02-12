@@ -9,6 +9,8 @@
 #include <xyz/openbmc_project/Control/Power/CapLimits/server.hpp>
 
 #include <filesystem>
+#include <functional>
+#include <optional>
 #include <regex>
 
 namespace open_power
@@ -90,7 +92,7 @@ class OccPersistCapData
     }
 
     /** @brief Return true if the power cap limits are available */
-    bool limitsAvailable()
+    bool limitsAvailable() const
     {
         return (capData.initialized);
     }
@@ -131,10 +133,9 @@ class PowerCap : public CapLimitsInterface
      *
      * @param[in] occStatus - The occ status object
      */
-    explicit PowerCap(Status& occStatus) :
+    explicit PowerCap() :
         CapLimitsInterface(utils::getBus(), PCAPLIMITS_PATH,
                            CapLimitsInterface::action::defer_emit),
-        occStatus(occStatus),
         pcapMatch(
             utils::getBus(),
             sdbusRule::member("PropertiesChanged") +
@@ -166,6 +167,11 @@ class PowerCap : public CapLimitsInterface
 
     /** @brief Read the power cap bounds from sysfs and update DBus */
     void updatePcapBounds();
+
+    void setMasterOccObj(Status& masterStatusObj)
+    {
+        masterOccObj = std::ref(masterStatusObj);
+    };
 
   private:
     /** @brief Persisted power cap limits */
@@ -217,7 +223,7 @@ class PowerCap : public CapLimitsInterface
     fs::path getPcapFilename(const std::regex& expr);
 
     /* @brief OCC Status object */
-    Status& occStatus;
+    std::optional<std::reference_wrapper<Status>> masterOccObj;
 
     /** @brief Used to subscribe to dbus pcap property changes **/
     sdbusplus::bus::match_t pcapMatch;
