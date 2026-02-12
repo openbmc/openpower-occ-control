@@ -16,8 +16,7 @@ class VerifyOccInput : public ::testing::Test
   public:
     VerifyOccInput() :
         rc(sd_event_default(&event)), eventP(event), manager(eventP),
-        occStatus(eventP, "/test/path/occ1", manager, powerMode),
-        pcap(occStatus)
+        occStatus(eventP, "/test/path/occ1", manager, powerMode), pcap()
     {
         EXPECT_GE(rc, 0);
         event = nullptr;
