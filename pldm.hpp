@@ -120,7 +120,7 @@ class Interface
 
     /** @brief Fetch the state sensor PDRs and populate the cache with
      *         sensorId to OCC/SBE instance mapping information and the sensor
-     *         offset for the relevent state set.
+     *         offset for the relevant state set.
      *
      *  @param[in] stateSetId - the state set ID to look for
      *  @param[out] sensorInstanceMap - map of sensorID to instance
@@ -380,7 +380,7 @@ class Interface
      *  @param[in] instance - OCC instance number
      *  @param[in] sensorId - OCC Active sensor ID number
      *
-     *  @return request - The encoded PLDM messsage to be sent
+     *  @return request - The encoded PLDM message to be sent
      */
     std::vector<uint8_t> encodeGetStateSensorRequest(uint8_t instance,
                                                      uint16_t sensorId);

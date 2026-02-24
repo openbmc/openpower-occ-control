@@ -47,7 +47,7 @@ enum class OccState
 enum class SysPwrMode
 {
     NO_CHANGE = 0,
-    STATIC = 0x01,            // Static Base Frequencey
+    STATIC = 0x01,            // Static Base Frequency
     NON_DETERMINISTIC = 0x02, // Non-Deterministic
     SFP = 0x03,               // Static Frequency Point (requires freqPt)
     SAFE = 0x04,         // reported when system is in SAFE mode (not settable)

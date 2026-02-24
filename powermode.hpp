@@ -298,7 +298,7 @@ class PowerMode : public ModeInterface
      */
     void setMasterOcc(const std::string& occPath);
 
-    /** @brief Notify object of master OCC state.  If not acitve, no
+    /** @brief Notify object of master OCC state.  If not active, no
      * commands will be sent to the master OCC
      *
      * @param[in]  isActive - true when master OCC is active

@@ -614,7 +614,7 @@ void PowerMode::ipsChanged(sdbusplus::message_t& msg)
         if (exitUtil == 0)
         {
             // Setting the exitUtil to 0 will force restoring the default IPS
-            // parmeters (0 is not valid exit utilization)
+            // parameters (0 is not valid exit utilization)
             lg2::info(
                 "Idle Power Saver Exit Utilization is 0%. Restoring default parameters");
             // Read the default IPS parameters, write persistent file and update
@@ -623,7 +623,7 @@ void PowerMode::ipsChanged(sdbusplus::message_t& msg)
         }
         else
         {
-            // Update persistant data with new DBus values
+            // Update persistent data with new DBus values
             persistedData.updateIPS(ipsEnabled, enterUtil, enterTime, exitUtil,
                                     exitTime);
         }
@@ -1367,7 +1367,7 @@ bool PowerMode::getSupportedModes()
         return false;
     }
 
-    // Determine if system suports EcoModes
+    // Determine if system supports EcoModes
     auto ecoSupport = powerModeProperties.find("EcoModeSupport");
     if (ecoSupport != powerModeProperties.end())
     {

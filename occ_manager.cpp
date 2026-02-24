@@ -73,7 +73,7 @@ void Manager::createPldmHandle()
 // findAndCreateObjects():
 // Takes care of getting the required objects created and
 // finds the available devices/processors.
-// (function is called everytime the discoverTimer expires)
+// (function is called every time the discoverTimer expires)
 // - create the PowerMode object to control OCC modes
 // - create statusObjects for each OCC device found
 // - waits for OCC Active sensors PDRs to become available
@@ -1027,7 +1027,7 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
         }
 
         double tempValue{0};
-        // NOTE: if OCC sends back 0xFF, kernal sets this fault value to 1.
+        // NOTE: if OCC sends back 0xFF, kernel sets this fault value to 1.
         if (faultValue != 0)
         {
             tempValue = std::numeric_limits<double>::quiet_NaN();
@@ -1063,7 +1063,7 @@ void Manager::readTempSensors(const fs::path& path, uint32_t occInstance)
             }
         }
 
-        // If this object path already has a value, only overwite
+        // If this object path already has a value, only overwrite
         // it if the previous one was an NaN or a smaller value.
         auto existing = sensorData.find(sensorPath);
         if (existing != sensorData.end())
