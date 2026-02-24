@@ -118,7 +118,7 @@ bool OccDBusSensors::setUnit(const std::string& path, const std::string& value)
     }
     catch (const std::exception& e)
     {
-        lg2::error("set Unit propety failed: error={ERR}", "ERR", e.what());
+        lg2::error("set Unit property failed: error={ERR}", "ERR", e.what());
         return false;
     }
 
@@ -135,7 +135,7 @@ std::string OccDBusSensors::getUnit(const std::string& path) const
         }
         catch (const std::exception& e)
         {
-            lg2::error("get Unit propety failed: error={ERR}", "ERR", e.what());
+            lg2::error("get Unit property failed: error={ERR}", "ERR", e.what());
         }
     }
 
@@ -265,7 +265,7 @@ bool OccDBusSensors::setPurpose(const std::string& path,
         catch (const std::exception& e)
         {
             lg2::error(
-                "set SensorPurpose propety failed for {PATH}: error={ERR}",
+                "set SensorPurpose property failed for {PATH}: error={ERR}",
                 "PATH", path, "ERR", e.what());
             return false;
         }

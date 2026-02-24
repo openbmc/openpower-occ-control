@@ -17,7 +17,7 @@ using InternalFailure =
 
 int main(int /*argc*/, char** /*argv[]*/)
 {
-    // Block SIGUSR1 untill the handler is ready
+    // Block SIGUSR1 until the handler is ready
     stdplus::signal::block(SIGUSR1);
 
     auto& bus = open_power::occ::utils::getBus();

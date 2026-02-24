@@ -215,7 +215,7 @@ void Status::hostControlEvent(sdbusplus::message_t& msg)
     return;
 }
 
-// Called from Manager::pollerTimerExpired() in preperation to POLL OCC.
+// Called from Manager::pollerTimerExpired() in preparation to POLL OCC.
 void Status::readOccState()
 {
     if (stateValid)
@@ -665,7 +665,7 @@ void Status::readProcAssociation()
     catch (const sdbusplus::exception_t& e)
     {
         lg2::error(
-            "readProcAssociation: Unable to get proc assocated with {PATH} - {ERROR}",
+            "readProcAssociation: Unable to get proc associated with {PATH} - {ERROR}",
             "PATH", path, "ERROR", e.what());
         procPath = {};
     }
