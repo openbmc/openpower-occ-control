@@ -623,9 +623,10 @@ void PowerMode::ipsChanged(sdbusplus::message_t& msg)
         }
         else
         {
-            // Update persistent data with new DBus values
+            // Update persistent data and dbus
             persistedData.updateIPS(ipsEnabled, enterUtil, enterTime, exitUtil,
                                     exitTime);
+            updateDbusIPS(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime);
         }
 
         // Trigger IPS data to get sent to the OCC
@@ -669,6 +670,10 @@ bool PowerMode::getIPSParms(bool& ipsEnabled, uint8_t& enterUtil,
             "ERROR: Idle Power Saver Enter Utilization ({ENTER}%) is > Exit Utilization ({EXIT}%) - using Exit for both",
             "ENTER", enterUtil, "EXIT", exitUtil);
         enterUtil = exitUtil;
+        // Update persistent data and dbus
+        persistedData.updateIPS(ipsEnabled, enterUtil, enterTime, exitUtil,
+                                exitTime);
+        updateDbusIPS(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime);
     }
 
     return true;
@@ -988,28 +993,6 @@ bool PowerMode::getDefaultIPSParms(bool& ipsEnabled, uint8_t& enterUtil,
             "PowerMode::getDefaultIPSParms could not find property: IdlePowerSaverEnabled");
     }
 
-    ipsEntry = ipsProperties.find("EnterUtilizationPercent");
-    if (ipsEntry != ipsProperties.end())
-    {
-        enterUtil = std::get<uint64_t>(ipsEntry->second);
-    }
-    else
-    {
-        lg2::error(
-            "PowerMode::getDefaultIPSParms could not find property: EnterUtilizationPercent");
-    }
-
-    ipsEntry = ipsProperties.find("EnterUtilizationDwellTime");
-    if (ipsEntry != ipsProperties.end())
-    {
-        enterTime = std::get<uint64_t>(ipsEntry->second);
-    }
-    else
-    {
-        lg2::error(
-            "PowerMode::getDefaultIPSParms could not find property: EnterUtilizationDwellTime");
-    }
-
     ipsEntry = ipsProperties.find("ExitUtilizationPercent");
     if (ipsEntry != ipsProperties.end())
     {
@@ -1039,6 +1022,29 @@ bool PowerMode::getDefaultIPSParms(bool& ipsEnabled, uint8_t& enterUtil,
             "ENTER", enterUtil, "EXIT", exitUtil);
         enterUtil = exitUtil;
     }
+
+    ipsEntry = ipsProperties.find("EnterUtilizationPercent");
+    if (ipsEntry != ipsProperties.end())
+    {
+        enterUtil = std::get<uint64_t>(ipsEntry->second);
+    }
+    else
+    {
+        lg2::error(
+            "PowerMode::getDefaultIPSParms could not find property: EnterUtilizationPercent");
+    }
+
+    ipsEntry = ipsProperties.find("EnterUtilizationDwellTime");
+    if (ipsEntry != ipsProperties.end())
+    {
+        enterTime = std::get<uint64_t>(ipsEntry->second);
+    }
+    else
+    {
+        lg2::error(
+            "PowerMode::getDefaultIPSParms could not find property: EnterUtilizationDwellTime");
+    }
+
 
     return true;
 }
