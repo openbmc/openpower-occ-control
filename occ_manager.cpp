@@ -1705,6 +1705,8 @@ void Manager::updatePcapBounds() const
         {
             if (obj->isMasterOcc())
             {
+                lg2::info("updatePcapBounds: setting OCC{INST} as pcap master",
+                          "INST", obj->getOccInstanceID());
                 pcap->setMasterOccObj(*obj);
                 break;
             }
