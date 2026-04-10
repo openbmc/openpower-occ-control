@@ -167,6 +167,14 @@ void FFDC::analyzeEvent()
     int tfd = -1;
     size_t total = 0;
     auto data = std::make_unique<unsigned char[]>(max_ffdc_size);
+
+    // Check if file still exists before reading (device may have been removed)
+    if (!fs::exists(file))
+    {
+        lg2::warning("analyzeEvent: File does not exist: {FILE}", "FILE", file);
+        return;
+    }
+
     while (total < max_ffdc_size)
     {
         auto r = read(fd, data.get() + total, max_ffdc_size - total);

@@ -36,7 +36,12 @@ test_sources = [
     occ_sensor_hpp,
 ]
 
-tests = ['error_files_tests.cpp', 'occ_dbus_test.cpp', 'utest.cpp']
+tests = [
+    'error_files_tests.cpp',
+    'occ_dbus_test.cpp',
+    'utest.cpp',
+    'error_readfile_race_test.cpp',
+]
 
 pthread_dep = dependency('threads')
 
