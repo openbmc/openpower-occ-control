@@ -168,9 +168,9 @@ std::string Error::readFile(int len) const
     // Need to seek to START, else the poll returns immediately telling
     // there is data to be read
     auto r = lseek(fd, 0, SEEK_SET);
-    if (r < 0)
+    if ((r < 0) || !fs::exists(file))
     {
-        lg2::error("Failure seeking error file to START");
+        lg2::error("Failure seeking error file to START (rc={RC})", "RC", r);
         elog<ConfigFailure>(
             phosphor::logging::org::open_power::OCC::Device::ConfigFailure::
                 CALLOUT_ERRNO(errno),

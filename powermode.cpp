@@ -1201,7 +1201,7 @@ void PowerMode::analyzeIpsEvent()
     // there is data to be read. if not done this floods the system.
     auto r = lseek(fd, 0, SEEK_SET);
     const int open_errno = errno;
-    if (r < 0)
+    if ((r < 0) || !std::filesystem::exists(ipsStatusFile))
     {
         // NOTE: upon file access error we can not just re-open file, we have to
         // remove and add to watch.
