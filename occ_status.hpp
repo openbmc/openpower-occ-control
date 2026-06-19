@@ -278,7 +278,7 @@ class Status : public Interface
      *  If the host does not ack the message, then there would be a timeout
      *  and we need to catch that to log an error
      **/
-    sdbusplus::bus::match_t hostControlSignal;
+    sdbusplus::match hostControlSignal;
 
     /** @brief Command object to send commands to the OCC */
     OccCommand occCmd;

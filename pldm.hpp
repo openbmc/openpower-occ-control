@@ -221,10 +221,10 @@ class Interface
     /** @brief Used to subscribe to D-Bus PLDM StateSensorEvent signal and
      *         processes if the event corresponds to OCC state change.
      */
-    sdbusplus::bus::match_t pldmEventSignal;
+    sdbusplus::match pldmEventSignal;
 
     /** @brief Used to subscribe for host state change signal */
-    sdbusplus::bus::match_t hostStateSignal;
+    sdbusplus::match hostStateSignal;
 
     /** @brief PLDM Sensor ID to OCC Instance mapping
      */

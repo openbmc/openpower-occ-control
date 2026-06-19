@@ -225,7 +225,7 @@ class PowerCap : public CapLimitsInterface
     std::optional<std::reference_wrapper<Status>> masterOccObj;
 
     /** @brief Used to subscribe to dbus pcap property changes **/
-    sdbusplus::bus::match_t pcapMatch;
+    sdbusplus::match pcapMatch;
 
     /** @brief Path to the sysfs files holding the cap properties **/
     fs::path pcapBasePathname;

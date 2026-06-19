@@ -357,10 +357,10 @@ class PowerMode : public ModeInterface
     std::unique_ptr<open_power::occ::OccCommand> occCmd;
 
     /** @brief Used to subscribe to dbus IPS property changes **/
-    sdbusplus::bus::match_t ipsMatch;
+    sdbusplus::match ipsMatch;
 
     /** @brief Used to subscribe to dbus defaults property changes **/
-    sdbusplus::bus::match_t defaultsUpdateMatch;
+    sdbusplus::match defaultsUpdateMatch;
 
     OccPersistData persistedData;
 
