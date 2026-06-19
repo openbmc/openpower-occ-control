@@ -17,7 +17,7 @@ namespace occ
 {
 
 // For waiting on signals
-namespace sdbusRule = sdbusplus::bus::match::rules;
+namespace sdbusRule = sdbusplus::match_rules;
 
 enum class CmdType
 {
@@ -151,7 +151,7 @@ class OccCommand
      *  Once the OCC status gets to active, only then we will get /dev/occ2
      *  populated and hence need to wait on that before opening that
      */
-    sdbusplus::bus::match_t activeStatusSignal;
+    sdbusplus::match activeStatusSignal;
 
     /** Opens devicePath and populates file descriptor */
     void openDevice();

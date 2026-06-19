@@ -52,13 +52,13 @@ PowerMode::PowerMode(const char* modePath, const char* ipsPath,
                      EventPtr& event) :
     ModeInterface(utils::getBus(), modePath,
                   ModeInterface::action::emit_no_signals),
-    ipsMatch(utils::getBus(),
-             sdbusplus::bus::match::rules::propertiesChanged(PIPS_PATH,
-                                                             PIPS_INTERFACE),
-             [this](auto& msg) { this->ipsChanged(msg); }),
+    ipsMatch(
+        utils::getBus(),
+        sdbusplus::match_rules::propertiesChanged(PIPS_PATH, PIPS_INTERFACE),
+        [this](auto& msg) { this->ipsChanged(msg); }),
     defaultsUpdateMatch(
         utils::getBus(),
-        sdbusplus::bus::match::rules::propertiesChangedNamespace(
+        sdbusplus::match_rules::propertiesChangedNamespace(
             "/xyz/openbmc_project/inventory", PMODE_DEFAULT_INTERFACE),
         [this](auto& msg) { this->defaultsReady(msg); }),
     masterOccSet(false), masterActive(false), ipsObjectPath(ipsPath),

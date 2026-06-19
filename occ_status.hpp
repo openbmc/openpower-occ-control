@@ -34,7 +34,7 @@ using ThrottleInterface = sdbusplus::server::object_t<xyzBase::Throttle>;
 namespace Control = sdbusplus::org::open_power::Control::server;
 
 // For waiting on signals
-namespace sdbusRule = sdbusplus::bus::match::rules;
+namespace sdbusRule = sdbusplus::match_rules;
 
 // OCC status instance. Ex. for "occ0", the instance is 0
 using instanceID = unsigned int;
@@ -278,7 +278,7 @@ class Status : public Interface
      *  If the host does not ack the message, then there would be a timeout
      *  and we need to catch that to log an error
      **/
-    sdbusplus::bus::match_t hostControlSignal;
+    sdbusplus::match hostControlSignal;
 
     /** @brief Command object to send commands to the OCC */
     OccCommand occCmd;

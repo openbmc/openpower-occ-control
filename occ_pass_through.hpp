@@ -21,7 +21,7 @@ using Iface = sdbusplus::server::object_t<
     sdbusplus::org::open_power::OCC::server::PassThrough>;
 
 // For waiting on signals
-namespace sdbusRule = sdbusplus::bus::match::rules;
+namespace sdbusRule = sdbusplus::match_rules;
 
 /** @class PassThrough
  *  @brief Implements org.open_power.OCC.PassThrough
@@ -91,7 +91,7 @@ class PassThrough : public Iface
      *  Once the OCC status gets to active, only then we will get /dev/occ2
      *  populated and hence need to wait on that before opening that
      */
-    sdbusplus::bus::match_t activeStatusSignal;
+    sdbusplus::match activeStatusSignal;
 
     /** @brief Object to send commands to the OCC */
     OccCommand occCmd;

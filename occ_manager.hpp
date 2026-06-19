@@ -21,7 +21,7 @@
 #include <functional>
 #include <vector>
 
-namespace sdbusRule = sdbusplus::bus::match::rules;
+namespace sdbusRule = sdbusplus::match_rules;
 namespace open_power
 {
 namespace occ
@@ -212,7 +212,7 @@ class Manager
     std::unique_ptr<open_power::occ::powermode::PowerMode> pmode;
 
     /** @brief sbdbusplus match objects */
-    std::vector<sdbusplus::bus::match_t> cpuMatches;
+    std::vector<sdbusplus::match> cpuMatches;
 
     /** @brief Number of OCCs that are bound */
     uint8_t activeCount = 0;
@@ -246,7 +246,7 @@ class Manager
         _pollTimer;
 
     /** @brief Subscribe to ambient temperature changed events */
-    sdbusplus::bus::match_t ambientPropChanged;
+    sdbusplus::match ambientPropChanged;
 
     /** @brief Flag to indicate that a PM complex reset needs to happen */
     bool resetRequired = false;
