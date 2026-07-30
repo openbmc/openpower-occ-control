@@ -32,7 +32,6 @@
 # data within them will be kept sorted.
 
 owners:
-- eajames@us.ibm.com
 - cjcain@us.ibm.com
 
 reviewers:
@@ -40,9 +39,6 @@ reviewers:
 matchers:
 
 openbmc:
-- name: Eddie James
-  email: eajames@us.ibm.com
-  discord: eajames
 - name: Chris Cain
   email: cjcain@us.ibm.com
   discord: cjcain
