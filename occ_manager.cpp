@@ -710,7 +710,7 @@ void Manager::sbeHRESETResult(instanceID instance, bool success)
                      "com.ibm.Dump.Create.DumpType.SBE"},
                     {"com.ibm.Dump.Create.CreateParameters.FailingUnitId",
                      uint64_t(instance)},
-                };
+            };
 
             method.append(createParams);
 
