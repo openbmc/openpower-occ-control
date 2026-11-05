@@ -218,14 +218,14 @@ std::string getStateValue(const std::string& intf, const std::string& objPath,
 
 BootProgress getBootProgress()
 {
-    BootProgress bootProgessStage;
+    BootProgress bootProgressStage;
     constexpr auto bootProgressInterface =
         "xyz.openbmc_project.State.Boot.Progress";
     std::string value = getStateValue(bootProgressInterface,
                                       HOST_STATE_OBJ_PATH, "BootProgress");
-    bootProgessStage = sdbusplus::xyz::openbmc_project::State::Boot::server::
+    bootProgressStage = sdbusplus::xyz::openbmc_project::State::Boot::server::
         Progress::convertProgressStagesFromString(value);
-    return bootProgessStage;
+    return bootProgressStage;
 }
 
 bool isHostRunning()

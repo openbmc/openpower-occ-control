@@ -110,7 +110,7 @@ void PowerMode::createIpsObject()
         uint8_t enterUtil, exitUtil;
         uint16_t enterTime, exitTime;
         bool ipsEnabled;
-        // Read the persisted Idle Power Saver parametres
+        // Read the persisted Idle Power Saver parameters
         if (getIPSParms(ipsEnabled, enterUtil, enterTime, exitUtil, exitTime))
         {
             // Update Idle Power Saver parameters on DBus
